@@ -22,6 +22,33 @@ Deno.serve(async (req) => {
       }
     )
 
+    console.log('Starting fresh seed - deleting existing data...')
+    
+    // Delete all existing tutor profiles, reviews, bookings, and availability
+    await supabaseAdmin.from('tutor_reviews').delete().neq('id', '00000000-0000-0000-0000-000000000000')
+    await supabaseAdmin.from('bookings').delete().neq('id', '00000000-0000-0000-0000-000000000000')
+    await supabaseAdmin.from('tutor_availability').delete().neq('id', '00000000-0000-0000-0000-000000000000')
+    await supabaseAdmin.from('tutor_profiles').delete().neq('id', '00000000-0000-0000-0000-000000000000')
+    
+    // Delete user roles and profiles for test tutors
+    const { data: existingTutorProfiles } = await supabaseAdmin
+      .from('profiles')
+      .select('id')
+      .ilike('full_name', '%test%')
+    
+    if (existingTutorProfiles && existingTutorProfiles.length > 0) {
+      const tutorIds = existingTutorProfiles.map(p => p.id)
+      await supabaseAdmin.from('user_roles').delete().in('user_id', tutorIds)
+      await supabaseAdmin.from('profiles').delete().in('id', tutorIds)
+      
+      // Delete auth users
+      for (const profile of existingTutorProfiles) {
+        await supabaseAdmin.auth.admin.deleteUser(profile.id)
+      }
+    }
+    
+    console.log('Existing data cleared. Creating 50 new tutors...')
+
     const testTutors = [
       { name: 'Sarah Mwangi', subjects: ['Mathematics', 'Physics'], school: 'University of Nairobi', curriculum: ['CBC', 'IGCSE'], rate: 800, exp: 5 },
       { name: 'David Ochieng', subjects: ['Chemistry', 'Biology'], school: 'Kenyatta University', curriculum: ['8-4-4', 'CBC'], rate: 750, exp: 7 },
