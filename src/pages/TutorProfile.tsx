@@ -2,12 +2,19 @@ import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Star, GraduationCap, Clock, BookOpen, MessageCircle } from "lucide-react";
+import { Star, GraduationCap, Clock, BookOpen, Award } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { BookingCalendar } from "@/components/BookingCalendar";
+import tutor1 from "@/assets/tutor-1.jpg";
+import tutor2 from "@/assets/tutor-2.jpg";
+import tutor3 from "@/assets/tutor-3.jpg";
+import tutor4 from "@/assets/tutor-4.jpg";
+import tutor5 from "@/assets/tutor-5.jpg";
+import tutor6 from "@/assets/tutor-6.jpg";
 
 const TutorProfile = () => {
   const { id } = useParams();
@@ -65,6 +72,9 @@ const TutorProfile = () => {
       // Get user email
       const { data: { user: tutorUser } } = await supabase.auth.getUser();
       
+      const tutorImages = [tutor1, tutor2, tutor3, tutor4, tutor5, tutor6];
+      const randomImage = tutorImages[Math.floor(Math.random() * tutorImages.length)];
+      
       setTutor({
         id: tutorProfile.id,
         userId: tutorProfile.user_id,
@@ -78,11 +88,12 @@ const TutorProfile = () => {
         photo: profile?.full_name 
           ? profile.full_name.split(' ').map((n: string) => n[0]).join('') 
           : "T",
+        photoUrl: randomImage,
         bio: tutorProfile.bio || "",
         education: Array.isArray(tutorProfile.qualifications) 
           ? tutorProfile.qualifications.join(", ") 
           : "Not specified",
-        experience: `${tutorProfile.experience_years || 0} years`,
+        experience: tutorProfile.experience_years || 0,
         curriculum: tutorProfile.curriculum || [],
       });
     }
@@ -116,89 +127,126 @@ const TutorProfile = () => {
 
   return (
     <div className="min-h-screen bg-secondary/20">
-      <div className="max-w-5xl mx-auto px-6 py-12">
-        <Card className="mb-6">
-          <CardContent className="p-8">
-            <div className="flex flex-col md:flex-row gap-8">
-              <Avatar className="w-32 h-32 border-4 border-cyan-600">
-                <AvatarFallback className="text-3xl bg-gradient-to-br from-cyan-600 to-cyan-700 text-white">
-                  {tutor.photo}
-                </AvatarFallback>
-              </Avatar>
-              
-              <div className="flex-1">
-                <h1 className="text-4xl font-bold mb-2">{tutor.name}</h1>
-                <p className="text-cyan-600 font-medium text-lg mb-3">
-                  {tutor.subjects.join(", ")}
-                </p>
+      <div className="max-w-4xl mx-auto px-6 py-12">
+        {/* Header Card */}
+        <Card className="mb-6 border-border/50">
+          <CardContent className="p-0">
+            <div className="p-8 border-b border-border/50">
+              <div className="flex flex-col sm:flex-row gap-6 items-start">
+                <Avatar className="w-24 h-24 shrink-0">
+                  <AvatarImage src={tutor.photoUrl} alt={tutor.name} />
+                  <AvatarFallback className="text-2xl bg-primary text-primary-foreground font-semibold">
+                    {tutor.photo}
+                  </AvatarFallback>
+                </Avatar>
                 
-                <div className="flex items-center gap-2 mb-4">
-                  <Star className="w-6 h-6 fill-yellow-400 text-yellow-400" />
-                  <span className="font-bold text-xl">{tutor.rating.toFixed(1)}</span>
-                  <span className="text-muted-foreground">({tutor.reviews} reviews)</span>
+                <div className="flex-1 min-w-0">
+                  <h1 className="text-3xl font-bold mb-2">{tutor.name}</h1>
+                  <p className="text-base text-muted-foreground mb-3">
+                    {tutor.subjects.join(" • ")}
+                  </p>
+                  <p className="text-sm text-muted-foreground/80">
+                    {tutor.school}
+                  </p>
                 </div>
-
-                <div className="text-3xl font-bold text-orange-600 mb-6">
-                  KES {tutor.hourlyRate}/hr
-                </div>
-
-                <Button size="lg" className="bg-cyan-600 hover:bg-cyan-700 text-white" onClick={handleBookSession}>
-                  <MessageCircle className="mr-2 h-5 w-5" />
-                  Book a Session
-                </Button>
               </div>
+            </div>
+
+            <div className="p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+              <div className="flex items-center gap-6">
+                <div className="flex items-center gap-2">
+                  <Star className="w-5 h-5 shrink-0 fill-yellow-500 text-yellow-500" />
+                  <span className="font-bold text-lg">{tutor.rating.toFixed(1)}</span>
+                  <span className="text-sm text-muted-foreground">({tutor.reviews})</span>
+                </div>
+                
+                <div className="h-8 w-px bg-border" />
+                
+                <div className="text-2xl font-bold">
+                  KES {tutor.hourlyRate.toLocaleString()}
+                  <span className="text-sm font-normal text-muted-foreground">/hr</span>
+                </div>
+              </div>
+
+              <Button size="lg" onClick={handleBookSession}>
+                Book Session
+              </Button>
             </div>
           </CardContent>
         </Card>
 
-        <div className="grid md:grid-cols-2 gap-6">
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center gap-3 mb-4">
-                <BookOpen className="w-6 h-6 text-cyan-600" />
-                <h2 className="text-2xl font-bold">About</h2>
+        {/* Info Grid */}
+        <div className="grid sm:grid-cols-2 gap-4 mb-6">
+          <Card className="border-border/50">
+            <CardContent className="p-5">
+              <div className="flex items-start gap-3">
+                <div className="p-2 rounded-lg bg-primary/10 shrink-0">
+                  <Clock className="w-5 h-5 text-primary" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-semibold text-sm mb-1">Experience</h3>
+                  <p className="text-sm text-muted-foreground">
+                    {tutor.experience} {tutor.experience === 1 ? 'year' : 'years'} teaching
+                  </p>
+                </div>
               </div>
-              <p className="text-muted-foreground leading-relaxed">{tutor.bio}</p>
             </CardContent>
           </Card>
 
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center gap-3 mb-4">
-                <GraduationCap className="w-6 h-6 text-cyan-600" />
-                <h2 className="text-2xl font-bold">Education</h2>
+          <Card className="border-border/50">
+            <CardContent className="p-5">
+              <div className="flex items-start gap-3">
+                <div className="p-2 rounded-lg bg-primary/10 shrink-0">
+                  <Award className="w-5 h-5 text-primary" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-semibold text-sm mb-1">Curriculum</h3>
+                  <div className="flex flex-wrap gap-1.5 mt-2">
+                    {tutor.curriculum.length > 0 ? (
+                      tutor.curriculum.map((curr: string, idx: number) => (
+                        <Badge key={idx} variant="secondary" className="text-xs">
+                          {curr}
+                        </Badge>
+                      ))
+                    ) : (
+                      <p className="text-sm text-muted-foreground">Not specified</p>
+                    )}
+                  </div>
+                </div>
               </div>
-              <p className="text-muted-foreground mb-4">{tutor.education}</p>
-              <p className="text-sm">
-                <span className="font-semibold">Institution:</span> {tutor.school}
-              </p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center gap-3 mb-4">
-                <Clock className="w-6 h-6 text-cyan-600" />
-                <h2 className="text-2xl font-bold">Experience</h2>
-              </div>
-              <p className="text-muted-foreground">{tutor.experience} of teaching experience</p>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center gap-3 mb-4">
-                <Clock className="w-6 h-6 text-cyan-600" />
-                <h2 className="text-2xl font-bold">Curriculum</h2>
-              </div>
-              <p className="text-muted-foreground">
-                {tutor.curriculum.length > 0 
-                  ? tutor.curriculum.join(" • ") 
-                  : "Not specified"}
-              </p>
             </CardContent>
           </Card>
         </div>
+
+        {/* About Section */}
+        <Card className="mb-4 border-border/50">
+          <CardContent className="p-6">
+            <div className="flex items-center gap-2 mb-4">
+              <BookOpen className="w-5 h-5 text-primary" />
+              <h2 className="font-bold text-lg">About</h2>
+            </div>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              {tutor.bio || "No bio provided yet."}
+            </p>
+          </CardContent>
+        </Card>
+
+        {/* Education Section */}
+        <Card className="border-border/50">
+          <CardContent className="p-6">
+            <div className="flex items-center gap-2 mb-4">
+              <GraduationCap className="w-5 h-5 text-primary" />
+              <h2 className="font-bold text-lg">Education</h2>
+            </div>
+            <div className="space-y-2">
+              <p className="text-sm text-muted-foreground">{tutor.education}</p>
+              <p className="text-sm">
+                <span className="font-medium">Institution:</span>{" "}
+                <span className="text-muted-foreground">{tutor.school}</span>
+              </p>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Booking Dialog */}
         <Dialog open={isBookingOpen} onOpenChange={setIsBookingOpen}>
