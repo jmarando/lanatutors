@@ -1,11 +1,26 @@
-import { useParams } from "react-router-dom";
+import { useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Star, GraduationCap, Clock, BookOpen, MessageCircle } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Star, GraduationCap, Clock, BookOpen, MessageCircle, Calendar } from "lucide-react";
+import { toast } from "sonner";
 
 const TutorProfile = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
+  const [isBookingOpen, setIsBookingOpen] = useState(false);
+
+  const handleBookSession = () => {
+    setIsBookingOpen(true);
+  };
+
+  const confirmBooking = () => {
+    setIsBookingOpen(false);
+    toast.success("Booking request sent! The tutor will contact you shortly.");
+    // In a real app, this would create a booking in the database
+  };
 
   // Mock data - will be replaced with database query
   const tutor = {
@@ -51,7 +66,7 @@ const TutorProfile = () => {
                   KES {tutor.hourlyRate}/hr
                 </div>
 
-                <Button size="lg" className="bg-cyan-600 hover:bg-cyan-700 text-white">
+                <Button size="lg" className="bg-cyan-600 hover:bg-cyan-700 text-white" onClick={handleBookSession}>
                   <MessageCircle className="mr-2 h-5 w-5" />
                   Book a Session
                 </Button>
@@ -108,6 +123,46 @@ const TutorProfile = () => {
             </CardContent>
           </Card>
         </div>
+
+        {/* Booking Dialog */}
+        <Dialog open={isBookingOpen} onOpenChange={setIsBookingOpen}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Book a Session with {tutor.name}</DialogTitle>
+              <DialogDescription>
+                Choose your preferred time slot to book a session
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <p className="text-sm font-medium">Rate: KES {tutor.hourlyRate}/hr</p>
+                <p className="text-sm text-muted-foreground">Subjects: {tutor.subjects.join(", ")}</p>
+              </div>
+
+              <div className="space-y-2">
+                <p className="text-sm font-medium">Available Time Slots:</p>
+                <div className="space-y-2">
+                  {tutor.availability.map((slot, index) => (
+                    <Button 
+                      key={index} 
+                      variant="outline" 
+                      className="w-full justify-start"
+                      onClick={confirmBooking}
+                    >
+                      <Calendar className="mr-2 h-4 w-4" />
+                      {slot}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+
+              <p className="text-xs text-muted-foreground">
+                After selecting a time slot, the tutor will be notified and will contact you to confirm the session details.
+              </p>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
