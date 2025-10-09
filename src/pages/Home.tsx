@@ -28,41 +28,56 @@ const Home = () => {
   const steps = [
     {
       icon: Search,
-      title: "Find Your Tutor",
-      description: "Browse verified tutors by subject, experience, and ratings"
+      title: "1. Browse & Compare Tutors",
+      description: "Search our database of 500+ verified tutors from Kenya's top schools. Filter by subject, experience level, rating, and hourly rate. View detailed profiles including qualifications, teaching style, student reviews, and availability."
     },
     {
       icon: Calendar,
-      title: "Book a Session",
-      description: "Choose a convenient time slot that fits your schedule"
+      title: "2. Schedule Your Session",
+      description: "Select a tutor and choose from their available time slots. Book one-time sessions or set up recurring lessons. Receive instant confirmation and automatic calendar invites with Google Meet links."
     },
     {
       icon: Video,
-      title: "Learn Online",
-      description: "Join your session via Google Meet from anywhere"
+      title: "3. Attend & Learn",
+      description: "Join your live video session via Google Meet - no downloads required. Get personalized 1-on-1 attention tailored to your learning pace. Access shared whiteboards, screen sharing, and interactive learning materials."
+    },
+    {
+      icon: Award,
+      title: "4. Track Progress",
+      description: "After each session, receive session notes and homework assignments. Rate your tutor and provide feedback. Monitor your improvement with progress reports and achieve your academic goals."
     }
   ];
 
   const benefits = [
     {
       icon: ShieldCheck,
-      title: "Verified Tutors",
-      description: "All tutors are from recognized Kenyan schools with verified credentials"
+      title: "Verified Expert Tutors",
+      description: "Every tutor on ElimuConnect comes from recognized Kenyan schools including Alliance, Starehe, Kenya High, and more. We verify teaching credentials, academic qualifications, and conduct background checks. Only the top 15% of applicants are accepted to ensure quality education."
     },
     {
       icon: Clock,
-      title: "Flexible Scheduling",
-      description: "Book sessions at times that work for you, 7 days a week"
+      title: "Learn on Your Schedule",
+      description: "Access tutoring 7 days a week from 6 AM to 10 PM. Book sessions as little as 2 hours in advance or schedule recurring weekly lessons. Reschedule or cancel up to 24 hours before your session with no penalty. Perfect for busy students balancing school, sports, and activities."
     },
     {
       icon: Lock,
-      title: "Safe & Secure",
-      description: "Online sessions eliminate safety concerns of in-home tutoring"
+      title: "Safe & Convenient Online Learning",
+      description: "No travel required - learn from the comfort of home. Parents can monitor sessions and ensure student safety. All sessions are conducted through secure Google Meet video calls. No stranger in your home, no commute in traffic, just quality education delivered safely online."
     },
     {
       icon: Smartphone,
-      title: "M-Pesa Payments",
-      description: "Easy, secure payments via M-Pesa - Kenya's trusted mobile money"
+      title: "Simple M-Pesa Payments",
+      description: "Pay easily using M-Pesa, Kenya's most trusted mobile money platform. No credit cards or bank accounts needed. Transparent pricing with no hidden fees. Get instant payment confirmation and digital receipts. Your financial information stays secure with M-Pesa's industry-leading security."
+    },
+    {
+      icon: GraduationCap,
+      title: "Personalized Learning",
+      description: "Get 1-on-1 attention customized to your learning style and pace. Tutors adapt to your specific needs, whether you're catching up, keeping pace, or advancing ahead. Focus on exactly what you need help with - no wasted time on topics you already understand."
+    },
+    {
+      icon: Users,
+      title: "Proven Results",
+      description: "Students who use ElimuConnect see an average grade improvement of 2 levels within 3 months. 94% of students report increased confidence in their subjects. Our tutors have helped over 10,000 students excel in KCPE and KCSE examinations."
     }
   ];
 
