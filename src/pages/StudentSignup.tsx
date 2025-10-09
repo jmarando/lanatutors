@@ -11,9 +11,32 @@ import { Award } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
-const SUBJECTS = [
-  "Mathematics", "English", "Kiswahili", "Physics", "Chemistry", 
-  "Biology", "History", "Geography", "Computer Science", "Business Studies"
+const CBC_SUBJECTS = [
+  "Mathematics", "English", "Kiswahili", "Science", "Social Studies",
+  "Religious Education", "Creative Arts", "Physical Education"
+];
+
+const CBC_SECONDARY_SUBJECTS = [
+  "Mathematics", "English", "Kiswahili", "Physics", "Chemistry",
+  "Biology", "History", "Geography", "Computer Science", "Business Studies",
+  "Agriculture", "Home Science"
+];
+
+const IGCSE_SUBJECTS = [
+  "Mathematics", "English Language", "English Literature", "Physics", "Chemistry",
+  "Biology", "Combined Science", "History", "Geography", "Computer Science",
+  "Business Studies", "Economics", "French", "Spanish", "Art & Design"
+];
+
+const CBC_GRADES = [
+  "Grade 1", "Grade 2", "Grade 3", "Grade 4", "Grade 5", "Grade 6",
+  "Grade 7", "Grade 8", "Grade 9", "Form 1", "Form 2", "Form 3", "Form 4"
+];
+
+const IGCSE_GRADES = [
+  "Year 1", "Year 2", "Year 3", "Year 4", "Year 5", "Year 6",
+  "Year 7", "Year 8", "Year 9", "IGCSE Year 10", "IGCSE Year 11",
+  "A-Level Year 12", "A-Level Year 13"
 ];
 
 const LEARNING_STYLES = [
@@ -35,10 +58,28 @@ const StudentSignup = () => {
     fullName: "",
     phoneNumber: "",
     age: "",
+    curriculum: "",
     gradeLevel: "",
     learningGoals: "",
     learningStyle: ""
   });
+
+  const getSubjects = () => {
+    if (!formData.curriculum) return [];
+    if (formData.curriculum === "IGCSE") return IGCSE_SUBJECTS;
+    
+    // For CBC, show different subjects based on grade level
+    const grade = formData.gradeLevel;
+    if (grade && (grade.includes("Form") || grade === "Grade 7" || grade === "Grade 8" || grade === "Grade 9")) {
+      return CBC_SECONDARY_SUBJECTS;
+    }
+    return CBC_SUBJECTS;
+  };
+
+  const getGrades = () => {
+    if (formData.curriculum === "IGCSE") return IGCSE_GRADES;
+    return CBC_GRADES;
+  };
 
   const handleSubjectToggle = (subject: string) => {
     setSelectedSubjects(prev =>
@@ -86,6 +127,7 @@ const StudentSignup = () => {
           full_name: formData.fullName,
           phone_number: formData.phoneNumber,
           age: parseInt(formData.age),
+          curriculum: formData.curriculum,
           grade_level: formData.gradeLevel,
           subjects_struggling: selectedSubjects,
           learning_goals: formData.learningGoals,
@@ -188,57 +230,79 @@ const StudentSignup = () => {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="password">Password *</Label>
+                  <Input
+                    id="password"
+                    type="password"
+                    value={formData.password}
+                    onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                    required
+                    minLength={6}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="curriculum">Curriculum *</Label>
+                  <Select
+                    value={formData.curriculum}
+                    onValueChange={(value) => {
+                      setFormData({ ...formData, curriculum: value, gradeLevel: "" });
+                      setSelectedSubjects([]);
+                    }}
+                    required
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select curriculum" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="CBC">CBC (Kenyan Curriculum)</SelectItem>
+                      <SelectItem value="IGCSE">IGCSE (International)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {formData.curriculum && (
                   <div className="space-y-2">
-                    <Label htmlFor="password">Password *</Label>
-                    <Input
-                      id="password"
-                      type="password"
-                      value={formData.password}
-                      onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                      required
-                      minLength={6}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="gradeLevel">Grade/Class *</Label>
+                    <Label htmlFor="gradeLevel">Grade/Year *</Label>
                     <Select
                       value={formData.gradeLevel}
                       onValueChange={(value) => setFormData({ ...formData, gradeLevel: value })}
                       required
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder="Select grade" />
+                        <SelectValue placeholder="Select grade/year" />
                       </SelectTrigger>
                       <SelectContent>
-                        {["Grade 1", "Grade 2", "Grade 3", "Grade 4", "Grade 5", "Grade 6", 
-                          "Grade 7", "Grade 8", "Form 1", "Form 2", "Form 3", "Form 4", "University"].map(grade => (
+                        {getGrades().map(grade => (
                           <SelectItem key={grade} value={grade}>{grade}</SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
                   </div>
-                </div>
+                )}
               </div>
 
               {/* Subjects */}
-              <div className="space-y-4">
-                <h3 className="font-semibold text-lg">What subjects do you need help with? *</h3>
-                <div className="grid grid-cols-2 gap-3">
-                  {SUBJECTS.map((subject) => (
-                    <div key={subject} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={subject}
-                        checked={selectedSubjects.includes(subject)}
-                        onCheckedChange={() => handleSubjectToggle(subject)}
-                      />
-                      <Label htmlFor={subject} className="cursor-pointer">
-                        {subject}
-                      </Label>
-                    </div>
-                  ))}
+              {formData.curriculum && formData.gradeLevel && (
+                <div className="space-y-4">
+                  <h3 className="font-semibold text-lg">What subjects do you need help with? *</h3>
+                  <div className="grid grid-cols-2 gap-3">
+                    {getSubjects().map((subject) => (
+                      <div key={subject} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={subject}
+                          checked={selectedSubjects.includes(subject)}
+                          onCheckedChange={() => handleSubjectToggle(subject)}
+                        />
+                        <Label htmlFor={subject} className="cursor-pointer">
+                          {subject}
+                        </Label>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
 
               {/* Learning Style */}
               <div className="space-y-2">

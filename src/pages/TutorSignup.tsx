@@ -10,9 +10,17 @@ import { Award } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
-const SUBJECTS = [
-  "Mathematics", "English", "Kiswahili", "Physics", "Chemistry", 
-  "Biology", "History", "Geography", "Computer Science", "Business Studies"
+const CBC_SUBJECTS = [
+  "Mathematics", "English", "Kiswahili", "Science", "Social Studies",
+  "Religious Education", "Creative Arts", "Physical Education",
+  "Physics", "Chemistry", "Biology", "History", "Geography",
+  "Computer Science", "Business Studies", "Agriculture", "Home Science"
+];
+
+const IGCSE_SUBJECTS = [
+  "Mathematics", "English Language", "English Literature", "Physics", "Chemistry",
+  "Biology", "Combined Science", "History", "Geography", "Computer Science",
+  "Business Studies", "Economics", "French", "Spanish", "Art & Design"
 ];
 
 const TutorSignup = () => {
@@ -20,6 +28,7 @@ const TutorSignup = () => {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
+  const [selectedCurricula, setSelectedCurricula] = useState<string[]>([]);
   
   const [formData, setFormData] = useState({
     email: "",
@@ -39,6 +48,26 @@ const TutorSignup = () => {
         ? prev.filter(s => s !== subject)
         : [...prev, subject]
     );
+  };
+
+  const handleCurriculumToggle = (curriculum: string) => {
+    setSelectedCurricula(prev =>
+      prev.includes(curriculum)
+        ? prev.filter(c => c !== curriculum)
+        : [...prev, curriculum]
+    );
+  };
+
+  const getAvailableSubjects = () => {
+    const subjects = new Set<string>();
+    selectedCurricula.forEach(curriculum => {
+      if (curriculum === "CBC") {
+        CBC_SUBJECTS.forEach(s => subjects.add(s));
+      } else if (curriculum === "IGCSE") {
+        IGCSE_SUBJECTS.forEach(s => subjects.add(s));
+      }
+    });
+    return Array.from(subjects).sort();
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -93,6 +122,7 @@ const TutorSignup = () => {
         .insert({
           user_id: authData.user.id,
           subjects: selectedSubjects,
+          curriculum: selectedCurricula,
           hourly_rate: parseFloat(formData.hourlyRate),
           experience_years: parseInt(formData.experienceYears),
           bio: formData.bio,
@@ -201,6 +231,33 @@ const TutorSignup = () => {
               {/* Teaching Info */}
               <div className="space-y-4">
                 <h3 className="font-semibold text-lg">Teaching Details</h3>
+                
+                <div className="space-y-2">
+                  <Label>Which Curricula Can You Teach? *</Label>
+                  <div className="flex gap-6 mt-2">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="CBC"
+                        checked={selectedCurricula.includes("CBC")}
+                        onCheckedChange={() => handleCurriculumToggle("CBC")}
+                      />
+                      <Label htmlFor="CBC" className="cursor-pointer font-normal">
+                        CBC (Kenyan Curriculum)
+                      </Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="IGCSE"
+                        checked={selectedCurricula.includes("IGCSE")}
+                        onCheckedChange={() => handleCurriculumToggle("IGCSE")}
+                      />
+                      <Label htmlFor="IGCSE" className="cursor-pointer font-normal">
+                        IGCSE (International)
+                      </Label>
+                    </div>
+                  </div>
+                </div>
+
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="experienceYears">Years of Experience *</Label>
@@ -227,23 +284,25 @@ const TutorSignup = () => {
                   </div>
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="subjects">Subjects You Can Teach *</Label>
-                  <div className="grid grid-cols-2 gap-3 mt-2">
-                    {SUBJECTS.map((subject) => (
-                      <div key={subject} className="flex items-center space-x-2">
-                        <Checkbox
-                          id={subject}
-                          checked={selectedSubjects.includes(subject)}
-                          onCheckedChange={() => handleSubjectToggle(subject)}
-                        />
-                        <Label htmlFor={subject} className="cursor-pointer">
-                          {subject}
-                        </Label>
-                      </div>
-                    ))}
+                {selectedCurricula.length > 0 && (
+                  <div className="space-y-2">
+                    <Label htmlFor="subjects">Subjects You Can Teach *</Label>
+                    <div className="grid grid-cols-2 gap-3 mt-2">
+                      {getAvailableSubjects().map((subject) => (
+                        <div key={subject} className="flex items-center space-x-2">
+                          <Checkbox
+                            id={subject}
+                            checked={selectedSubjects.includes(subject)}
+                            onCheckedChange={() => handleSubjectToggle(subject)}
+                          />
+                          <Label htmlFor={subject} className="cursor-pointer">
+                            {subject}
+                          </Label>
+                        </div>
+                      ))}
+                    </div>
                   </div>
-                </div>
+                )}
 
                 <div className="space-y-2">
                   <Label htmlFor="bio">About You *</Label>

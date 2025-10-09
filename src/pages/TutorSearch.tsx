@@ -11,6 +11,7 @@ const TutorSearch = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedSubject, setSelectedSubject] = useState("all");
+  const [selectedCurriculum, setSelectedCurriculum] = useState("all");
   const [sortBy, setSortBy] = useState("rating");
 
   const tutors = [
@@ -18,6 +19,7 @@ const TutorSearch = () => {
       id: 1,
       name: "Sarah Wanjiru",
       subjects: ["Math", "Physics"],
+      curriculum: ["CBC", "IGCSE"],
       school: "University of Nairobi",
       rating: 4.9,
       reviews: 85,
@@ -28,6 +30,7 @@ const TutorSearch = () => {
       id: 2,
       name: "Jane Muthoni",
       subjects: ["English", "Kiswahili"],
+      curriculum: ["CBC"],
       school: "Moi University",
       rating: 4.9,
       reviews: 95,
@@ -38,6 +41,7 @@ const TutorSearch = () => {
       id: 3,
       name: "John Kariuki",
       subjects: ["Math"],
+      curriculum: ["IGCSE"],
       school: "Egerton University",
       rating: 4.9,
       reviews: 102,
@@ -48,6 +52,7 @@ const TutorSearch = () => {
       id: 4,
       name: "David Kamau",
       subjects: ["Chemistry", "Biology"],
+      curriculum: ["CBC", "IGCSE"],
       school: "Kenyatta University",
       rating: 4.8,
       reviews: 72,
@@ -58,6 +63,7 @@ const TutorSearch = () => {
       id: 5,
       name: "Mary Akinyi",
       subjects: ["Physics"],
+      curriculum: ["IGCSE"],
       school: "Jomo Kenyatta University of Agriculture and Technology",
       rating: 4.9,
       reviews: 65,
@@ -68,6 +74,7 @@ const TutorSearch = () => {
       id: 6,
       name: "Peter Otieno",
       subjects: ["History", "Geography"],
+      curriculum: ["CBC"],
       school: "Maseno University",
       rating: 4.7,
       reviews: 61,
@@ -86,8 +93,9 @@ const TutorSearch = () => {
         tutor.school.toLowerCase().includes(searchQuery.toLowerCase());
       
       const matchesSubject = selectedSubject === "all" || tutor.subjects.includes(selectedSubject);
+      const matchesCurriculum = selectedCurriculum === "all" || tutor.curriculum.includes(selectedCurriculum);
       
-      return matchesSearch && matchesSubject;
+      return matchesSearch && matchesSubject && matchesCurriculum;
     })
     .sort((a, b) => {
       if (sortBy === "rating") return b.rating - a.rating;
@@ -109,8 +117,8 @@ const TutorSearch = () => {
         </div>
 
         {/* Filters */}
-        <div className="flex gap-4 mb-8 max-w-5xl mx-auto">
-          <div className="relative flex-1">
+        <div className="flex gap-4 mb-8 max-w-5xl mx-auto flex-wrap">
+          <div className="relative flex-1 min-w-64">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
             <Input
               placeholder="Search by name, subject, school..."
@@ -120,21 +128,32 @@ const TutorSearch = () => {
             />
           </div>
           
+          <Select value={selectedCurriculum} onValueChange={setSelectedCurriculum}>
+            <SelectTrigger className="w-48 h-12">
+              <SelectValue placeholder="All Curricula" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Curricula</SelectItem>
+              <SelectItem value="CBC">CBC</SelectItem>
+              <SelectItem value="IGCSE">IGCSE</SelectItem>
+            </SelectContent>
+          </Select>
+
           <Select value={selectedSubject} onValueChange={setSelectedSubject}>
-            <SelectTrigger className="w-56 h-12">
-              <SelectValue placeholder="All" />
+            <SelectTrigger className="w-48 h-12">
+              <SelectValue placeholder="All Subjects" />
             </SelectTrigger>
             <SelectContent>
               {subjects.map(subject => (
                 <SelectItem key={subject} value={subject}>
-                  {subject === "all" ? "All" : subject}
+                  {subject === "all" ? "All Subjects" : subject}
                 </SelectItem>
               ))}
             </SelectContent>
           </Select>
 
           <Select value={sortBy} onValueChange={setSortBy}>
-            <SelectTrigger className="w-56 h-12">
+            <SelectTrigger className="w-48 h-12">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -161,6 +180,9 @@ const TutorSearch = () => {
                     <h3 className="text-xl font-bold mb-1">{tutor.name}</h3>
                     <p className="text-cyan-600 font-medium text-sm mb-1">
                       {tutor.subjects.join(", ")}
+                    </p>
+                    <p className="text-xs text-muted-foreground mb-1">
+                      {tutor.curriculum.join(" • ")}
                     </p>
                     <p className="text-sm text-muted-foreground">
                       {tutor.school}

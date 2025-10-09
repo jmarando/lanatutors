@@ -63,6 +63,7 @@ export type Database = {
         Row: {
           age: number | null
           created_at: string | null
+          curriculum: string | null
           full_name: string | null
           grade_level: string | null
           id: string
@@ -75,6 +76,7 @@ export type Database = {
         Insert: {
           age?: number | null
           created_at?: string | null
+          curriculum?: string | null
           full_name?: string | null
           grade_level?: string | null
           id: string
@@ -87,6 +89,7 @@ export type Database = {
         Update: {
           age?: number | null
           created_at?: string | null
+          curriculum?: string | null
           full_name?: string | null
           grade_level?: string | null
           id?: string
@@ -157,6 +160,7 @@ export type Database = {
           availability: string | null
           bio: string | null
           created_at: string | null
+          curriculum: string[] | null
           experience_years: number | null
           hourly_rate: number
           id: string
@@ -172,6 +176,7 @@ export type Database = {
           availability?: string | null
           bio?: string | null
           created_at?: string | null
+          curriculum?: string[] | null
           experience_years?: number | null
           hourly_rate: number
           id?: string
@@ -187,6 +192,7 @@ export type Database = {
           availability?: string | null
           bio?: string | null
           created_at?: string | null
+          curriculum?: string[] | null
           experience_years?: number | null
           hourly_rate?: number
           id?: string
