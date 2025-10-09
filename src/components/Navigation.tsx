@@ -1,11 +1,35 @@
 import { Button } from "@/components/ui/button";
-import { Award, Menu, X } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Award, Menu, LogOut } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { User } from "@supabase/supabase-js";
 
 const Navigation = () => {
   const [open, setOpen] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    // Get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setUser(session?.user ?? null);
+    });
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
+
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    navigate("/");
+    setOpen(false);
+  };
 
   const navLinks = [
     { to: "/tutors", label: "Find Tutors" },
@@ -34,12 +58,24 @@ const Navigation = () => {
               {link.label}
             </Link>
           ))}
-          <Link to="/login">
-            <Button variant="outline" size="sm">Sign In</Button>
-          </Link>
-          <Link to="/login">
-            <Button size="sm">Get Started</Button>
-          </Link>
+          {user ? (
+            <>
+              <span className="text-sm text-muted-foreground">{user.email}</span>
+              <Button variant="outline" size="sm" onClick={handleSignOut}>
+                <LogOut className="w-4 h-4 mr-2" />
+                Sign Out
+              </Button>
+            </>
+          ) : (
+            <>
+              <Link to="/login">
+                <Button variant="outline" size="sm">Sign In</Button>
+              </Link>
+              <Link to="/login">
+                <Button size="sm">Get Started</Button>
+              </Link>
+            </>
+          )}
         </div>
 
         {/* Mobile Menu */}
@@ -61,12 +97,24 @@ const Navigation = () => {
                   {link.label}
                 </Link>
               ))}
-              <Link to="/login" onClick={() => setOpen(false)}>
-                <Button variant="outline" className="w-full">Sign In</Button>
-              </Link>
-              <Link to="/login" onClick={() => setOpen(false)}>
-                <Button className="w-full">Get Started</Button>
-              </Link>
+              {user ? (
+                <>
+                  <span className="text-sm text-muted-foreground">{user.email}</span>
+                  <Button variant="outline" className="w-full" onClick={handleSignOut}>
+                    <LogOut className="w-4 h-4 mr-2" />
+                    Sign Out
+                  </Button>
+                </>
+              ) : (
+                <>
+                  <Link to="/login" onClick={() => setOpen(false)}>
+                    <Button variant="outline" className="w-full">Sign In</Button>
+                  </Link>
+                  <Link to="/login" onClick={() => setOpen(false)}>
+                    <Button className="w-full">Get Started</Button>
+                  </Link>
+                </>
+              )}
             </div>
           </SheetContent>
         </Sheet>
