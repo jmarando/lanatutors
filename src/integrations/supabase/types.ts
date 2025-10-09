@@ -252,7 +252,11 @@ export type Database = {
           qualifications: string[] | null
           rating: number | null
           referees: Json | null
+          services_offered: string[] | null
+          specializations: string | null
           subjects: string[]
+          teaching_location: string | null
+          teaching_mode: string[] | null
           total_reviews: number | null
           updated_at: string | null
           user_id: string
@@ -271,7 +275,11 @@ export type Database = {
           qualifications?: string[] | null
           rating?: number | null
           referees?: Json | null
+          services_offered?: string[] | null
+          specializations?: string | null
           subjects: string[]
+          teaching_location?: string | null
+          teaching_mode?: string[] | null
           total_reviews?: number | null
           updated_at?: string | null
           user_id: string
@@ -290,7 +298,11 @@ export type Database = {
           qualifications?: string[] | null
           rating?: number | null
           referees?: Json | null
+          services_offered?: string[] | null
+          specializations?: string | null
           subjects?: string[]
+          teaching_location?: string | null
+          teaching_mode?: string[] | null
           total_reviews?: number | null
           updated_at?: string | null
           user_id?: string
