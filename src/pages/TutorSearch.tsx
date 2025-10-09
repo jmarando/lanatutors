@@ -192,109 +192,103 @@ const TutorSearch = () => {
         </div>
       </nav>
 
-      <div className="max-w-7xl mx-auto px-6 py-12">
-        <h1 className="text-4xl font-bold mb-8">Find Your Perfect Tutor</h1>
-
+      <div className="max-w-7xl mx-auto px-6 py-8">
         {/* Search & Filters */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
-          <div className="relative md:col-span-2">
-            <Search className="absolute left-3 top-3 w-5 h-5 text-muted-foreground" />
-            <Input
-              placeholder="Search by name, subject, or school..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
-            />
-          </div>
+        <div className="max-w-2xl mx-auto mb-12">
+          <h1 className="text-3xl font-bold mb-6 text-center">Find Your Perfect Tutor</h1>
           
-          <Select value={selectedSubject} onValueChange={setSelectedSubject}>
-            <SelectTrigger>
-              <SelectValue placeholder="Filter by subject" />
-            </SelectTrigger>
-            <SelectContent>
-              {subjects.map(subject => (
-                <SelectItem key={subject} value={subject}>
-                  {subject === "all" ? "All Subjects" : subject}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+          <div className="flex gap-3 mb-4">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-3 w-5 h-5 text-muted-foreground" />
+              <Input
+                placeholder="Search by name, subject, or school..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+            
+            <Select value={selectedSubject} onValueChange={setSelectedSubject}>
+              <SelectTrigger className="w-48">
+                <SelectValue placeholder="All Subjects" />
+              </SelectTrigger>
+              <SelectContent>
+                {subjects.map(subject => (
+                  <SelectItem key={subject} value={subject}>
+                    {subject === "all" ? "All Subjects" : subject}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
-        <div className="flex items-center justify-between mb-6">
-          <p className="text-muted-foreground">
-            Showing {filteredTutors.length} tutor{filteredTutors.length !== 1 ? 's' : ''}
-          </p>
-          <Select value={sortBy} onValueChange={setSortBy}>
-            <SelectTrigger className="w-48">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="rating">Highest Rated</SelectItem>
-              <SelectItem value="reviews">Most Reviews</SelectItem>
-              <SelectItem value="price-low">Price: Low to High</SelectItem>
-              <SelectItem value="price-high">Price: High to Low</SelectItem>
-            </SelectContent>
-          </Select>
+          <div className="flex items-center justify-between text-sm">
+            <p className="text-muted-foreground">
+              {filteredTutors.length} tutor{filteredTutors.length !== 1 ? 's' : ''}
+            </p>
+            <Select value={sortBy} onValueChange={setSortBy}>
+              <SelectTrigger className="w-40 h-9">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="rating">Highest Rated</SelectItem>
+                <SelectItem value="reviews">Most Reviews</SelectItem>
+                <SelectItem value="price-low">Price: Low to High</SelectItem>
+                <SelectItem value="price-high">Price: High to Low</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
         {/* Tutors Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto">
           {filteredTutors.map((tutor) => (
             <Dialog key={tutor.id}>
               <DialogTrigger asChild>
-                <Card className="card-hover cursor-pointer" onClick={() => setSelectedTutor(tutor)}>
-                  <CardContent className="p-6">
-                    <div className="flex items-start gap-4 mb-4">
-                      <Avatar className="w-16 h-16">
-                        <AvatarFallback className="text-xl bg-accent text-accent-foreground">
+                <Card className="card-hover cursor-pointer group" onClick={() => setSelectedTutor(tutor)}>
+                  <CardContent className="p-5">
+                    <div className="flex items-center gap-3 mb-4">
+                      <Avatar className="w-12 h-12">
+                        <AvatarFallback className="text-lg bg-accent text-accent-foreground">
                           {tutor.photo}
                         </AvatarFallback>
                       </Avatar>
-                      <div className="flex-1">
-                        <div className="flex items-start justify-between">
-                          <h3 className="text-xl font-bold mb-1">{tutor.name}</h3>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <h3 className="text-lg font-bold truncate">{tutor.name}</h3>
                           {tutor.verified && (
-                            <CheckCircle2 className="w-5 h-5 text-accent" />
+                            <CheckCircle2 className="w-4 h-4 text-accent flex-shrink-0" />
                           )}
                         </div>
-                        <div className="flex flex-wrap gap-1 mb-2">
-                          {tutor.subjects.slice(0, 2).map((subject, idx) => (
-                            <Badge key={idx} variant="secondary" className="text-xs">
-                              {subject}
-                            </Badge>
-                          ))}
-                          {tutor.subjects.length > 2 && (
-                            <Badge variant="secondary" className="text-xs">
-                              +{tutor.subjects.length - 2}
-                            </Badge>
-                          )}
-                        </div>
+                        <p className="text-sm text-muted-foreground truncate">{tutor.school}</p>
                       </div>
                     </div>
                     
-                    <p className="text-sm text-muted-foreground mb-3">{tutor.school}</p>
-                    
-                    <div className="flex items-center gap-2 mb-3">
-                      <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                      <span className="font-semibold">{tutor.rating}</span>
-                      <span className="text-sm text-muted-foreground">
-                        ({tutor.reviews} reviews)
-                      </span>
+                    <div className="flex flex-wrap gap-1.5 mb-4">
+                      {tutor.subjects.slice(0, 2).map((subject, idx) => (
+                        <Badge key={idx} variant="secondary" className="text-xs">
+                          {subject}
+                        </Badge>
+                      ))}
+                      {tutor.subjects.length > 2 && (
+                        <Badge variant="secondary" className="text-xs">
+                          +{tutor.subjects.length - 2}
+                        </Badge>
+                      )}
                     </div>
-
-                    <div className="flex items-center gap-2 mb-3 text-sm text-muted-foreground">
-                      <MapPin className="w-4 h-4" />
-                      <span>{tutor.location}</span>
-                      <Clock className="w-4 h-4 ml-2" />
-                      <span>{tutor.experience}</span>
+                    
+                    <div className="flex items-center gap-1.5 mb-4">
+                      <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                      <span className="font-semibold text-sm">{tutor.rating}</span>
+                      <span className="text-xs text-muted-foreground">({tutor.reviews})</span>
+                      <span className="text-xs text-muted-foreground ml-auto">{tutor.experience}</span>
                     </div>
 
                     <div className="flex items-center justify-between pt-3 border-t">
-                      <div className="text-2xl font-bold text-primary">
-                        KES {tutor.hourlyRate.toLocaleString()}/hr
+                      <div className="text-xl font-bold text-primary">
+                        KES {tutor.hourlyRate.toLocaleString()}
                       </div>
-                      <Button size="sm">View Profile</Button>
+                      <Button size="sm" className="group-hover:bg-primary/90">View</Button>
                     </div>
                   </CardContent>
                 </Card>
