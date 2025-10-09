@@ -1,42 +1,114 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Star, GraduationCap, Clock, BookOpen, MessageCircle, Calendar } from "lucide-react";
+import { Star, GraduationCap, Clock, BookOpen, MessageCircle } from "lucide-react";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
+import { BookingCalendar } from "@/components/BookingCalendar";
 
 const TutorProfile = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [isBookingOpen, setIsBookingOpen] = useState(false);
+  const [tutor, setTutor] = useState<any>(null);
+  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchTutorProfile();
+    fetchCurrentUser();
+  }, [id]);
+
+  const fetchCurrentUser = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (user) {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", user.id)
+        .single();
+      
+      setCurrentUser({
+        id: user.id,
+        email: user.email,
+        name: profile?.full_name || "Student",
+      });
+    }
+  };
+
+  const fetchTutorProfile = async () => {
+    setLoading(true);
+    const { data: tutorProfile, error } = await supabase
+      .from("tutor_profiles")
+      .select("*")
+      .eq("id", id)
+      .single();
+
+    if (error) {
+      console.error("Error fetching tutor:", error);
+      toast.error("Failed to load tutor profile");
+      setLoading(false);
+      return;
+    }
+
+    if (tutorProfile) {
+      // Fetch profile separately
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("full_name, avatar_url")
+        .eq("id", tutorProfile.user_id)
+        .single();
+
+      // Get user email
+      const { data: { user: tutorUser } } = await supabase.auth.getUser();
+      
+      setTutor({
+        id: tutorProfile.id,
+        userId: tutorProfile.user_id,
+        name: profile?.full_name || "Tutor",
+        email: tutorUser?.email || "",
+        subjects: tutorProfile.subjects || [],
+        school: tutorProfile.current_institution || "Not specified",
+        rating: Number(tutorProfile.rating) || 0,
+        reviews: tutorProfile.total_reviews || 0,
+        hourlyRate: Number(tutorProfile.hourly_rate) || 0,
+        photo: profile?.full_name?.split(' ').map((n: string) => n[0]).join('') || "T",
+        bio: tutorProfile.bio || "",
+        education: tutorProfile.qualifications?.join(", ") || "Not specified",
+        experience: `${tutorProfile.experience_years || 0} years`,
+        curriculum: tutorProfile.curriculum || [],
+      });
+    }
+    setLoading(false);
+  };
 
   const handleBookSession = () => {
+    if (!currentUser) {
+      toast.error("Please log in to book a session");
+      navigate("/login");
+      return;
+    }
     setIsBookingOpen(true);
   };
 
-  const confirmBooking = () => {
-    setIsBookingOpen(false);
-    toast.success("Booking request sent! The tutor will contact you shortly.");
-    // In a real app, this would create a booking in the database
-  };
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-secondary/20 flex items-center justify-center">
+        <p>Loading...</p>
+      </div>
+    );
+  }
 
-  // Mock data - will be replaced with database query
-  const tutor = {
-    id: 1,
-    name: "Sarah Wanjiru",
-    subjects: ["Math", "Physics"],
-    school: "University of Nairobi",
-    rating: 4.9,
-    reviews: 85,
-    hourlyRate: 1500,
-    photo: "SW",
-    bio: "Passionate mathematics and physics tutor with 5+ years of experience helping students achieve their academic goals. I specialize in making complex concepts simple and engaging.",
-    education: "Bachelor of Science in Mathematics, University of Nairobi",
-    experience: "5 years",
-    availability: ["Monday 2PM-6PM", "Wednesday 2PM-6PM", "Friday 2PM-6PM"],
-  };
+  if (!tutor) {
+    return (
+      <div className="min-h-screen bg-secondary/20 flex items-center justify-center">
+        <p>Tutor not found</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-secondary/20">
@@ -126,41 +198,25 @@ const TutorProfile = () => {
 
         {/* Booking Dialog */}
         <Dialog open={isBookingOpen} onOpenChange={setIsBookingOpen}>
-          <DialogContent>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Book a Session with {tutor.name}</DialogTitle>
               <DialogDescription>
-                Choose your preferred time slot to book a session
+                Select a date and available time slot
               </DialogDescription>
             </DialogHeader>
             
-            <div className="space-y-4 py-4">
-              <div className="space-y-2">
-                <p className="text-sm font-medium">Rate: KES {tutor.hourlyRate}/hr</p>
-                <p className="text-sm text-muted-foreground">Subjects: {tutor.subjects.join(", ")}</p>
-              </div>
-
-              <div className="space-y-2">
-                <p className="text-sm font-medium">Available Time Slots:</p>
-                <div className="space-y-2">
-                  {tutor.availability.map((slot, index) => (
-                    <Button 
-                      key={index} 
-                      variant="outline" 
-                      className="w-full justify-start"
-                      onClick={confirmBooking}
-                    >
-                      <Calendar className="mr-2 h-4 w-4" />
-                      {slot}
-                    </Button>
-                  ))}
-                </div>
-              </div>
-
-              <p className="text-xs text-muted-foreground">
-                After selecting a time slot, the tutor will be notified and will contact you to confirm the session details.
-              </p>
-            </div>
+            {currentUser && (
+              <BookingCalendar
+                tutorId={tutor.userId}
+                tutorName={tutor.name}
+                tutorEmail={tutor.email}
+                studentEmail={currentUser.email}
+                studentName={currentUser.name}
+                hourlyRate={tutor.hourlyRate}
+                onBookingComplete={() => setIsBookingOpen(false)}
+              />
+            )}
           </DialogContent>
         </Dialog>
       </div>
