@@ -126,7 +126,7 @@ const Home = () => {
                 <span className="text-primary">ElimuConnect</span>
               </h1>
               <p className="text-lg text-muted-foreground mb-8">
-                Learn from verified tutors from Kenya's top schools - from the safety and comfort of your home. No stranger visits. Rigorous tutor vetting. Seamless M-Pesa payments. All CBC and IGCSE subjects covered.
+                Learn from verified tutors from Kenya's top schools, from the safety and comfort of your home. No stranger visits. Rigorous tutor vetting. Seamless M-Pesa payments. All CBC and IGCSE subjects covered.
               </p>
               <div className="flex flex-wrap gap-4">
                 <Link to="/tutors">
