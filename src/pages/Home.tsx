@@ -102,21 +102,27 @@ const Home = () => {
   return (
     <div className="min-h-screen">
       {/* Navigation */}
-      <nav className="border-b bg-background">
+      <nav className="border-b bg-background sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <div className="flex items-center gap-2">
+          <Link to="/" className="flex items-center gap-2">
             <Award className="w-8 h-8 text-primary" />
             <span className="text-2xl font-bold">ElimuConnect</span>
-          </div>
-          <div className="flex items-center gap-4">
-            <Link to="/tutors">
-              <Button variant="ghost">Find Tutors</Button>
+          </Link>
+          <div className="flex items-center gap-6">
+            <Link to="/tutors" className="text-sm font-medium hover:text-primary transition-colors">
+              Find Tutors
+            </Link>
+            <a href="#how-it-works" className="text-sm font-medium hover:text-primary transition-colors">
+              How It Works
+            </a>
+            <a href="#about" className="text-sm font-medium hover:text-primary transition-colors">
+              About Us
+            </a>
+            <Link to="/login">
+              <Button variant="outline" size="sm">Sign In</Button>
             </Link>
             <Link to="/login">
-              <Button variant="outline">Sign In</Button>
-            </Link>
-            <Link to="/login">
-              <Button>Get Started</Button>
+              <Button size="sm">Get Started</Button>
             </Link>
           </div>
         </div>
@@ -170,7 +176,7 @@ const Home = () => {
       </section>
 
       {/* How It Works */}
-      <section className="bg-background">
+      <section id="how-it-works" className="bg-background">
         <div className="max-w-7xl mx-auto px-6 py-16">
           <h2 className="text-3xl font-bold text-center mb-12">How It Works</h2>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -227,8 +233,8 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Why Choose Us */}
-      <section className="bg-background">
+      {/* Why Choose Us / About */}
+      <section id="about" className="bg-background">
         <div className="max-w-7xl mx-auto px-6 py-16">
           <h2 className="text-3xl font-bold text-center mb-12">Why Choose ElimuConnect</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
