@@ -174,24 +174,6 @@ const TutorSearch = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Navigation */}
-      <nav className="border-b bg-background sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2">
-            <Award className="w-8 h-8 text-primary" />
-            <span className="text-2xl font-bold">ElimuConnect</span>
-          </Link>
-          <div className="flex items-center gap-4">
-            <Link to="/login">
-              <Button variant="outline">Sign In</Button>
-            </Link>
-            <Link to="/login">
-              <Button>Dashboard</Button>
-            </Link>
-          </div>
-        </div>
-      </nav>
-
       <div className="max-w-7xl mx-auto px-6 py-8">
         {/* Search & Filters */}
         <div className="max-w-2xl mx-auto mb-12">
