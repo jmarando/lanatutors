@@ -16,7 +16,7 @@ import {
   Award
 } from "lucide-react";
 import { Link } from "react-router-dom";
-import heroImage from "@/assets/hero-image.jpg";
+import heroVideo from "@/assets/hero-video.mp4";
 
 const Home = () => {
   const stats = [
@@ -135,11 +135,16 @@ const Home = () => {
               </Link>
             </div>
             <div className="relative">
-              <img 
-                src={heroImage} 
-                alt="Students learning with tutors" 
+              <video 
+                src={heroVideo} 
+                autoPlay 
+                loop 
+                muted 
+                playsInline
                 className="rounded-lg shadow-2xl w-full h-auto object-cover"
-              />
+              >
+                Your browser does not support the video tag.
+              </video>
             </div>
           </div>
         </div>
