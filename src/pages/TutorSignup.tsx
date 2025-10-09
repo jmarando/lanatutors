@@ -45,6 +45,10 @@ const TutorSignup = () => {
     availability: "",
     currentInstitution: "",
     institutionYears: "",
+    graduationYear: "",
+    teachingLocation: "",
+    specializations: "",
+    tutoringExperience: "",
     referee1Name: "",
     referee1Phone: "",
     referee1Relation: "",
@@ -55,6 +59,21 @@ const TutorSignup = () => {
     referee3Phone: "",
     referee3Relation: "",
   });
+
+  const [selectedServices, setSelectedServices] = useState<string[]>([]);
+  const [selectedTeachingModes, setSelectedTeachingModes] = useState<string[]>([]);
+  const [teachingPositions, setTeachingPositions] = useState<Array<{institution: string, years: string, role: string}>>([
+    { institution: "", years: "", role: "" }
+  ]);
+
+
+  const SERVICES = [
+    'Extra Tuition', 'Exam Preparation', 'Homework Help', 
+    'Problem-Solving Sessions', 'Revision Classes',
+    'Essay Writing Support', 'Reading Comprehension'
+  ];
+
+  const TEACHING_MODES = ['Online Sessions', 'In-Person', 'Home Visits'];
 
   const handleSubjectToggle = (subject: string) => {
     setSelectedSubjects(prev =>
@@ -70,6 +89,36 @@ const TutorSignup = () => {
         ? prev.filter(c => c !== curriculum)
         : [...prev, curriculum]
     );
+  };
+
+  const handleServiceToggle = (service: string) => {
+    setSelectedServices(prev =>
+      prev.includes(service)
+        ? prev.filter(s => s !== service)
+        : [...prev, service]
+    );
+  };
+
+  const handleTeachingModeToggle = (mode: string) => {
+    setSelectedTeachingModes(prev =>
+      prev.includes(mode)
+        ? prev.filter(m => m !== mode)
+        : [...prev, mode]
+    );
+  };
+
+  const addTeachingPosition = () => {
+    setTeachingPositions([...teachingPositions, { institution: "", years: "", role: "" }]);
+  };
+
+  const removeTeachingPosition = (index: number) => {
+    setTeachingPositions(teachingPositions.filter((_, i) => i !== index));
+  };
+
+  const updateTeachingPosition = (index: number, field: string, value: string) => {
+    const updated = [...teachingPositions];
+    updated[index] = { ...updated[index], [field]: value };
+    setTeachingPositions(updated);
   };
 
   const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -182,6 +231,15 @@ const TutorSignup = () => {
         .map(q => q.trim())
         .filter(q => q);
 
+      // Prepare teaching experience
+      const teachingExperience = teachingPositions
+        .filter(pos => pos.institution && pos.years && pos.role)
+        .map(pos => ({
+          institution: pos.institution,
+          years: parseInt(pos.years),
+          role: pos.role
+        }));
+
       const { error: tutorProfileError } = await supabase
         .from("tutor_profiles")
         .insert({
@@ -195,6 +253,13 @@ const TutorSignup = () => {
           availability: formData.availability,
           current_institution: formData.currentInstitution,
           institution_years: parseInt(formData.institutionYears) || null,
+          graduation_year: formData.graduationYear ? parseInt(formData.graduationYear) : null,
+          teaching_location: formData.teachingLocation || null,
+          teaching_mode: selectedTeachingModes.length > 0 ? selectedTeachingModes : null,
+          services_offered: selectedServices.length > 0 ? selectedServices : null,
+          specializations: formData.specializations || null,
+          teaching_experience: teachingExperience.length > 0 ? teachingExperience : null,
+          tutoring_experience: formData.tutoringExperience || null,
           referees: referees,
           verified: false
         });
@@ -457,6 +522,132 @@ const TutorSignup = () => {
                     onChange={(e) => setFormData({ ...formData, qualifications: e.target.value })}
                     required
                   />
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="graduationYear">Graduation Year</Label>
+                    <Input
+                      id="graduationYear"
+                      type="number"
+                      min="1980"
+                      max={new Date().getFullYear()}
+                      placeholder="2015"
+                      value={formData.graduationYear}
+                      onChange={(e) => setFormData({ ...formData, graduationYear: e.target.value })}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="teachingLocation">Teaching Location *</Label>
+                    <Input
+                      id="teachingLocation"
+                      placeholder="e.g., Nairobi, Westlands"
+                      value={formData.teachingLocation}
+                      onChange={(e) => setFormData({ ...formData, teachingLocation: e.target.value })}
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Services Offered *</Label>
+                  <div className="grid grid-cols-2 gap-3 mt-2">
+                    {SERVICES.map((service) => (
+                      <div key={service} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`service-${service}`}
+                          checked={selectedServices.includes(service)}
+                          onCheckedChange={() => handleServiceToggle(service)}
+                        />
+                        <Label htmlFor={`service-${service}`} className="cursor-pointer font-normal">
+                          {service}
+                        </Label>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Teaching Mode *</Label>
+                  <div className="flex gap-4 mt-2">
+                    {TEACHING_MODES.map((mode) => (
+                      <div key={mode} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`mode-${mode}`}
+                          checked={selectedTeachingModes.includes(mode)}
+                          onCheckedChange={() => handleTeachingModeToggle(mode)}
+                        />
+                        <Label htmlFor={`mode-${mode}`} className="cursor-pointer font-normal">
+                          {mode}
+                        </Label>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="specializations">Specializations & Topics</Label>
+                  <Textarea
+                    id="specializations"
+                    placeholder="Describe specific topics or areas you specialize in..."
+                    value={formData.specializations}
+                    onChange={(e) => setFormData({ ...formData, specializations: e.target.value })}
+                    rows={3}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="tutoringExperience">Private Tutoring Experience</Label>
+                  <Textarea
+                    id="tutoringExperience"
+                    placeholder="Describe your experience with private tutoring..."
+                    value={formData.tutoringExperience}
+                    onChange={(e) => setFormData({ ...formData, tutoringExperience: e.target.value })}
+                    rows={3}
+                  />
+                </div>
+
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <Label>Teaching Experience Timeline</Label>
+                    <Button type="button" variant="outline" size="sm" onClick={addTeachingPosition}>
+                      Add Position
+                    </Button>
+                  </div>
+                  {teachingPositions.map((position, index) => (
+                    <div key={index} className="grid grid-cols-3 gap-3 p-3 border rounded-lg">
+                      <Input
+                        placeholder="Institution"
+                        value={position.institution}
+                        onChange={(e) => updateTeachingPosition(index, 'institution', e.target.value)}
+                      />
+                      <Input
+                        type="number"
+                        placeholder="Years"
+                        min="0"
+                        value={position.years}
+                        onChange={(e) => updateTeachingPosition(index, 'years', e.target.value)}
+                      />
+                      <div className="flex gap-2">
+                        <Input
+                          placeholder="Role"
+                          value={position.role}
+                          onChange={(e) => updateTeachingPosition(index, 'role', e.target.value)}
+                          className="flex-1"
+                        />
+                        {teachingPositions.length > 1 && (
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => removeTeachingPosition(index)}
+                          >
+                            ×
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
                 </div>
 
                 <div className="space-y-2">
