@@ -144,22 +144,57 @@ const StudentDashboard = () => {
                 <p className="text-sm text-muted-foreground">Review your previous sessions and generate AI summaries.</p>
               </CardHeader>
               <CardContent>
-                <div className="overflow-x-auto">
+                {/* Mobile View - Cards */}
+                <div className="md:hidden space-y-4">
+                  {pastClasses.map((classItem, idx) => (
+                    <div key={idx} className="border rounded-lg p-4 space-y-3">
+                      <div>
+                        <h3 className="font-semibold text-base mb-1">{classItem.subject}</h3>
+                        <p className="text-sm text-muted-foreground">{classItem.tutor}</p>
+                        <p className="text-sm text-muted-foreground">{classItem.date}</p>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        <Button 
+                          variant="outline" 
+                          size="sm"
+                          className="flex-1"
+                          onClick={() => handleGenerateSummary(classItem.subject)}
+                        >
+                          <Sparkles className="w-4 h-4 mr-1" />
+                          Summary
+                        </Button>
+                        {classItem.hasRecording && (
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            className="flex-1"
+                            onClick={() => handleWatchRecording(classItem.subject)}
+                          >
+                            Recording
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                {/* Desktop View - Table */}
+                <div className="hidden md:block overflow-x-auto">
                   <table className="w-full">
                     <thead className="border-b">
                       <tr className="text-left text-sm text-muted-foreground">
-                        <th className="pb-3 font-medium">Subject</th>
-                        <th className="pb-3 font-medium">Tutor</th>
-                        <th className="pb-3 font-medium">Date</th>
-                        <th className="pb-3 font-medium text-right">Actions</th>
+                        <th className="pb-3 font-medium w-[30%]">Subject</th>
+                        <th className="pb-3 font-medium w-[25%]">Tutor</th>
+                        <th className="pb-3 font-medium w-[20%]">Date</th>
+                        <th className="pb-3 font-medium text-right w-[25%]">Actions</th>
                       </tr>
                     </thead>
                     <tbody>
                       {pastClasses.map((classItem, idx) => (
                         <tr key={idx} className="border-b last:border-0">
-                          <td className="py-4 font-medium">{classItem.subject}</td>
-                          <td className="py-4 text-muted-foreground">{classItem.tutor}</td>
-                          <td className="py-4 text-muted-foreground">{classItem.date}</td>
+                          <td className="py-4 font-medium break-words">{classItem.subject}</td>
+                          <td className="py-4 text-muted-foreground break-words">{classItem.tutor}</td>
+                          <td className="py-4 text-muted-foreground whitespace-nowrap">{classItem.date}</td>
                           <td className="py-4">
                             <div className="flex items-center justify-end gap-2">
                               <Button 
