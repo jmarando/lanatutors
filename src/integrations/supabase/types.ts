@@ -14,6 +14,56 @@ export type Database = {
   }
   public: {
     Tables: {
+      bookings: {
+        Row: {
+          amount: number
+          availability_slot_id: string
+          created_at: string | null
+          id: string
+          meeting_link: string | null
+          notes: string | null
+          status: string | null
+          student_id: string
+          subject: string
+          tutor_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          amount: number
+          availability_slot_id: string
+          created_at?: string | null
+          id?: string
+          meeting_link?: string | null
+          notes?: string | null
+          status?: string | null
+          student_id: string
+          subject: string
+          tutor_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          amount?: number
+          availability_slot_id?: string
+          created_at?: string | null
+          id?: string
+          meeting_link?: string | null
+          notes?: string | null
+          status?: string | null
+          student_id?: string
+          subject?: string
+          tutor_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bookings_availability_slot_id_fkey"
+            columns: ["availability_slot_id"]
+            isOneToOne: false
+            referencedRelation: "tutor_availability"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       payments: {
         Row: {
           amount: number
@@ -155,6 +205,36 @@ export type Database = {
           start_date?: string | null
           status?: Database["public"]["Enums"]["subscription_status"] | null
           user_id?: string
+        }
+        Relationships: []
+      }
+      tutor_availability: {
+        Row: {
+          created_at: string | null
+          end_time: string
+          id: string
+          is_booked: boolean | null
+          start_time: string
+          tutor_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          end_time: string
+          id?: string
+          is_booked?: boolean | null
+          start_time: string
+          tutor_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          end_time?: string
+          id?: string
+          is_booked?: boolean | null
+          start_time?: string
+          tutor_id?: string
+          updated_at?: string | null
         }
         Relationships: []
       }
