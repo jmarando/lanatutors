@@ -166,41 +166,41 @@ const TutorSearch = () => {
         {/* Tutors Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto">
           {filteredTutors.map((tutor) => (
-            <Card key={tutor.id} className="overflow-hidden hover:shadow-lg transition-shadow">
-              <CardContent className="p-6">
+            <Card key={tutor.id} className="overflow-hidden hover:shadow-lg transition-shadow flex flex-col">
+              <CardContent className="p-6 flex flex-col h-full">
                 <div className="flex items-start gap-4 mb-4">
-                  <Avatar className="w-20 h-20 border-4 border-cyan-600">
+                  <Avatar className="w-20 h-20 shrink-0 border-4 border-cyan-600">
                     <AvatarFallback className="text-lg bg-gradient-to-br from-cyan-600 to-cyan-700 text-white">
                       {tutor.photo}
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex-1 min-w-0">
-                    <h3 className="text-xl font-bold mb-1">{tutor.name}</h3>
-                    <p className="text-cyan-600 font-medium text-sm mb-1">
+                    <h3 className="text-xl font-bold mb-1 leading-tight">{tutor.name}</h3>
+                    <p className="text-cyan-600 font-medium text-sm mb-1 leading-snug">
                       {tutor.subjects.join(", ")}
                     </p>
-                    <p className="text-xs text-muted-foreground mb-1">
+                    <p className="text-xs text-muted-foreground mb-1 leading-snug">
                       {tutor.curriculum.join(" • ")}
                     </p>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm text-muted-foreground leading-snug">
                       {tutor.school}
                     </p>
                   </div>
                 </div>
                 
-                <div className="flex items-center gap-1.5 mb-4">
-                  <Star className="w-5 h-5 fill-yellow-400 text-yellow-400" />
+                <div className="flex items-center gap-1.5 mb-3">
+                  <Star className="w-5 h-5 shrink-0 fill-yellow-400 text-yellow-400" />
                   <span className="font-bold text-lg">{tutor.rating.toFixed(1)}</span>
-                  <span className="text-muted-foreground">({tutor.reviews} reviews)</span>
+                  <span className="text-muted-foreground text-sm">({tutor.reviews} reviews)</span>
                 </div>
 
                 <div className="text-2xl font-bold text-orange-600 mb-4">
-                  KES {tutor.hourlyRate}/hr
+                  KES {tutor.hourlyRate.toLocaleString()}/hr
                 </div>
 
                 <Button 
                   onClick={() => navigate(`/tutors/${tutor.id}`)}
-                  className="w-full bg-cyan-600 hover:bg-cyan-700 text-white h-11"
+                  className="w-full bg-cyan-600 hover:bg-cyan-700 text-white h-11 mt-auto"
                 >
                   View Profile
                 </Button>
