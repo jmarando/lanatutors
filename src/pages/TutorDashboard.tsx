@@ -1,3 +1,5 @@
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -13,9 +15,19 @@ import {
   TrendingUp,
   Clock
 } from "lucide-react";
-import { Link } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import Navigation from "@/components/Navigation";
 
 const TutorDashboard = () => {
+  const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState(false);
+
+  const handleLogout = async () => {
+    setIsLoading(true);
+    await supabase.auth.signOut();
+    navigate("/");
+  };
+
   const upcomingSessions = [
     { 
       student: "Sarah M.", 
@@ -61,20 +73,22 @@ const TutorDashboard = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Navigation */}
-      <nav className="border-b bg-background">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2">
-            <Award className="w-8 h-8 text-primary" />
-            <span className="text-2xl font-bold">ElimuConnect</span>
-          </Link>
-          <div className="flex items-center gap-4">
-            <Button variant="ghost">My Profile</Button>
-            <Button variant="ghost">Availability</Button>
-            <Button variant="outline">Logout</Button>
-          </div>
+      <Navigation />
+
+      {/* Dashboard Header with Actions */}
+      <div className="border-b bg-background">
+        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-end gap-4">
+          <Button variant="ghost" onClick={() => navigate("/tutor/profile")}>
+            My Profile
+          </Button>
+          <Button variant="ghost" onClick={() => navigate("/tutor/availability")}>
+            Availability
+          </Button>
+          <Button variant="outline" onClick={handleLogout} disabled={isLoading}>
+            {isLoading ? "Logging out..." : "Logout"}
+          </Button>
         </div>
-      </nav>
+      </div>
 
       <div className="max-w-7xl mx-auto px-6 py-12">
         {/* Welcome Section */}
