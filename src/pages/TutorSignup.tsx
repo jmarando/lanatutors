@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Award } from "lucide-react";
+import { Award, Upload } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
@@ -26,9 +26,12 @@ const IGCSE_SUBJECTS = [
 const TutorSignup = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
   const [selectedCurricula, setSelectedCurricula] = useState<string[]>([]);
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string>("");
   
   const [formData, setFormData] = useState({
     email: "",
@@ -39,7 +42,18 @@ const TutorSignup = () => {
     experienceYears: "",
     bio: "",
     qualifications: "",
-    availability: ""
+    availability: "",
+    currentInstitution: "",
+    institutionYears: "",
+    referee1Name: "",
+    referee1Phone: "",
+    referee1Relation: "",
+    referee2Name: "",
+    referee2Phone: "",
+    referee2Relation: "",
+    referee3Name: "",
+    referee3Phone: "",
+    referee3Relation: "",
   });
 
   const handleSubjectToggle = (subject: string) => {
@@ -56,6 +70,18 @@ const TutorSignup = () => {
         ? prev.filter(c => c !== curriculum)
         : [...prev, curriculum]
     );
+  };
+
+  const handleAvatarChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setAvatarFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setAvatarPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   const getAvailableSubjects = () => {
@@ -100,16 +126,55 @@ const TutorSignup = () => {
       if (authError) throw authError;
       if (!authData.user) throw new Error("No user data returned");
 
+      // Upload avatar if selected
+      let avatarUrl = "";
+      if (avatarFile) {
+        const fileExt = avatarFile.name.split('.').pop();
+        const filePath = `${authData.user.id}/avatar.${fileExt}`;
+        
+        const { error: uploadError } = await supabase.storage
+          .from('avatars')
+          .upload(filePath, avatarFile, { upsert: true });
+
+        if (uploadError) throw uploadError;
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('avatars')
+          .getPublicUrl(filePath);
+        
+        avatarUrl = publicUrl;
+      }
+
       // Create profile
       const { error: profileError } = await supabase
         .from("profiles")
         .insert({
           id: authData.user.id,
           full_name: formData.fullName,
-          phone_number: formData.phoneNumber
+          phone_number: formData.phoneNumber,
+          avatar_url: avatarUrl || null,
         });
 
       if (profileError) throw profileError;
+
+      // Prepare referees data
+      const referees = [
+        {
+          name: formData.referee1Name,
+          phone: formData.referee1Phone,
+          relation: formData.referee1Relation
+        },
+        {
+          name: formData.referee2Name,
+          phone: formData.referee2Phone,
+          relation: formData.referee2Relation
+        },
+        {
+          name: formData.referee3Name,
+          phone: formData.referee3Phone,
+          relation: formData.referee3Relation
+        }
+      ];
 
       // Create tutor profile
       const qualificationsArray = formData.qualifications
@@ -128,6 +193,9 @@ const TutorSignup = () => {
           bio: formData.bio,
           qualifications: qualificationsArray,
           availability: formData.availability,
+          current_institution: formData.currentInstitution,
+          institution_years: parseInt(formData.institutionYears) || null,
+          referees: referees,
           verified: false
         });
 
@@ -178,6 +246,35 @@ const TutorSignup = () => {
               {/* Basic Info */}
               <div className="space-y-4">
                 <h3 className="font-semibold text-lg">Basic Information</h3>
+                
+                <div className="space-y-2">
+                  <Label>Profile Picture</Label>
+                  <div className="flex items-center gap-4">
+                    {avatarPreview && (
+                      <img 
+                        src={avatarPreview} 
+                        alt="Avatar preview" 
+                        className="w-20 h-20 rounded-full object-cover border-2"
+                      />
+                    )}
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => fileInputRef.current?.click()}
+                    >
+                      <Upload className="mr-2 h-4 w-4" />
+                      {avatarPreview ? "Change Picture" : "Upload Picture"}
+                    </Button>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="image/*"
+                      onChange={handleAvatarChange}
+                      className="hidden"
+                    />
+                  </div>
+                </div>
+
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="fullName">Full Name *</Label>
@@ -258,7 +355,7 @@ const TutorSignup = () => {
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="experienceYears">Years of Experience *</Label>
+                    <Label htmlFor="experienceYears">Total Years of Experience *</Label>
                     <Input
                       id="experienceYears"
                       type="number"
@@ -277,6 +374,30 @@ const TutorSignup = () => {
                       placeholder="500"
                       value={formData.hourlyRate}
                       onChange={(e) => setFormData({ ...formData, hourlyRate: e.target.value })}
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="currentInstitution">Current Institution *</Label>
+                    <Input
+                      id="currentInstitution"
+                      placeholder="Where you currently teach"
+                      value={formData.currentInstitution}
+                      onChange={(e) => setFormData({ ...formData, currentInstitution: e.target.value })}
+                      required
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="institutionYears">Years at Institution *</Label>
+                    <Input
+                      id="institutionYears"
+                      type="number"
+                      min="0"
+                      value={formData.institutionYears}
+                      onChange={(e) => setFormData({ ...formData, institutionYears: e.target.value })}
                       required
                     />
                   </div>
@@ -332,6 +453,78 @@ const TutorSignup = () => {
                     placeholder="e.g., Weekdays 4-8pm, Weekends all day"
                     value={formData.availability}
                     onChange={(e) => setFormData({ ...formData, availability: e.target.value })}
+                  />
+                </div>
+              </div>
+
+              {/* Referees Section */}
+              <div className="space-y-4 pt-4 border-t">
+                <h3 className="font-semibold text-lg">Parent Referees</h3>
+                <p className="text-sm text-muted-foreground">Provide contacts of 3 parents whose children you've taught</p>
+                
+                <div className="space-y-3">
+                  <Label className="font-medium">Referee 1 *</Label>
+                  <Input
+                    placeholder="Parent's Full Name"
+                    value={formData.referee1Name}
+                    onChange={(e) => setFormData({ ...formData, referee1Name: e.target.value })}
+                    required
+                  />
+                  <Input
+                    placeholder="Phone Number"
+                    value={formData.referee1Phone}
+                    onChange={(e) => setFormData({ ...formData, referee1Phone: e.target.value })}
+                    required
+                  />
+                  <Input
+                    placeholder="Child's name or relation"
+                    value={formData.referee1Relation}
+                    onChange={(e) => setFormData({ ...formData, referee1Relation: e.target.value })}
+                    required
+                  />
+                </div>
+
+                <div className="space-y-3">
+                  <Label className="font-medium">Referee 2 *</Label>
+                  <Input
+                    placeholder="Parent's Full Name"
+                    value={formData.referee2Name}
+                    onChange={(e) => setFormData({ ...formData, referee2Name: e.target.value })}
+                    required
+                  />
+                  <Input
+                    placeholder="Phone Number"
+                    value={formData.referee2Phone}
+                    onChange={(e) => setFormData({ ...formData, referee2Phone: e.target.value })}
+                    required
+                  />
+                  <Input
+                    placeholder="Child's name or relation"
+                    value={formData.referee2Relation}
+                    onChange={(e) => setFormData({ ...formData, referee2Relation: e.target.value })}
+                    required
+                  />
+                </div>
+
+                <div className="space-y-3">
+                  <Label className="font-medium">Referee 3 *</Label>
+                  <Input
+                    placeholder="Parent's Full Name"
+                    value={formData.referee3Name}
+                    onChange={(e) => setFormData({ ...formData, referee3Name: e.target.value })}
+                    required
+                  />
+                  <Input
+                    placeholder="Phone Number"
+                    value={formData.referee3Phone}
+                    onChange={(e) => setFormData({ ...formData, referee3Phone: e.target.value })}
+                    required
+                  />
+                  <Input
+                    placeholder="Child's name or relation"
+                    value={formData.referee3Relation}
+                    onChange={(e) => setFormData({ ...formData, referee3Relation: e.target.value })}
+                    required
                   />
                 </div>
               </div>

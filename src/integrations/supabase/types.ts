@@ -62,6 +62,7 @@ export type Database = {
       profiles: {
         Row: {
           age: number | null
+          avatar_url: string | null
           created_at: string | null
           curriculum: string | null
           full_name: string | null
@@ -75,6 +76,7 @@ export type Database = {
         }
         Insert: {
           age?: number | null
+          avatar_url?: string | null
           created_at?: string | null
           curriculum?: string | null
           full_name?: string | null
@@ -88,6 +90,7 @@ export type Database = {
         }
         Update: {
           age?: number | null
+          avatar_url?: string | null
           created_at?: string | null
           curriculum?: string | null
           full_name?: string | null
@@ -160,12 +163,15 @@ export type Database = {
           availability: string | null
           bio: string | null
           created_at: string | null
+          current_institution: string | null
           curriculum: string[] | null
           experience_years: number | null
           hourly_rate: number
           id: string
+          institution_years: number | null
           qualifications: string[] | null
           rating: number | null
+          referees: Json | null
           subjects: string[]
           total_reviews: number | null
           updated_at: string | null
@@ -176,12 +182,15 @@ export type Database = {
           availability?: string | null
           bio?: string | null
           created_at?: string | null
+          current_institution?: string | null
           curriculum?: string[] | null
           experience_years?: number | null
           hourly_rate: number
           id?: string
+          institution_years?: number | null
           qualifications?: string[] | null
           rating?: number | null
+          referees?: Json | null
           subjects: string[]
           total_reviews?: number | null
           updated_at?: string | null
@@ -192,12 +201,15 @@ export type Database = {
           availability?: string | null
           bio?: string | null
           created_at?: string | null
+          current_institution?: string | null
           curriculum?: string[] | null
           experience_years?: number | null
           hourly_rate?: number
           id?: string
+          institution_years?: number | null
           qualifications?: string[] | null
           rating?: number | null
+          referees?: Json | null
           subjects?: string[]
           total_reviews?: number | null
           updated_at?: string | null
