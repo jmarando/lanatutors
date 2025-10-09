@@ -5,3 +5,6 @@ verify_jwt = true
 
 [functions.mpesa-callback]
 verify_jwt = false
+
+[functions.send-booking-email]
+verify_jwt = true
