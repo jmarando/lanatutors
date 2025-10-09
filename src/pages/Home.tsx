@@ -126,7 +126,7 @@ const Home = () => {
                 <span className="block whitespace-nowrap text-primary">Safe. Verified. Kenyan.</span>
               </h1>
               <p className="text-lg text-muted-foreground mb-8 leading-relaxed">
-                Top-tier tutors from Kenya's best schools. Learn from home with complete safety. Pay seamlessly with M-Pesa. Master every CBC and IGCSE subject.
+                Learn from verified tutors from Kenya's top schools, from the comfort of your home. 100% online. Rigorously vetted educators. Seamless M-Pesa payments. All CBC and IGCSE subjects covered.
               </p>
               <div className="flex flex-wrap gap-4">
                 <Link to="/tutors">
