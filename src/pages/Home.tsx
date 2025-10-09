@@ -190,29 +190,8 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Why Choose Us */}
-      <section className="bg-secondary/30">
-        <div className="max-w-7xl mx-auto px-6 py-16">
-          <h2 className="text-3xl font-bold text-center mb-12">Why Choose ElimuConnect</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {benefits.map((benefit, index) => {
-              const Icon = benefit.icon;
-              return (
-                <Card key={index} className="border">
-                  <CardContent className="p-6">
-                    <Icon className="w-10 h-10 text-primary mb-3" />
-                    <h3 className="text-xl font-bold mb-2">{benefit.title}</h3>
-                    <p className="text-sm text-muted-foreground">{benefit.description}</p>
-                  </CardContent>
-                </Card>
-              );
-            })}
-          </div>
-        </div>
-      </section>
-
       {/* Featured Tutors */}
-      <section className="bg-background">
+      <section className="bg-secondary/30">
         <div className="max-w-7xl mx-auto px-6 py-16">
           <h2 className="text-3xl font-bold text-center mb-3">Featured Tutors</h2>
           <p className="text-center text-muted-foreground mb-10">Meet some of our top-rated educators</p>
@@ -244,6 +223,27 @@ const Home = () => {
                 </CardContent>
               </Card>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Why Choose Us */}
+      <section className="bg-background">
+        <div className="max-w-7xl mx-auto px-6 py-16">
+          <h2 className="text-3xl font-bold text-center mb-12">Why Choose ElimuConnect</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {benefits.map((benefit, index) => {
+              const Icon = benefit.icon;
+              return (
+                <Card key={index} className="border">
+                  <CardContent className="p-6">
+                    <Icon className="w-10 h-10 text-primary mb-3" />
+                    <h3 className="text-xl font-bold mb-2">{benefit.title}</h3>
+                    <p className="text-sm text-muted-foreground">{benefit.description}</p>
+                  </CardContent>
+                </Card>
+              );
+            })}
           </div>
         </div>
       </section>
