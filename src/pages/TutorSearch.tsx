@@ -3,11 +3,17 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Search, Star } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import tutor1 from "@/assets/tutor-1.jpg";
+import tutor2 from "@/assets/tutor-2.jpg";
+import tutor3 from "@/assets/tutor-3.jpg";
+import tutor4 from "@/assets/tutor-4.jpg";
+import tutor5 from "@/assets/tutor-5.jpg";
+import tutor6 from "@/assets/tutor-6.jpg";
 
 const TutorSearch = () => {
   const navigate = useNavigate();
@@ -48,7 +54,8 @@ const TutorSearch = () => {
       }
 
       // 3) Merge and format
-      const formattedTutors = (tutorProfiles || []).map((tp: any) => {
+      const tutorImages = [tutor1, tutor2, tutor3, tutor4, tutor5, tutor6];
+      const formattedTutors = (tutorProfiles || []).map((tp: any, index: number) => {
         const prof = profilesById.get(tp.user_id);
         const name = prof?.full_name || "Tutor";
         return {
@@ -61,6 +68,7 @@ const TutorSearch = () => {
           reviews: tp.total_reviews || 0,
           hourlyRate: Number(tp.hourly_rate) || 0,
           photo: name.split(' ').map((n: string) => n[0]).join('') || "T",
+          photoUrl: tutorImages[index % tutorImages.length],
         };
       });
 
@@ -176,6 +184,7 @@ const TutorSearch = () => {
                 <div className="p-6 pb-4 border-b border-border/50">
                   <div className="flex items-start gap-4">
                     <Avatar className="w-16 h-16 shrink-0">
+                      <AvatarImage src={tutor.photoUrl} alt={tutor.name} />
                       <AvatarFallback className="text-base bg-primary text-primary-foreground font-semibold">
                         {tutor.photo}
                       </AvatarFallback>
