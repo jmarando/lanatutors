@@ -3,6 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 const SeedTutors = () => {
   const [loading, setLoading] = useState(false);
@@ -11,25 +12,21 @@ const SeedTutors = () => {
   const handleSeed = async () => {
     setLoading(true);
     try {
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/seed-test-tutors`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-        }
-      );
+      const { data, error } = await supabase.functions.invoke('seed-test-tutors', {
+        method: 'POST',
+      });
 
-      const data = await response.json();
+      if (error) {
+        throw error;
+      }
 
-      if (data.success) {
+      if (data?.success) {
         toast({
           title: "Success!",
           description: data.message,
         });
       } else {
-        throw new Error(data.error || 'Failed to seed tutors');
+        throw new Error(data?.error || 'Failed to seed tutors');
       }
     } catch (error) {
       toast({
