@@ -128,11 +128,18 @@ const Home = () => {
               <p className="text-lg text-muted-foreground mb-8">
                 Find expert, verified tutors for any subject. Personalized one-on-one learning, tailored to your schedule.
               </p>
-              <Link to="/tutors">
-                <Button size="lg" className="text-lg px-8 shadow-lg">
-                  Find a Tutor
-                </Button>
-              </Link>
+              <div className="flex flex-wrap gap-4">
+                <Link to="/tutors">
+                  <Button size="lg" className="text-lg px-8 shadow-lg">
+                    Find a Tutor
+                  </Button>
+                </Link>
+                <Link to="/student-signup">
+                  <Button size="lg" variant="secondary" className="text-lg px-8 shadow-lg">
+                    Get Started
+                  </Button>
+                </Link>
+              </div>
             </div>
             <div className="relative">
               <video 
