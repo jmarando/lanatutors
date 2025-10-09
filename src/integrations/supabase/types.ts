@@ -61,24 +61,39 @@ export type Database = {
       }
       profiles: {
         Row: {
+          age: number | null
           created_at: string | null
           full_name: string | null
+          grade_level: string | null
           id: string
+          learning_goals: string | null
           phone_number: string | null
+          preferred_learning_style: string | null
+          subjects_struggling: string[] | null
           updated_at: string | null
         }
         Insert: {
+          age?: number | null
           created_at?: string | null
           full_name?: string | null
+          grade_level?: string | null
           id: string
+          learning_goals?: string | null
           phone_number?: string | null
+          preferred_learning_style?: string | null
+          subjects_struggling?: string[] | null
           updated_at?: string | null
         }
         Update: {
+          age?: number | null
           created_at?: string | null
           full_name?: string | null
+          grade_level?: string | null
           id?: string
+          learning_goals?: string | null
           phone_number?: string | null
+          preferred_learning_style?: string | null
+          subjects_struggling?: string[] | null
           updated_at?: string | null
         }
         Relationships: []
@@ -137,6 +152,75 @@ export type Database = {
         }
         Relationships: []
       }
+      tutor_profiles: {
+        Row: {
+          availability: string | null
+          bio: string | null
+          created_at: string | null
+          experience_years: number | null
+          hourly_rate: number
+          id: string
+          qualifications: string[] | null
+          rating: number | null
+          subjects: string[]
+          total_reviews: number | null
+          updated_at: string | null
+          user_id: string
+          verified: boolean | null
+        }
+        Insert: {
+          availability?: string | null
+          bio?: string | null
+          created_at?: string | null
+          experience_years?: number | null
+          hourly_rate: number
+          id?: string
+          qualifications?: string[] | null
+          rating?: number | null
+          subjects: string[]
+          total_reviews?: number | null
+          updated_at?: string | null
+          user_id: string
+          verified?: boolean | null
+        }
+        Update: {
+          availability?: string | null
+          bio?: string | null
+          created_at?: string | null
+          experience_years?: number | null
+          hourly_rate?: number
+          id?: string
+          qualifications?: string[] | null
+          rating?: number | null
+          subjects?: string[]
+          total_reviews?: number | null
+          updated_at?: string | null
+          user_id?: string
+          verified?: boolean | null
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string | null
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -146,8 +230,16 @@ export type Database = {
         Args: { _class_id: string; _user_id: string }
         Returns: boolean
       }
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
+      app_role: "student" | "tutor" | "admin"
       payment_status: "pending" | "completed" | "failed" | "cancelled"
       subscription_status: "active" | "expired" | "cancelled"
     }
@@ -277,6 +369,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
+      app_role: ["student", "tutor", "admin"],
       payment_status: ["pending", "completed", "failed", "cancelled"],
       subscription_status: ["active", "expired", "cancelled"],
     },
