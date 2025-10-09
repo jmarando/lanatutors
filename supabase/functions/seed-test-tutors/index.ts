@@ -180,6 +180,26 @@ Deno.serve(async (req) => {
         'Offered intensive crash courses for students preparing for university entrance exams with proven results.',
         'Mentored struggling students to achieve academic excellence through tailored learning strategies.'
       ];
+
+      // Generate "Why Students Love" highlights
+      const whyStudentsLoveOptions = [
+        'Makes complex concepts simple and easy to understand',
+        'Patient and understanding with struggling students',
+        'Uses real-world examples to illustrate difficult topics',
+        'Provides personalized attention and tailored study plans',
+        'Always available for questions outside of scheduled sessions',
+        'Creates a comfortable, judgment-free learning environment',
+        'Excellent track record of improving student grades',
+        'Engaging teaching style that keeps students motivated',
+        'Flexible scheduling to accommodate busy student schedules',
+        'Provides comprehensive notes and study materials',
+        'Goes the extra mile to ensure student success',
+        'Uses innovative teaching methods and technology'
+      ];
+      
+      // Select 3-5 random highlights
+      const shuffled = [...whyStudentsLoveOptions].sort(() => 0.5 - Math.random());
+      const whyStudentsLove = shuffled.slice(0, 3 + Math.floor(Math.random() * 3));
       
       // Upsert tutor profile (update if exists, insert if not)
       const { error: tutorError } = await supabaseAdmin
@@ -202,7 +222,8 @@ Deno.serve(async (req) => {
           teaching_mode: selectedModes,
           graduation_year: 2010 + Math.floor(Math.random() * 12),
           teaching_experience: teachingExperience,
-          tutoring_experience: tutoringExperiences[Math.floor(Math.random() * tutoringExperiences.length)]
+          tutoring_experience: tutoringExperiences[Math.floor(Math.random() * tutoringExperiences.length)],
+          why_students_love: whyStudentsLove
         })
 
       if (tutorError) {

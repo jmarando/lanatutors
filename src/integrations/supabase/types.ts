@@ -264,6 +264,7 @@ export type Database = {
           updated_at: string | null
           user_id: string
           verified: boolean | null
+          why_students_love: string[] | null
         }
         Insert: {
           availability?: string | null
@@ -290,6 +291,7 @@ export type Database = {
           updated_at?: string | null
           user_id: string
           verified?: boolean | null
+          why_students_love?: string[] | null
         }
         Update: {
           availability?: string | null
@@ -316,6 +318,7 @@ export type Database = {
           updated_at?: string | null
           user_id?: string
           verified?: boolean | null
+          why_students_love?: string[] | null
         }
         Relationships: []
       }

@@ -6,7 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Star, GraduationCap, Clock, BookOpen, Award, MapPin, Users, CheckCircle2 } from "lucide-react";
+import { Star, GraduationCap, Clock, BookOpen, Award, MapPin, Users, CheckCircle2, Heart } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { BookingCalendar } from "@/components/BookingCalendar";
@@ -105,6 +105,7 @@ const TutorProfile = () => {
         specializations: tutorProfile.specializations || "",
         teachingLocation: tutorProfile.teaching_location || "",
         teachingMode: tutorProfile.teaching_mode || [],
+        whyStudentsLove: tutorProfile.why_students_love || [],
       });
     }
     setLoading(false);
@@ -342,6 +343,26 @@ const TutorProfile = () => {
             </div>
           </CardContent>
         </Card>
+
+        {/* Why Students Love This Tutor */}
+        {tutor.whyStudentsLove.length > 0 && (
+          <Card className="mb-6 border-border/50 bg-gradient-to-br from-primary/5 to-primary/10">
+            <CardContent className="p-6">
+              <div className="flex items-center gap-2 mb-4">
+                <Heart className="w-5 h-5 text-primary fill-primary" />
+                <h2 className="font-bold text-lg">Why Students Love {tutor.name.split(' ')[0]}</h2>
+              </div>
+              <ul className="space-y-3">
+                {tutor.whyStudentsLove.map((reason: string, idx: number) => (
+                  <li key={idx} className="flex items-start gap-3">
+                    <CheckCircle2 className="w-5 h-5 text-primary shrink-0 mt-0.5" />
+                    <span className="text-sm text-foreground leading-relaxed">{reason}</span>
+                  </li>
+                ))}
+              </ul>
+            </CardContent>
+          </Card>
+        )}
 
         {/* About / Bio */}
         <Card className="mb-6 border-border/50">
