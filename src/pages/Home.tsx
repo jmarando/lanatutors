@@ -121,9 +121,9 @@ const Home = () => {
         <div className="max-w-7xl mx-auto px-6 py-12 md:py-20">
           <div className="grid md:grid-cols-2 gap-12 items-center">
             <div>
-              <h1 className="text-4xl md:text-5xl font-bold mb-6 leading-tight">
-                <span className="block">Expert Online Tutoring.</span>
-                <span className="block text-primary">Safe. Verified. Kenyan.</span>
+              <h1 className="text-3xl md:text-5xl font-bold mb-6 leading-tight">
+                <span className="block whitespace-nowrap">Expert Online Tutoring.</span>
+                <span className="block whitespace-nowrap text-primary">Safe. Verified. Kenyan.</span>
               </h1>
               <p className="text-lg text-muted-foreground mb-8 leading-relaxed">
                 Learn from verified tutors from Kenya's top schools, from the safety and comfort of your home. No stranger visits. Rigorous tutor vetting. Seamless M-Pesa payments. All CBC and IGCSE subjects covered.
