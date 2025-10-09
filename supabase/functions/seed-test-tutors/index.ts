@@ -24,28 +24,43 @@ Deno.serve(async (req) => {
 
     console.log('Starting fresh seed - deleting existing data...')
     
-    // Delete all existing tutor profiles, reviews, bookings, and availability
+    // First, get all test tutor emails to delete auth users
+    const testEmails = [
+      'sarah.mwangi@testtutor.com', 'david.ochieng@testtutor.com', 'grace.wanjiru@testtutor.com',
+      'peter.kamau@testtutor.com', 'mary.akinyi@testtutor.com', 'john.kariuki@testtutor.com',
+      'faith.njeri@testtutor.com', 'michael.otieno@testtutor.com', 'lucy.wairimu@testtutor.com',
+      'james.mutua@testtutor.com', 'elizabeth.chebet@testtutor.com', 'daniel.kipchoge@testtutor.com',
+      'catherine.adhiambo@testtutor.com', 'robert.maina@testtutor.com', 'anne.wambui@testtutor.com',
+      'joseph.kiprotich@testtutor.com', 'jane.nyambura@testtutor.com', 'patrick.owino@testtutor.com',
+      'susan.njoki@testtutor.com', 'thomas.kiptoo@testtutor.com', 'rose.mumbua@testtutor.com',
+      'george.omondi@testtutor.com', 'margaret.nyawira@testtutor.com', 'samuel.kuria@testtutor.com',
+      'joyce.jepkoech@testtutor.com', 'anthony.njuguna@testtutor.com', 'mercy.awino@testtutor.com',
+      'francis.githinji@testtutor.com', 'esther.chepkoech@testtutor.com', 'kevin.odongo@testtutor.com',
+      'nancy.wangari@testtutor.com', 'vincent.koech@testtutor.com', 'beatrice.nduta@testtutor.com',
+      'dennis.kiplagat@testtutor.com', 'christine.moraa@testtutor.com', 'brian.mulwa@testtutor.com',
+      'phyllis.jepkemoi@testtutor.com', 'eric.ndirangu@testtutor.com', 'alice.atieno@testtutor.com',
+      'martin.rotich@testtutor.com', 'violet.wanjiku@testtutor.com', 'charles.kemboi@testtutor.com',
+      'priscilla.anyango@testtutor.com', 'stephen.kamande@testtutor.com', 'rebecca.chepkurui@testtutor.com',
+      'wilson.onyango@testtutor.com', 'helen.waweru@testtutor.com', 'edwin.kimani@testtutor.com',
+      'caroline.jelimo@testtutor.com', 'kenneth.macharia@testtutor.com'
+    ]
+    
+    // Delete auth users (this will cascade to profiles, roles, etc.)
+    const { data: allUsers } = await supabaseAdmin.auth.admin.listUsers()
+    if (allUsers?.users) {
+      for (const user of allUsers.users) {
+        if (user.email && testEmails.includes(user.email)) {
+          await supabaseAdmin.auth.admin.deleteUser(user.id)
+          console.log(`Deleted user: ${user.email}`)
+        }
+      }
+    }
+    
+    // Delete any remaining data
     await supabaseAdmin.from('tutor_reviews').delete().neq('id', '00000000-0000-0000-0000-000000000000')
     await supabaseAdmin.from('bookings').delete().neq('id', '00000000-0000-0000-0000-000000000000')
     await supabaseAdmin.from('tutor_availability').delete().neq('id', '00000000-0000-0000-0000-000000000000')
     await supabaseAdmin.from('tutor_profiles').delete().neq('id', '00000000-0000-0000-0000-000000000000')
-    
-    // Delete user roles and profiles for test tutors
-    const { data: existingTutorProfiles } = await supabaseAdmin
-      .from('profiles')
-      .select('id')
-      .ilike('full_name', '%test%')
-    
-    if (existingTutorProfiles && existingTutorProfiles.length > 0) {
-      const tutorIds = existingTutorProfiles.map(p => p.id)
-      await supabaseAdmin.from('user_roles').delete().in('user_id', tutorIds)
-      await supabaseAdmin.from('profiles').delete().in('id', tutorIds)
-      
-      // Delete auth users
-      for (const profile of existingTutorProfiles) {
-        await supabaseAdmin.auth.admin.deleteUser(profile.id)
-      }
-    }
     
     console.log('Existing data cleared. Creating 50 new tutors...')
 
