@@ -81,7 +81,9 @@ Deno.serve(async (req) => {
       const email = `${tutor.name.toLowerCase().replace(' ', '.')}@testtutor.com`
       const password = 'TestPass123!'
 
-      // Create auth user
+      let userId: string
+
+      // Try to create auth user
       const { data: authData, error: authError } = await supabaseAdmin.auth.admin.createUser({
         email,
         password,
@@ -92,11 +94,23 @@ Deno.serve(async (req) => {
       })
 
       if (authError) {
-        console.error(`Error creating user ${tutor.name}:`, authError)
-        continue
+        // If user already exists, get their ID
+        if (authError.message.includes('already been registered')) {
+          const { data: existingUsers } = await supabaseAdmin.auth.admin.listUsers()
+          const existingUser = existingUsers?.users.find(u => u.email === email)
+          if (existingUser) {
+            userId = existingUser.id
+          } else {
+            console.error(`Could not find existing user ${tutor.name}`)
+            continue
+          }
+        } else {
+          console.error(`Error creating user ${tutor.name}:`, authError)
+          continue
+        }
+      } else {
+        userId = authData.user.id
       }
-
-      const userId = authData.user.id
 
       // Create profile
       const { error: profileError } = await supabaseAdmin
@@ -142,10 +156,10 @@ Deno.serve(async (req) => {
       const teachingModes = ['Online Sessions', 'In-Person', 'Home Visits'];
       const selectedModes = teachingModes.slice(0, 1 + Math.floor(Math.random() * 2));
       
-      // Create tutor profile
+      // Upsert tutor profile (update if exists, insert if not)
       const { error: tutorError } = await supabaseAdmin
         .from('tutor_profiles')
-        .insert({
+        .upsert({
           user_id: userId,
           subjects: tutor.subjects,
           curriculum: tutor.curriculum,
