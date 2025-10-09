@@ -24,35 +24,53 @@ const TutorSearch = () => {
 
   const fetchTutors = async () => {
     setLoading(true);
-    const { data: tutorProfiles, error } = await supabase
-      .from("tutor_profiles")
-      .select(`
-        *,
-        profiles!inner(full_name, avatar_url)
-      `)
-      .eq("verified", true);
 
-    if (error) {
-      console.error("Error fetching tutors:", error);
+    try {
+      // 1) Fetch tutor profiles (verified)
+      const { data: tutorProfiles, error: tutorError } = await supabase
+        .from("tutor_profiles")
+        .select("*")
+        .eq("verified", true);
+
+      if (tutorError) throw tutorError;
+
+      const profilesById = new Map<string, any>();
+
+      // 2) Fetch matching user profiles and index by id
+      const userIds = (tutorProfiles || []).map((tp: any) => tp.user_id).filter(Boolean);
+      if (userIds.length) {
+        const { data: profiles, error: profileError } = await supabase
+          .from("profiles")
+          .select("id, full_name, avatar_url")
+          .in("id", userIds);
+        if (profileError) throw profileError;
+        (profiles || []).forEach((p: any) => profilesById.set(p.id, p));
+      }
+
+      // 3) Merge and format
+      const formattedTutors = (tutorProfiles || []).map((tp: any) => {
+        const prof = profilesById.get(tp.user_id);
+        const name = prof?.full_name || "Tutor";
+        return {
+          id: tp.id,
+          name,
+          subjects: tp.subjects || [],
+          curriculum: tp.curriculum || [],
+          school: tp.current_institution || "Not specified",
+          rating: Number(tp.rating) || 0,
+          reviews: tp.total_reviews || 0,
+          hourlyRate: Number(tp.hourly_rate) || 0,
+          photo: name.split(' ').map((n: string) => n[0]).join('') || "T",
+        };
+      });
+
+      setTutors(formattedTutors);
+    } catch (err) {
+      console.error("Error fetching tutors:", err);
       toast.error("Failed to load tutors");
+    } finally {
       setLoading(false);
-      return;
     }
-
-    const formattedTutors = (tutorProfiles || []).map((tp: any) => ({
-      id: tp.id,
-      name: tp.profiles?.full_name || "Tutor",
-      subjects: tp.subjects || [],
-      curriculum: tp.curriculum || [],
-      school: tp.current_institution || "Not specified",
-      rating: Number(tp.rating) || 0,
-      reviews: tp.total_reviews || 0,
-      hourlyRate: Number(tp.hourly_rate) || 0,
-      photo: tp.profiles?.full_name?.split(' ').map((n: string) => n[0]).join('') || "T",
-    }));
-
-    setTutors(formattedTutors);
-    setLoading(false);
   };
 
   const subjects = ["all", "Math", "Physics", "Chemistry", "Biology", "English", "Kiswahili", "History", "Geography"];
