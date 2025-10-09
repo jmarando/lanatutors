@@ -170,44 +170,57 @@ const TutorSearch = () => {
         {/* Tutors Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto">
           {filteredTutors.map((tutor) => (
-            <Card key={tutor.id} className="overflow-hidden hover:shadow-lg transition-shadow flex flex-col">
-              <CardContent className="p-6 flex flex-col h-full">
-                <div className="flex items-start gap-4 mb-4">
-                  <Avatar className="w-20 h-20 shrink-0 border-4 border-cyan-600">
-                    <AvatarFallback className="text-lg bg-gradient-to-br from-cyan-600 to-cyan-700 text-white">
-                      {tutor.photo}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="text-xl font-bold mb-1 leading-tight">{tutor.name}</h3>
-                    <p className="text-cyan-600 font-medium text-sm mb-1 leading-snug">
-                      {tutor.subjects.join(", ")}
-                    </p>
-                    <p className="text-xs text-muted-foreground mb-1 leading-snug">
-                      {tutor.curriculum.join(" • ")}
-                    </p>
-                    <p className="text-sm text-muted-foreground leading-snug">
-                      {tutor.school}
-                    </p>
+            <Card key={tutor.id} className="overflow-hidden hover:shadow-lg transition-all duration-300 border-border/50">
+              <CardContent className="p-0">
+                {/* Header Section */}
+                <div className="p-6 pb-4 border-b border-border/50">
+                  <div className="flex items-start gap-4">
+                    <Avatar className="w-16 h-16 shrink-0">
+                      <AvatarFallback className="text-base bg-primary text-primary-foreground font-semibold">
+                        {tutor.photo}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-lg font-bold mb-1.5 leading-tight truncate">{tutor.name}</h3>
+                      <p className="text-sm text-muted-foreground mb-1 leading-snug line-clamp-1">
+                        {tutor.subjects.join(", ")}
+                      </p>
+                      <p className="text-xs text-muted-foreground/80 leading-snug">
+                        {tutor.school}
+                      </p>
+                    </div>
                   </div>
                 </div>
-                
-                <div className="flex items-center gap-1.5 mb-3">
-                  <Star className="w-5 h-5 shrink-0 fill-yellow-400 text-yellow-400" />
-                  <span className="font-bold text-lg">{tutor.rating.toFixed(1)}</span>
-                  <span className="text-muted-foreground text-sm">({tutor.reviews} reviews)</span>
+
+                {/* Details Section */}
+                <div className="px-6 py-4 space-y-3">
+                  <div className="flex items-center justify-between text-xs text-muted-foreground">
+                    <span className="font-medium">{tutor.curriculum.join(" • ")}</span>
+                  </div>
+                  
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5">
+                      <Star className="w-4 h-4 shrink-0 fill-yellow-500 text-yellow-500" />
+                      <span className="font-semibold text-sm">{tutor.rating.toFixed(1)}</span>
+                      <span className="text-xs text-muted-foreground">({tutor.reviews})</span>
+                    </div>
+                    
+                    <div className="text-lg font-bold text-foreground">
+                      KES {tutor.hourlyRate.toLocaleString()}<span className="text-xs font-normal text-muted-foreground">/hr</span>
+                    </div>
+                  </div>
                 </div>
 
-                <div className="text-2xl font-bold text-orange-600 mb-4">
-                  KES {tutor.hourlyRate.toLocaleString()}/hr
+                {/* Action Button */}
+                <div className="px-6 pb-6">
+                  <Button 
+                    onClick={() => navigate(`/tutors/${tutor.id}`)}
+                    className="w-full h-10"
+                    variant="default"
+                  >
+                    View Profile
+                  </Button>
                 </div>
-
-                <Button 
-                  onClick={() => navigate(`/tutors/${tutor.id}`)}
-                  className="w-full bg-cyan-600 hover:bg-cyan-700 text-white h-11 mt-auto"
-                >
-                  View Profile
-                </Button>
               </CardContent>
             </Card>
           ))}
