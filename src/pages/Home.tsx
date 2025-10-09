@@ -122,11 +122,11 @@ const Home = () => {
           <div className="grid md:grid-cols-2 gap-12 items-center">
             <div>
               <h1 className="text-4xl md:text-5xl font-bold mb-6 leading-tight">
-                Unlock Your Potential with{" "}
+                Safe, Quality Online Tutoring with{" "}
                 <span className="text-primary">ElimuConnect</span>
               </h1>
               <p className="text-lg text-muted-foreground mb-8">
-                Find expert, verified tutors for any subject. Personalized one-on-one learning, tailored to your schedule.
+                Learn from verified tutors from Kenya's top schools - from the safety and comfort of your home. No stranger visits. Rigorous tutor vetting. Seamless M-Pesa payments. All CBC and IGCSE subjects covered.
               </p>
               <div className="flex flex-wrap gap-4">
                 <Link to="/tutors">
