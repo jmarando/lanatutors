@@ -101,33 +101,6 @@ const Home = () => {
 
   return (
     <div className="min-h-screen">
-      {/* Navigation */}
-      <nav className="border-b bg-background sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2">
-            <Award className="w-8 h-8 text-primary" />
-            <span className="text-2xl font-bold">ElimuConnect</span>
-          </Link>
-          <div className="flex items-center gap-6">
-            <Link to="/tutors" className="text-sm font-medium hover:text-primary transition-colors">
-              Find Tutors
-            </Link>
-            <a href="#how-it-works" className="text-sm font-medium hover:text-primary transition-colors">
-              How It Works
-            </a>
-            <a href="#about" className="text-sm font-medium hover:text-primary transition-colors">
-              About Us
-            </a>
-            <Link to="/login">
-              <Button variant="outline" size="sm">Sign In</Button>
-            </Link>
-            <Link to="/login">
-              <Button size="sm">Get Started</Button>
-            </Link>
-          </div>
-        </div>
-      </nav>
-
       {/* Hero Section */}
       <section className="bg-background">
         <div className="max-w-7xl mx-auto px-6 py-12 md:py-20">
