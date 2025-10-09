@@ -134,7 +134,7 @@ const TutorProfile = () => {
                 
                 <div className="flex items-center gap-2 mb-4">
                   <Star className="w-6 h-6 fill-yellow-400 text-yellow-400" />
-                  <span className="font-bold text-xl">{tutor.rating}</span>
+                  <span className="font-bold text-xl">{tutor.rating.toFixed(1)}</span>
                   <span className="text-muted-foreground">({tutor.reviews} reviews)</span>
                 </div>
 

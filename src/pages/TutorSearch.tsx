@@ -190,7 +190,7 @@ const TutorSearch = () => {
                 
                 <div className="flex items-center gap-1.5 mb-4">
                   <Star className="w-5 h-5 fill-yellow-400 text-yellow-400" />
-                  <span className="font-bold text-lg">{tutor.rating}</span>
+                  <span className="font-bold text-lg">{tutor.rating.toFixed(1)}</span>
                   <span className="text-muted-foreground">({tutor.reviews} reviews)</span>
                 </div>
 

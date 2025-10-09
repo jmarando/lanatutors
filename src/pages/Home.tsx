@@ -216,7 +216,7 @@ const Home = () => {
                     <p className="text-xs text-muted-foreground mb-2">{tutor.school}</p>
                     <div className="flex items-center gap-1 mb-2">
                       <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                      <span className="font-semibold text-sm">{tutor.rating}</span>
+                      <span className="font-semibold text-sm">{tutor.rating.toFixed(1)}</span>
                       <span className="text-xs text-muted-foreground">({tutor.reviews})</span>
                     </div>
                     <div className="text-xl font-bold text-primary mb-3">
