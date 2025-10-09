@@ -132,8 +132,12 @@ const TutorSearch = () => {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Curricula</SelectItem>
-              <SelectItem value="CBC">CBC</SelectItem>
+              <SelectItem value="CBC">CBC (Kenyan)</SelectItem>
               <SelectItem value="IGCSE">IGCSE</SelectItem>
+              <SelectItem value="IB">IB (International Baccalaureate)</SelectItem>
+              <SelectItem value="A-Level">A-Level</SelectItem>
+              <SelectItem value="AP">AP (Advanced Placement)</SelectItem>
+              <SelectItem value="8-4-4">8-4-4 (Kenyan)</SelectItem>
             </SelectContent>
           </Select>
 
