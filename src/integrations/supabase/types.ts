@@ -232,6 +232,10 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      assign_user_role: {
+        Args: { _role: string; _user_id: string }
+        Returns: undefined
+      }
       has_recording_access: {
         Args: { _class_id: string; _user_id: string }
         Returns: boolean

@@ -133,13 +133,11 @@ const TutorSignup = () => {
 
       if (tutorProfileError) throw tutorProfileError;
 
-      // Assign tutor role
-      const { error: roleError } = await supabase
-        .from("user_roles")
-        .insert({
-          user_id: authData.user.id,
-          role: "tutor"
-        });
+      // Assign tutor role using secure database function
+      const { error: roleError } = await supabase.rpc("assign_user_role", {
+        _user_id: authData.user.id,
+        _role: "tutor"
+      });
 
       if (roleError) throw roleError;
 
