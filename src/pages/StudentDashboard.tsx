@@ -1,19 +1,31 @@
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
 import { 
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { 
   Award, 
   Video, 
   Sparkles,
-  MessageCircle
+  MessageCircle,
+  PlayCircle
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { useToast } from "@/components/ui/use-toast";
 
 const StudentDashboard = () => {
   const { toast } = useToast();
+  const [summaryDialogOpen, setSummaryDialogOpen] = useState(false);
+  const [recordingDialogOpen, setRecordingDialogOpen] = useState(false);
+  const [selectedClass, setSelectedClass] = useState<string>("");
 
   const upcomingClass = {
     subject: "Mathematics: Algebra II",
@@ -77,18 +89,39 @@ const StudentDashboard = () => {
   };
 
   const handleGenerateSummary = (subject: string) => {
-    toast({
-      title: "Generating AI Summary",
-      description: `Creating summary for ${subject}...`,
-    });
+    setSelectedClass(subject);
+    setSummaryDialogOpen(true);
   };
 
   const handleWatchRecording = (subject: string) => {
-    toast({
-      title: "Opening Recording",
-      description: `Loading ${subject} session recording...`,
-    });
+    setSelectedClass(subject);
+    setRecordingDialogOpen(true);
   };
+
+  const dummySummary = `
+**Session Overview:**
+This was an engaging session covering key concepts in ${selectedClass}. The tutor provided clear explanations and practical examples to help understand the material better.
+
+**Key Topics Covered:**
+• Introduction to fundamental principles
+• Step-by-step problem-solving techniques
+• Real-world applications and examples
+• Common mistakes to avoid
+• Practice problems and exercises
+
+**Main Takeaways:**
+1. Understanding the core concepts is essential before moving to advanced topics
+2. Practice regularly to build confidence and speed
+3. Review the examples provided during the session
+
+**Action Items:**
+- Complete the assigned practice problems
+- Review notes from this session
+- Prepare questions for the next class
+
+**Next Steps:**
+Continue practicing the concepts learned today and reach out if you need clarification on any topics.
+  `;
 
   return (
     <div className="min-h-screen bg-background">
@@ -271,6 +304,80 @@ const StudentDashboard = () => {
             </Card>
           </div>
         </div>
+
+        {/* AI Summary Dialog */}
+        <Dialog open={summaryDialogOpen} onOpenChange={setSummaryDialogOpen}>
+          <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Sparkles className="w-5 h-5 text-yellow-500" />
+                AI-Generated Summary: {selectedClass}
+              </DialogTitle>
+              <DialogDescription>
+                This summary was automatically generated from your class session.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="prose prose-sm max-w-none">
+              <div className="whitespace-pre-wrap text-sm leading-relaxed">
+                {dummySummary}
+              </div>
+            </div>
+            <div className="flex gap-2 mt-4">
+              <Button variant="outline" className="flex-1">
+                Download PDF
+              </Button>
+              <Button variant="outline" className="flex-1">
+                Share Summary
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Recording Dialog */}
+        <Dialog open={recordingDialogOpen} onOpenChange={setRecordingDialogOpen}>
+          <DialogContent className="max-w-4xl">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <PlayCircle className="w-5 h-5 text-cyan-600" />
+                Class Recording: {selectedClass}
+              </DialogTitle>
+              <DialogDescription>
+                Watch the recording of your previous class session.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4">
+              {/* Dummy Video Player */}
+              <div className="aspect-video bg-secondary rounded-lg flex items-center justify-center">
+                <div className="text-center">
+                  <PlayCircle className="w-20 h-20 text-muted-foreground mx-auto mb-4" />
+                  <p className="text-muted-foreground">Video Player Placeholder</p>
+                  <p className="text-sm text-muted-foreground">Duration: 45:30</p>
+                </div>
+              </div>
+              
+              {/* Recording Info */}
+              <div className="grid grid-cols-2 gap-4 text-sm">
+                <div>
+                  <p className="text-muted-foreground">Recorded on</p>
+                  <p className="font-medium">October 12, 2023</p>
+                </div>
+                <div>
+                  <p className="text-muted-foreground">Quality</p>
+                  <p className="font-medium">1080p HD</p>
+                </div>
+              </div>
+
+              <div className="flex gap-2">
+                <Button variant="outline" className="flex-1">
+                  Download Recording
+                </Button>
+                <Button variant="outline" className="flex-1">
+                  Generate Transcript
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
