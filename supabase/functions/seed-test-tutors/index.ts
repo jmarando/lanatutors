@@ -118,8 +118,12 @@ Deno.serve(async (req) => {
     ]
 
     const createdTutors = []
+    let tutorIndex = 0
 
     for (const tutor of testTutors) {
+      tutorIndex++
+      // Make first 25 tutors verified, last 25 pending for testing
+      const isVerified = tutorIndex <= 25
       const email = `${tutor.name.toLowerCase().replace(' ', '.')}@testtutor.com`
       const password = 'TestPass123!'
 
@@ -255,7 +259,6 @@ Deno.serve(async (req) => {
           experience_years: tutor.exp,
           bio: `Experienced ${tutor.subjects.join(' and ')} tutor with ${tutor.exp} years of teaching experience. Passionate about helping students achieve their academic goals.`,
           qualifications: [`Bachelor's Degree in Education`, `${tutor.subjects[0]} Specialist`],
-          verified: true,
           rating: 4.0 + Math.random() * 1.0,
           total_reviews: Math.floor(Math.random() * 20),
           services_offered: selectedServices,
@@ -265,7 +268,8 @@ Deno.serve(async (req) => {
           graduation_year: 2010 + Math.floor(Math.random() * 12),
           teaching_experience: teachingExperience,
           tutoring_experience: tutoringExperiences[Math.floor(Math.random() * tutoringExperiences.length)],
-          why_students_love: whyStudentsLove
+          why_students_love: whyStudentsLove,
+          verified: isVerified
         })
 
       if (tutorError) {
