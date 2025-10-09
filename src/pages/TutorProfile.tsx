@@ -110,13 +110,27 @@ const TutorProfile = () => {
   const fetchReviews = async () => {
     const { data: reviewsData } = await supabase
       .from("tutor_reviews")
-      .select("*, profiles!tutor_reviews_student_id_fkey(full_name)")
+      .select("*")
       .eq("tutor_id", id)
       .eq("is_approved", true)
       .order("created_at", { ascending: false });
 
     if (reviewsData) {
-      setReviews(reviewsData);
+      // Fetch student names separately
+      const studentIds = reviewsData.map(r => r.student_id);
+      const { data: students } = await supabase
+        .from("profiles")
+        .select("id, full_name")
+        .in("id", studentIds);
+
+      const studentsMap = new Map(students?.map(s => [s.id, s]) || []);
+      
+      const enrichedReviews = reviewsData.map(review => ({
+        ...review,
+        profiles: studentsMap.get(review.student_id),
+      }));
+
+      setReviews(enrichedReviews);
     }
   };
 

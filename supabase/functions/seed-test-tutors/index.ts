@@ -126,6 +126,22 @@ Deno.serve(async (req) => {
         console.error(`Error assigning role to ${tutor.name}:`, roleError)
       }
 
+      // Define services and teaching modes based on subjects
+      const services = ['Extra Tuition', 'Exam Preparation', 'Homework Help'];
+      const allServices = [...services];
+      
+      // Add subject-specific services
+      if (tutor.subjects.includes('Mathematics') || tutor.subjects.includes('Physics')) {
+        allServices.push('Problem-Solving Sessions', 'Revision Classes');
+      }
+      if (tutor.subjects.includes('English') || tutor.subjects.includes('Literature')) {
+        allServices.push('Essay Writing Support', 'Reading Comprehension');
+      }
+      
+      const selectedServices = allServices.slice(0, 3 + Math.floor(Math.random() * 2));
+      const teachingModes = ['Online Sessions', 'In-Person', 'Home Visits'];
+      const selectedModes = teachingModes.slice(0, 1 + Math.floor(Math.random() * 2));
+      
       // Create tutor profile
       const { error: tutorError } = await supabaseAdmin
         .from('tutor_profiles')
@@ -140,7 +156,11 @@ Deno.serve(async (req) => {
           qualifications: [`Bachelor's Degree in Education`, `${tutor.subjects[0]} Specialist`],
           verified: true,
           rating: 4.0 + Math.random() * 1.0,
-          total_reviews: Math.floor(Math.random() * 20)
+          total_reviews: Math.floor(Math.random() * 20),
+          services_offered: selectedServices,
+          specializations: `I specialize in ${tutor.subjects[0]} concepts including algebra, calculus, and problem-solving techniques. I focus on building strong foundations and exam strategies tailored to ${tutor.curriculum.join(' and ')} curricula.`,
+          teaching_location: `${tutor.school} Area, Nairobi`,
+          teaching_mode: selectedModes
         })
 
       if (tutorError) {
