@@ -6,119 +6,202 @@ import { Progress } from "@/components/ui/progress";
 import { 
   Award, 
   Video, 
-  Calendar,
-  Clock,
-  MessageSquare,
-  BookOpen,
-  TrendingUp
+  Sparkles,
+  MessageCircle
 } from "lucide-react";
 import { Link } from "react-router-dom";
+import { useToast } from "@/components/ui/use-toast";
 
 const StudentDashboard = () => {
+  const { toast } = useToast();
+
   const upcomingClass = {
-    subject: "Algebra II",
-    tutor: "Ms. Aisha Hassan",
-    date: "Tomorrow",
-    time: "3:00 PM",
-    meetLink: "https://meet.google.com/abc-defg-hij"
+    subject: "Mathematics: Algebra II",
+    tutor: "Sarah Wanjiru",
+    date: "10/10/2025 at 09:32 AM",
+    meetLink: "https://meet.google.com/abc-defg-hij",
+    daysUntil: "in 1 day"
   };
 
   const pastClasses = [
-    { subject: "Mechanics", date: "12th Oct", tutor: "Mr. Peter Mutua", hasRecording: true },
-    { subject: "Algebra I", date: "10th Oct", tutor: "Ms. Aisha Hassan", hasRecording: true },
-    { subject: "Organic Chemistry", date: "8th Oct", tutor: "Ms. Grace Wanjiru", hasRecording: false }
+    { 
+      subject: "Classical Mechanics", 
+      date: "12th Oct, 2023", 
+      tutor: "Sarah Wanjiru", 
+      hasRecording: true 
+    },
+    { 
+      subject: "Stoichiometry", 
+      date: "10th Oct, 2023", 
+      tutor: "David Kamau", 
+      hasRecording: true 
+    },
+    { 
+      subject: "Fasihi Simulizi", 
+      date: "8th Oct, 2023", 
+      tutor: "Jane Muthoni", 
+      hasRecording: true 
+    }
   ];
 
   const learningProgress = [
-    { subject: "Mathematics", progress: 85, color: "bg-primary" },
-    { subject: "Physics", progress: 78, color: "bg-accent" },
-    { subject: "Chemistry", progress: 92, color: "bg-green-500" }
+    { subject: "Math", progress: 85 },
+    { subject: "Physics", progress: 78 },
+    { subject: "Chemistry", progress: 92 }
   ];
 
   const messages = [
-    { from: "Mr. Kamau", subject: "Assignment feedback", time: "2 hours ago", unread: true },
-    { from: "Ms. Hassan", subject: "Next session prep", time: "Yesterday", unread: false },
-    { from: "Support", subject: "Welcome to ElimuConnect", time: "2 days ago", unread: false }
+    { 
+      from: "David Kamau", 
+      message: "Great work on the assignment! Just a few notes...", 
+      unread: true 
+    },
+    { 
+      from: "Sarah Wanjiru", 
+      message: "Our session for tomorrow is confirmed. See you then!", 
+      unread: false 
+    },
+    { 
+      from: "Jane Muthoni", 
+      message: "I've rescheduled our class to 5 PM. Please confirm.", 
+      unread: true 
+    }
   ];
+
+  const handleJoinClass = () => {
+    window.open(upcomingClass.meetLink, '_blank');
+    toast({
+      title: "Opening Google Meet",
+      description: "Joining your class session...",
+    });
+  };
+
+  const handleGenerateSummary = (subject: string) => {
+    toast({
+      title: "Generating AI Summary",
+      description: `Creating summary for ${subject}...`,
+    });
+  };
+
+  const handleWatchRecording = (subject: string) => {
+    toast({
+      title: "Opening Recording",
+      description: `Loading ${subject} session recording...`,
+    });
+  };
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Navigation */}
-      <nav className="border-b bg-background">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <Link to="/" className="flex items-center gap-2">
-            <Award className="w-8 h-8 text-primary" />
-            <span className="text-2xl font-bold">ElimuConnect</span>
-          </Link>
-          <div className="flex items-center gap-4">
-            <Link to="/tutors">
-              <Button variant="ghost">Find Tutors</Button>
-            </Link>
-            <Button variant="outline">Logout</Button>
-          </div>
-        </div>
-      </nav>
-
-      <div className="max-w-7xl mx-auto px-6 py-12">
+      <div className="max-w-7xl mx-auto px-6 py-8">
         {/* Welcome Section */}
         <div className="mb-8">
           <h1 className="text-4xl font-bold mb-2">Welcome back, Sarah!</h1>
-          <p className="text-muted-foreground">Here's a summary of your learning journey</p>
+          <p className="text-muted-foreground">Here's a summary of your learning journey.</p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left Column - Main Content */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Upcoming Class */}
-            <Card className="border-2 border-primary">
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <Video className="w-5 h-5 text-primary" />
-                  Upcoming Class
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
+            {/* Upcoming Class - Teal Card */}
+            <Card className="bg-[hsl(188,75%,40%)] border-0 text-white">
+              <CardContent className="p-6">
+                <div className="flex items-start justify-between mb-4">
                   <div>
-                    <h3 className="text-2xl font-bold mb-1">{upcomingClass.subject}</h3>
-                    <p className="text-muted-foreground">with {upcomingClass.tutor}</p>
+                    <h2 className="text-2xl font-bold mb-1">Upcoming Class</h2>
+                    <p className="text-white/90">{upcomingClass.subject}</p>
                   </div>
-                  <div className="flex items-center gap-6 text-sm">
-                    <div className="flex items-center gap-2">
-                      <Calendar className="w-4 h-4 text-accent" />
-                      <span>{upcomingClass.date}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Clock className="w-4 h-4 text-accent" />
-                      <span>{upcomingClass.time}</span>
-                    </div>
-                  </div>
-                  <div className="flex gap-3">
-                    <Button className="flex-1">
-                      <Video className="w-4 h-4 mr-2" />
-                      Join Class
-                    </Button>
-                    <Button variant="outline">
-                      View Details
-                    </Button>
+                  <Badge className="bg-white text-[hsl(188,75%,40%)] hover:bg-white/90">
+                    {upcomingClass.daysUntil}
+                  </Badge>
+                </div>
+                
+                <div className="flex items-center gap-3 mb-6">
+                  <Avatar className="h-12 w-12">
+                    <AvatarFallback className="bg-white/20 text-white">
+                      {upcomingClass.tutor.split(' ').map(n => n[0]).join('')}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div>
+                    <p className="font-semibold">{upcomingClass.tutor}</p>
+                    <p className="text-sm text-white/80">{upcomingClass.date}</p>
                   </div>
                 </div>
+
+                <Button 
+                  onClick={handleJoinClass}
+                  className="w-full bg-white text-[hsl(188,75%,40%)] hover:bg-white/90"
+                >
+                  <Video className="w-4 h-4 mr-2" />
+                  Join Class
+                </Button>
               </CardContent>
             </Card>
 
+            {/* Past Classes */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Past Classes</CardTitle>
+                <p className="text-sm text-muted-foreground">Review your previous sessions and generate AI summaries.</p>
+              </CardHeader>
+              <CardContent>
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead className="border-b">
+                      <tr className="text-left text-sm text-muted-foreground">
+                        <th className="pb-3 font-medium">Subject</th>
+                        <th className="pb-3 font-medium">Tutor</th>
+                        <th className="pb-3 font-medium">Date</th>
+                        <th className="pb-3 font-medium text-right">Actions</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {pastClasses.map((classItem, idx) => (
+                        <tr key={idx} className="border-b last:border-0">
+                          <td className="py-4 font-medium">{classItem.subject}</td>
+                          <td className="py-4 text-muted-foreground">{classItem.tutor}</td>
+                          <td className="py-4 text-muted-foreground">{classItem.date}</td>
+                          <td className="py-4">
+                            <div className="flex items-center justify-end gap-2">
+                              <Button 
+                                variant="outline" 
+                                size="sm"
+                                onClick={() => handleGenerateSummary(classItem.subject)}
+                              >
+                                <Sparkles className="w-4 h-4 mr-1" />
+                                Summary
+                              </Button>
+                              {classItem.hasRecording && (
+                                <Button 
+                                  variant="outline" 
+                                  size="sm"
+                                  onClick={() => handleWatchRecording(classItem.subject)}
+                                >
+                                  Recording
+                                </Button>
+                              )}
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Right Column - Sidebar */}
+          <div className="space-y-6">
             {/* Learning Progress */}
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <TrendingUp className="w-5 h-5 text-accent" />
-                  Learning Progress
-                </CardTitle>
+                <CardTitle>Learning Progress</CardTitle>
               </CardHeader>
-              <CardContent className="space-y-6">
+              <CardContent className="space-y-4">
                 {learningProgress.map((item) => (
                   <div key={item.subject}>
                     <div className="flex items-center justify-between mb-2">
-                      <span className="font-semibold">{item.subject}</span>
+                      <span className="font-medium">{item.subject}</span>
                       <span className="text-sm text-muted-foreground">{item.progress}%</span>
                     </div>
                     <Progress value={item.progress} className="h-2" />
@@ -127,97 +210,28 @@ const StudentDashboard = () => {
               </CardContent>
             </Card>
 
-            {/* Past Classes */}
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <BookOpen className="w-5 h-5 text-accent" />
-                  Past Classes
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  {pastClasses.map((classItem, idx) => (
-                    <div key={idx} className="flex items-center justify-between p-3 border rounded-lg hover:bg-secondary transition-colors">
-                      <div>
-                        <p className="font-semibold">{classItem.subject}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {classItem.date} • {classItem.tutor}
-                        </p>
-                      </div>
-                      {classItem.hasRecording && (
-                        <Button variant="outline" size="sm">
-                          <Video className="w-4 h-4 mr-2" />
-                          Watch Recording
-                        </Button>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Right Column - Sidebar */}
-          <div className="space-y-6">
-            {/* Quick Stats */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Quick Stats</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">Total Classes</span>
-                  <span className="text-2xl font-bold text-primary">24</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">Hours Learned</span>
-                  <span className="text-2xl font-bold text-accent">36</span>
-                </div>
-                <div className="flex items-center justify-between">
-                  <span className="text-muted-foreground">Active Tutors</span>
-                  <span className="text-2xl font-bold">3</span>
-                </div>
-              </CardContent>
-            </Card>
-
             {/* Messages */}
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <MessageSquare className="w-5 h-5 text-accent" />
-                  Messages
-                </CardTitle>
+                <CardTitle>Messages</CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  {messages.map((message, idx) => (
-                    <div key={idx} className={`p-3 border rounded-lg cursor-pointer hover:bg-secondary transition-colors ${message.unread ? 'bg-secondary border-accent' : ''}`}>
-                      <div className="flex items-start justify-between mb-1">
-                        <p className="font-semibold text-sm">{message.from}</p>
-                        {message.unread && (
-                          <Badge variant="default" className="text-xs">New</Badge>
-                        )}
+                  {messages.map((msg, idx) => (
+                    <div key={idx} className="flex items-start gap-3 p-3 rounded-lg hover:bg-secondary/50 transition-colors cursor-pointer">
+                      {msg.unread && (
+                        <div className="w-2 h-2 rounded-full bg-[hsl(188,75%,40%)] mt-2 flex-shrink-0" />
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-sm mb-1">{msg.from}</p>
+                        <p className="text-sm text-muted-foreground truncate">{msg.message}</p>
                       </div>
-                      <p className="text-sm text-muted-foreground mb-1">{message.subject}</p>
-                      <p className="text-xs text-muted-foreground">{message.time}</p>
                     </div>
                   ))}
                 </div>
-                <Button variant="outline" className="w-full mt-4">View All Messages</Button>
-              </CardContent>
-            </Card>
-
-            {/* Find More Tutors CTA */}
-            <Card className="bg-gradient-to-br from-primary to-primary/90 text-primary-foreground border-0">
-              <CardContent className="p-6 text-center">
-                <h3 className="text-xl font-bold mb-2">Need Help in Another Subject?</h3>
-                <p className="text-sm opacity-90 mb-4">Browse our verified tutors</p>
-                <Link to="/tutors">
-                  <Button variant="secondary" className="w-full">
-                    Find Tutors
-                  </Button>
-                </Link>
+                <Button variant="outline" className="w-full mt-4">
+                  View All Messages
+                </Button>
               </CardContent>
             </Card>
           </div>
