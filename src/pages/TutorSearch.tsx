@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -7,6 +8,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Search, Star } from "lucide-react";
 
 const TutorSearch = () => {
+  const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedSubject, setSelectedSubject] = useState("all");
   const [sortBy, setSortBy] = useState("rating");
@@ -176,7 +178,10 @@ const TutorSearch = () => {
                   KES {tutor.hourlyRate}/hr
                 </div>
 
-                <Button className="w-full bg-cyan-600 hover:bg-cyan-700 text-white h-11">
+                <Button 
+                  onClick={() => navigate(`/tutors/${tutor.id}`)}
+                  className="w-full bg-cyan-600 hover:bg-cyan-700 text-white h-11"
+                >
                   View Profile
                 </Button>
               </CardContent>
