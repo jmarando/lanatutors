@@ -245,7 +245,10 @@ const TutorSignup = () => {
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* Basic Info */}
               <div className="space-y-4">
-                <h3 className="font-semibold text-lg">Basic Information</h3>
+                <div>
+                  <h3 className="font-semibold text-lg">Basic Information</h3>
+                  <p className="text-sm text-muted-foreground">This information will be visible on your public profile</p>
+                </div>
                 
                 <div className="space-y-2">
                   <Label>Profile Picture</Label>
@@ -325,7 +328,10 @@ const TutorSignup = () => {
 
               {/* Teaching Info */}
               <div className="space-y-4">
-                <h3 className="font-semibold text-lg">Teaching Details</h3>
+                <div>
+                  <h3 className="font-semibold text-lg">Teaching Details</h3>
+                  <p className="text-sm text-muted-foreground">This information will be visible on your public profile</p>
+                </div>
                 
                 <div className="space-y-2">
                   <Label>Which Curricula Can You Teach? *</Label>
@@ -379,27 +385,34 @@ const TutorSignup = () => {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="currentInstitution">Current Institution *</Label>
-                    <Input
-                      id="currentInstitution"
-                      placeholder="Where you currently teach"
-                      value={formData.currentInstitution}
-                      onChange={(e) => setFormData({ ...formData, currentInstitution: e.target.value })}
-                      required
-                    />
+                <div className="space-y-4 pt-4 border-t">
+                  <div>
+                    <h4 className="font-medium">Current Employment</h4>
+                    <p className="text-xs text-muted-foreground">For verification purposes only - not shown publicly</p>
                   </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="institutionYears">Years at Institution *</Label>
-                    <Input
-                      id="institutionYears"
-                      type="number"
-                      min="0"
-                      value={formData.institutionYears}
-                      onChange={(e) => setFormData({ ...formData, institutionYears: e.target.value })}
-                      required
-                    />
+                  
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="currentInstitution">Current Institution *</Label>
+                      <Input
+                        id="currentInstitution"
+                        placeholder="Where you currently teach"
+                        value={formData.currentInstitution}
+                        onChange={(e) => setFormData({ ...formData, currentInstitution: e.target.value })}
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="institutionYears">Years at Institution *</Label>
+                      <Input
+                        id="institutionYears"
+                        type="number"
+                        min="0"
+                        value={formData.institutionYears}
+                        onChange={(e) => setFormData({ ...formData, institutionYears: e.target.value })}
+                        required
+                      />
+                    </div>
                   </div>
                 </div>
 
@@ -459,8 +472,10 @@ const TutorSignup = () => {
 
               {/* Referees Section */}
               <div className="space-y-4 pt-4 border-t">
-                <h3 className="font-semibold text-lg">Parent Referees</h3>
-                <p className="text-sm text-muted-foreground">Provide contacts of 3 parents whose children you've taught</p>
+                <div>
+                  <h3 className="font-semibold text-lg">Parent Referees</h3>
+                  <p className="text-sm text-muted-foreground">For verification purposes only - not shown publicly. We may contact these parents to verify your teaching experience.</p>
+                </div>
                 
                 <div className="space-y-3">
                   <Label className="font-medium">Referee 1 *</Label>
