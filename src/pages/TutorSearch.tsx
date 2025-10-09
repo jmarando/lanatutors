@@ -9,6 +9,8 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Calendar } from "@/components/ui/calendar";
 import { Separator } from "@/components/ui/separator";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
 import { 
   Search, 
   Award, 
@@ -17,9 +19,12 @@ import {
   Clock,
   Video,
   CheckCircle2,
-  Calendar as CalendarIcon
+  Calendar as CalendarIcon,
+  Home,
+  Building2
 } from "lucide-react";
 import { Link } from "react-router-dom";
+import { cn } from "@/lib/utils";
 
 const TutorSearch = () => {
   const [searchQuery, setSearchQuery] = useState("");
@@ -28,6 +33,8 @@ const TutorSearch = () => {
   const [selectedDate, setSelectedDate] = useState<Date>();
   const [selectedTime, setSelectedTime] = useState("");
   const [selectedTutor, setSelectedTutor] = useState<any>(null);
+  const [consultationType, setConsultationType] = useState("free-online");
+  const [paymentType, setPaymentType] = useState("per-session");
 
   const tutors = [
     {
@@ -145,7 +152,23 @@ const TutorSearch = () => {
 
   const handleBooking = () => {
     if (selectedDate && selectedTime && selectedTutor) {
-      alert(`Booking confirmed!\n\nTutor: ${selectedTutor.name}\nDate: ${selectedDate.toLocaleDateString()}\nTime: ${selectedTime}\nTotal: KES ${selectedTutor.hourlyRate}\n\nGoogle Meet link will be sent to your email.`);
+      const isFreeConsultation = consultationType.startsWith("free");
+      const consultationTypeText = 
+        consultationType === "free-online" ? "Free Online Consultation" :
+        consultationType === "free-office" ? "Free Office Consultation" :
+        consultationType === "free-home" ? "Free Home Consultation" : "Paid Session";
+      
+      const paymentInfo = !isFreeConsultation 
+        ? `\nPayment: ${paymentType === "monthly" ? "Monthly Subscription" : "Pay Per Session (M-Pesa)"}\nAmount: KES ${selectedTutor.hourlyRate}` 
+        : "\nAmount: FREE";
+      
+      const locationInfo = 
+        consultationType === "free-online" ? "\nLocation: Google Meet (link will be sent)" :
+        consultationType === "free-office" ? "\nLocation: ElimuConnect Office, Nairobi" :
+        consultationType === "free-home" ? "\nLocation: Your preferred location (we'll contact you)" : 
+        "\nLocation: Google Meet (link will be sent)";
+      
+      alert(`Booking confirmed!\n\nType: ${consultationTypeText}\nTutor: ${selectedTutor.name}\nDate: ${selectedDate.toLocaleDateString()}\nTime: ${selectedTime}${paymentInfo}${locationInfo}`);
     }
   };
 
@@ -380,7 +403,73 @@ const TutorSearch = () => {
 
                   <TabsContent value="booking" className="space-y-4">
                     <div>
-                      <h4 className="font-bold mb-4">Select Date & Time</h4>
+                      <h4 className="font-bold mb-4">Consultation Type</h4>
+                      <RadioGroup value={consultationType} onValueChange={setConsultationType} className="space-y-3 mb-6">
+                        <div className="flex items-center space-x-2 border rounded-lg p-3 cursor-pointer hover:bg-accent">
+                          <RadioGroupItem value="free-online" id="free-online-tab" />
+                          <Label htmlFor="free-online-tab" className="flex items-center gap-2 cursor-pointer flex-1">
+                            <Video className="w-4 h-4 text-primary" />
+                            <div>
+                              <div className="font-semibold">Free Online Consultation</div>
+                              <div className="text-xs text-muted-foreground">30-min intro via Google Meet</div>
+                            </div>
+                          </Label>
+                        </div>
+                        <div className="flex items-center space-x-2 border rounded-lg p-3 cursor-pointer hover:bg-accent">
+                          <RadioGroupItem value="free-office" id="free-office-tab" />
+                          <Label htmlFor="free-office-tab" className="flex items-center gap-2 cursor-pointer flex-1">
+                            <Building2 className="w-4 h-4 text-primary" />
+                            <div>
+                              <div className="font-semibold">Free Office Consultation</div>
+                              <div className="text-xs text-muted-foreground">30-min intro at our office</div>
+                            </div>
+                          </Label>
+                        </div>
+                        <div className="flex items-center space-x-2 border rounded-lg p-3 cursor-pointer hover:bg-accent">
+                          <RadioGroupItem value="free-home" id="free-home-tab" />
+                          <Label htmlFor="free-home-tab" className="flex items-center gap-2 cursor-pointer flex-1">
+                            <Home className="w-4 h-4 text-primary" />
+                            <div>
+                              <div className="font-semibold">Free Home Consultation</div>
+                              <div className="text-xs text-muted-foreground">30-min intro at your location</div>
+                            </div>
+                          </Label>
+                        </div>
+                        <div className="flex items-center space-x-2 border rounded-lg p-3 cursor-pointer hover:bg-accent">
+                          <RadioGroupItem value="paid-session" id="paid-session-tab" />
+                          <Label htmlFor="paid-session-tab" className="flex items-center gap-2 cursor-pointer flex-1">
+                            <Star className="w-4 h-4 text-primary" />
+                            <div>
+                              <div className="font-semibold">Book Paid Session</div>
+                              <div className="text-xs text-muted-foreground">Full tutoring session</div>
+                            </div>
+                          </Label>
+                        </div>
+                      </RadioGroup>
+
+                      {consultationType === "paid-session" && (
+                        <div className="mb-6">
+                          <h5 className="font-semibold mb-3">Payment Option</h5>
+                          <RadioGroup value={paymentType} onValueChange={setPaymentType} className="space-y-3">
+                            <div className="flex items-center space-x-2 border rounded-lg p-3 cursor-pointer hover:bg-accent">
+                              <RadioGroupItem value="per-session" id="per-session-tab" />
+                              <Label htmlFor="per-session-tab" className="cursor-pointer flex-1">
+                                <div className="font-semibold">Pay Per Session</div>
+                                <div className="text-xs text-muted-foreground">M-Pesa payment after each session</div>
+                              </Label>
+                            </div>
+                            <div className="flex items-center space-x-2 border rounded-lg p-3 cursor-pointer hover:bg-accent">
+                              <RadioGroupItem value="monthly" id="monthly-tab" />
+                              <Label htmlFor="monthly-tab" className="cursor-pointer flex-1">
+                                <div className="font-semibold">Monthly Subscription</div>
+                                <div className="text-xs text-muted-foreground">Pay once, book multiple sessions</div>
+                              </Label>
+                            </div>
+                          </RadioGroup>
+                        </div>
+                      )}
+
+                      <h5 className="font-bold mb-4">Select Date & Time</h5>
                       <div className="flex flex-col md:flex-row gap-6">
                         <div className="flex-1">
                           <Calendar
@@ -388,7 +477,7 @@ const TutorSearch = () => {
                             selected={selectedDate}
                             onSelect={setSelectedDate}
                             disabled={(date) => date < new Date()}
-                            className="border rounded-lg p-3"
+                            className={cn("border rounded-lg p-3 pointer-events-auto")}
                           />
                         </div>
                         <div className="flex-1">

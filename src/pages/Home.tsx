@@ -16,6 +16,7 @@ import {
   Award
 } from "lucide-react";
 import { Link } from "react-router-dom";
+import heroImage from "@/assets/hero-image.jpg";
 
 const Home = () => {
   const stats = [
@@ -122,43 +123,45 @@ const Home = () => {
       </nav>
 
       {/* Hero Section */}
-      <section className="bg-gradient-to-br from-secondary to-background">
-        <div className="max-w-7xl mx-auto px-6 py-20 md:py-28">
-          <div className="text-center max-w-4xl mx-auto">
-            <h1 className="text-5xl md:text-6xl font-bold mb-6">
-              Quality Online Tutoring for{" "}
-              <span className="text-primary">Kenyan Students</span>
-            </h1>
-            <p className="text-xl text-muted-foreground mb-10">
-              Connect with verified teachers from top Kenyan schools for safe, convenient one-on-one sessions. Master KCSE, KCPE, and CBC curriculum from home.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+      <section className="bg-background">
+        <div className="max-w-7xl mx-auto px-6 py-12 md:py-20">
+          <div className="grid md:grid-cols-2 gap-12 items-center">
+            <div>
+              <h1 className="text-4xl md:text-5xl font-bold mb-6 leading-tight">
+                Unlock Your Potential with{" "}
+                <span className="text-primary">ElimuConnect</span>
+              </h1>
+              <p className="text-lg text-muted-foreground mb-8">
+                Find expert, verified tutors for any subject. Personalized one-on-one learning, tailored to your schedule.
+              </p>
               <Link to="/tutors">
                 <Button size="lg" className="text-lg px-8 shadow-lg">
                   Find a Tutor
                 </Button>
               </Link>
-              <Link to="/tutor-signup">
-                <Button size="lg" variant="outline" className="text-lg px-8">
-                  Become a Tutor
-                </Button>
-              </Link>
+            </div>
+            <div className="relative">
+              <img 
+                src={heroImage} 
+                alt="Students learning with tutors" 
+                className="rounded-lg shadow-2xl w-full h-auto object-cover"
+              />
             </div>
           </div>
         </div>
       </section>
 
       {/* Stats Section */}
-      <section className="border-b bg-background">
-        <div className="max-w-7xl mx-auto px-6 py-16">
+      <section className="border-y bg-secondary/30">
+        <div className="max-w-7xl mx-auto px-6 py-12">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
             {stats.map((stat, index) => {
               const Icon = stat.icon;
               return (
                 <div key={index} className="space-y-2">
-                  <Icon className="w-12 h-12 mx-auto text-accent mb-3" />
-                  <div className="text-4xl font-bold text-primary">{stat.value}</div>
-                  <div className="text-lg text-muted-foreground">{stat.label}</div>
+                  <Icon className="w-10 h-10 mx-auto text-primary mb-2" />
+                  <div className="text-3xl font-bold">{stat.value}</div>
+                  <div className="text-sm text-muted-foreground">{stat.label}</div>
                 </div>
               );
             })}
@@ -167,19 +170,19 @@ const Home = () => {
       </section>
 
       {/* How It Works */}
-      <section className="bg-secondary">
-        <div className="section-container">
-          <h2 className="text-4xl font-bold text-center mb-16">How It Works</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
+      <section className="bg-background">
+        <div className="max-w-7xl mx-auto px-6 py-16">
+          <h2 className="text-3xl font-bold text-center mb-12">How It Works</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {steps.map((step, index) => {
               const Icon = step.icon;
               return (
                 <div key={index} className="text-center">
-                  <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-primary text-primary-foreground mb-4">
-                    <Icon className="w-8 h-8" />
+                  <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-primary/10 text-primary mb-3">
+                    <Icon className="w-7 h-7" />
                   </div>
-                  <h3 className="text-2xl font-bold mb-3">{step.title}</h3>
-                  <p className="text-muted-foreground">{step.description}</p>
+                  <h3 className="text-xl font-bold mb-2">{step.title}</h3>
+                  <p className="text-sm text-muted-foreground">{step.description}</p>
                 </div>
               );
             })}
@@ -188,18 +191,18 @@ const Home = () => {
       </section>
 
       {/* Why Choose Us */}
-      <section className="bg-background">
-        <div className="section-container">
-          <h2 className="text-4xl font-bold text-center mb-16">Why Choose ElimuConnect</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+      <section className="bg-secondary/30">
+        <div className="max-w-7xl mx-auto px-6 py-16">
+          <h2 className="text-3xl font-bold text-center mb-12">Why Choose ElimuConnect</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {benefits.map((benefit, index) => {
               const Icon = benefit.icon;
               return (
-                <Card key={index} className="border-2">
-                  <CardContent className="p-8">
-                    <Icon className="w-12 h-12 text-accent mb-4" />
-                    <h3 className="text-2xl font-bold mb-3">{benefit.title}</h3>
-                    <p className="text-muted-foreground">{benefit.description}</p>
+                <Card key={index} className="border">
+                  <CardContent className="p-6">
+                    <Icon className="w-10 h-10 text-primary mb-3" />
+                    <h3 className="text-xl font-bold mb-2">{benefit.title}</h3>
+                    <p className="text-sm text-muted-foreground">{benefit.description}</p>
                   </CardContent>
                 </Card>
               );
@@ -209,34 +212,34 @@ const Home = () => {
       </section>
 
       {/* Featured Tutors */}
-      <section className="bg-secondary">
-        <div className="section-container">
-          <h2 className="text-4xl font-bold text-center mb-4">Featured Tutors</h2>
-          <p className="text-center text-muted-foreground mb-12">Meet some of our top-rated educators</p>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+      <section className="bg-background">
+        <div className="max-w-7xl mx-auto px-6 py-16">
+          <h2 className="text-3xl font-bold text-center mb-3">Featured Tutors</h2>
+          <p className="text-center text-muted-foreground mb-10">Meet some of our top-rated educators</p>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {featuredTutors.map((tutor) => (
               <Card key={tutor.id} className="card-hover cursor-pointer">
                 <CardContent className="p-6">
                   <div className="flex flex-col items-center text-center mb-4">
-                    <Avatar className="w-20 h-20 mb-4">
-                      <AvatarFallback className="text-2xl bg-accent text-accent-foreground">
+                    <Avatar className="w-16 h-16 mb-3">
+                      <AvatarFallback className="text-xl bg-primary/10 text-primary">
                         {tutor.photo}
                       </AvatarFallback>
                     </Avatar>
-                    <h3 className="text-xl font-bold mb-1">{tutor.name}</h3>
-                    <Badge variant="secondary" className="mb-2">{tutor.subjects}</Badge>
-                    <p className="text-sm text-muted-foreground mb-3">{tutor.school}</p>
-                    <div className="flex items-center gap-2 mb-2">
-                      <Star className="w-5 h-5 fill-yellow-400 text-yellow-400" />
-                      <span className="font-semibold">{tutor.rating}</span>
-                      <span className="text-sm text-muted-foreground">({tutor.reviews} reviews)</span>
+                    <h3 className="text-lg font-bold mb-1">{tutor.name}</h3>
+                    <Badge variant="secondary" className="mb-2 text-xs">{tutor.subjects}</Badge>
+                    <p className="text-xs text-muted-foreground mb-2">{tutor.school}</p>
+                    <div className="flex items-center gap-1 mb-2">
+                      <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                      <span className="font-semibold text-sm">{tutor.rating}</span>
+                      <span className="text-xs text-muted-foreground">({tutor.reviews})</span>
                     </div>
-                    <div className="text-2xl font-bold text-primary mb-4">
+                    <div className="text-xl font-bold text-primary mb-3">
                       KES {tutor.hourlyRate.toLocaleString()}/hr
                     </div>
                   </div>
                   <Link to="/tutors">
-                    <Button className="w-full" variant="outline">View Profile</Button>
+                    <Button className="w-full" variant="outline" size="sm">View Profile</Button>
                   </Link>
                 </CardContent>
               </Card>
@@ -246,12 +249,12 @@ const Home = () => {
       </section>
 
       {/* CTA Section */}
-      <section className="bg-background">
-        <div className="section-container">
+      <section className="bg-secondary/30">
+        <div className="max-w-7xl mx-auto px-6 py-16">
           <Card className="bg-gradient-to-r from-primary to-primary/90 text-primary-foreground border-0">
-            <CardContent className="p-12 text-center">
-              <h2 className="text-4xl font-bold mb-4">Ready to Excel in Your Studies?</h2>
-              <p className="text-xl mb-8 opacity-90">Join thousands of students learning with ElimuConnect</p>
+            <CardContent className="p-10 text-center">
+              <h2 className="text-3xl font-bold mb-3">Ready to Excel in Your Studies?</h2>
+              <p className="text-lg mb-6 opacity-90">Join thousands of students learning with ElimuConnect</p>
               <Link to="/tutors">
                 <Button size="lg" variant="secondary" className="text-lg px-8 shadow-lg">
                   Find Your Tutor Now
@@ -286,9 +289,9 @@ const Home = () => {
             <div>
               <h4 className="font-bold mb-4">For Tutors</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><Link to="/tutor-signup">Become a Tutor</Link></li>
                 <li><Link to="/login">Tutor Dashboard</Link></li>
                 <li><Link to="#">Requirements</Link></li>
+                <li><Link to="/tutor-signup" className="text-primary hover:underline">Become a Tutor →</Link></li>
               </ul>
             </div>
             <div>
