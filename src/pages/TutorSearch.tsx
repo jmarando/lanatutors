@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -6,6 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Search, Star } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "sonner";
 
 const TutorSearch = () => {
   const navigate = useNavigate();
@@ -13,75 +15,45 @@ const TutorSearch = () => {
   const [selectedSubject, setSelectedSubject] = useState("all");
   const [selectedCurriculum, setSelectedCurriculum] = useState("all");
   const [sortBy, setSortBy] = useState("rating");
+  const [tutors, setTutors] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const tutors = [
-    {
-      id: 1,
-      name: "Sarah Wanjiru",
-      subjects: ["Math", "Physics"],
-      curriculum: ["CBC", "IGCSE"],
-      school: "University of Nairobi",
-      rating: 4.9,
-      reviews: 85,
-      hourlyRate: 1500,
-      photo: "SW",
-    },
-    {
-      id: 2,
-      name: "Jane Muthoni",
-      subjects: ["English", "Kiswahili"],
-      curriculum: ["CBC"],
-      school: "Moi University",
-      rating: 4.9,
-      reviews: 95,
-      hourlyRate: 1200,
-      photo: "JM",
-    },
-    {
-      id: 3,
-      name: "John Kariuki",
-      subjects: ["Math"],
-      curriculum: ["IGCSE"],
-      school: "Egerton University",
-      rating: 4.9,
-      reviews: 102,
-      hourlyRate: 1550,
-      photo: "JK",
-    },
-    {
-      id: 4,
-      name: "David Kamau",
-      subjects: ["Chemistry", "Biology"],
-      curriculum: ["CBC", "IGCSE"],
-      school: "Kenyatta University",
-      rating: 4.8,
-      reviews: 72,
-      hourlyRate: 1400,
-      photo: "DK",
-    },
-    {
-      id: 5,
-      name: "Mary Akinyi",
-      subjects: ["Physics"],
-      curriculum: ["IGCSE"],
-      school: "Jomo Kenyatta University of Agriculture and Technology",
-      rating: 4.9,
-      reviews: 65,
-      hourlyRate: 1600,
-      photo: "MA",
-    },
-    {
-      id: 6,
-      name: "Peter Otieno",
-      subjects: ["History", "Geography"],
-      curriculum: ["CBC"],
-      school: "Maseno University",
-      rating: 4.7,
-      reviews: 61,
-      hourlyRate: 1300,
-      photo: "PO",
+  useEffect(() => {
+    fetchTutors();
+  }, []);
+
+  const fetchTutors = async () => {
+    setLoading(true);
+    const { data: tutorProfiles, error } = await supabase
+      .from("tutor_profiles")
+      .select(`
+        *,
+        profiles!inner(full_name, avatar_url)
+      `)
+      .eq("verified", true);
+
+    if (error) {
+      console.error("Error fetching tutors:", error);
+      toast.error("Failed to load tutors");
+      setLoading(false);
+      return;
     }
-  ];
+
+    const formattedTutors = (tutorProfiles || []).map((tp: any) => ({
+      id: tp.id,
+      name: tp.profiles?.full_name || "Tutor",
+      subjects: tp.subjects || [],
+      curriculum: tp.curriculum || [],
+      school: tp.current_institution || "Not specified",
+      rating: Number(tp.rating) || 0,
+      reviews: tp.total_reviews || 0,
+      hourlyRate: Number(tp.hourly_rate) || 0,
+      photo: tp.profiles?.full_name?.split(' ').map((n: string) => n[0]).join('') || "T",
+    }));
+
+    setTutors(formattedTutors);
+    setLoading(false);
+  };
 
   const subjects = ["all", "Math", "Physics", "Chemistry", "Biology", "English", "Kiswahili", "History", "Geography"];
 
@@ -104,6 +76,14 @@ const TutorSearch = () => {
       if (sortBy === "reviews") return b.reviews - a.reviews;
       return 0;
     });
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-secondary/20 flex items-center justify-center">
+        <p>Loading tutors...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-secondary/20">
