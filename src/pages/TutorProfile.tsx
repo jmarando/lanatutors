@@ -75,9 +75,13 @@ const TutorProfile = () => {
         rating: Number(tutorProfile.rating) || 0,
         reviews: tutorProfile.total_reviews || 0,
         hourlyRate: Number(tutorProfile.hourly_rate) || 0,
-        photo: profile?.full_name?.split(' ').map((n: string) => n[0]).join('') || "T",
+        photo: profile?.full_name 
+          ? profile.full_name.split(' ').map((n: string) => n[0]).join('') 
+          : "T",
         bio: tutorProfile.bio || "",
-        education: tutorProfile.qualifications?.join(", ") || "Not specified",
+        education: Array.isArray(tutorProfile.qualifications) 
+          ? tutorProfile.qualifications.join(", ") 
+          : "Not specified",
         experience: `${tutorProfile.experience_years || 0} years`,
         curriculum: tutorProfile.curriculum || [],
       });
@@ -185,13 +189,13 @@ const TutorProfile = () => {
             <CardContent className="p-6">
               <div className="flex items-center gap-3 mb-4">
                 <Clock className="w-6 h-6 text-cyan-600" />
-                <h2 className="text-2xl font-bold">Availability</h2>
+                <h2 className="text-2xl font-bold">Curriculum</h2>
               </div>
-              <ul className="space-y-2">
-                {tutor.availability.map((slot, index) => (
-                  <li key={index} className="text-muted-foreground">• {slot}</li>
-                ))}
-              </ul>
+              <p className="text-muted-foreground">
+                {tutor.curriculum.length > 0 
+                  ? tutor.curriculum.join(" • ") 
+                  : "Not specified"}
+              </p>
             </CardContent>
           </Card>
         </div>
