@@ -246,6 +246,7 @@ export type Database = {
           current_institution: string | null
           curriculum: string[] | null
           experience_years: number | null
+          graduation_year: number | null
           hourly_rate: number
           id: string
           institution_years: number | null
@@ -255,9 +256,11 @@ export type Database = {
           services_offered: string[] | null
           specializations: string | null
           subjects: string[]
+          teaching_experience: Json | null
           teaching_location: string | null
           teaching_mode: string[] | null
           total_reviews: number | null
+          tutoring_experience: string | null
           updated_at: string | null
           user_id: string
           verified: boolean | null
@@ -269,6 +272,7 @@ export type Database = {
           current_institution?: string | null
           curriculum?: string[] | null
           experience_years?: number | null
+          graduation_year?: number | null
           hourly_rate: number
           id?: string
           institution_years?: number | null
@@ -278,9 +282,11 @@ export type Database = {
           services_offered?: string[] | null
           specializations?: string | null
           subjects: string[]
+          teaching_experience?: Json | null
           teaching_location?: string | null
           teaching_mode?: string[] | null
           total_reviews?: number | null
+          tutoring_experience?: string | null
           updated_at?: string | null
           user_id: string
           verified?: boolean | null
@@ -292,6 +298,7 @@ export type Database = {
           current_institution?: string | null
           curriculum?: string[] | null
           experience_years?: number | null
+          graduation_year?: number | null
           hourly_rate?: number
           id?: string
           institution_years?: number | null
@@ -301,9 +308,11 @@ export type Database = {
           services_offered?: string[] | null
           specializations?: string | null
           subjects?: string[]
+          teaching_experience?: Json | null
           teaching_location?: string | null
           teaching_mode?: string[] | null
           total_reviews?: number | null
+          tutoring_experience?: string | null
           updated_at?: string | null
           user_id?: string
           verified?: boolean | null

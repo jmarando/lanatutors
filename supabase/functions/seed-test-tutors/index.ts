@@ -156,6 +156,31 @@ Deno.serve(async (req) => {
       const teachingModes = ['Online Sessions', 'In-Person', 'Home Visits'];
       const selectedModes = teachingModes.slice(0, 1 + Math.floor(Math.random() * 2));
       
+      // Generate teaching experience timeline
+      const institutions = [
+        'Starehe Boys Centre', 'Alliance High School', 'Kenya High School',
+        'Moi Girls School', 'Nairobi School', 'Brookhouse School',
+        'St. Mary\'s School', 'Precious Blood', 'Loreto Convent'
+      ];
+      
+      const teachingExperience = [];
+      const numPositions = 1 + Math.floor(Math.random() * 2); // 1-2 positions
+      for (let i = 0; i < numPositions; i++) {
+        teachingExperience.push({
+          institution: institutions[Math.floor(Math.random() * institutions.length)],
+          years: 2 + Math.floor(Math.random() * 5), // 2-6 years
+          role: `${tutor.subjects[0]} Teacher`
+        });
+      }
+
+      const tutoringExperiences = [
+        'Specialized in one-on-one tutoring for KCSE candidates, helping over 50 students improve their grades by at least 2 points.',
+        'Provided personalized tutoring for IGCSE and A-Level students, focusing on exam preparation and concept mastery.',
+        'Conducted group tutoring sessions for 8-4-4 curriculum students, with a 90% success rate in national examinations.',
+        'Offered intensive crash courses for students preparing for university entrance exams with proven results.',
+        'Mentored struggling students to achieve academic excellence through tailored learning strategies.'
+      ];
+      
       // Upsert tutor profile (update if exists, insert if not)
       const { error: tutorError } = await supabaseAdmin
         .from('tutor_profiles')
@@ -174,7 +199,10 @@ Deno.serve(async (req) => {
           services_offered: selectedServices,
           specializations: `I specialize in ${tutor.subjects[0]} concepts including algebra, calculus, and problem-solving techniques. I focus on building strong foundations and exam strategies tailored to ${tutor.curriculum.join(' and ')} curricula.`,
           teaching_location: `${tutor.school} Area, Nairobi`,
-          teaching_mode: selectedModes
+          teaching_mode: selectedModes,
+          graduation_year: 2010 + Math.floor(Math.random() * 12),
+          teaching_experience: teachingExperience,
+          tutoring_experience: tutoringExperiences[Math.floor(Math.random() * tutoringExperiences.length)]
         })
 
       if (tutorError) {

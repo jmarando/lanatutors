@@ -96,7 +96,10 @@ const TutorProfile = () => {
         education: Array.isArray(tutorProfile.qualifications) 
           ? tutorProfile.qualifications.join(", ") 
           : "Not specified",
+        graduationYear: tutorProfile.graduation_year,
         experience: tutorProfile.experience_years || 0,
+        teachingExperience: tutorProfile.teaching_experience || [],
+        tutoringExperience: tutorProfile.tutoring_experience || "",
         curriculum: tutorProfile.curriculum || [],
         servicesOffered: tutorProfile.services_offered || [],
         specializations: tutorProfile.specializations || "",
@@ -254,47 +257,91 @@ const TutorProfile = () => {
           </Card>
         )}
 
-        <div className="grid md:grid-cols-2 gap-6 mb-6">
-          {/* Experience & Curriculum */}
-          <Card className="border-border/50">
-            <CardContent className="p-5">
-              <div className="flex items-start gap-3 mb-4">
-                <div className="p-2 rounded-lg bg-primary/10 shrink-0">
-                  <Clock className="w-5 h-5 text-primary" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-semibold text-sm mb-1">Experience</h3>
-                  <p className="text-sm text-muted-foreground mb-3">
-                    {tutor.experience} {tutor.experience === 1 ? 'year' : 'years'} teaching
-                  </p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {tutor.curriculum.map((curr: string, idx: number) => (
-                      <Badge key={idx} variant="secondary" className="text-xs">
-                        {curr}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
+        {/* Experience Timeline */}
+        <Card className="mb-6 border-border/50">
+          <CardContent className="p-6">
+            <div className="flex items-center gap-2 mb-6">
+              <Clock className="w-5 h-5 text-primary" />
+              <h2 className="font-bold text-lg">Teaching Experience</h2>
+            </div>
+            
+            {/* Overall Experience Summary */}
+            <div className="mb-6 pb-6 border-b border-border/50">
+              <div className="flex items-center gap-2 mb-2">
+                <span className="font-semibold">Total Teaching Experience:</span>
+                <span className="text-muted-foreground">
+                  {tutor.experience} {tutor.experience === 1 ? 'year' : 'years'}
+                </span>
               </div>
-            </CardContent>
-          </Card>
+              <div className="flex flex-wrap gap-1.5 mt-3">
+                {tutor.curriculum.map((curr: string, idx: number) => (
+                  <Badge key={idx} variant="secondary" className="text-xs">
+                    {curr}
+                  </Badge>
+                ))}
+              </div>
+            </div>
 
-          {/* Education */}
-          <Card className="border-border/50">
-            <CardContent className="p-5">
-              <div className="flex items-start gap-3">
-                <div className="p-2 rounded-lg bg-primary/10 shrink-0">
-                  <GraduationCap className="w-5 h-5 text-primary" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-semibold text-sm mb-2">Education</h3>
-                  <p className="text-sm text-muted-foreground mb-1">{tutor.education}</p>
-                  <p className="text-xs text-muted-foreground">{tutor.school}</p>
+            {/* Teaching Experience Timeline */}
+            {tutor.teachingExperience.length > 0 && (
+              <div className="mb-6">
+                <h3 className="font-semibold text-sm mb-4">Professional Teaching Positions</h3>
+                <div className="space-y-4">
+                  {tutor.teachingExperience.map((exp: any, idx: number) => (
+                    <div key={idx} className="flex gap-4">
+                      <div className="flex flex-col items-center">
+                        <div className="w-3 h-3 rounded-full bg-primary shrink-0" />
+                        {idx < tutor.teachingExperience.length - 1 && (
+                          <div className="w-px h-full bg-border mt-1" />
+                        )}
+                      </div>
+                      <div className="flex-1 pb-4">
+                        <div className="flex items-start justify-between gap-4 mb-1">
+                          <h4 className="font-semibold text-sm">{exp.institution}</h4>
+                          <Badge variant="outline" className="text-xs shrink-0">
+                            {exp.years} {exp.years === 1 ? 'year' : 'years'}
+                          </Badge>
+                        </div>
+                        <p className="text-sm text-muted-foreground">{exp.role}</p>
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
-            </CardContent>
-          </Card>
-        </div>
+            )}
+
+            {/* Tutoring Experience */}
+            {tutor.tutoringExperience && (
+              <div>
+                <h3 className="font-semibold text-sm mb-3">Private Tutoring Experience</h3>
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  {tutor.tutoringExperience}
+                </p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Education */}
+        <Card className="mb-6 border-border/50">
+          <CardContent className="p-6">
+            <div className="flex items-center gap-2 mb-4">
+              <GraduationCap className="w-5 h-5 text-primary" />
+              <h2 className="font-bold text-lg">Education</h2>
+            </div>
+            <div className="space-y-3">
+              <div>
+                <p className="font-semibold text-sm mb-1">{tutor.education}</p>
+                <p className="text-sm text-muted-foreground">{tutor.school}</p>
+                {tutor.graduationYear && (
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Graduated: {tutor.graduationYear}
+                  </p>
+                )}
+              </div>
+            </div>
+          </CardContent>
+        </Card>
 
         {/* About / Bio */}
         <Card className="mb-6 border-border/50">
