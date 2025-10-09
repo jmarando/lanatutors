@@ -72,7 +72,7 @@ const TutorDashboard = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-[image:var(--gradient-page)]">
       <Navigation />
 
       {/* Dashboard Header with Actions */}

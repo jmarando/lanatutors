@@ -149,7 +149,7 @@ const TutorProfile = () => {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-secondary/20 flex items-center justify-center">
+      <div className="min-h-screen bg-[image:var(--gradient-page)] flex items-center justify-center">
         <p>Loading...</p>
       </div>
     );
@@ -157,14 +157,14 @@ const TutorProfile = () => {
 
   if (!tutor) {
     return (
-      <div className="min-h-screen bg-secondary/20 flex items-center justify-center">
+      <div className="min-h-screen bg-[image:var(--gradient-page)] flex items-center justify-center">
         <p>Tutor not found</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-secondary/20">
+    <div className="min-h-screen bg-[image:var(--gradient-page)]">
       <div className="max-w-5xl mx-auto px-6 py-12">
         {/* Header Card */}
         <Card className="mb-6 border-border/50">

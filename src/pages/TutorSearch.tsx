@@ -112,11 +112,11 @@ const TutorSearch = () => {
   }
 
   return (
-    <div className="min-h-screen bg-secondary/20">
+    <div className="min-h-screen bg-[image:var(--gradient-page)]">
       <div className="max-w-7xl mx-auto px-6 py-12">
         {/* Header */}
         <div className="text-center mb-10">
-          <h1 className="text-5xl font-bold mb-3">Find Your Perfect Tutor</h1>
+          <h1 className="text-5xl font-bold mb-3">Find Your Tutor</h1>
           <p className="text-muted-foreground text-lg">
             Search our network of expert tutors to find the right one for you.
           </p>

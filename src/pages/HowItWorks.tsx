@@ -102,9 +102,9 @@ const HowItWorks = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-[image:var(--gradient-page)]">
       {/* Hero Section */}
-      <section className="bg-gradient-to-b from-primary/10 to-background">
+      <section>
         <div className="max-w-7xl mx-auto px-6 py-16 text-center">
           <h1 className="text-4xl md:text-5xl font-bold mb-6">
             How ElimuConnect Works

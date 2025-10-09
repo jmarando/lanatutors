@@ -187,7 +187,7 @@ Continue practicing the concepts learned today and reach out if you need clarifi
   `;
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-[image:var(--gradient-page)]">
       <div className="max-w-7xl mx-auto px-6 py-8">
         {/* Welcome Section */}
         <div className="mb-8">

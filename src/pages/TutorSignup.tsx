@@ -292,7 +292,7 @@ const TutorSignup = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-secondary to-background flex items-center justify-center p-6">
+    <div className="min-h-screen bg-[image:var(--gradient-page)] flex items-center justify-center p-6">
       <div className="w-full max-w-2xl">
         <Link to="/" className="flex items-center justify-center gap-2 mb-8">
           <Award className="w-10 h-10 text-primary" />

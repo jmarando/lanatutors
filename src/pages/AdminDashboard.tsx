@@ -160,7 +160,7 @@ const AdminDashboard = () => {
   };
 
   if (loading) {
-    return <div className="min-h-screen bg-secondary/20 flex items-center justify-center">Loading...</div>;
+    return <div className="min-h-screen bg-[image:var(--gradient-page)] flex items-center justify-center">Loading...</div>;
   }
 
   if (!isAdmin) {
@@ -168,7 +168,7 @@ const AdminDashboard = () => {
   }
 
   return (
-    <div className="min-h-screen bg-secondary/20">
+    <div className="min-h-screen bg-[image:var(--gradient-page)]">
       <div className="max-w-7xl mx-auto px-6 py-12">
         <h1 className="text-4xl font-bold mb-8">Admin Dashboard</h1>
 

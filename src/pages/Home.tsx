@@ -115,15 +115,15 @@ const Home = () => {
   ];
 
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen bg-[image:var(--gradient-page)]">
       {/* Hero Section */}
-      <section className="bg-background">
+      <section>
         <div className="max-w-7xl mx-auto px-6 py-12 md:py-20">
           <div className="grid md:grid-cols-2 gap-12 items-center">
             <div>
               <h1 className="text-4xl md:text-5xl font-bold mb-6 leading-tight">
-                Safe, Quality Online Tutoring with{" "}
-                <span className="text-primary">ElimuConnect</span>
+                Expert Online Tutoring.<br />
+                <span className="text-primary">Safe. Verified. Kenyan.</span>
               </h1>
               <p className="text-lg text-muted-foreground mb-8 leading-relaxed">
                 Learn from verified tutors from Kenya's top schools, from the safety and comfort of your home. No stranger visits. Rigorous tutor vetting. Seamless M-Pesa payments. All CBC and IGCSE subjects covered.
@@ -176,7 +176,7 @@ const Home = () => {
       </section>
 
       {/* How It Works */}
-      <section id="how-it-works" className="bg-background">
+      <section id="how-it-works">
         <div className="max-w-7xl mx-auto px-6 py-16">
           <h2 className="text-3xl font-bold text-center mb-12">How It Works</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
@@ -234,7 +234,7 @@ const Home = () => {
       </section>
 
       {/* Why Choose Us / About */}
-      <section id="about" className="bg-background">
+      <section id="about">
         <div className="max-w-7xl mx-auto px-6 py-16">
           <h2 className="text-3xl font-bold text-center mb-12">Why Choose ElimuConnect</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
