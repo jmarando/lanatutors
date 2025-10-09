@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -16,16 +16,23 @@ import {
   Video, 
   Sparkles,
   MessageCircle,
-  PlayCircle
+  PlayCircle,
+  Lock
 } from "lucide-react";
 import { Link } from "react-router-dom";
-import { useToast } from "@/components/ui/use-toast";
+import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { RecordingPayment } from "@/components/RecordingPayment";
 
 const StudentDashboard = () => {
   const { toast } = useToast();
   const [summaryDialogOpen, setSummaryDialogOpen] = useState(false);
   const [recordingDialogOpen, setRecordingDialogOpen] = useState(false);
+  const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
   const [selectedClass, setSelectedClass] = useState<string>("");
+  const [selectedClassId, setSelectedClassId] = useState<string>("");
+  const [hasAccess, setHasAccess] = useState(false);
+  const [userId, setUserId] = useState<string | null>(null);
 
   const upcomingClass = {
     subject: "Mathematics: Algebra II",
@@ -35,20 +42,33 @@ const StudentDashboard = () => {
     daysUntil: "in 1 day"
   };
 
+  useEffect(() => {
+    const getUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        setUserId(user.id);
+      }
+    };
+    getUser();
+  }, []);
+
   const pastClasses = [
     { 
+      id: "class-1",
       subject: "Classical Mechanics", 
       date: "12th Oct, 2023", 
       tutor: "Sarah Wanjiru", 
       hasRecording: true 
     },
     { 
+      id: "class-2",
       subject: "Stoichiometry", 
       date: "10th Oct, 2023", 
       tutor: "David Kamau", 
       hasRecording: true 
     },
     { 
+      id: "class-3",
       subject: "Fasihi Simulizi", 
       date: "8th Oct, 2023", 
       tutor: "Jane Muthoni", 
@@ -93,9 +113,52 @@ const StudentDashboard = () => {
     setSummaryDialogOpen(true);
   };
 
-  const handleWatchRecording = (subject: string) => {
+  const handleWatchRecording = async (subject: string, classId: string) => {
     setSelectedClass(subject);
+    setSelectedClassId(classId);
+
+    // Check if user has access
+    if (!userId) {
+      toast({
+        title: "Please log in",
+        description: "You need to be logged in to access recordings",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const { data, error } = await supabase.rpc('has_recording_access', {
+      _user_id: userId,
+      _class_id: classId
+    });
+
+    if (error) {
+      console.error('Error checking access:', error);
+      toast({
+        title: "Error",
+        description: "Failed to check recording access",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setHasAccess(data || false);
+    
+    if (data) {
+      setRecordingDialogOpen(true);
+    } else {
+      setPaymentDialogOpen(true);
+    }
+  };
+
+  const handlePaymentSuccess = () => {
+    setPaymentDialogOpen(false);
+    setHasAccess(true);
     setRecordingDialogOpen(true);
+    toast({
+      title: "Payment Successful",
+      description: "You now have access to this recording!",
+    });
   };
 
   const dummySummary = `
@@ -201,8 +264,9 @@ Continue practicing the concepts learned today and reach out if you need clarifi
                             variant="outline" 
                             size="sm"
                             className="flex-1"
-                            onClick={() => handleWatchRecording(classItem.subject)}
+                            onClick={() => handleWatchRecording(classItem.subject, classItem.id)}
                           >
+                            <Lock className="w-3 h-3 mr-1" />
                             Recording
                           </Button>
                         )}
@@ -242,8 +306,9 @@ Continue practicing the concepts learned today and reach out if you need clarifi
                                 <Button 
                                   variant="outline" 
                                   size="sm"
-                                  onClick={() => handleWatchRecording(classItem.subject)}
+                                  onClick={() => handleWatchRecording(classItem.subject, classItem.id)}
                                 >
+                                  <Lock className="w-3 h-3 mr-1" />
                                   Recording
                                 </Button>
                               )}
@@ -330,6 +395,17 @@ Continue practicing the concepts learned today and reach out if you need clarifi
                 Share Summary
               </Button>
             </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Payment Dialog */}
+        <Dialog open={paymentDialogOpen} onOpenChange={setPaymentDialogOpen}>
+          <DialogContent className="max-w-md">
+            <RecordingPayment 
+              classId={selectedClassId}
+              className={selectedClass}
+              onSuccess={handlePaymentSuccess}
+            />
           </DialogContent>
         </Dialog>
 
