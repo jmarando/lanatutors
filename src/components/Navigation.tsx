@@ -9,21 +9,41 @@ import { User } from "@supabase/supabase-js";
 const Navigation = () => {
   const [open, setOpen] = useState(false);
   const [user, setUser] = useState<User | null>(null);
+  const [isAdmin, setIsAdmin] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
     // Get initial session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setUser(session?.user ?? null);
+      if (session?.user) {
+        checkAdminStatus(session.user.id);
+      }
     });
 
     // Listen for auth changes
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setUser(session?.user ?? null);
+      if (session?.user) {
+        checkAdminStatus(session.user.id);
+      } else {
+        setIsAdmin(false);
+      }
     });
 
     return () => subscription.unsubscribe();
   }, []);
+
+  const checkAdminStatus = async (userId: string) => {
+    const { data } = await supabase
+      .from('user_roles')
+      .select('role')
+      .eq('user_id', userId)
+      .eq('role', 'admin')
+      .single();
+    
+    setIsAdmin(!!data);
+  };
 
   const handleSignOut = async () => {
     await supabase.auth.signOut();
@@ -58,6 +78,11 @@ const Navigation = () => {
               {link.label}
             </Link>
           ))}
+          {isAdmin && (
+            <Link to="/admin" className="text-sm font-medium hover:text-primary transition-colors">
+              Admin
+            </Link>
+          )}
           {user ? (
             <>
               <span className="text-sm text-muted-foreground">{user.email}</span>
@@ -97,6 +122,11 @@ const Navigation = () => {
                   {link.label}
                 </Link>
               ))}
+              {isAdmin && (
+                <Link to="/admin" onClick={() => setOpen(false)} className="text-lg font-medium hover:text-primary transition-colors">
+                  Admin Dashboard
+                </Link>
+              )}
               {user ? (
                 <>
                   <span className="text-sm text-muted-foreground">{user.email}</span>
