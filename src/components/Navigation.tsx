@@ -9,8 +9,8 @@ const Navigation = () => {
 
   const navLinks = [
     { to: "/tutors", label: "Find Tutors" },
-    { to: "/#how-it-works", label: "How It Works" },
-    { to: "/#about", label: "About Us" },
+    { to: "/how-it-works", label: "How It Works" },
+    { to: "/about", label: "About Us" },
     { to: "/student/dashboard", label: "Student Dashboard" },
     { to: "/tutor/dashboard", label: "Tutor Dashboard" },
   ];
