@@ -6,29 +6,56 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Award } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 
 const Login = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
 
-  const handleStudentLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent, userType: "student" | "tutor") => {
     e.preventDefault();
     setIsLoading(true);
-    // Simulate login
-    setTimeout(() => {
-      setIsLoading(false);
-      navigate("/student/dashboard");
-    }, 1000);
-  };
 
-  const handleTutorLogin = (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-    // Simulate login
-    setTimeout(() => {
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
+
+      if (error) throw error;
+
+      // Check user role
+      const { data: roleData } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", data.user.id)
+        .single();
+
+      if (roleData?.role === "student") {
+        navigate("/student/dashboard");
+      } else if (roleData?.role === "tutor") {
+        navigate("/tutor/dashboard");
+      } else {
+        navigate("/");
+      }
+
+      toast({
+        title: "Welcome back!",
+        description: "You've successfully signed in"
+      });
+    } catch (error: any) {
+      toast({
+        title: "Login failed",
+        description: error.message,
+        variant: "destructive"
+      });
+    } finally {
       setIsLoading(false);
-      navigate("/tutor/dashboard");
-    }, 1000);
+    }
   };
 
   return (
@@ -52,13 +79,15 @@ const Login = () => {
               </TabsList>
 
               <TabsContent value="student">
-                <form onSubmit={handleStudentLogin} className="space-y-4">
+                <form onSubmit={(e) => handleLogin(e, "student")} className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="student-email">Email</Label>
                     <Input
                       id="student-email"
                       type="email"
                       placeholder="student@example.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
                       required
                     />
                   </div>
@@ -68,6 +97,8 @@ const Login = () => {
                       id="student-password"
                       type="password"
                       placeholder="Enter your password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
                       required
                     />
                   </div>
@@ -76,7 +107,7 @@ const Login = () => {
                   </Button>
                   <p className="text-sm text-center text-muted-foreground">
                     Don't have an account?{" "}
-                    <Link to="/signup" className="text-primary hover:underline">
+                    <Link to="/student-signup" className="text-primary hover:underline">
                       Sign up
                     </Link>
                   </p>
@@ -84,13 +115,15 @@ const Login = () => {
               </TabsContent>
 
               <TabsContent value="tutor">
-                <form onSubmit={handleTutorLogin} className="space-y-4">
+                <form onSubmit={(e) => handleLogin(e, "tutor")} className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="tutor-email">Email</Label>
                     <Input
                       id="tutor-email"
                       type="email"
                       placeholder="tutor@example.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
                       required
                     />
                   </div>
@@ -100,6 +133,8 @@ const Login = () => {
                       id="tutor-password"
                       type="password"
                       placeholder="Enter your password"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
                       required
                     />
                   </div>

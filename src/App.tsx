@@ -10,6 +10,8 @@ import AboutUs from "./pages/AboutUs";
 import TutorSearch from "./pages/TutorSearch";
 import TutorProfile from "./pages/TutorProfile";
 import Login from "./pages/Login";
+import StudentSignup from "./pages/StudentSignup";
+import TutorSignup from "./pages/TutorSignup";
 import StudentDashboard from "./pages/StudentDashboard";
 import TutorDashboard from "./pages/TutorDashboard";
 import NotFound from "./pages/NotFound";
@@ -31,6 +33,8 @@ const App = () => {
             <Route path="/tutors" element={<TutorSearch />} />
             <Route path="/tutors/:id" element={<TutorProfile />} />
             <Route path="/login" element={<Login />} />
+            <Route path="/student-signup" element={<StudentSignup />} />
+            <Route path="/tutor-signup" element={<TutorSignup />} />
             <Route path="/student/dashboard" element={<StudentDashboard />} />
             <Route path="/tutor/dashboard" element={<TutorDashboard />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
