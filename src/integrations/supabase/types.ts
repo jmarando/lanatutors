@@ -280,6 +280,7 @@ export type Database = {
           id: string
           phone_number: string
           status: string
+          tsc_number: string | null
           updated_at: string
           user_id: string | null
           years_of_experience: number
@@ -295,6 +296,7 @@ export type Database = {
           id?: string
           phone_number: string
           status?: string
+          tsc_number?: string | null
           updated_at?: string
           user_id?: string | null
           years_of_experience: number
@@ -310,6 +312,7 @@ export type Database = {
           id?: string
           phone_number?: string
           status?: string
+          tsc_number?: string | null
           updated_at?: string
           user_id?: string | null
           years_of_experience?: number

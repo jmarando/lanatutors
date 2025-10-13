@@ -88,6 +88,7 @@ const BecomeATutor = () => {
     phoneNumber: "",
     currentSchool: "",
     yearsOfExperience: "",
+    tscNumber: "",
   });
 
   const handleCvChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -170,6 +171,7 @@ const BecomeATutor = () => {
           phone_number: phoneValidation.normalized,
           current_school: formData.currentSchool,
           years_of_experience: parseInt(formData.yearsOfExperience),
+          tsc_number: formData.tscNumber,
           cv_url: cvUrl,
           agreed_to_terms: agreedToTerms,
           status: 'pending'
@@ -366,6 +368,17 @@ const BecomeATutor = () => {
                         required
                       />
                     </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="tscNumber">TSC Number *</Label>
+                    <Input
+                      id="tscNumber"
+                      placeholder="Teachers Service Commission number"
+                      value={formData.tscNumber}
+                      onChange={(e) => setFormData({ ...formData, tscNumber: e.target.value })}
+                      required
+                    />
                   </div>
 
                   <div className="space-y-2">
