@@ -434,7 +434,7 @@ const BecomeATutor = () => {
                 <div>
                   <h3 className="font-semibold text-2xl mb-2">Application Submitted!</h3>
                   <p className="text-muted-foreground max-w-md mx-auto">
-                    Thank you for applying to become an ElimuConnect tutor. Our team will review your application and contact you within 3-5 business days.
+                    Thank you for applying to become an ElimuConnect tutor. Our team will review your application and contact you within 3-5 business days. If you pass the initial screening, we'll be in touch to schedule an interview.
                   </p>
                 </div>
 
