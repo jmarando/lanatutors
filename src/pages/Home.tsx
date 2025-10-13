@@ -212,6 +212,32 @@ const Home = () => {
         </div>
       </section>
 
+      {/* CTA Section - Between Services and How It Works */}
+      <section className="py-16 px-6">
+        <div className="max-w-4xl mx-auto">
+          <Card className="bg-gradient-to-r from-primary to-primary/90 text-primary-foreground border-0">
+            <CardContent className="p-10 text-center">
+              <h2 className="text-3xl font-bold mb-3">Ready to Get Started?</h2>
+              <p className="text-lg mb-6 opacity-90">
+                Book a free 30-minute consultation or browse our verified tutors
+              </p>
+              <div className="flex flex-wrap gap-4 justify-center">
+                <Link to="/book-consultation">
+                  <Button size="lg" variant="secondary" className="text-lg px-8 shadow-lg">
+                    Book Free Consultation
+                  </Button>
+                </Link>
+                <Link to="/tutors">
+                  <Button size="lg" variant="outline" className="text-lg px-8 shadow-lg bg-white/10 hover:bg-white/20 text-white border-white/30">
+                    Browse Tutors
+                  </Button>
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </section>
+
       {/* How It Works Section */}
       <section className="py-20 px-6">
         <div className="max-w-6xl mx-auto">
