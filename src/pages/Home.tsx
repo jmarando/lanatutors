@@ -122,7 +122,7 @@ const Home = () => {
           <div className="grid md:grid-cols-2 gap-12 items-center">
             <div>
               <h1 className="text-3xl md:text-5xl font-bold mb-6 leading-tight">
-                <span className="block whitespace-nowrap">Expert Online Tutoring.</span>
+                <span className="block whitespace-nowrap">Expert Tutoring.</span>
                 <span className="block whitespace-nowrap text-primary">Safe. Verified. Kenyan.</span>
               </h1>
               <p className="text-lg text-muted-foreground mb-8 leading-relaxed">
@@ -134,9 +134,9 @@ const Home = () => {
                     Book Free Consultation
                   </Button>
                 </Link>
-                <Link to="/tutor/signup">
+                <Link to="/tutors">
                   <Button size="lg" variant="outline" className="h-14 px-8 text-lg">
-                    Become a Tutor
+                    Find Tutors
                   </Button>
                 </Link>
               </div>
