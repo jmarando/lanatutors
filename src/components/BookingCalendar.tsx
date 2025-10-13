@@ -25,6 +25,7 @@ interface BookingCalendarProps {
   studentName: string;
   hourlyRate: number;
   onBookingComplete?: () => void;
+  classType?: 'online' | 'in-person';
 }
 
 export const BookingCalendar = ({
@@ -35,6 +36,7 @@ export const BookingCalendar = ({
   studentName,
   hourlyRate,
   onBookingComplete,
+  classType = 'online',
 }: BookingCalendarProps) => {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [availableSlots, setAvailableSlots] = useState<AvailabilitySlot[]>([]);
@@ -42,6 +44,7 @@ export const BookingCalendar = ({
   const [subject, setSubject] = useState("");
   const [notes, setNotes] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
+  const [selectedClassType, setSelectedClassType] = useState<'online' | 'in-person'>(classType);
   const [loading, setLoading] = useState(false);
   const [paymentInitiated, setPaymentInitiated] = useState(false);
   const { toast } = useToast();
@@ -107,7 +110,14 @@ export const BookingCalendar = ({
         (new Date(selectedSlot.end_time).getTime() -
           new Date(selectedSlot.start_time).getTime()) /
         (1000 * 60 * 60);
-      const amount = duration * hourlyRate;
+      
+      // Calculate rate (30% more for in-person)
+      const rate = selectedClassType === 'in-person' ? hourlyRate * 1.3 : hourlyRate;
+      const totalAmount = duration * rate;
+      
+      // Deposit is 30% of total
+      const depositAmount = totalAmount * 0.3;
+      const balanceDue = totalAmount - depositAmount;
 
       // Create booking first with "pending_payment" status
       const { data: booking, error: bookingError } = await supabase
@@ -118,7 +128,10 @@ export const BookingCalendar = ({
           availability_slot_id: selectedSlot.id,
           subject: subject.trim(),
           notes: notes.trim() || null,
-          amount,
+          amount: totalAmount,
+          deposit_paid: depositAmount,
+          balance_due: balanceDue,
+          class_type: selectedClassType,
           status: "pending",
         })
         .select()
@@ -126,14 +139,14 @@ export const BookingCalendar = ({
 
       if (bookingError) throw bookingError;
 
-      // Initiate M-Pesa payment
+      // Initiate M-Pesa payment for deposit
       const { data: paymentData, error: paymentError } = await supabase.functions.invoke(
         "initiate-mpesa-payment",
         {
           body: {
             phoneNumber: `254${phoneNumber.substring(1)}`,
-            amount: Math.round(amount),
-            paymentType: "tutor_booking",
+            amount: Math.round(depositAmount),
+            paymentType: "tutor_booking_deposit",
             referenceId: booking.id,
           },
         }
@@ -147,8 +160,8 @@ export const BookingCalendar = ({
 
       setPaymentInitiated(true);
       toast({
-        title: "Payment Initiated",
-        description: "Please check your phone and enter your M-Pesa PIN to complete the payment. Your booking will be confirmed once payment is successful.",
+        title: "Deposit Payment Initiated",
+        description: `Please check your phone and pay the deposit of KES ${depositAmount.toFixed(0)}. Balance of KES ${balanceDue.toFixed(0)} due before the session.`,
       });
 
       // Poll for payment completion (simplified - in production use webhooks)
@@ -180,8 +193,8 @@ export const BookingCalendar = ({
           });
 
           toast({
-            title: "Booking confirmed!",
-            description: "Payment successful. You'll receive a confirmation email shortly.",
+            title: "Deposit confirmed!",
+            description: `Deposit payment successful. Balance of KES ${balanceDue.toFixed(0)} due before the session. You'll receive a confirmation email shortly.`,
           });
 
           setSubject("");
@@ -189,6 +202,7 @@ export const BookingCalendar = ({
           setPhoneNumber("");
           setSelectedSlot(null);
           setPaymentInitiated(false);
+          setSelectedClassType('online');
           fetchAvailableSlots();
           onBookingComplete?.();
         } else if (attempts >= 24) { // 2 minutes (24 * 5 seconds)
@@ -255,6 +269,28 @@ export const BookingCalendar = ({
           {selectedSlot && (
             <div className="space-y-4 pt-4 border-t">
               <div>
+                <Label className="text-sm font-medium mb-2 block">Class Type *</Label>
+                <div className="grid grid-cols-2 gap-2">
+                  <Button
+                    type="button"
+                    variant={selectedClassType === 'online' ? 'default' : 'outline'}
+                    onClick={() => setSelectedClassType('online')}
+                    disabled={paymentInitiated}
+                  >
+                    Online
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={selectedClassType === 'in-person' ? 'default' : 'outline'}
+                    onClick={() => setSelectedClassType('in-person')}
+                    disabled={paymentInitiated}
+                  >
+                    In-Person (+30%)
+                  </Button>
+                </div>
+              </div>
+
+              <div>
                 <Label className="text-sm font-medium mb-2 block">Subject *</Label>
                 <Input
                   placeholder="e.g., Mathematics - Algebra"
@@ -290,13 +326,25 @@ export const BookingCalendar = ({
                 </p>
               </div>
 
-              <div className="text-sm space-y-1">
-                <p className="font-medium">Total Amount: KES {
-                  (((new Date(selectedSlot.end_time).getTime() - new Date(selectedSlot.start_time).getTime()) / (1000 * 60 * 60)) * hourlyRate).toFixed(2)
-                }</p>
-                {paymentInitiated && (
-                  <p className="text-amber-600">⏳ Waiting for M-Pesa payment confirmation...</p>
-                )}
+              <div className="text-sm space-y-1 bg-muted/50 p-3 rounded">
+                {(() => {
+                  const duration = (new Date(selectedSlot.end_time).getTime() - new Date(selectedSlot.start_time).getTime()) / (1000 * 60 * 60);
+                  const rate = selectedClassType === 'in-person' ? hourlyRate * 1.3 : hourlyRate;
+                  const total = duration * rate;
+                  const deposit = total * 0.3;
+                  const balance = total - deposit;
+                  
+                  return (
+                    <>
+                      <p className="font-medium">Total Amount: KES {total.toFixed(2)} {selectedClassType === 'in-person' && <span className="text-xs">(+30% for in-person)</span>}</p>
+                      <p className="text-primary font-semibold">Deposit Now: KES {deposit.toFixed(2)} (30%)</p>
+                      <p className="text-muted-foreground text-xs">Balance Due: KES {balance.toFixed(2)} (before session)</p>
+                      {paymentInitiated && (
+                        <p className="text-amber-600">⏳ Waiting for M-Pesa deposit confirmation...</p>
+                      )}
+                    </>
+                  );
+                })()}
               </div>
 
               <Button 
@@ -312,15 +360,16 @@ export const BookingCalendar = ({
                 ) : paymentInitiated ? (
                   "Waiting for Payment..."
                 ) : (
-                  "Pay & Confirm Booking"
+                  "Pay Deposit & Confirm Booking"
                 )}
               </Button>
 
               {!paymentInitiated && (
                 <div className="text-xs text-muted-foreground space-y-1">
+                  <p>• Pay only 30% deposit now to secure your booking</p>
+                  <p>• Balance due before the session starts</p>
                   <p>• You will receive an M-Pesa prompt on your phone</p>
-                  <p>• Enter your M-Pesa PIN to complete the payment</p>
-                  <p>• Booking is confirmed after successful payment</p>
+                  <p>• Enter your M-Pesa PIN to complete the deposit</p>
                 </div>
               )}
             </div>

@@ -214,8 +214,13 @@ const TutorSearch = () => {
                       <span className="text-xs text-muted-foreground">({tutor.reviews})</span>
                     </div>
                     
-                    <div className="text-lg font-bold text-foreground">
-                      KES {tutor.hourlyRate.toLocaleString()}<span className="text-xs font-normal text-muted-foreground">/hr</span>
+                    <div className="text-sm space-y-0.5">
+                      <div className="font-bold text-foreground">
+                        Online: KES {tutor.hourlyRate.toLocaleString()}<span className="text-xs font-normal">/hr</span>
+                      </div>
+                      <div className="text-xs text-muted-foreground">
+                        In-Person: KES {Math.round(tutor.hourlyRate * 1.3).toLocaleString()}/hr
+                      </div>
                     </div>
                   </div>
                 </div>

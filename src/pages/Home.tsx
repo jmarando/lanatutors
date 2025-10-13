@@ -61,13 +61,13 @@ const Home = () => {
     },
     {
       icon: Lock,
-      title: "Safe & Convenient Online Learning",
-      description: "No travel required - learn from the comfort of home. Parents can monitor sessions and ensure student safety. All sessions are conducted through secure Google Meet video calls. No stranger in your home, no commute in traffic, just quality education delivered safely online."
+      title: "Safe & Flexible Learning",
+      description: "Choose between online sessions from home or in-person tutoring. Parents can monitor sessions and ensure student safety. Online sessions use secure video calls. In-person sessions feature thoroughly vetted tutors. Quality education delivered your way."
     },
     {
       icon: Smartphone,
-      title: "Simple M-Pesa Payments",
-      description: "Pay easily using M-Pesa, Kenya's most trusted mobile money platform. No credit cards or bank accounts needed. Transparent pricing with no hidden fees. Get instant payment confirmation and digital receipts. Your financial information stays secure with M-Pesa's industry-leading security."
+      title: "Flexible Payment Options",
+      description: "Pay using M-Pesa or card payments. Transparent pricing with no hidden fees. Our deposit system ensures commitment while keeping barriers low. Get instant payment confirmation and digital receipts. Your financial information stays secure."
     },
     {
       icon: GraduationCap,
@@ -126,17 +126,17 @@ const Home = () => {
                 <span className="block whitespace-nowrap text-primary">Safe. Verified. Kenyan.</span>
               </h1>
               <p className="text-lg text-muted-foreground mb-8 leading-relaxed">
-                Learn from verified tutors from Kenya's top schools, from the comfort of your home. 100% online. Rigorously vetted educators. Seamless M-Pesa payments. All CBC and IGCSE subjects covered.
+                Learn from verified tutors from Kenya's top schools. Choose between online or in-person sessions. Rigorously vetted educators. Seamless payments via M-Pesa or Card. All CBC and IGCSE subjects covered.
               </p>
               <div className="flex flex-wrap gap-4">
-                <Link to="/tutors">
-                  <Button size="lg" className="text-lg px-8 shadow-lg">
-                    Find a Tutor
+                <Link to="/book-consultation">
+                  <Button size="lg" className="h-14 px-8 text-lg">
+                    Book Free Consultation
                   </Button>
                 </Link>
-                <Link to="/student-signup">
-                  <Button size="lg" variant="secondary" className="text-lg px-8 shadow-lg">
-                    Get Started
+                <Link to="/tutor/signup">
+                  <Button size="lg" variant="outline" className="h-14 px-8 text-lg">
+                    Become a Tutor
                   </Button>
                 </Link>
               </div>
@@ -175,23 +175,125 @@ const Home = () => {
         </div>
       </section>
 
-      {/* How It Works */}
-      <section id="how-it-works">
-        <div className="max-w-7xl mx-auto px-6 py-16">
-          <h2 className="text-3xl font-bold text-center mb-12">How It Works</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
-            {steps.map((step, index) => {
-              const Icon = step.icon;
-              return (
-                <div key={index} className="text-center">
-                  <div className="inline-flex items-center justify-center w-14 h-14 rounded-full bg-primary/10 text-primary mb-3">
-                    <Icon className="w-7 h-7" />
-                  </div>
-                  <h3 className="text-xl font-bold mb-2">{step.title}</h3>
-                  <p className="text-sm text-muted-foreground">{step.description}</p>
+      {/* Services Section */}
+      <section className="py-20 px-6 bg-muted/30">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-12">
+            <h2 className="text-4xl font-bold mb-4">Our Services</h2>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+              Comprehensive tutoring solutions tailored to your learning needs
+            </p>
+          </div>
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {[
+              {
+                title: "After School Tuition",
+                description: "Regular sessions to reinforce classroom learning and build strong fundamentals",
+              },
+              {
+                title: "Homework Assistance",
+                description: "Expert guidance to help students complete assignments with confidence",
+              },
+              {
+                title: "Exam Revision & Prep",
+                description: "Intensive preparation for KCSE, IGCSE, and other major examinations",
+              },
+              {
+                title: "Holiday Tuition",
+                description: "Catch-up programs and advanced learning during school breaks",
+              },
+            ].map((service, index) => (
+              <Card key={index} className="text-center p-6 hover:shadow-lg transition-shadow">
+                <h3 className="text-xl font-bold mb-3">{service.title}</h3>
+                <p className="text-sm text-muted-foreground">{service.description}</p>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* How It Works Section */}
+      <section className="py-20 px-6">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-12">
+            <h2 className="text-4xl font-bold mb-4">How It Works</h2>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+              Get started in three simple steps
+            </p>
+          </div>
+          <div className="grid md:grid-cols-3 gap-8">
+            {[
+              {
+                step: "1",
+                title: "Book a Consultation",
+                description: "Schedule a free 30-minute consultation with an ElimuConnect consultant to discuss your learning goals",
+              },
+              {
+                step: "2",
+                title: "Get Matched",
+                description: "We'll match you with the perfect tutor based on your needs, curriculum, and learning style",
+              },
+              {
+                step: "3",
+                title: "Start Learning",
+                description: "Choose online or in-person sessions, pay securely, and begin your learning journey",
+              },
+            ].map((item, index) => (
+              <div key={index} className="text-center">
+                <div className="w-16 h-16 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-2xl font-bold mx-auto mb-4">
+                  {item.step}
                 </div>
-              );
-            })}
+                <h3 className="text-xl font-bold mb-3">{item.title}</h3>
+                <p className="text-muted-foreground">{item.description}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* Reviews Section */}
+      <section className="py-20 px-6 bg-muted/30">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-12">
+            <h2 className="text-4xl font-bold mb-4">What Parents & Students Say</h2>
+            <p className="text-lg text-muted-foreground">
+              Real feedback from our ElimuConnect community
+            </p>
+          </div>
+          <div className="grid md:grid-cols-3 gap-8">
+            {[
+              {
+                name: "Jane Wanjiru",
+                role: "Parent",
+                rating: 5,
+                comment: "My daughter's grades improved from C to A- in just 3 months! The tutors are professional and really care about the students.",
+              },
+              {
+                name: "David Omondi",
+                role: "Form 3 Student",
+                rating: 5,
+                comment: "I love that I can choose online classes. It's so convenient and I don't have to travel. My tutor makes Math actually fun!",
+              },
+              {
+                name: "Mary Kamau",
+                role: "Parent",
+                rating: 5,
+                comment: "Safe, verified tutors from top schools. The M-Pesa payment is seamless. Best decision for my son's education!",
+              },
+            ].map((review, index) => (
+              <Card key={index} className="p-6">
+                <div className="flex gap-1 mb-3">
+                  {[...Array(review.rating)].map((_, i) => (
+                    <Star key={i} className="w-4 h-4 fill-yellow-500 text-yellow-500" />
+                  ))}
+                </div>
+                <p className="text-sm text-muted-foreground mb-4 leading-relaxed">"{review.comment}"</p>
+                <div className="border-t pt-4">
+                  <p className="font-semibold text-sm">{review.name}</p>
+                  <p className="text-xs text-muted-foreground">{review.role}</p>
+                </div>
+              </Card>
+            ))}
           </div>
         </div>
       </section>
@@ -233,11 +335,16 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Why Choose Us / About */}
-      <section id="about">
-        <div className="max-w-7xl mx-auto px-6 py-16">
-          <h2 className="text-3xl font-bold text-center mb-12">Why Choose ElimuConnect</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {/* About Us Section */}
+      <section id="about" className="py-20 px-6">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-12">
+            <h2 className="text-4xl font-bold mb-4">About ElimuConnect</h2>
+            <p className="text-lg text-muted-foreground max-w-3xl mx-auto leading-relaxed">
+              ElimuConnect connects Kenyan students with the country's best educators from top institutions. Our mission is to make quality education accessible, safe, and convenient for every student, whether they prefer learning online or in-person.
+            </p>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {benefits.map((benefit, index) => {
               const Icon = benefit.icon;
               return (
@@ -281,7 +388,7 @@ const Home = () => {
                 <span className="text-xl font-bold">ElimuConnect</span>
               </div>
               <p className="text-sm text-muted-foreground">
-                Quality online tutoring for Kenyan students
+                Quality tutoring for Kenyan students - online and in-person
               </p>
             </div>
             <div>

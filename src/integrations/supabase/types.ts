@@ -18,7 +18,10 @@ export type Database = {
         Row: {
           amount: number
           availability_slot_id: string
+          balance_due: number | null
+          class_type: string | null
           created_at: string | null
+          deposit_paid: number | null
           id: string
           meeting_link: string | null
           notes: string | null
@@ -31,7 +34,10 @@ export type Database = {
         Insert: {
           amount: number
           availability_slot_id: string
+          balance_due?: number | null
+          class_type?: string | null
           created_at?: string | null
+          deposit_paid?: number | null
           id?: string
           meeting_link?: string | null
           notes?: string | null
@@ -44,7 +50,10 @@ export type Database = {
         Update: {
           amount?: number
           availability_slot_id?: string
+          balance_due?: number | null
+          class_type?: string | null
           created_at?: string | null
+          deposit_paid?: number | null
           id?: string
           meeting_link?: string | null
           notes?: string | null
@@ -63,6 +72,57 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      consultation_bookings: {
+        Row: {
+          additional_notes: string | null
+          consultation_date: string
+          consultation_time: string
+          created_at: string | null
+          email: string | null
+          grade_level: string
+          id: string
+          parent_name: string
+          phone_number: string
+          preferred_mode: string
+          status: string
+          student_name: string
+          subjects_interest: string[]
+          updated_at: string | null
+        }
+        Insert: {
+          additional_notes?: string | null
+          consultation_date: string
+          consultation_time: string
+          created_at?: string | null
+          email?: string | null
+          grade_level: string
+          id?: string
+          parent_name: string
+          phone_number: string
+          preferred_mode: string
+          status?: string
+          student_name: string
+          subjects_interest: string[]
+          updated_at?: string | null
+        }
+        Update: {
+          additional_notes?: string | null
+          consultation_date?: string
+          consultation_time?: string
+          created_at?: string | null
+          email?: string | null
+          grade_level?: string
+          id?: string
+          parent_name?: string
+          phone_number?: string
+          preferred_mode?: string
+          status?: string
+          student_name?: string
+          subjects_interest?: string[]
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       payments: {
         Row: {
