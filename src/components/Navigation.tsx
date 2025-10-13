@@ -1,10 +1,11 @@
 import { Button } from "@/components/ui/button";
-import { Award, Menu, LogOut } from "lucide-react";
+import { Menu, LogOut } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { User } from "@supabase/supabase-js";
+import logo from "@/assets/elimuconnect-logo.png";
 
 const Navigation = () => {
   const [open, setOpen] = useState(false);
@@ -63,8 +64,7 @@ const Navigation = () => {
     <nav className="border-b bg-background sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
         <Link to="/" className="flex items-center gap-2">
-          <Award className="w-8 h-8 text-primary" />
-          <span className="text-2xl font-bold">ElimuConnect</span>
+          <img src={logo} alt="ElimuConnect Logo" className="h-10" />
         </Link>
 
         {/* Desktop Navigation */}
