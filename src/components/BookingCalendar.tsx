@@ -27,6 +27,7 @@ interface BookingCalendarProps {
   hourlyRate: number;
   onBookingComplete?: () => void;
   classType?: 'online' | 'in-person';
+  isTrialSession?: boolean;
 }
 
 export const BookingCalendar = ({
@@ -38,6 +39,7 @@ export const BookingCalendar = ({
   hourlyRate,
   onBookingComplete,
   classType = 'online',
+  isTrialSession = false,
 }: BookingCalendarProps) => {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [availableSlots, setAvailableSlots] = useState<AvailabilitySlot[]>([]);
@@ -93,7 +95,8 @@ export const BookingCalendar = ({
       return;
     }
 
-    if (paymentMethod === 'mpesa' && (!phoneNumber || phoneNumber.length !== 10)) {
+    // Skip payment validation for trial sessions
+    if (!isTrialSession && paymentMethod === 'mpesa' && (!phoneNumber || phoneNumber.length !== 10)) {
       toast({
         title: "Invalid Phone Number",
         description: "Please enter a valid 10-digit M-Pesa phone number",
@@ -108,20 +111,30 @@ export const BookingCalendar = ({
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
-      const duration =
-        (new Date(selectedSlot.end_time).getTime() -
-          new Date(selectedSlot.start_time).getTime()) /
-        (1000 * 60 * 60);
+      // For trial sessions, always 30 minutes and free
+      let duration, totalAmount, depositAmount, balanceDue;
       
-      // Calculate rate (30% more for in-person)
-      const rate = selectedClassType === 'in-person' ? hourlyRate * 1.3 : hourlyRate;
-      const totalAmount = duration * rate;
-      
-      // Deposit is 30% of total
-      const depositAmount = totalAmount * 0.3;
-      const balanceDue = totalAmount - depositAmount;
+      if (isTrialSession) {
+        duration = 0.5; // 30 minutes
+        totalAmount = 0;
+        depositAmount = 0;
+        balanceDue = 0;
+      } else {
+        duration =
+          (new Date(selectedSlot.end_time).getTime() -
+            new Date(selectedSlot.start_time).getTime()) /
+          (1000 * 60 * 60);
+        
+        // Calculate rate (30% more for in-person)
+        const rate = selectedClassType === 'in-person' ? hourlyRate * 1.3 : hourlyRate;
+        totalAmount = duration * rate;
+        
+        // Deposit is 30% of total
+        depositAmount = totalAmount * 0.3;
+        balanceDue = totalAmount - depositAmount;
+      }
 
-      // Create booking first with "pending_payment" status
+      // Create booking with appropriate status
       const { data: booking, error: bookingError } = await supabase
         .from("bookings")
         .insert({
@@ -129,19 +142,45 @@ export const BookingCalendar = ({
           tutor_id: tutorId,
           availability_slot_id: selectedSlot.id,
           subject: subject.trim(),
-          notes: notes.trim() || null,
+          notes: isTrialSession 
+            ? `FREE TRIAL SESSION (30 min chemistry check): ${notes.trim()}` 
+            : (notes.trim() || null),
           amount: totalAmount,
           deposit_paid: depositAmount,
           balance_due: balanceDue,
           class_type: selectedClassType,
-          status: "pending",
+          status: isTrialSession ? "confirmed" : "pending",
         })
         .select()
         .single();
 
       if (bookingError) throw bookingError;
 
-      // Handle payment based on selected method
+      // For trial sessions, skip payment and send confirmation immediately
+      if (isTrialSession) {
+        // Send email notifications
+        await supabase.functions.invoke("send-booking-email", {
+          body: {
+            studentEmail,
+            studentName,
+            tutorEmail,
+            tutorName,
+            subject: `FREE TRIAL: ${subject.trim()}`,
+            startTime: selectedSlot.start_time,
+            endTime: selectedSlot.end_time,
+          },
+        });
+
+        toast({
+          title: "Trial session booked!",
+          description: "Your free 30-minute chemistry session has been confirmed. Check your email for details.",
+        });
+
+        resetForm();
+        return;
+      }
+
+      // Handle payment for regular sessions based on selected method
       if (paymentMethod === 'mpesa') {
         // Initiate M-Pesa payment for deposit
         const { data: paymentData, error: paymentError } = await supabase.functions.invoke(
@@ -276,7 +315,9 @@ export const BookingCalendar = ({
 
   return (
     <Card className="p-6">
-      <h3 className="text-lg font-semibold mb-4">Book a Session</h3>
+      <h3 className="text-lg font-semibold mb-4">
+        {isTrialSession ? "Book Free Trial Session (30 min)" : "Book a Session"}
+      </h3>
 
       <div className="grid md:grid-cols-2 gap-6">
         <div>
@@ -314,49 +355,51 @@ export const BookingCalendar = ({
 
           {selectedSlot && (
             <div className="space-y-4 pt-4 border-t">
-              <div>
-                <Label className="text-sm font-medium mb-2 block">Class Type *</Label>
-                <div className="grid grid-cols-2 gap-3">
-                  <button
-                    type="button"
-                    className={`p-4 rounded-lg border-2 transition-all text-left ${
-                      selectedClassType === 'online' 
-                        ? 'border-primary bg-primary/5' 
-                        : 'border-border hover:border-primary/50'
-                    } ${paymentInitiated ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
-                    onClick={() => !paymentInitiated && setSelectedClassType('online')}
-                    disabled={paymentInitiated}
-                  >
-                    <div className="font-semibold mb-1">
-                      Online - KES {hourlyRate}/hr
-                    </div>
-                    <ul className="text-xs text-muted-foreground space-y-1">
-                      <li>✓ Session recordings</li>
-                      <li>✓ AI transcripts</li>
-                      <li>✓ Virtual whiteboard</li>
-                    </ul>
-                  </button>
-                  <button
-                    type="button"
-                    className={`p-4 rounded-lg border-2 transition-all text-left ${
-                      selectedClassType === 'in-person' 
-                        ? 'border-primary bg-primary/5' 
-                        : 'border-border hover:border-primary/50'
-                    } ${paymentInitiated ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
-                    onClick={() => !paymentInitiated && setSelectedClassType('in-person')}
-                    disabled={paymentInitiated}
-                  >
-                    <div className="font-semibold mb-1">
-                      In-Person - KES {(hourlyRate * 1.3).toFixed(0)}/hr
-                    </div>
-                    <ul className="text-xs text-muted-foreground space-y-1">
-                      <li>✓ Face-to-face learning</li>
-                      <li>✓ Hands-on guidance</li>
-                      <li>✓ Physical materials</li>
-                    </ul>
-                  </button>
+              {!isTrialSession && (
+                <div>
+                  <Label className="text-sm font-medium mb-2 block">Class Type *</Label>
+                  <div className="grid grid-cols-2 gap-3">
+                    <button
+                      type="button"
+                      className={`p-4 rounded-lg border-2 transition-all text-left ${
+                        selectedClassType === 'online' 
+                          ? 'border-primary bg-primary/5' 
+                          : 'border-border hover:border-primary/50'
+                      } ${paymentInitiated ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                      onClick={() => !paymentInitiated && setSelectedClassType('online')}
+                      disabled={paymentInitiated}
+                    >
+                      <div className="font-semibold mb-1">
+                        Online - KES {hourlyRate}/hr
+                      </div>
+                      <ul className="text-xs text-muted-foreground space-y-1">
+                        <li>✓ Session recordings</li>
+                        <li>✓ AI transcripts</li>
+                        <li>✓ Virtual whiteboard</li>
+                      </ul>
+                    </button>
+                    <button
+                      type="button"
+                      className={`p-4 rounded-lg border-2 transition-all text-left ${
+                        selectedClassType === 'in-person' 
+                          ? 'border-primary bg-primary/5' 
+                          : 'border-border hover:border-primary/50'
+                      } ${paymentInitiated ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                      onClick={() => !paymentInitiated && setSelectedClassType('in-person')}
+                      disabled={paymentInitiated}
+                    >
+                      <div className="font-semibold mb-1">
+                        In-Person - KES {(hourlyRate * 1.3).toFixed(0)}/hr
+                      </div>
+                      <ul className="text-xs text-muted-foreground space-y-1">
+                        <li>✓ Face-to-face learning</li>
+                        <li>✓ Hands-on guidance</li>
+                        <li>✓ Physical materials</li>
+                      </ul>
+                    </button>
+                  </div>
                 </div>
-              </div>
+              )}
 
               <div>
                 <Label className="text-sm font-medium mb-2 block">Subject *</Label>
@@ -379,58 +422,71 @@ export const BookingCalendar = ({
                 />
               </div>
 
-              <div>
-                <Label className="text-sm font-medium mb-2 block">Payment Method *</Label>
-                <Tabs value={paymentMethod} onValueChange={(v) => setPaymentMethod(v as 'mpesa' | 'card')} className="w-full">
-                  <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="mpesa" className="flex items-center gap-2">
-                      <Smartphone className="w-4 h-4" />
-                      M-Pesa
-                    </TabsTrigger>
-                    <TabsTrigger value="card" className="flex items-center gap-2">
-                      <CreditCard className="w-4 h-4" />
-                      Card
-                    </TabsTrigger>
-                  </TabsList>
-                </Tabs>
-              </div>
+              {!isTrialSession && (
+                <>
+                  <div>
+                    <Label className="text-sm font-medium mb-2 block">Payment Method *</Label>
+                    <Tabs value={paymentMethod} onValueChange={(v) => setPaymentMethod(v as 'mpesa' | 'card')} className="w-full">
+                      <TabsList className="grid w-full grid-cols-2">
+                        <TabsTrigger value="mpesa" className="flex items-center gap-2">
+                          <Smartphone className="w-4 h-4" />
+                          M-Pesa
+                        </TabsTrigger>
+                        <TabsTrigger value="card" className="flex items-center gap-2">
+                          <CreditCard className="w-4 h-4" />
+                          Card
+                        </TabsTrigger>
+                      </TabsList>
+                    </Tabs>
+                  </div>
 
-              {paymentMethod === 'mpesa' && (
-                <div>
-                  <Label className="text-sm font-medium mb-2 block">M-Pesa Phone Number *</Label>
-                  <Input
-                    type="tel"
-                    placeholder="0712345678"
-                    value={phoneNumber}
-                    onChange={(e) => setPhoneNumber(e.target.value)}
-                    maxLength={10}
-                    disabled={paymentInitiated}
-                  />
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Enter your Safaricom number (format: 07XXXXXXXX)
-                  </p>
-                </div>
+                  {paymentMethod === 'mpesa' && (
+                    <div>
+                      <Label className="text-sm font-medium mb-2 block">M-Pesa Phone Number *</Label>
+                      <Input
+                        type="tel"
+                        placeholder="0712345678"
+                        value={phoneNumber}
+                        onChange={(e) => setPhoneNumber(e.target.value)}
+                        maxLength={10}
+                        disabled={paymentInitiated}
+                      />
+                      <p className="text-xs text-muted-foreground mt-1">
+                        Enter your Safaricom number (format: 07XXXXXXXX)
+                      </p>
+                    </div>
+                  )}
+                </>
               )}
 
               <div className="text-sm space-y-1 bg-muted/50 p-3 rounded">
-                {(() => {
-                  const duration = (new Date(selectedSlot.end_time).getTime() - new Date(selectedSlot.start_time).getTime()) / (1000 * 60 * 60);
-                  const rate = selectedClassType === 'in-person' ? hourlyRate * 1.3 : hourlyRate;
-                  const total = duration * rate;
-                  const deposit = total * 0.3;
-                  const balance = total - deposit;
-                  
-                  return (
-                    <>
-                      <p className="font-medium">Total Amount: KES {total.toFixed(2)} {selectedClassType === 'in-person' && <span className="text-xs">(+30% for in-person)</span>}</p>
-                      <p className="text-primary font-semibold">Deposit Now: KES {deposit.toFixed(2)} (30%)</p>
-                      <p className="text-muted-foreground text-xs">Balance Due: KES {balance.toFixed(2)} (before session)</p>
-                      {paymentInitiated && (
-                        <p className="text-amber-600">⏳ Waiting for M-Pesa deposit confirmation...</p>
-                      )}
-                    </>
-                  );
-                })()}
+                {isTrialSession ? (
+                  <div>
+                    <p className="font-semibold text-primary">🎉 FREE 30-Minute Trial Session</p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      No payment required - this is a complimentary chemistry session to check compatibility
+                    </p>
+                  </div>
+                ) : (
+                  (() => {
+                    const duration = (new Date(selectedSlot.end_time).getTime() - new Date(selectedSlot.start_time).getTime()) / (1000 * 60 * 60);
+                    const rate = selectedClassType === 'in-person' ? hourlyRate * 1.3 : hourlyRate;
+                    const total = duration * rate;
+                    const deposit = total * 0.3;
+                    const balance = total - deposit;
+                    
+                    return (
+                      <>
+                        <p className="font-medium">Total Amount: KES {total.toFixed(2)} {selectedClassType === 'in-person' && <span className="text-xs">(+30% for in-person)</span>}</p>
+                        <p className="text-primary font-semibold">Deposit Now: KES {deposit.toFixed(2)} (30%)</p>
+                        <p className="text-muted-foreground text-xs">Balance Due: KES {balance.toFixed(2)} (before session)</p>
+                        {paymentInitiated && (
+                          <p className="text-amber-600">⏳ Waiting for M-Pesa deposit confirmation...</p>
+                        )}
+                      </>
+                    );
+                  })()
+                )}
               </div>
 
               <Button 
@@ -441,10 +497,12 @@ export const BookingCalendar = ({
                 {loading ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Processing...
+                    {isTrialSession ? "Booking..." : "Processing..."}
                   </>
                 ) : paymentInitiated ? (
                   "Waiting for Payment..."
+                ) : isTrialSession ? (
+                  "Confirm Free Trial"
                 ) : (
                   <>
                     {paymentMethod === 'mpesa' ? <Smartphone className="w-4 h-4 mr-2" /> : <CreditCard className="w-4 h-4 mr-2" />}
@@ -453,7 +511,7 @@ export const BookingCalendar = ({
                 )}
               </Button>
 
-              {!paymentInitiated && (
+              {!paymentInitiated && !isTrialSession && (
                 <div className="text-xs text-muted-foreground space-y-1">
                   <p>• Pay only 30% deposit now to secure your booking</p>
                   <p>• Balance due before the session starts</p>

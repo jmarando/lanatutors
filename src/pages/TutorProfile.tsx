@@ -21,6 +21,7 @@ const TutorProfile = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [isBookingOpen, setIsBookingOpen] = useState(false);
+  const [isTrialBookingOpen, setIsTrialBookingOpen] = useState(false);
   const [tutor, setTutor] = useState<any>(null);
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -147,6 +148,15 @@ const TutorProfile = () => {
     setIsBookingOpen(true);
   };
 
+  const handleBookTrialSession = () => {
+    if (!currentUser) {
+      toast.error("Please log in to book a trial session");
+      navigate("/login");
+      return;
+    }
+    setIsTrialBookingOpen(true);
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-[image:var(--gradient-page)] flex items-center justify-center">
@@ -224,9 +234,14 @@ const TutorProfile = () => {
                 </div>
               </div>
 
-              <Button size="lg" onClick={handleBookSession} className="w-full sm:w-auto">
-                Book Session
-              </Button>
+              <div className="flex flex-col gap-2 w-full sm:w-auto">
+                <Button size="lg" onClick={handleBookSession} className="w-full sm:w-auto">
+                  Book Session
+                </Button>
+                <Button size="lg" variant="outline" onClick={handleBookTrialSession} className="w-full sm:w-auto">
+                  Book Free Trial (30 min)
+                </Button>
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -466,6 +481,31 @@ const TutorProfile = () => {
                 studentName={currentUser.name}
                 hourlyRate={tutor.hourlyRate}
                 onBookingComplete={() => setIsBookingOpen(false)}
+              />
+            )}
+          </DialogContent>
+        </Dialog>
+
+        {/* Trial Session Booking Dialog */}
+        <Dialog open={isTrialBookingOpen} onOpenChange={setIsTrialBookingOpen}>
+          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Book Free 30-Min Trial Session</DialogTitle>
+              <DialogDescription>
+                Get to know {tutor.name} with a complimentary chemistry session to check compatibility
+              </DialogDescription>
+            </DialogHeader>
+            
+            {currentUser && (
+              <BookingCalendar
+                tutorId={tutor.userId}
+                tutorName={tutor.name}
+                tutorEmail={tutor.email}
+                studentEmail={currentUser.email}
+                studentName={currentUser.name}
+                hourlyRate={0}
+                isTrialSession={true}
+                onBookingComplete={() => setIsTrialBookingOpen(false)}
               />
             )}
           </DialogContent>
