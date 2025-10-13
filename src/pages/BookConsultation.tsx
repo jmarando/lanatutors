@@ -83,8 +83,12 @@ const BookConsultation = () => {
   };
 
   const handleNext = () => {
-    if (step === 1 && !validateStep1()) return;
-    if (step === 2 && !validateStep2()) return;
+    // Step 1 is just benefits overview, no validation needed
+    // Step 2 needs validateStep1 (basic info: parent, student, phone)
+    // Step 3 needs validateStep2 (learning details: grade, subjects, mode) and validateStep3 (date & time)
+    
+    if (step === 2 && !validateStep1()) return;
+    if (step === 3 && !validateStep2()) return;
     if (step === 3 && !validateStep3()) return;
     
     if (step === 3) {
