@@ -316,23 +316,45 @@ export const BookingCalendar = ({
             <div className="space-y-4 pt-4 border-t">
               <div>
                 <Label className="text-sm font-medium mb-2 block">Class Type *</Label>
-                <div className="grid grid-cols-2 gap-2">
-                  <Button
+                <div className="grid grid-cols-2 gap-3">
+                  <button
                     type="button"
-                    variant={selectedClassType === 'online' ? 'default' : 'outline'}
-                    onClick={() => setSelectedClassType('online')}
+                    className={`p-4 rounded-lg border-2 transition-all text-left ${
+                      selectedClassType === 'online' 
+                        ? 'border-primary bg-primary/5' 
+                        : 'border-border hover:border-primary/50'
+                    } ${paymentInitiated ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                    onClick={() => !paymentInitiated && setSelectedClassType('online')}
                     disabled={paymentInitiated}
                   >
-                    Online
-                  </Button>
-                  <Button
+                    <div className="font-semibold mb-1">
+                      Online - KES {hourlyRate}/hr
+                    </div>
+                    <ul className="text-xs text-muted-foreground space-y-1">
+                      <li>✓ Session recordings</li>
+                      <li>✓ AI transcripts</li>
+                      <li>✓ Virtual whiteboard</li>
+                    </ul>
+                  </button>
+                  <button
                     type="button"
-                    variant={selectedClassType === 'in-person' ? 'default' : 'outline'}
-                    onClick={() => setSelectedClassType('in-person')}
+                    className={`p-4 rounded-lg border-2 transition-all text-left ${
+                      selectedClassType === 'in-person' 
+                        ? 'border-primary bg-primary/5' 
+                        : 'border-border hover:border-primary/50'
+                    } ${paymentInitiated ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                    onClick={() => !paymentInitiated && setSelectedClassType('in-person')}
                     disabled={paymentInitiated}
                   >
-                    In-Person (+30%)
-                  </Button>
+                    <div className="font-semibold mb-1">
+                      In-Person - KES {(hourlyRate * 1.3).toFixed(0)}/hr
+                    </div>
+                    <ul className="text-xs text-muted-foreground space-y-1">
+                      <li>✓ Face-to-face learning</li>
+                      <li>✓ Hands-on guidance</li>
+                      <li>✓ Physical materials</li>
+                    </ul>
+                  </button>
                 </div>
               </div>
 
