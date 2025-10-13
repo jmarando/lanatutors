@@ -5,10 +5,11 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { format, isSameDay } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2 } from "lucide-react";
+import { Loader2, CreditCard, Smartphone } from "lucide-react";
 
 interface AvailabilitySlot {
   id: string;
@@ -45,6 +46,7 @@ export const BookingCalendar = ({
   const [notes, setNotes] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [selectedClassType, setSelectedClassType] = useState<'online' | 'in-person'>(classType);
+  const [paymentMethod, setPaymentMethod] = useState<'mpesa' | 'card'>('mpesa');
   const [loading, setLoading] = useState(false);
   const [paymentInitiated, setPaymentInitiated] = useState(false);
   const { toast } = useToast();
@@ -91,7 +93,7 @@ export const BookingCalendar = ({
       return;
     }
 
-    if (!phoneNumber || phoneNumber.length !== 10) {
+    if (paymentMethod === 'mpesa' && (!phoneNumber || phoneNumber.length !== 10)) {
       toast({
         title: "Invalid Phone Number",
         description: "Please enter a valid 10-digit M-Pesa phone number",
@@ -139,83 +141,38 @@ export const BookingCalendar = ({
 
       if (bookingError) throw bookingError;
 
-      // Initiate M-Pesa payment for deposit
-      const { data: paymentData, error: paymentError } = await supabase.functions.invoke(
-        "initiate-mpesa-payment",
-        {
-          body: {
-            phoneNumber: `254${phoneNumber.substring(1)}`,
-            amount: Math.round(depositAmount),
-            paymentType: "tutor_booking_deposit",
-            referenceId: booking.id,
-          },
-        }
-      );
-
-      if (paymentError) {
-        // Delete the booking if payment initiation fails
-        await supabase.from("bookings").delete().eq("id", booking.id);
-        throw paymentError;
-      }
-
-      setPaymentInitiated(true);
-      toast({
-        title: "Deposit Payment Initiated",
-        description: `Please check your phone and pay the deposit of KES ${depositAmount.toFixed(0)}. Balance of KES ${balanceDue.toFixed(0)} due before the session.`,
-      });
-
-      // Poll for payment completion (simplified - in production use webhooks)
-      let attempts = 0;
-      const checkPayment = setInterval(async () => {
-        attempts++;
-        
-        // Check if booking status has been updated to "confirmed"
-        const { data: updatedBooking } = await supabase
-          .from("bookings")
-          .select("status")
-          .eq("id", booking.id)
-          .single();
-
-        if (updatedBooking?.status === "confirmed") {
-          clearInterval(checkPayment);
-          
-          // Send email notifications
-          await supabase.functions.invoke("send-booking-email", {
+      // Handle payment based on selected method
+      if (paymentMethod === 'mpesa') {
+        // Initiate M-Pesa payment for deposit
+        const { data: paymentData, error: paymentError } = await supabase.functions.invoke(
+          "initiate-mpesa-payment",
+          {
             body: {
-              studentEmail,
-              studentName,
-              tutorEmail,
-              tutorName,
-              subject: subject.trim(),
-              startTime: selectedSlot.start_time,
-              endTime: selectedSlot.end_time,
+              phoneNumber: `254${phoneNumber.substring(1)}`,
+              amount: Math.round(depositAmount),
+              paymentType: "tutor_booking_deposit",
+              referenceId: booking.id,
             },
-          });
+          }
+        );
 
-          toast({
-            title: "Deposit confirmed!",
-            description: `Deposit payment successful. Balance of KES ${balanceDue.toFixed(0)} due before the session. You'll receive a confirmation email shortly.`,
-          });
-
-          setSubject("");
-          setNotes("");
-          setPhoneNumber("");
-          setSelectedSlot(null);
-          setPaymentInitiated(false);
-          setSelectedClassType('online');
-          fetchAvailableSlots();
-          onBookingComplete?.();
-        } else if (attempts >= 24) { // 2 minutes (24 * 5 seconds)
-          clearInterval(checkPayment);
-          toast({
-            title: "Payment timeout",
-            description: "Payment is taking longer than expected. Please check your M-Pesa messages.",
-            variant: "destructive",
-          });
-          setPaymentInitiated(false);
+        if (paymentError) {
+          await supabase.from("bookings").delete().eq("id", booking.id);
+          throw paymentError;
         }
-      }, 5000);
 
+        setPaymentInitiated(true);
+        toast({
+          title: "Deposit Payment Initiated",
+          description: `Please check your phone and pay the deposit of KES ${depositAmount.toFixed(0)}. Balance of KES ${balanceDue.toFixed(0)} due before the session.`,
+        });
+
+        // Poll for payment completion
+        pollMpesaPayment(booking.id, balanceDue);
+      } else {
+        // Handle Stripe payment
+        await handleStripePayment(booking.id, depositAmount, balanceDue);
+      }
     } catch (error: any) {
       console.error("Error booking slot:", error);
       toast({
@@ -226,6 +183,95 @@ export const BookingCalendar = ({
     } finally {
       setLoading(false);
     }
+  };
+
+  const pollMpesaPayment = async (bookingId: string, balanceDue: number) => {
+    // Poll for payment completion (simplified - in production use webhooks)
+    let attempts = 0;
+    const checkPayment = setInterval(async () => {
+      attempts++;
+      
+      // Check if booking status has been updated to "confirmed"
+      const { data: updatedBooking } = await supabase
+        .from("bookings")
+        .select("status")
+        .eq("id", bookingId)
+        .single();
+
+      if (updatedBooking?.status === "confirmed") {
+        clearInterval(checkPayment);
+        
+        // Send email notifications
+        await supabase.functions.invoke("send-booking-email", {
+          body: {
+            studentEmail,
+            studentName,
+            tutorEmail,
+            tutorName,
+            subject: subject.trim(),
+            startTime: selectedSlot!.start_time,
+            endTime: selectedSlot!.end_time,
+          },
+        });
+
+        toast({
+          title: "Deposit confirmed!",
+          description: `Deposit payment successful. Balance of KES ${balanceDue.toFixed(0)} due before the session. You'll receive a confirmation email shortly.`,
+        });
+
+        resetForm();
+      } else if (attempts >= 24) { // 2 minutes (24 * 5 seconds)
+        clearInterval(checkPayment);
+        toast({
+          title: "Payment timeout",
+          description: "Payment is taking longer than expected. Please check your M-Pesa messages.",
+          variant: "destructive",
+        });
+        setPaymentInitiated(false);
+      }
+    }, 5000);
+  };
+
+  const handleStripePayment = async (bookingId: string, depositAmount: number, balanceDue: number) => {
+    try {
+      // Create Stripe checkout session
+      const { data, error } = await supabase.functions.invoke("create-stripe-checkout", {
+        body: {
+          amount: Math.round(depositAmount * 100), // Convert to cents
+          bookingId,
+          successUrl: `${window.location.origin}/student/dashboard?payment=success`,
+          cancelUrl: `${window.location.origin}/tutors/${tutorId}?payment=cancelled`,
+        },
+      });
+
+      if (error) {
+        await supabase.from("bookings").delete().eq("id", bookingId);
+        throw error;
+      }
+
+      // Redirect to Stripe Checkout
+      if (data?.url) {
+        window.location.href = data.url;
+      }
+    } catch (error: any) {
+      console.error("Stripe payment error:", error);
+      toast({
+        title: "Payment failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    }
+  };
+
+  const resetForm = () => {
+    setSubject("");
+    setNotes("");
+    setPhoneNumber("");
+    setSelectedSlot(null);
+    setPaymentInitiated(false);
+    setSelectedClassType('online');
+    fetchAvailableSlots();
+    onBookingComplete?.();
   };
 
   return (
@@ -312,19 +358,37 @@ export const BookingCalendar = ({
               </div>
 
               <div>
-                <Label className="text-sm font-medium mb-2 block">M-Pesa Phone Number *</Label>
-                <Input
-                  type="tel"
-                  placeholder="0712345678"
-                  value={phoneNumber}
-                  onChange={(e) => setPhoneNumber(e.target.value)}
-                  maxLength={10}
-                  disabled={paymentInitiated}
-                />
-                <p className="text-xs text-muted-foreground mt-1">
-                  Enter your Safaricom number (format: 07XXXXXXXX)
-                </p>
+                <Label className="text-sm font-medium mb-2 block">Payment Method *</Label>
+                <Tabs value={paymentMethod} onValueChange={(v) => setPaymentMethod(v as 'mpesa' | 'card')} className="w-full">
+                  <TabsList className="grid w-full grid-cols-2">
+                    <TabsTrigger value="mpesa" className="flex items-center gap-2">
+                      <Smartphone className="w-4 h-4" />
+                      M-Pesa
+                    </TabsTrigger>
+                    <TabsTrigger value="card" className="flex items-center gap-2">
+                      <CreditCard className="w-4 h-4" />
+                      Card
+                    </TabsTrigger>
+                  </TabsList>
+                </Tabs>
               </div>
+
+              {paymentMethod === 'mpesa' && (
+                <div>
+                  <Label className="text-sm font-medium mb-2 block">M-Pesa Phone Number *</Label>
+                  <Input
+                    type="tel"
+                    placeholder="0712345678"
+                    value={phoneNumber}
+                    onChange={(e) => setPhoneNumber(e.target.value)}
+                    maxLength={10}
+                    disabled={paymentInitiated}
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Enter your Safaricom number (format: 07XXXXXXXX)
+                  </p>
+                </div>
+              )}
 
               <div className="text-sm space-y-1 bg-muted/50 p-3 rounded">
                 {(() => {
@@ -360,7 +424,10 @@ export const BookingCalendar = ({
                 ) : paymentInitiated ? (
                   "Waiting for Payment..."
                 ) : (
-                  "Pay Deposit & Confirm Booking"
+                  <>
+                    {paymentMethod === 'mpesa' ? <Smartphone className="w-4 h-4 mr-2" /> : <CreditCard className="w-4 h-4 mr-2" />}
+                    Pay Deposit & Confirm Booking
+                  </>
                 )}
               </Button>
 
@@ -368,8 +435,14 @@ export const BookingCalendar = ({
                 <div className="text-xs text-muted-foreground space-y-1">
                   <p>• Pay only 30% deposit now to secure your booking</p>
                   <p>• Balance due before the session starts</p>
-                  <p>• You will receive an M-Pesa prompt on your phone</p>
-                  <p>• Enter your M-Pesa PIN to complete the deposit</p>
+                  {paymentMethod === 'mpesa' ? (
+                    <>
+                      <p>• You will receive an M-Pesa prompt on your phone</p>
+                      <p>• Enter your M-Pesa PIN to complete the deposit</p>
+                    </>
+                  ) : (
+                    <p>• You'll be redirected to secure Stripe checkout</p>
+                  )}
                 </div>
               )}
             </div>
