@@ -150,7 +150,7 @@ const TutorProfile = () => {
 
   const handleBookTrialSession = () => {
     if (!currentUser) {
-      toast.error("Please log in to book a trial session");
+      toast.error("Please log in to book a free consultation");
       navigate("/login");
       return;
     }
@@ -239,7 +239,7 @@ const TutorProfile = () => {
                   Book Session
                 </Button>
                 <Button size="lg" variant="outline" onClick={handleBookTrialSession} className="w-full sm:w-auto">
-                  Book Free Trial (30 min)
+                  Book Free Consultation (30 min)
                 </Button>
               </div>
             </div>
@@ -486,13 +486,13 @@ const TutorProfile = () => {
           </DialogContent>
         </Dialog>
 
-        {/* Trial Session Booking Dialog */}
+        {/* Consultation Booking Dialog */}
         <Dialog open={isTrialBookingOpen} onOpenChange={setIsTrialBookingOpen}>
           <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Book Free 30-Min Trial Session</DialogTitle>
+              <DialogTitle>Book Free Consultation</DialogTitle>
               <DialogDescription>
-                Get to know {tutor.name} with a complimentary chemistry session to check compatibility
+                Get to know {tutor.name} with a complimentary 30-minute chemistry session to check compatibility
               </DialogDescription>
             </DialogHeader>
             

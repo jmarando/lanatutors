@@ -143,7 +143,7 @@ export const BookingCalendar = ({
           availability_slot_id: selectedSlot.id,
           subject: subject.trim(),
           notes: isTrialSession 
-            ? `FREE TRIAL SESSION (30 min chemistry check): ${notes.trim()}` 
+            ? `FREE CONSULTATION (30 min chemistry check): ${notes.trim()}` 
             : (notes.trim() || null),
           amount: totalAmount,
           deposit_paid: depositAmount,
@@ -165,14 +165,14 @@ export const BookingCalendar = ({
             studentName,
             tutorEmail,
             tutorName,
-            subject: `FREE TRIAL: ${subject.trim()}`,
+            subject: `FREE CONSULTATION: ${subject.trim()}`,
             startTime: selectedSlot.start_time,
             endTime: selectedSlot.end_time,
           },
         });
 
         toast({
-          title: "Trial session booked!",
+          title: "Consultation booked!",
           description: "Your free 30-minute chemistry session has been confirmed. Check your email for details.",
         });
 
@@ -316,7 +316,7 @@ export const BookingCalendar = ({
   return (
     <Card className="p-6">
       <h3 className="text-lg font-semibold mb-4">
-        {isTrialSession ? "Book Free Trial Session (30 min)" : "Book a Session"}
+        {isTrialSession ? "Book Free Consultation (30 min)" : "Book a Session"}
       </h3>
 
       <div className="grid md:grid-cols-2 gap-6">
@@ -462,7 +462,7 @@ export const BookingCalendar = ({
               <div className="text-sm space-y-1 bg-muted/50 p-3 rounded">
                 {isTrialSession ? (
                   <div>
-                    <p className="font-semibold text-primary">🎉 FREE 30-Minute Trial Session</p>
+                    <p className="font-semibold text-primary">🎉 FREE 30-Minute Consultation</p>
                     <p className="text-xs text-muted-foreground mt-1">
                       No payment required - this is a complimentary chemistry session to check compatibility
                     </p>
