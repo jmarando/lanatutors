@@ -6,13 +6,33 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
+import { Progress } from "@/components/ui/progress";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
-import { useNavigate } from "react-router-dom";
-import { CalendarIcon, Clock } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
+import { CalendarIcon, Clock, CheckCircle, Users, GraduationCap, Target, Award } from "lucide-react";
+
+const CONSULTATION_BENEFITS = [
+  {
+    icon: Users,
+    title: "Personalized Matching",
+    description: "We'll help identify the perfect tutor based on your student's specific needs, learning style, and academic goals"
+  },
+  {
+    icon: GraduationCap,
+    title: "Expert Guidance",
+    description: "Speak with experienced education consultants who understand Kenya's education system inside and out"
+  },
+  {
+    icon: Target,
+    title: "Custom Learning Plan",
+    description: "Get a tailored roadmap for success with subject recommendations, session frequency, and progress milestones"
+  }
+];
 
 const BookConsultation = () => {
   const navigate = useNavigate();
+  const [step, setStep] = useState(1);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [selectedTime, setSelectedTime] = useState("");
   const [formData, setFormData] = useState({
@@ -32,23 +52,52 @@ const BookConsultation = () => {
     "02:00 PM", "03:00 PM", "04:00 PM", "05:00 PM", "06:00 PM"
   ];
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    if (!selectedDate || !selectedTime) {
-      toast.error("Please select a date and time");
-      return;
-    }
+  const progress = (step / 4) * 100;
 
+  const validateStep1 = () => {
+    if (!formData.parentName || !formData.studentName) {
+      toast.error("Please fill in all required fields");
+      return false;
+    }
     if (!formData.phoneNumber.match(/^254[0-9]{9}$/)) {
       toast.error("Phone number must be in format 254XXXXXXXXX");
-      return;
+      return false;
     }
+    return true;
+  };
 
+  const validateStep2 = () => {
+    if (!formData.gradeLevel || !formData.subjects || !formData.preferredMode) {
+      toast.error("Please fill in all required fields");
+      return false;
+    }
+    return true;
+  };
+
+  const validateStep3 = () => {
+    if (!selectedDate || !selectedTime) {
+      toast.error("Please select a date and time");
+      return false;
+    }
+    return true;
+  };
+
+  const handleNext = () => {
+    if (step === 1 && !validateStep1()) return;
+    if (step === 2 && !validateStep2()) return;
+    if (step === 3 && !validateStep3()) return;
+    
+    if (step === 3) {
+      handleSubmit();
+    } else {
+      setStep(step + 1);
+    }
+  };
+
+  const handleSubmit = async () => {
     setLoading(true);
 
     try {
-      // Create consultation booking
       const { error } = await supabase.from("consultation_bookings").insert({
         parent_name: formData.parentName,
         student_name: formData.studentName,
@@ -58,15 +107,14 @@ const BookConsultation = () => {
         subjects_interest: formData.subjects.split(",").map(s => s.trim()),
         preferred_mode: formData.preferredMode,
         additional_notes: formData.additionalNotes,
-        consultation_date: selectedDate.toISOString().split('T')[0],
+        consultation_date: selectedDate!.toISOString().split('T')[0],
         consultation_time: selectedTime,
         status: "pending",
       });
 
       if (error) throw error;
 
-      toast.success("Consultation booked! We'll contact you shortly to confirm.");
-      navigate("/");
+      setStep(4);
     } catch (error: any) {
       console.error("Error booking consultation:", error);
       toast.error(error.message || "Failed to book consultation");
@@ -78,156 +126,316 @@ const BookConsultation = () => {
   return (
     <div className="min-h-screen bg-[image:var(--gradient-page)] py-12 px-6">
       <div className="max-w-4xl mx-auto">
+        <Link to="/" className="flex items-center justify-center gap-2 mb-8">
+          <Award className="w-10 h-10 text-primary" />
+          <span className="text-3xl font-bold">ElimuConnect</span>
+        </Link>
+
         <Card>
-          <CardHeader className="text-center">
-            <CardTitle className="text-3xl">Book Your Free Consultation</CardTitle>
-            <CardDescription className="text-base">
-              Schedule a 30-minute session with an ElimuConnect consultant to discuss your learning goals and find the perfect tutor
+          <CardHeader>
+            <div className="mb-4">
+              <Progress value={progress} className="h-2" />
+              <p className="text-sm text-muted-foreground mt-2">Step {step} of 4</p>
+            </div>
+            <CardTitle className="text-3xl text-center">Book Your Free Consultation</CardTitle>
+            <CardDescription className="text-base text-center">
+              30-minute session with an education consultant
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Basic Information */}
-              <div className="grid md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="parentName">Parent/Guardian Name *</Label>
-                  <Input
-                    id="parentName"
-                    value={formData.parentName}
-                    onChange={(e) => setFormData({ ...formData, parentName: e.target.value })}
-                    required
-                  />
+            {/* Step 1: Why Book */}
+            {step === 1 && (
+              <div className="space-y-6">
+                <div>
+                  <h3 className="font-semibold text-lg mb-4">What You'll Get</h3>
+                  <p className="text-sm text-muted-foreground mb-6">
+                    Our free consultation helps us understand your needs so we can connect you with the perfect tutor
+                  </p>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="studentName">Student Name *</Label>
-                  <Input
-                    id="studentName"
-                    value={formData.studentName}
-                    onChange={(e) => setFormData({ ...formData, studentName: e.target.value })}
-                    required
-                  />
+
+                <div className="grid gap-4">
+                  {CONSULTATION_BENEFITS.map((benefit, index) => {
+                    const Icon = benefit.icon;
+                    return (
+                      <Card key={index} className="border-2">
+                        <CardContent className="p-4 flex gap-4">
+                          <div className="flex-shrink-0">
+                            <Icon className="w-8 h-8 text-primary" />
+                          </div>
+                          <div>
+                            <h4 className="font-semibold mb-1">{benefit.title}</h4>
+                            <p className="text-sm text-muted-foreground">{benefit.description}</p>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </div>
+
+                <div className="bg-primary/5 border border-primary/20 rounded-lg p-4">
+                  <p className="text-sm font-medium">
+                    ✨ <strong>Absolutely Free</strong> - No commitment required. We'll help you understand how ElimuConnect can support your student's success.
+                  </p>
+                </div>
+
+                <div className="flex justify-end gap-4 pt-4">
+                  <Link to="/">
+                    <Button variant="outline">Cancel</Button>
+                  </Link>
+                  <Button onClick={() => setStep(2)}>
+                    Get Started
+                  </Button>
                 </div>
               </div>
+            )}
 
-              <div className="grid md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="phoneNumber">Phone Number (254XXXXXXXXX) *</Label>
-                  <Input
-                    id="phoneNumber"
-                    placeholder="254712345678"
-                    value={formData.phoneNumber}
-                    onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
-                    required
-                  />
+            {/* Step 2: Basic Information */}
+            {step === 2 && (
+              <div className="space-y-6">
+                <div>
+                  <h3 className="font-semibold text-lg mb-2">Basic Information</h3>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Tell us about yourself and the student
+                  </p>
                 </div>
-                <div className="space-y-2">
-                  <Label htmlFor="email">Email</Label>
-                  <Input
-                    id="email"
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                  />
-                </div>
-              </div>
 
-              {/* Learning Details */}
-              <div className="grid md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="gradeLevel">Grade Level *</Label>
-                  <Select value={formData.gradeLevel} onValueChange={(value) => setFormData({ ...formData, gradeLevel: value })}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select grade level" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="grade-1-3">Grade 1-3 (Lower Primary)</SelectItem>
-                      <SelectItem value="grade-4-6">Grade 4-6 (Upper Primary)</SelectItem>
-                      <SelectItem value="grade-7-9">Grade 7-9 (Junior Secondary)</SelectItem>
-                      <SelectItem value="form-1-2">Form 1-2</SelectItem>
-                      <SelectItem value="form-3-4">Form 3-4 (KCSE)</SelectItem>
-                      <SelectItem value="igcse">IGCSE</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="preferredMode">Preferred Learning Mode *</Label>
-                  <Select value={formData.preferredMode} onValueChange={(value) => setFormData({ ...formData, preferredMode: value })}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select mode" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="online">Online</SelectItem>
-                      <SelectItem value="in-person">In-Person</SelectItem>
-                      <SelectItem value="both">Either/Both</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="subjects">Subjects of Interest (comma-separated) *</Label>
-                <Input
-                  id="subjects"
-                  placeholder="e.g., Mathematics, Physics, Chemistry"
-                  value={formData.subjects}
-                  onChange={(e) => setFormData({ ...formData, subjects: e.target.value })}
-                  required
-                />
-              </div>
-
-              {/* Schedule Selection */}
-              <div className="border-t pt-6">
-                <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-                  <CalendarIcon className="w-5 h-5" />
-                  Select Consultation Date & Time
-                </h3>
-                <div className="grid md:grid-cols-2 gap-6">
+                <div className="grid md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label>Choose Date *</Label>
-                    <Calendar
-                      mode="single"
-                      selected={selectedDate}
-                      onSelect={setSelectedDate}
-                      disabled={(date) => date < new Date() || date.getDay() === 0}
-                      className="rounded-md border"
+                    <Label htmlFor="parentName">Parent/Guardian Name *</Label>
+                    <Input
+                      id="parentName"
+                      value={formData.parentName}
+                      onChange={(e) => setFormData({ ...formData, parentName: e.target.value })}
+                      placeholder="Your full name"
+                      required
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label>Choose Time *</Label>
-                    <div className="grid grid-cols-2 gap-2">
-                      {availableTimeSlots.map((time) => (
-                        <Button
-                          key={time}
-                          type="button"
-                          variant={selectedTime === time ? "default" : "outline"}
-                          size="sm"
-                          onClick={() => setSelectedTime(time)}
-                          className="justify-start"
-                        >
-                          <Clock className="w-4 h-4 mr-2" />
-                          {time}
-                        </Button>
-                      ))}
+                    <Label htmlFor="studentName">Student Name *</Label>
+                    <Input
+                      id="studentName"
+                      value={formData.studentName}
+                      onChange={(e) => setFormData({ ...formData, studentName: e.target.value })}
+                      placeholder="Student's full name"
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="phoneNumber">Phone Number *</Label>
+                    <Input
+                      id="phoneNumber"
+                      placeholder="254712345678"
+                      value={formData.phoneNumber}
+                      onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
+                      required
+                    />
+                    <p className="text-xs text-muted-foreground">Format: 254XXXXXXXXX</p>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="email">Email (Optional)</Label>
+                    <Input
+                      id="email"
+                      type="email"
+                      placeholder="your@email.com"
+                      value={formData.email}
+                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                    />
+                  </div>
+                </div>
+
+                <div className="flex justify-between gap-4 pt-4">
+                  <Button variant="outline" onClick={() => setStep(1)}>
+                    Back
+                  </Button>
+                  <Button onClick={handleNext}>
+                    Continue
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {/* Step 3: Learning Details & Schedule */}
+            {step === 3 && (
+              <div className="space-y-6">
+                <div>
+                  <h3 className="font-semibold text-lg mb-2">Learning Details</h3>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Help us understand your student's needs
+                  </p>
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="gradeLevel">Grade Level *</Label>
+                    <Select value={formData.gradeLevel} onValueChange={(value) => setFormData({ ...formData, gradeLevel: value })}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select grade level" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="grade-1-3">Grade 1-3 (Lower Primary)</SelectItem>
+                        <SelectItem value="grade-4-6">Grade 4-6 (Upper Primary)</SelectItem>
+                        <SelectItem value="grade-7-9">Grade 7-9 (Junior Secondary)</SelectItem>
+                        <SelectItem value="form-1-2">Form 1-2</SelectItem>
+                        <SelectItem value="form-3-4">Form 3-4 (KCSE)</SelectItem>
+                        <SelectItem value="igcse">IGCSE</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="preferredMode">Preferred Learning Mode *</Label>
+                    <Select value={formData.preferredMode} onValueChange={(value) => setFormData({ ...formData, preferredMode: value })}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select mode" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="online">Online Sessions</SelectItem>
+                        <SelectItem value="in-person">In-Person Sessions</SelectItem>
+                        <SelectItem value="both">Either/Both</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="subjects">Subjects of Interest *</Label>
+                  <Input
+                    id="subjects"
+                    placeholder="e.g., Mathematics, Physics, Chemistry"
+                    value={formData.subjects}
+                    onChange={(e) => setFormData({ ...formData, subjects: e.target.value })}
+                    required
+                  />
+                  <p className="text-xs text-muted-foreground">Separate multiple subjects with commas</p>
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="additionalNotes">Additional Notes (Optional)</Label>
+                  <Textarea
+                    id="additionalNotes"
+                    placeholder="Any specific concerns or questions you'd like to discuss?"
+                    value={formData.additionalNotes}
+                    onChange={(e) => setFormData({ ...formData, additionalNotes: e.target.value })}
+                    rows={3}
+                  />
+                </div>
+
+                <div className="border-t pt-6">
+                  <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                    <CalendarIcon className="w-5 h-5" />
+                    Select Date & Time
+                  </h3>
+                  <div className="grid md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                      <Label>Choose Date *</Label>
+                      <Calendar
+                        mode="single"
+                        selected={selectedDate}
+                        onSelect={setSelectedDate}
+                        disabled={(date) => date < new Date() || date.getDay() === 0}
+                        className="rounded-md border"
+                      />
+                      <p className="text-xs text-muted-foreground">Consultations available Monday-Saturday</p>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Choose Time *</Label>
+                      <div className="grid grid-cols-2 gap-2">
+                        {availableTimeSlots.map((time) => (
+                          <Button
+                            key={time}
+                            type="button"
+                            variant={selectedTime === time ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => setSelectedTime(time)}
+                            className="justify-start"
+                          >
+                            <Clock className="w-4 h-4 mr-2" />
+                            {time}
+                          </Button>
+                        ))}
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="additionalNotes">Additional Notes</Label>
-                <Textarea
-                  id="additionalNotes"
-                  placeholder="Any specific concerns or questions you'd like to discuss?"
-                  value={formData.additionalNotes}
-                  onChange={(e) => setFormData({ ...formData, additionalNotes: e.target.value })}
-                  rows={4}
-                />
+                <div className="flex justify-between gap-4 pt-4">
+                  <Button variant="outline" onClick={() => setStep(2)}>
+                    Back
+                  </Button>
+                  <Button onClick={handleNext} disabled={loading}>
+                    {loading ? "Booking..." : "Confirm Booking"}
+                  </Button>
+                </div>
               </div>
+            )}
 
-              <Button type="submit" size="lg" className="w-full" disabled={loading}>
-                {loading ? "Booking..." : "Book Free Consultation"}
-              </Button>
-            </form>
+            {/* Step 4: Confirmation */}
+            {step === 4 && (
+              <div className="space-y-6 py-8 text-center">
+                <div className="flex justify-center">
+                  <div className="rounded-full bg-primary/10 p-6">
+                    <CheckCircle className="w-16 h-16 text-primary" />
+                  </div>
+                </div>
+                
+                <div>
+                  <h3 className="font-semibold text-2xl mb-2">Consultation Booked!</h3>
+                  <p className="text-muted-foreground max-w-md mx-auto">
+                    Thank you for booking a consultation with ElimuConnect. We'll contact you shortly to confirm your appointment.
+                  </p>
+                </div>
+
+                <div className="bg-muted/50 border rounded-lg p-6 max-w-md mx-auto text-left">
+                  <h4 className="font-semibold mb-3 text-center">Your Consultation Details</h4>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Parent:</span>
+                      <span className="font-medium">{formData.parentName}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Student:</span>
+                      <span className="font-medium">{formData.studentName}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Phone:</span>
+                      <span className="font-medium">{formData.phoneNumber}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Date:</span>
+                      <span className="font-medium">{selectedDate?.toLocaleDateString('en-GB')}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-muted-foreground">Time:</span>
+                      <span className="font-medium">{selectedTime}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="bg-primary/5 border border-primary/20 rounded-lg p-4 max-w-md mx-auto">
+                  <h4 className="font-semibold mb-2 text-sm">What Happens Next?</h4>
+                  <ul className="text-sm text-left space-y-2">
+                    <li className="flex gap-2">
+                      <CheckCircle className="w-5 h-5 text-primary flex-shrink-0" />
+                      <span>We'll call you within 24 hours to confirm</span>
+                    </li>
+                    <li className="flex gap-2">
+                      <CheckCircle className="w-5 h-5 text-primary flex-shrink-0" />
+                      <span>Receive meeting link via SMS & email</span>
+                    </li>
+                    <li className="flex gap-2">
+                      <CheckCircle className="w-5 h-5 text-primary flex-shrink-0" />
+                      <span>Join the consultation at scheduled time</span>
+                    </li>
+                  </ul>
+                </div>
+
+                <Link to="/">
+                  <Button size="lg">Return to Home</Button>
+                </Link>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
