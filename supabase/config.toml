@@ -11,3 +11,9 @@ verify_jwt = true
 
 [functions.create-stripe-checkout]
 verify_jwt = true
+
+[functions.generate-session-summary]
+verify_jwt = true
+
+[functions.send-booking-reminder]
+verify_jwt = true

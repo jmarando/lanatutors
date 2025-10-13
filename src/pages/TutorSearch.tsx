@@ -5,7 +5,10 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, Star } from "lucide-react";
+import { Slider } from "@/components/ui/slider";
+import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { Search, Star, SlidersHorizontal } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import tutor1 from "@/assets/tutor-1.jpg";
@@ -14,6 +17,14 @@ import tutor3 from "@/assets/tutor-3.jpg";
 import tutor4 from "@/assets/tutor-4.jpg";
 import tutor5 from "@/assets/tutor-5.jpg";
 import tutor6 from "@/assets/tutor-6.jpg";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 
 const TutorSearch = () => {
   const navigate = useNavigate();
@@ -21,6 +32,8 @@ const TutorSearch = () => {
   const [selectedSubject, setSelectedSubject] = useState("all");
   const [selectedCurriculum, setSelectedCurriculum] = useState("all");
   const [sortBy, setSortBy] = useState("rating");
+  const [priceRange, setPriceRange] = useState([0, 5000]);
+  const [minRating, setMinRating] = useState(0);
   const [tutors, setTutors] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -92,8 +105,10 @@ const TutorSearch = () => {
       
       const matchesSubject = selectedSubject === "all" || tutor.subjects.includes(selectedSubject);
       const matchesCurriculum = selectedCurriculum === "all" || tutor.curriculum.includes(selectedCurriculum);
+      const matchesPrice = tutor.hourlyRate >= priceRange[0] && tutor.hourlyRate <= priceRange[1];
+      const matchesRating = tutor.rating >= minRating;
       
-      return matchesSearch && matchesSubject && matchesCurriculum;
+      return matchesSearch && matchesSubject && matchesCurriculum && matchesPrice && matchesRating;
     })
     .sort((a, b) => {
       if (sortBy === "rating") return b.rating - a.rating;
@@ -173,6 +188,79 @@ const TutorSearch = () => {
               <SelectItem value="price-high">Price: High to Low</SelectItem>
             </SelectContent>
           </Select>
+
+          {/* Advanced Filters Sheet */}
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button variant="outline" className="h-12">
+                <SlidersHorizontal className="w-4 h-4 mr-2" />
+                Filters
+              </Button>
+            </SheetTrigger>
+            <SheetContent>
+              <SheetHeader>
+                <SheetTitle>Advanced Filters</SheetTitle>
+                <SheetDescription>
+                  Refine your tutor search with advanced filters
+                </SheetDescription>
+              </SheetHeader>
+              <div className="space-y-6 mt-6">
+                {/* Price Range */}
+                <div>
+                  <Label className="mb-3 block">
+                    Price Range: KES {priceRange[0]} - KES {priceRange[1]}/hr
+                  </Label>
+                  <Slider
+                    value={priceRange}
+                    onValueChange={setPriceRange}
+                    max={5000}
+                    min={0}
+                    step={100}
+                    className="mb-2"
+                  />
+                  <div className="flex justify-between text-xs text-muted-foreground">
+                    <span>KES 0</span>
+                    <span>KES 5,000</span>
+                  </div>
+                </div>
+
+                {/* Minimum Rating */}
+                <div>
+                  <Label className="mb-3 block">Minimum Rating: {minRating}★</Label>
+                  <Slider
+                    value={[minRating]}
+                    onValueChange={(val) => setMinRating(val[0])}
+                    max={5}
+                    min={0}
+                    step={0.5}
+                    className="mb-2"
+                  />
+                  <div className="flex justify-between text-xs text-muted-foreground">
+                    <span>0★</span>
+                    <span>5★</span>
+                  </div>
+                </div>
+
+                <Button 
+                  variant="outline" 
+                  className="w-full" 
+                  onClick={() => {
+                    setPriceRange([0, 5000]);
+                    setMinRating(0);
+                  }}
+                >
+                  Reset Filters
+                </Button>
+              </div>
+            </SheetContent>
+          </Sheet>
+        </div>
+
+        {/* Results Count */}
+        <div className="max-w-7xl mx-auto mb-4">
+          <p className="text-sm text-muted-foreground">
+            Showing {filteredTutors.length} of {tutors.length} tutors
+          </p>
         </div>
 
         {/* Tutors Grid */}
