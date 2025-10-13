@@ -8,54 +8,68 @@ import {
   CheckCircle2,
   Clock,
   MessageCircle,
-  TrendingUp
+  TrendingUp,
+  Users,
+  MapPin,
+  PhoneCall
 } from "lucide-react";
 import { Link } from "react-router-dom";
 
 const HowItWorks = () => {
   const steps = [
     {
-      icon: Search,
-      title: "1. Browse & Compare Tutors",
-      description: "Search our database of 500+ verified tutors from Kenya's top schools. Filter by subject, experience level, rating, and hourly rate.",
+      icon: PhoneCall,
+      title: "1. Book Free Consultation",
+      description: "Start with a complimentary 30-minute consultation with our education experts to understand your needs and goals.",
       details: [
-        "View detailed tutor profiles with qualifications and teaching experience",
-        "Read reviews from other students and parents",
-        "Compare hourly rates and availability",
-        "Filter by subject expertise and school background"
+        "Discuss your student's learning challenges and objectives",
+        "Get personalized tutor recommendations",
+        "Understand our teaching approach and methodology",
+        "Ask questions about online or in-person sessions"
+      ]
+    },
+    {
+      icon: Search,
+      title: "2. Get Matched with Perfect Tutor",
+      description: "We'll connect you with verified tutors from Kenya's top schools who specialize in your subject areas.",
+      details: [
+        "Access 500+ tutors from Alliance, Starehe, Kenya High, and more",
+        "View detailed profiles with qualifications and experience",
+        "Read verified reviews from other students and parents",
+        "Choose between online or in-person sessions"
       ]
     },
     {
       icon: Calendar,
-      title: "2. Schedule Your Session",
-      description: "Select a tutor and choose from their available time slots. Book one-time sessions or set up recurring lessons.",
+      title: "3. Schedule Your Sessions",
+      description: "Book one-time or recurring sessions at times that work for you. Choose online video calls or in-person tutoring.",
       details: [
+        "Flexible scheduling - online sessions 7 days a week, 6 AM to 10 PM",
+        "In-person sessions at agreed locations in Nairobi and major towns",
         "Instant booking confirmation via SMS and email",
-        "Automatic calendar invites with Google Meet links",
-        "Flexible scheduling - book up to 2 hours in advance",
-        "Set up recurring weekly or bi-weekly sessions"
+        "Set up weekly or bi-weekly recurring lessons"
       ]
     },
     {
       icon: Video,
-      title: "3. Attend & Learn",
-      description: "Join your live video session via Google Meet. Get personalized 1-on-1 attention tailored to your learning pace.",
+      title: "4. Attend & Learn",
+      description: "Join online sessions via Google Meet or meet your tutor in person. Get personalized 1-on-1 attention.",
       details: [
-        "No software downloads required - works in your browser",
-        "Interactive whiteboard and screen sharing",
-        "Record sessions for later review (with tutor permission)",
-        "Safe, monitored online environment"
+        "Online: No downloads required - works in your browser",
+        "In-Person: Safe, verified tutors at convenient locations",
+        "Interactive learning with whiteboards and materials",
+        "Flexible learning mode - switch between online and in-person"
       ]
     },
     {
       icon: Award,
-      title: "4. Track Progress",
-      description: "After each session, receive notes and assignments. Rate your tutor and monitor your improvement.",
+      title: "5. Track Progress & Improve",
+      description: "Monitor your improvement with session summaries, assignments, and progress reports.",
       details: [
         "AI-generated session summaries after each class",
         "Homework assignments and practice materials",
-        "Progress tracking and performance reports",
-        "Rate and review your tutor to help others"
+        "Track performance improvements over time",
+        "Rate and review your tutor to help the community"
       ]
     }
   ];
@@ -82,22 +96,32 @@ const HowItWorks = () => {
     {
       icon: CheckCircle2,
       title: "Quality Guaranteed",
-      text: "All tutors are verified and come from recognized Kenyan schools"
+      text: "All tutors verified from recognized Kenyan schools with thorough background checks"
+    },
+    {
+      icon: MapPin,
+      title: "Online & In-Person",
+      text: "Choose the learning mode that works best - online video or face-to-face sessions"
     },
     {
       icon: Clock,
       title: "Flexible Scheduling",
-      text: "Book sessions 7 days a week from 6 AM to 10 PM"
+      text: "Online sessions available 7 days a week, 6 AM to 10 PM. In-person by arrangement"
     },
     {
       icon: MessageCircle,
-      title: "Direct Communication",
-      text: "Message your tutor before booking to discuss your learning needs"
+      title: "Free Consultation",
+      text: "Start with a complimentary consultation to find the perfect tutor match"
     },
     {
       icon: TrendingUp,
       title: "Proven Results",
       text: "Students see average grade improvement of 2 levels within 3 months"
+    },
+    {
+      icon: Users,
+      title: "Expert Support",
+      text: "Dedicated support team to help you every step of your learning journey"
     }
   ];
 
@@ -110,13 +134,20 @@ const HowItWorks = () => {
             How ElimuConnect Works
           </h1>
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto mb-8">
-            Getting started with online tutoring is simple. Follow these four easy steps to unlock your academic potential.
+            Getting started is simple. Book a free consultation, get matched with expert tutors, and choose between convenient online or in-person sessions.
           </p>
-          <Link to="/tutors">
-            <Button size="lg" className="text-lg px-8">
-              Find a Tutor Now
-            </Button>
-          </Link>
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <Link to="/book-consultation">
+              <Button size="lg" className="text-lg px-8">
+                Book Free Consultation
+              </Button>
+            </Link>
+            <Link to="/tutors">
+              <Button size="lg" variant="outline" className="text-lg px-8">
+                Browse Tutors
+              </Button>
+            </Link>
+          </div>
         </div>
       </section>
 
@@ -186,7 +217,7 @@ const HowItWorks = () => {
       {/* Features Grid */}
       <section className="max-w-7xl mx-auto px-6 py-16">
         <h2 className="text-3xl font-bold text-center mb-12">What Makes Us Different</h2>
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {features.map((feature, index) => {
             const Icon = feature.icon;
             return (
@@ -207,20 +238,23 @@ const HowItWorks = () => {
         <div className="max-w-7xl mx-auto px-6 py-16 text-center">
           <h2 className="text-3xl font-bold mb-4">Ready to Get Started?</h2>
           <p className="text-xl mb-8 opacity-90">
-            Join thousands of students already learning with ElimuConnect
+            Book a free consultation today and discover how we can help your student excel
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link to="/tutors">
+            <Link to="/book-consultation">
               <Button size="lg" variant="secondary" className="text-lg px-8">
+                Book Free Consultation
+              </Button>
+            </Link>
+            <Link to="/tutors">
+              <Button size="lg" variant="outline" className="text-lg px-8 bg-transparent hover:bg-white/10 border-white text-white">
                 Browse Tutors
               </Button>
             </Link>
-            <Link to="/login">
-              <Button size="lg" variant="outline" className="text-lg px-8 bg-transparent hover:bg-white/10 border-white text-white">
-                Sign In
-              </Button>
-            </Link>
           </div>
+          <p className="mt-6 text-sm opacity-75">
+            No credit card required • Online & In-Person Sessions Available
+          </p>
         </div>
       </section>
     </div>
