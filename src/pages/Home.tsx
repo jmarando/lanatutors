@@ -413,9 +413,15 @@ const Home = () => {
                 <Award className="w-6 h-6 text-primary" />
                 <span className="text-xl font-bold">ElimuConnect</span>
               </div>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-sm text-muted-foreground mb-4">
                 Quality tutoring for Kenyan students - online and in-person
               </p>
+              <div className="text-sm text-muted-foreground space-y-1">
+                <p>First Floor, Arbor House,</p>
+                <p>Arboretum Drive, Nairobi</p>
+                <p>(+254) 725252542</p>
+                <p>info@elimuconnect.co.ke</p>
+              </div>
             </div>
             <div>
               <h4 className="font-bold mb-4">For Students</h4>
@@ -430,7 +436,6 @@ const Home = () => {
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li><Link to="/login">Tutor Dashboard</Link></li>
                 <li><Link to="/become-a-tutor">Become a Tutor</Link></li>
-                <li><Link to="/tutor-signup" className="text-primary hover:underline">Become a Tutor →</Link></li>
               </ul>
             </div>
             <div>
