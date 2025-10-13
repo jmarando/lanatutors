@@ -9,6 +9,7 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } f
 import { Star, GraduationCap, Clock, BookOpen, Award, MapPin, Users, CheckCircle2, Heart } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { SEO } from "@/components/SEO";
 import { BookingCalendar } from "@/components/BookingCalendar";
 import tutor1 from "@/assets/tutor-1.jpg";
 import tutor2 from "@/assets/tutor-2.jpg";
@@ -189,8 +190,37 @@ const TutorProfile = () => {
     );
   }
 
+  const tutorSchema = {
+    "@context": "https://schema.org",
+    "@type": "Person",
+    "name": tutor.name,
+    "jobTitle": "Tutor",
+    "worksFor": {
+      "@type": "EducationalOrganization",
+      "name": tutor.school
+    },
+    "knowsAbout": tutor.subjects,
+    "aggregateRating": {
+      "@type": "AggregateRating",
+      "ratingValue": tutor.rating,
+      "reviewCount": tutor.reviews
+    },
+    "offers": {
+      "@type": "Offer",
+      "price": tutor.hourlyRate,
+      "priceCurrency": "KES",
+      "availability": "https://schema.org/InStock"
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[image:var(--gradient-page)]">
+      <SEO 
+        title={`${tutor.name} - ${tutor.subjects.join(", ")} Tutor`}
+        description={`Book tutoring sessions with ${tutor.name}, an experienced ${tutor.subjects.join(", ")} tutor from ${tutor.school}. ${tutor.rating} star rating with ${tutor.reviews} reviews. KES ${tutor.hourlyRate}/hour.`}
+        keywords={`${tutor.subjects.join(", ")}, Kenya tutor, ${tutor.school}, online tutoring`}
+        structuredData={tutorSchema}
+      />
       <div className="max-w-5xl mx-auto px-6 py-12">
         {/* Header Card */}
         <Card className="mb-6 border-border/50">

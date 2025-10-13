@@ -14,6 +14,7 @@ import {
   PhoneCall
 } from "lucide-react";
 import { Link } from "react-router-dom";
+import { SEO } from "@/components/SEO";
 
 const HowItWorks = () => {
   const steps = [
@@ -127,6 +128,12 @@ const HowItWorks = () => {
 
   return (
     <div className="min-h-screen bg-[image:var(--gradient-page)]">
+      <SEO 
+        title="How It Works - Online Tutoring Process"
+        description="Learn how to get started with ElimuConnect. Book a free consultation, browse verified tutors, schedule sessions, and start learning. Simple online booking and M-Pesa payment."
+        keywords="how online tutoring works, book tutor Kenya, tutoring process, M-Pesa tutor payment"
+      />
+      
       {/* Hero Section */}
       <section>
         <div className="max-w-7xl mx-auto px-6 py-16 text-center">

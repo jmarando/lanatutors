@@ -16,9 +16,37 @@ import {
   Award
 } from "lucide-react";
 import { Link } from "react-router-dom";
+import { SEO } from "@/components/SEO";
 import heroVideo from "@/assets/hero-video.mp4";
 
 const Home = () => {
+  const organizationSchema = {
+    "@context": "https://schema.org",
+    "@type": "EducationalOrganization",
+    "name": "ElimuConnect",
+    "description": "Quality online tutoring for Kenyan students with verified teachers from top schools",
+    "url": window.location.origin,
+    "logo": `${window.location.origin}/favicon.ico`,
+    "address": {
+      "@type": "PostalAddress",
+      "streetAddress": "First Floor, Arbor House, Arboretum Drive",
+      "addressLocality": "Nairobi",
+      "addressCountry": "KE"
+    },
+    "contactPoint": {
+      "@type": "ContactPoint",
+      "telephone": "+254-725252542",
+      "contactType": "customer service",
+      "email": "info@elimuconnect.co.ke"
+    },
+    "sameAs": [],
+    "aggregateRating": {
+      "@type": "AggregateRating",
+      "ratingValue": "4.9",
+      "reviewCount": "10000"
+    }
+  };
+
   const stats = [
     { icon: Users, value: "500+", label: "Verified Tutors" },
     { icon: GraduationCap, value: "10,000+", label: "Happy Students" },
@@ -116,6 +144,12 @@ const Home = () => {
 
   return (
     <div className="min-h-screen bg-[image:var(--gradient-page)]">
+      <SEO 
+        title="Quality Online Tutoring for Kenyan Students"
+        description="Connect with verified teachers from top Kenyan schools for safe, convenient one-on-one tutoring. Master KCSE, KCPE, and CBC curriculum from home with ElimuConnect."
+        structuredData={organizationSchema}
+      />
+      
       {/* Hero Section */}
       <section>
         <div className="max-w-7xl mx-auto px-6 py-12 md:py-20">

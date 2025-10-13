@@ -9,6 +9,7 @@ import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Search, Star, SlidersHorizontal } from "lucide-react";
+import { SEO } from "@/components/SEO";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import tutor1 from "@/assets/tutor-1.jpg";
@@ -128,6 +129,12 @@ const TutorSearch = () => {
 
   return (
     <div className="min-h-screen bg-[image:var(--gradient-page)]">
+      <SEO 
+        title="Find Verified Tutors in Kenya"
+        description="Browse 500+ verified tutors from top Kenyan schools. Filter by subject, curriculum (CBC, IGCSE), rating, and price. Book online or in-person tutoring sessions."
+        keywords="find tutors Kenya, hire tutor Nairobi, CBC tutors, IGCSE tutors, verified teachers Kenya"
+      />
+      
       <div className="max-w-7xl mx-auto px-6 py-12">
         {/* Header */}
         <div className="text-center mb-10">
