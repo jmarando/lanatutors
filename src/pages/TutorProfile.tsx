@@ -20,8 +20,9 @@ import tutor6 from "@/assets/tutor-6.jpg";
 const TutorProfile = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const [isBookingTypeDialogOpen, setIsBookingTypeDialogOpen] = useState(false);
   const [isBookingOpen, setIsBookingOpen] = useState(false);
-  const [isTrialBookingOpen, setIsTrialBookingOpen] = useState(false);
+  const [bookingType, setBookingType] = useState<'paid' | 'free'>('paid');
   const [tutor, setTutor] = useState<any>(null);
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -140,21 +141,36 @@ const TutorProfile = () => {
   };
 
   const handleBookSession = () => {
-    if (!currentUser) {
-      toast.error("Please log in to book a session");
-      navigate("/login");
-      return;
-    }
-    setIsBookingOpen(true);
+    setIsBookingTypeDialogOpen(true);
   };
 
-  const handleBookTrialSession = () => {
+  const handleBookingTypeSelect = async (type: 'paid' | 'free') => {
+    setBookingType(type);
+    setIsBookingTypeDialogOpen(false);
+    
+    // Fetch current user if not already fetched
     if (!currentUser) {
-      toast.error("Please log in to book a free consultation");
-      navigate("/login");
-      return;
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("id", user.id)
+          .single();
+        
+        setCurrentUser({
+          id: user.id,
+          email: user.email,
+          name: profile?.full_name || "Student",
+        });
+      } else {
+        toast.error("Please log in to continue");
+        navigate("/login");
+        return;
+      }
     }
-    setIsTrialBookingOpen(true);
+    
+    setIsBookingOpen(true);
   };
 
   if (loading) {
@@ -237,9 +253,6 @@ const TutorProfile = () => {
               <div className="flex flex-col gap-2 w-full sm:w-auto">
                 <Button size="lg" onClick={handleBookSession} className="w-full sm:w-auto">
                   Book Session
-                </Button>
-                <Button size="lg" variant="outline" onClick={handleBookTrialSession} className="w-full sm:w-auto">
-                  Book Free Consultation (30 min)
                 </Button>
               </div>
             </div>
@@ -462,13 +475,48 @@ const TutorProfile = () => {
           </Card>
         )}
 
+        {/* Booking Type Selection Dialog */}
+        <Dialog open={isBookingTypeDialogOpen} onOpenChange={setIsBookingTypeDialogOpen}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Choose Booking Type</DialogTitle>
+              <DialogDescription>
+                Select the type of session you'd like to book with {tutor.name}
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="space-y-3 pt-4">
+              <Button 
+                size="lg" 
+                className="w-full"
+                onClick={() => handleBookingTypeSelect('paid')}
+              >
+                Book Paid Session
+              </Button>
+              <Button 
+                size="lg" 
+                variant="outline"
+                className="w-full"
+                onClick={() => handleBookingTypeSelect('free')}
+              >
+                Book Free Consultation (30 min)
+              </Button>
+            </div>
+          </DialogContent>
+        </Dialog>
+
         {/* Booking Dialog */}
         <Dialog open={isBookingOpen} onOpenChange={setIsBookingOpen}>
           <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Book a Session with {tutor.name}</DialogTitle>
+              <DialogTitle>
+                {bookingType === 'free' ? 'Book Free Consultation' : `Book a Session with ${tutor.name}`}
+              </DialogTitle>
               <DialogDescription>
-                Select a date and available time slot
+                {bookingType === 'free' 
+                  ? `Get to know ${tutor.name} with a complimentary 30-minute chemistry session to check compatibility`
+                  : 'Select a date and available time slot'
+                }
               </DialogDescription>
             </DialogHeader>
             
@@ -479,33 +527,9 @@ const TutorProfile = () => {
                 tutorEmail={tutor.email}
                 studentEmail={currentUser.email}
                 studentName={currentUser.name}
-                hourlyRate={tutor.hourlyRate}
+                hourlyRate={bookingType === 'free' ? 0 : tutor.hourlyRate}
+                isTrialSession={bookingType === 'free'}
                 onBookingComplete={() => setIsBookingOpen(false)}
-              />
-            )}
-          </DialogContent>
-        </Dialog>
-
-        {/* Consultation Booking Dialog */}
-        <Dialog open={isTrialBookingOpen} onOpenChange={setIsTrialBookingOpen}>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Book Free Consultation</DialogTitle>
-              <DialogDescription>
-                Get to know {tutor.name} with a complimentary 30-minute chemistry session to check compatibility
-              </DialogDescription>
-            </DialogHeader>
-            
-            {currentUser && (
-              <BookingCalendar
-                tutorId={tutor.userId}
-                tutorName={tutor.name}
-                tutorEmail={tutor.email}
-                studentEmail={currentUser.email}
-                studentName={currentUser.name}
-                hourlyRate={0}
-                isTrialSession={true}
-                onBookingComplete={() => setIsTrialBookingOpen(false)}
               />
             )}
           </DialogContent>
