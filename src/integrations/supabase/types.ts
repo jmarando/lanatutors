@@ -268,6 +268,54 @@ export type Database = {
         }
         Relationships: []
       }
+      tutor_applications: {
+        Row: {
+          admin_notes: string | null
+          agreed_to_terms: boolean
+          created_at: string
+          current_school: string
+          cv_url: string | null
+          email: string
+          full_name: string
+          id: string
+          phone_number: string
+          status: string
+          updated_at: string
+          user_id: string | null
+          years_of_experience: number
+        }
+        Insert: {
+          admin_notes?: string | null
+          agreed_to_terms?: boolean
+          created_at?: string
+          current_school: string
+          cv_url?: string | null
+          email: string
+          full_name: string
+          id?: string
+          phone_number: string
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+          years_of_experience: number
+        }
+        Update: {
+          admin_notes?: string | null
+          agreed_to_terms?: boolean
+          created_at?: string
+          current_school?: string
+          cv_url?: string | null
+          email?: string
+          full_name?: string
+          id?: string
+          phone_number?: string
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+          years_of_experience?: number
+        }
+        Relationships: []
+      }
       tutor_availability: {
         Row: {
           created_at: string | null

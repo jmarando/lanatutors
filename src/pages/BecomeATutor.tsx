@@ -1,0 +1,454 @@
+import { useState, useRef } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Award, Upload, CheckCircle, FileText, Shield, GraduationCap } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
+import { Progress } from "@/components/ui/progress";
+
+const TUTOR_REQUIREMENTS = [
+  {
+    icon: GraduationCap,
+    title: "Teaching Experience",
+    description: "Minimum 2 years of teaching or tutoring experience in recognized schools or institutions"
+  },
+  {
+    icon: FileText,
+    title: "Qualifications",
+    description: "Bachelor's degree in Education or relevant subject area. Teaching certification preferred"
+  },
+  {
+    icon: Shield,
+    title: "Background Check",
+    description: "Successful completion of background verification and reference checks"
+  },
+  {
+    icon: CheckCircle,
+    title: "Subject Expertise",
+    description: "Demonstrated mastery in CBC, IGCSE, or both curriculum subjects you wish to teach"
+  }
+];
+
+const TERMS_AND_CONDITIONS = `
+ElimuConnect Tutor Terms & Conditions
+
+1. TUTOR QUALIFICATIONS
+   - You must have at least 2 years of teaching/tutoring experience
+   - You must hold valid teaching credentials and qualifications
+   - All credentials are subject to verification
+
+2. PROFESSIONAL CONDUCT
+   - Maintain professional behavior at all times
+   - Respect student privacy and confidentiality
+   - Arrive punctually for all scheduled sessions
+   - Provide quality, engaging instruction
+
+3. PAYMENT TERMS
+   - Tutors receive 70% of the hourly rate charged to students
+   - Payments are processed bi-weekly via M-Pesa
+   - Platform fee of 30% covers marketing, support, and infrastructure
+
+4. SESSION REQUIREMENTS
+   - Maintain 95% attendance rate for scheduled sessions
+   - Provide 24-hour notice for cancellations
+   - Submit session notes within 24 hours of completion
+   - Respond to student messages within 12 hours
+
+5. PLATFORM POLICIES
+   - No direct payment from students outside the platform
+   - Use only ElimuConnect platform for session coordination
+   - Maintain a minimum 4.0-star rating
+   - Complete at least 10 sessions per month to remain active
+
+6. TERMINATION
+   - Either party may terminate with 14 days notice
+   - Immediate termination for policy violations
+   - All pending payments will be settled upon termination
+
+By accepting these terms, you agree to uphold ElimuConnect's standards of excellence and professionalism.
+`;
+
+const BecomeATutor = () => {
+  const navigate = useNavigate();
+  const { toast } = useToast();
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [step, setStep] = useState(1);
+  const [isLoading, setIsLoading] = useState(false);
+  const [cvFile, setCvFile] = useState<File | null>(null);
+  const [agreedToTerms, setAgreedToTerms] = useState(false);
+  
+  const [formData, setFormData] = useState({
+    fullName: "",
+    email: "",
+    phoneNumber: "",
+    currentSchool: "",
+    yearsOfExperience: "",
+  });
+
+  const handleCvChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        toast({
+          title: "File too large",
+          description: "Please upload a CV smaller than 5MB",
+          variant: "destructive"
+        });
+        return;
+      }
+      setCvFile(file);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!agreedToTerms) {
+      toast({
+        title: "Please accept terms",
+        description: "You must agree to the terms and conditions to continue",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!cvFile) {
+      toast({
+        title: "CV required",
+        description: "Please upload your CV to continue",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      let cvUrl = "";
+      
+      // Create a temporary ID for file upload (before auth)
+      const tempId = crypto.randomUUID();
+      
+      // Upload CV
+      const fileExt = cvFile.name.split('.').pop();
+      const filePath = `${tempId}/cv.${fileExt}`;
+      
+      const { error: uploadError } = await supabase.storage
+        .from('tutor-cvs')
+        .upload(filePath, cvFile);
+
+      if (uploadError) throw uploadError;
+
+      const { data: { publicUrl } } = supabase.storage
+        .from('tutor-cvs')
+        .getPublicUrl(filePath);
+      
+      cvUrl = publicUrl;
+
+      // Submit application
+      const { error: applicationError } = await supabase
+        .from("tutor_applications")
+        .insert({
+          email: formData.email,
+          full_name: formData.fullName,
+          phone_number: formData.phoneNumber,
+          current_school: formData.currentSchool,
+          years_of_experience: parseInt(formData.yearsOfExperience),
+          cv_url: cvUrl,
+          agreed_to_terms: agreedToTerms,
+          status: 'pending'
+        });
+
+      if (applicationError) throw applicationError;
+
+      toast({
+        title: "Application submitted!",
+        description: "We'll review your application and contact you within 3-5 business days."
+      });
+
+      // Move to success step
+      setStep(4);
+    } catch (error: any) {
+      toast({
+        title: "Submission failed",
+        description: error.message,
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const progress = (step / 4) * 100;
+
+  return (
+    <div className="min-h-screen bg-[image:var(--gradient-page)] flex items-center justify-center p-6">
+      <div className="w-full max-w-4xl">
+        <Link to="/" className="flex items-center justify-center gap-2 mb-8">
+          <Award className="w-10 h-10 text-primary" />
+          <span className="text-3xl font-bold">ElimuConnect</span>
+        </Link>
+
+        <Card>
+          <CardHeader>
+            <div className="mb-4">
+              <Progress value={progress} className="h-2" />
+              <p className="text-sm text-muted-foreground mt-2">Step {step} of 4</p>
+            </div>
+            <CardTitle className="text-2xl">Become a Tutor</CardTitle>
+            <CardDescription>
+              Join Kenya's leading tutoring platform
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {step === 1 && (
+              <div className="space-y-6">
+                <div>
+                  <h3 className="font-semibold text-lg mb-4">Tutor Requirements</h3>
+                  <p className="text-sm text-muted-foreground mb-6">
+                    Before you apply, please ensure you meet the following requirements:
+                  </p>
+                </div>
+
+                <div className="grid gap-4">
+                  {TUTOR_REQUIREMENTS.map((req, index) => {
+                    const Icon = req.icon;
+                    return (
+                      <Card key={index} className="border-2">
+                        <CardContent className="p-4 flex gap-4">
+                          <div className="flex-shrink-0">
+                            <Icon className="w-8 h-8 text-primary" />
+                          </div>
+                          <div>
+                            <h4 className="font-semibold mb-1">{req.title}</h4>
+                            <p className="text-sm text-muted-foreground">{req.description}</p>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </div>
+
+                <div className="flex justify-end gap-4 pt-4">
+                  <Link to="/">
+                    <Button variant="outline">Cancel</Button>
+                  </Link>
+                  <Button onClick={() => setStep(2)}>
+                    I Meet These Requirements
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {step === 2 && (
+              <div className="space-y-6">
+                <div>
+                  <h3 className="font-semibold text-lg mb-2">Terms & Conditions</h3>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Please read and accept our terms and conditions
+                  </p>
+                </div>
+
+                <div className="border rounded-lg p-4 h-96 overflow-y-auto bg-muted/30">
+                  <pre className="whitespace-pre-wrap text-sm font-sans">{TERMS_AND_CONDITIONS}</pre>
+                </div>
+
+                <div className="flex items-start space-x-2 p-4 border rounded-lg">
+                  <Checkbox
+                    id="terms"
+                    checked={agreedToTerms}
+                    onCheckedChange={(checked) => setAgreedToTerms(checked as boolean)}
+                  />
+                  <div className="grid gap-1.5 leading-none">
+                    <Label
+                      htmlFor="terms"
+                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                    >
+                      I accept the terms and conditions
+                    </Label>
+                    <p className="text-sm text-muted-foreground">
+                      You agree to our Terms of Service and Privacy Policy
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex justify-between gap-4 pt-4">
+                  <Button variant="outline" onClick={() => setStep(1)}>
+                    Back
+                  </Button>
+                  <Button onClick={() => setStep(3)} disabled={!agreedToTerms}>
+                    Continue
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {step === 3 && (
+              <form onSubmit={handleSubmit} className="space-y-6">
+                <div>
+                  <h3 className="font-semibold text-lg mb-2">Basic Information</h3>
+                  <p className="text-sm text-muted-foreground mb-4">
+                    Tell us about yourself and your teaching experience
+                  </p>
+                </div>
+
+                <div className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="fullName">Full Name *</Label>
+                    <Input
+                      id="fullName"
+                      value={formData.fullName}
+                      onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+                      required
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="email">Email *</Label>
+                      <Input
+                        id="email"
+                        type="email"
+                        value={formData.email}
+                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="phoneNumber">Phone Number *</Label>
+                      <Input
+                        id="phoneNumber"
+                        type="tel"
+                        placeholder="0712345678"
+                        value={formData.phoneNumber}
+                        onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="currentSchool">Current School/Institution *</Label>
+                      <Input
+                        id="currentSchool"
+                        placeholder="Where you currently teach"
+                        value={formData.currentSchool}
+                        onChange={(e) => setFormData({ ...formData, currentSchool: e.target.value })}
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="yearsOfExperience">Years of Experience *</Label>
+                      <Input
+                        id="yearsOfExperience"
+                        type="number"
+                        min="2"
+                        value={formData.yearsOfExperience}
+                        onChange={(e) => setFormData({ ...formData, yearsOfExperience: e.target.value })}
+                        required
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Upload CV/Resume *</Label>
+                    <div className="flex items-center gap-4">
+                      {cvFile && (
+                        <div className="flex items-center gap-2 text-sm">
+                          <FileText className="w-4 h-4 text-primary" />
+                          <span className="text-muted-foreground">{cvFile.name}</span>
+                        </div>
+                      )}
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => fileInputRef.current?.click()}
+                      >
+                        <Upload className="mr-2 h-4 w-4" />
+                        {cvFile ? "Change File" : "Upload CV"}
+                      </Button>
+                      <input
+                        ref={fileInputRef}
+                        type="file"
+                        accept=".pdf,.doc,.docx"
+                        onChange={handleCvChange}
+                        className="hidden"
+                      />
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Accepted formats: PDF, DOC, DOCX (Max 5MB)
+                    </p>
+                  </div>
+                </div>
+
+                <div className="flex justify-between gap-4 pt-4">
+                  <Button type="button" variant="outline" onClick={() => setStep(2)}>
+                    Back
+                  </Button>
+                  <Button type="submit" disabled={isLoading}>
+                    {isLoading ? "Submitting..." : "Submit Application"}
+                  </Button>
+                </div>
+              </form>
+            )}
+
+            {step === 4 && (
+              <div className="space-y-6 py-8 text-center">
+                <div className="flex justify-center">
+                  <div className="rounded-full bg-primary/10 p-6">
+                    <CheckCircle className="w-16 h-16 text-primary" />
+                  </div>
+                </div>
+                
+                <div>
+                  <h3 className="font-semibold text-2xl mb-2">Application Submitted!</h3>
+                  <p className="text-muted-foreground max-w-md mx-auto">
+                    Thank you for applying to become an ElimuConnect tutor. Our team will review your application and contact you within 3-5 business days.
+                  </p>
+                </div>
+
+                <div className="bg-muted/50 border rounded-lg p-6 max-w-md mx-auto">
+                  <h4 className="font-semibold mb-3">What Happens Next?</h4>
+                  <ul className="text-sm text-left space-y-2">
+                    <li className="flex gap-2">
+                      <CheckCircle className="w-5 h-5 text-primary flex-shrink-0" />
+                      <span>We'll verify your credentials and references</span>
+                    </li>
+                    <li className="flex gap-2">
+                      <CheckCircle className="w-5 h-5 text-primary flex-shrink-0" />
+                      <span>If approved, we'll send you the comprehensive tutor profile form</span>
+                    </li>
+                    <li className="flex gap-2">
+                      <CheckCircle className="w-5 h-5 text-primary flex-shrink-0" />
+                      <span>Complete your profile and start teaching!</span>
+                    </li>
+                  </ul>
+                </div>
+
+                <Link to="/">
+                  <Button size="lg">Return to Home</Button>
+                </Link>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        <div className="text-center mt-6">
+          <p className="text-sm text-muted-foreground">
+            Questions?{" "}
+            <a href="mailto:support@elimuconnect.co.ke" className="text-primary hover:underline">
+              Contact our support team
+            </a>
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default BecomeATutor;

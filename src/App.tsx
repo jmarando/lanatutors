@@ -12,6 +12,7 @@ import TutorProfile from "./pages/TutorProfile";
 import Login from "./pages/Login";
 import StudentSignup from "./pages/StudentSignup";
 import TutorSignup from "./pages/TutorSignup";
+import BecomeATutor from "./pages/BecomeATutor";
 import StudentDashboard from "./pages/StudentDashboard";
 import TutorDashboard from "./pages/TutorDashboard";
 import AdminDashboard from "./pages/AdminDashboard";
@@ -38,6 +39,7 @@ const App = () => {
             <Route path="/login" element={<Login />} />
             <Route path="/student-signup" element={<StudentSignup />} />
             <Route path="/tutor-signup" element={<TutorSignup />} />
+            <Route path="/become-a-tutor" element={<BecomeATutor />} />
             <Route path="/student/dashboard" element={<StudentDashboard />} />
             <Route path="/tutor/dashboard" element={<TutorDashboard />} />
             <Route path="/admin" element={<AdminDashboard />} />

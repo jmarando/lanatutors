@@ -403,7 +403,7 @@ const Home = () => {
               <h4 className="font-bold mb-4">For Tutors</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li><Link to="/login">Tutor Dashboard</Link></li>
-                <li><Link to="#">Requirements</Link></li>
+                <li><Link to="/become-a-tutor">Become a Tutor</Link></li>
                 <li><Link to="/tutor-signup" className="text-primary hover:underline">Become a Tutor →</Link></li>
               </ul>
             </div>
