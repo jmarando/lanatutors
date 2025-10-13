@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Link, useNavigate } from "react-router-dom";
 import { CalendarIcon, Clock, CheckCircle, Users, GraduationCap, Target, Award } from "lucide-react";
+import { validateAndNormalizePhone } from "@/utils/phoneValidation";
 
 const CONSULTATION_BENEFITS = [
   {
@@ -55,14 +56,19 @@ const BookConsultation = () => {
   const progress = (step / 4) * 100;
 
   const validateStep1 = () => {
-    if (!formData.parentName || !formData.studentName) {
+    if (!formData.parentName || !formData.studentName || !formData.phoneNumber) {
       toast.error("Please fill in all required fields");
       return false;
     }
-    if (!formData.phoneNumber.match(/^254[0-9]{9}$/)) {
-      toast.error("Phone number must be in format 254XXXXXXXXX");
+    
+    const phoneValidation = validateAndNormalizePhone(formData.phoneNumber);
+    if (!phoneValidation.isValid) {
+      toast.error(phoneValidation.error || "Invalid phone number");
       return false;
     }
+    
+    // Update the phone number to normalized format
+    setFormData({ ...formData, phoneNumber: phoneValidation.normalized });
     return true;
   };
 
@@ -231,12 +237,12 @@ const BookConsultation = () => {
                     <Label htmlFor="phoneNumber">Phone Number *</Label>
                     <Input
                       id="phoneNumber"
-                      placeholder="254712345678"
+                      placeholder="+254712345678 or 0712345678"
                       value={formData.phoneNumber}
                       onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
                       required
                     />
-                    <p className="text-xs text-muted-foreground">Format: 254XXXXXXXXX</p>
+                    <p className="text-xs text-muted-foreground">Accepts: +254, 254, or 0 prefix</p>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="email">Email (Optional)</Label>

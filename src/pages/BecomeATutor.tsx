@@ -9,6 +9,7 @@ import { Award, Upload, CheckCircle, FileText, Shield, GraduationCap } from "luc
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Progress } from "@/components/ui/progress";
+import { validateAndNormalizePhone } from "@/utils/phoneValidation";
 
 const TUTOR_REQUIREMENTS = [
   {
@@ -125,6 +126,17 @@ const BecomeATutor = () => {
       return;
     }
 
+    // Validate and normalize phone number
+    const phoneValidation = validateAndNormalizePhone(formData.phoneNumber);
+    if (!phoneValidation.isValid) {
+      toast({
+        title: "Invalid phone number",
+        description: phoneValidation.error,
+        variant: "destructive"
+      });
+      return;
+    }
+
     setIsLoading(true);
 
     try {
@@ -149,13 +161,13 @@ const BecomeATutor = () => {
       
       cvUrl = publicUrl;
 
-      // Submit application
+      // Submit application with normalized phone number
       const { error: applicationError } = await supabase
         .from("tutor_applications")
         .insert({
           email: formData.email,
           full_name: formData.fullName,
-          phone_number: formData.phoneNumber,
+          phone_number: phoneValidation.normalized,
           current_school: formData.currentSchool,
           years_of_experience: parseInt(formData.yearsOfExperience),
           cv_url: cvUrl,
@@ -323,11 +335,12 @@ const BecomeATutor = () => {
                       <Input
                         id="phoneNumber"
                         type="tel"
-                        placeholder="0712345678"
+                        placeholder="+254712345678 or 0712345678"
                         value={formData.phoneNumber}
                         onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
                         required
                       />
+                      <p className="text-xs text-muted-foreground">Accepts: +254, 254, or 0 prefix</p>
                     </div>
                   </div>
 
