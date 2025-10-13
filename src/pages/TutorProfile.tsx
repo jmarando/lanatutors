@@ -197,18 +197,30 @@ const TutorProfile = () => {
             </div>
 
             <div className="p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-muted/30">
-              <div className="flex items-center gap-6">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6">
                 <div className="flex items-center gap-2">
                   <Star className="w-5 h-5 shrink-0 fill-yellow-500 text-yellow-500" />
                   <span className="font-bold text-lg">{tutor.rating.toFixed(1)}</span>
                   <span className="text-sm text-muted-foreground">({tutor.reviews} reviews)</span>
                 </div>
                 
-                <div className="h-8 w-px bg-border" />
+                <div className="h-8 w-px bg-border hidden sm:block" />
                 
-                <div className="text-2xl font-bold">
-                  KES {tutor.hourlyRate.toLocaleString()}
-                  <span className="text-sm font-normal text-muted-foreground">/hr</span>
+                <div className="space-y-1">
+                  <div className="flex items-baseline gap-2">
+                    <div className="text-xl font-bold">
+                      KES {tutor.hourlyRate.toLocaleString()}
+                      <span className="text-sm font-normal text-muted-foreground">/hr</span>
+                    </div>
+                    <span className="text-xs text-muted-foreground">online</span>
+                  </div>
+                  <div className="flex items-baseline gap-2">
+                    <div className="text-lg font-semibold text-muted-foreground">
+                      KES {(tutor.hourlyRate * 1.3).toLocaleString()}
+                      <span className="text-xs font-normal">/hr</span>
+                    </div>
+                    <span className="text-xs text-muted-foreground">in-person</span>
+                  </div>
                 </div>
               </div>
 
