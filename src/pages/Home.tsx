@@ -183,6 +183,7 @@ const Home = () => {
                 muted 
                 playsInline
                 className="rounded-lg shadow-2xl w-full h-auto object-cover"
+                aria-label="ElimuConnect online tutoring demo video"
               >
                 Your browser does not support the video tag.
               </video>

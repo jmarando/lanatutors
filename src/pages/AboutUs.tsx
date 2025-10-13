@@ -13,6 +13,7 @@ import {
   Clock
 } from "lucide-react";
 import { Link } from "react-router-dom";
+import { SEO } from "@/components/SEO";
 
 const AboutUs = () => {
   const mission = [
@@ -95,6 +96,12 @@ const AboutUs = () => {
 
   return (
     <div className="min-h-screen bg-[image:var(--gradient-page)]">
+      <SEO
+        title="About Us - Our Mission to Democratize Quality Education in Kenya"
+        description="Learn about ElimuConnect's mission to provide accessible, high-quality online tutoring across Kenya. Connecting students with verified teachers from top schools since our inception."
+        keywords="about ElimuConnect, online tutoring mission Kenya, verified tutors Kenya, education accessibility, KCSE tutoring platform"
+      />
+      
       {/* Hero Section */}
       <section>
         <div className="max-w-7xl mx-auto px-6 py-16 text-center">

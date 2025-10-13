@@ -3,22 +3,25 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { lazy, Suspense } from "react";
 import Navigation from "./components/Navigation";
-import Home from "./pages/Home";
-import HowItWorks from "./pages/HowItWorks";
-import AboutUs from "./pages/AboutUs";
-import TutorSearch from "./pages/TutorSearch";
-import TutorProfile from "./pages/TutorProfile";
-import Login from "./pages/Login";
-import StudentSignup from "./pages/StudentSignup";
-import TutorSignup from "./pages/TutorSignup";
-import BecomeATutor from "./pages/BecomeATutor";
-import StudentDashboard from "./pages/StudentDashboard";
-import TutorDashboard from "./pages/TutorDashboard";
-import AdminDashboard from "./pages/AdminDashboard";
-import SeedTutors from "./pages/SeedTutors";
-import BookConsultation from "./pages/BookConsultation";
-import NotFound from "./pages/NotFound";
+
+// Lazy load pages for code splitting
+const Home = lazy(() => import("./pages/Home"));
+const HowItWorks = lazy(() => import("./pages/HowItWorks"));
+const AboutUs = lazy(() => import("./pages/AboutUs"));
+const TutorSearch = lazy(() => import("./pages/TutorSearch"));
+const TutorProfile = lazy(() => import("./pages/TutorProfile"));
+const Login = lazy(() => import("./pages/Login"));
+const StudentSignup = lazy(() => import("./pages/StudentSignup"));
+const TutorSignup = lazy(() => import("./pages/TutorSignup"));
+const BecomeATutor = lazy(() => import("./pages/BecomeATutor"));
+const StudentDashboard = lazy(() => import("./pages/StudentDashboard"));
+const TutorDashboard = lazy(() => import("./pages/TutorDashboard"));
+const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
+const SeedTutors = lazy(() => import("./pages/SeedTutors"));
+const BookConsultation = lazy(() => import("./pages/BookConsultation"));
+const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient();
 
@@ -30,24 +33,30 @@ const App = () => {
         <Sonner />
         <BrowserRouter>
           <Navigation />
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/how-it-works" element={<HowItWorks />} />
-            <Route path="/about" element={<AboutUs />} />
-            <Route path="/tutors" element={<TutorSearch />} />
-            <Route path="/tutors/:id" element={<TutorProfile />} />
-            <Route path="/login" element={<Login />} />
-            <Route path="/student-signup" element={<StudentSignup />} />
-            <Route path="/tutor-signup" element={<TutorSignup />} />
-            <Route path="/become-a-tutor" element={<BecomeATutor />} />
-            <Route path="/student/dashboard" element={<StudentDashboard />} />
-            <Route path="/tutor/dashboard" element={<TutorDashboard />} />
-            <Route path="/admin" element={<AdminDashboard />} />
-            <Route path="/seed-tutors" element={<SeedTutors />} />
-            <Route path="/book-consultation" element={<BookConsultation />} />
-            {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-            <Route path="*" element={<NotFound />} />
-          </Routes>
+          <Suspense fallback={
+            <div className="min-h-screen flex items-center justify-center">
+              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+            </div>
+          }>
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/how-it-works" element={<HowItWorks />} />
+              <Route path="/about" element={<AboutUs />} />
+              <Route path="/tutors" element={<TutorSearch />} />
+              <Route path="/tutors/:id" element={<TutorProfile />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/student-signup" element={<StudentSignup />} />
+              <Route path="/tutor-signup" element={<TutorSignup />} />
+              <Route path="/become-a-tutor" element={<BecomeATutor />} />
+              <Route path="/student/dashboard" element={<StudentDashboard />} />
+              <Route path="/tutor/dashboard" element={<TutorDashboard />} />
+              <Route path="/admin" element={<AdminDashboard />} />
+              <Route path="/seed-tutors" element={<SeedTutors />} />
+              <Route path="/book-consultation" element={<BookConsultation />} />
+              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+              <Route path="*" element={<NotFound />} />
+            </Routes>
+          </Suspense>
         </BrowserRouter>
       </TooltipProvider>
     </QueryClientProvider>

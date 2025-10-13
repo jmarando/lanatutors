@@ -321,8 +321,9 @@ const TutorSignup = () => {
                     {avatarPreview && (
                       <img 
                         src={avatarPreview} 
-                        alt="Avatar preview" 
+                        alt="Profile picture preview for tutor registration" 
                         className="w-20 h-20 rounded-full object-cover border-2"
+                        loading="lazy"
                       />
                     )}
                     <Button

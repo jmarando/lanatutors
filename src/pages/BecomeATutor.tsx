@@ -10,6 +10,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Progress } from "@/components/ui/progress";
 import { validateAndNormalizePhone } from "@/utils/phoneValidation";
+import { SEO } from "@/components/SEO";
 
 const TUTOR_REQUIREMENTS = [
   {
@@ -201,8 +202,14 @@ const BecomeATutor = () => {
 
   return (
     <div className="min-h-screen bg-[image:var(--gradient-page)] flex items-center justify-center p-6">
+      <SEO
+        title="Become a Tutor - Share Your Knowledge, Earn Income"
+        description="Join ElimuConnect as a tutor and help Kenyan students excel. Earn competitive rates, set your own schedule, and make an impact. Apply today if you're a qualified teacher."
+        keywords="become tutor Kenya, online teaching jobs Kenya, tutoring opportunities, earn teaching Kenya, KCSE tutor jobs"
+      />
+      
       <div className="w-full max-w-4xl">
-        <Link to="/" className="flex items-center justify-center gap-2 mb-8">
+        <Link to="/" className="flex items-center justify-center gap-2 mb-8" aria-label="ElimuConnect Home">
           <Award className="w-10 h-10 text-primary" />
           <span className="text-3xl font-bold">ElimuConnect</span>
         </Link>
