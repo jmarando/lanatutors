@@ -383,14 +383,11 @@ const NewStudentDashboard = () => {
     <div className="min-h-screen bg-[image:var(--gradient-page)]">
       <Navigation />
       
-      <div className="container mx-auto px-4 py-8 max-w-7xl">
-        {/* Header */}
-        <div className="mb-8 mt-8">
-          <h1 className="text-4xl font-bold mb-2">
-            Welcome back, <span className="text-primary">{user?.email?.split('@')[0] || 'Student'}</span>!
-          </h1>
-          <p className="text-muted-foreground text-lg">Track your learning journey and manage your sessions</p>
-        </div>
+      <div className="container mx-auto px-4 py-16 max-w-7xl">
+        <h1 className="text-4xl font-bold mb-2">
+          Welcome back, <span className="text-primary">{user?.email?.split('@')[0] || 'Student'}</span>!
+        </h1>
+        <p className="text-muted-foreground text-lg mb-8">Track your learning journey and manage your sessions</p>
 
         {/* Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
@@ -581,18 +578,37 @@ const NewStudentDashboard = () => {
                           )}
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
-                        {booking.meeting_link && booking.status === "confirmed" && (
+                      <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2">
+                        {booking.status === "confirmed" && (
                           <Button 
-                            onClick={() => window.open(booking.meeting_link!, '_blank')}
+                            onClick={() => {
+                              if (booking.meeting_link) {
+                                window.open(booking.meeting_link, '_blank');
+                              } else {
+                                toast({
+                                  title: "Meeting link not ready",
+                                  description: "The meeting link will be available shortly before the session",
+                                  variant: "default"
+                                });
+                              }
+                            }}
                             className="gap-2"
                           >
                             <Video className="w-4 h-4" />
-                            Join Session
+                            Join Class
                           </Button>
                         )}
                         {booking.balance_due > 0 && (
-                          <Button variant="outline" className="gap-2">
+                          <Button 
+                            variant="outline" 
+                            className="gap-2"
+                            onClick={() => {
+                              toast({
+                                title: "Payment Required",
+                                description: `Please pay the balance of KES ${booking.balance_due.toFixed(0)} to confirm your booking`,
+                              });
+                            }}
+                          >
                             Pay Balance
                             <ChevronRight className="w-4 h-4" />
                           </Button>
