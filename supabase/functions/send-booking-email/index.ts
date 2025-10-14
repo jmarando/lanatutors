@@ -74,7 +74,7 @@ const handler = async (req: Request): Promise<Response> => {
               <table role="presentation" style="max-width: 600px; width: 100%; border-collapse: collapse; background-color: #ffffff; border-radius: 12px; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
                 <!-- Header -->
                 <tr>
-                  <td style="padding: 40px 40px 30px; text-align: center; background: linear-gradient(135deg, #0ea5e9 0%, #0369a1 100%); border-radius: 12px 12px 0 0;">
+                  <td style="padding: 40px 40px 30px; text-align: center; background: linear-gradient(135deg, #e5432c 0%, #c2341f 100%); border-radius: 12px 12px 0 0;">
                     <h1 style="margin: 0; color: #ffffff; font-size: 28px; font-weight: 700; text-shadow: 0 2px 4px rgba(0,0,0,0.1);">
                       ✓ Booking Confirmed!
                     </h1>
@@ -92,10 +92,10 @@ const handler = async (req: Request): Promise<Response> => {
                     </p>
                     
                     <!-- Session Details Card -->
-                    <table role="presentation" style="width: 100%; border-collapse: collapse; background-color: #f0f9ff; border-radius: 8px; margin-bottom: 24px;">
+                    <table role="presentation" style="width: 100%; border-collapse: collapse; background-color: #fef2f1; border-radius: 8px; margin-bottom: 24px;">
                       <tr>
                         <td style="padding: 24px;">
-                          <h2 style="margin: 0 0 16px; font-size: 18px; color: #0369a1; font-weight: 600;">
+                          <h2 style="margin: 0 0 16px; font-size: 18px; color: #e5432c; font-weight: 600;">
                             📚 Session Details
                           </h2>
                           <table role="presentation" style="width: 100%; border-collapse: collapse;">
@@ -214,10 +214,10 @@ const handler = async (req: Request): Promise<Response> => {
                           <h3 style="margin: 0 0 12px; font-size: 16px; color: #111827; font-weight: 600;">
                             🔗 Quick Links
                           </h3>
-                          <p style="margin: 0; font-size: 14px; line-height: 28px;">
-                            📊 <a href="https://your-app-url.com/student-dashboard" style="color: #0ea5e9; text-decoration: none; font-weight: 500;">View Your Dashboard</a><br>
-                            💬 <a href="https://your-app-url.com/student-dashboard" style="color: #0ea5e9; text-decoration: none; font-weight: 500;">Message Your Tutor</a><br>
-                            📚 <a href="https://your-app-url.com/tutors" style="color: #0ea5e9; text-decoration: none; font-weight: 500;">Book Another Session</a>
+                           <p style="margin: 0; font-size: 14px; line-height: 28px;">
+                            📊 <a href="https://your-app-url.com/student-dashboard" style="color: #e5432c; text-decoration: none; font-weight: 500;">View Your Dashboard</a><br>
+                            💬 <a href="https://your-app-url.com/student-dashboard" style="color: #e5432c; text-decoration: none; font-weight: 500;">Message Your Tutor</a><br>
+                            📚 <a href="https://your-app-url.com/tutors" style="color: #e5432c; text-decoration: none; font-weight: 500;">Book Another Session</a>
                           </p>
                         </td>
                       </tr>
