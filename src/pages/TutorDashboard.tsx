@@ -16,7 +16,6 @@ import {
   Clock
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import Navigation from "@/components/Navigation";
 
 const TutorDashboard = () => {
   const navigate = useNavigate();
@@ -73,7 +72,6 @@ const TutorDashboard = () => {
 
   return (
     <div className="min-h-screen bg-[image:var(--gradient-page)]">
-      <Navigation />
 
       {/* Dashboard Header with Actions */}
       <div className="border-b bg-background">
