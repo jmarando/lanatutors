@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Calendar } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -52,6 +53,7 @@ export const BookingCalendar = ({
   const [loading, setLoading] = useState(false);
   const [paymentInitiated, setPaymentInitiated] = useState(false);
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (selectedDate) {
@@ -203,26 +205,9 @@ export const BookingCalendar = ({
 
         // In test mode, payment is auto-confirmed
         if (paymentData?.testMode) {
-          toast({
-            title: "🎉 Booking Confirmed!",
-            description: (
-              <div className="space-y-2 mt-2">
-                <p className="font-semibold">Your tutoring session has been successfully booked!</p>
-                <div className="text-sm space-y-1">
-                  <p>✓ Deposit of KES {depositAmount.toFixed(0)} paid</p>
-                  {balanceDue > 0 && <p>• Balance of KES {balanceDue.toFixed(0)} due before the session</p>}
-                </div>
-                <div className="mt-3 pt-2 border-t border-border/50 text-sm">
-                  <p className="font-medium mb-1">Next Steps:</p>
-                  <p>📧 A confirmation email has been sent to your inbox with full booking details</p>
-                  <p>📚 Visit your Student Dashboard to view upcoming sessions and join the class</p>
-                </div>
-                <p className="text-xs text-muted-foreground mt-2">(Test mode - no actual payment processed)</p>
-              </div>
-            ),
-            duration: 10000,
-          });
-
+          // Redirect to booking confirmed page
+          navigate(`/booking-confirmed?bookingId=${booking.id}`);
+          
           resetForm();
         } else {
           setPaymentInitiated(true);
