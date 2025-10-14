@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Award, Menu, LogOut } from "lucide-react";
+import { Award, Menu, LogOut, Phone } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useState, useEffect } from "react";
@@ -53,10 +53,9 @@ const Navigation = () => {
 
   const navLinks = [
     { to: "/tutors", label: "Find Tutors" },
-    { to: "/how-it-works", label: "How It Works" },
+    { to: "/for-students", label: "ElimuConnect for Students" },
+    { to: "/for-tutors", label: "ElimuConnect for Tutors" },
     { to: "/about", label: "About Us" },
-    { to: "/student/dashboard", label: "Student Dashboard" },
-    { to: "/tutor/dashboard", label: "Tutor Dashboard" },
   ];
 
   return (
@@ -68,39 +67,47 @@ const Navigation = () => {
         </Link>
 
         {/* Desktop Navigation */}
-        <div className="hidden lg:flex items-center gap-6">
-          {navLinks.map((link) => (
-            <Link
-              key={link.to}
-              to={link.to}
-              className="text-sm font-medium hover:text-primary transition-colors"
-            >
-              {link.label}
-            </Link>
-          ))}
-          {isAdmin && (
-            <Link to="/admin" className="text-sm font-medium hover:text-primary transition-colors">
-              Admin
-            </Link>
-          )}
-          {user ? (
-            <>
-              <span className="text-sm text-muted-foreground">{user.email}</span>
-              <Button variant="outline" size="sm" onClick={handleSignOut}>
-                <LogOut className="w-4 h-4 mr-2" />
-                Sign Out
-              </Button>
-            </>
-          ) : (
-            <>
-              <Link to="/login">
-                <Button variant="outline" size="sm">Sign In</Button>
+        <div className="hidden lg:flex items-center gap-6 flex-1 justify-between ml-8">
+          <div className="flex items-center gap-6">
+            {navLinks.map((link) => (
+              <Link
+                key={link.to}
+                to={link.to}
+                className="text-sm font-medium hover:text-primary transition-colors"
+              >
+                {link.label}
               </Link>
-              <Link to="/login">
-                <Button size="sm">Get Started</Button>
+            ))}
+            {isAdmin && (
+              <Link to="/admin" className="text-sm font-medium hover:text-primary transition-colors">
+                Admin
               </Link>
-            </>
-          )}
+            )}
+          </div>
+          <div className="flex items-center gap-4">
+            <a href="tel:+254725252542" className="flex items-center gap-2 text-sm font-medium hover:text-primary transition-colors">
+              <Phone className="w-4 h-4" />
+              <span>0725 - 252542</span>
+            </a>
+            {user ? (
+              <>
+                <span className="text-sm text-muted-foreground">{user.email}</span>
+                <Button variant="outline" size="sm" onClick={handleSignOut}>
+                  <LogOut className="w-4 h-4 mr-2" />
+                  Sign Out
+                </Button>
+              </>
+            ) : (
+              <>
+                <Link to="/login">
+                  <Button variant="outline" size="sm">Sign In</Button>
+                </Link>
+                <Link to="/login">
+                  <Button size="sm">Get Started</Button>
+                </Link>
+              </>
+            )}
+          </div>
         </div>
 
         {/* Mobile Menu */}
@@ -127,6 +134,10 @@ const Navigation = () => {
                   Admin Dashboard
                 </Link>
               )}
+              <a href="tel:+254725252542" className="flex items-center gap-2 text-lg font-medium hover:text-primary transition-colors">
+                <Phone className="w-5 h-5" />
+                <span>0725 - 252542</span>
+              </a>
               {user ? (
                 <>
                   <span className="text-sm text-muted-foreground">{user.email}</span>

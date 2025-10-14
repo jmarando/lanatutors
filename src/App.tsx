@@ -10,6 +10,8 @@ import Navigation from "./components/Navigation";
 const Home = lazy(() => import("./pages/Home"));
 const HowItWorks = lazy(() => import("./pages/HowItWorks"));
 const AboutUs = lazy(() => import("./pages/AboutUs"));
+const ForStudents = lazy(() => import("./pages/ForStudents"));
+const ForTutors = lazy(() => import("./pages/ForTutors"));
 const TutorSearch = lazy(() => import("./pages/TutorSearch"));
 const TutorProfile = lazy(() => import("./pages/TutorProfile"));
 const Login = lazy(() => import("./pages/Login"));
@@ -42,6 +44,8 @@ const App = () => {
               <Route path="/" element={<Home />} />
               <Route path="/how-it-works" element={<HowItWorks />} />
               <Route path="/about" element={<AboutUs />} />
+              <Route path="/for-students" element={<ForStudents />} />
+              <Route path="/for-tutors" element={<ForTutors />} />
               <Route path="/tutors" element={<TutorSearch />} />
               <Route path="/tutors/:id" element={<TutorProfile />} />
               <Route path="/login" element={<Login />} />
