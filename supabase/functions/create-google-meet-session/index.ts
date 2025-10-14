@@ -129,9 +129,9 @@ serve(async (req) => {
       },
     };
 
-    // Create event in tutor's calendar
+    // Create event in primary calendar
     const calendarResponse = await fetch(
-      `https://www.googleapis.com/calendar/v3/calendars/${tutorEmail}/events?conferenceDataVersion=1&sendUpdates=all`,
+      `https://www.googleapis.com/calendar/v3/calendars/primary/events?conferenceDataVersion=1&sendUpdates=all`,
       {
         method: 'POST',
         headers: {
