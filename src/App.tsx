@@ -18,7 +18,7 @@ const Login = lazy(() => import("./pages/Login"));
 const StudentSignup = lazy(() => import("./pages/StudentSignup"));
 const TutorSignup = lazy(() => import("./pages/TutorSignup"));
 const BecomeATutor = lazy(() => import("./pages/BecomeATutor"));
-const StudentDashboard = lazy(() => import("./pages/StudentDashboard"));
+const StudentDashboard = lazy(() => import("./pages/NewStudentDashboard"));
 const TutorDashboard = lazy(() => import("./pages/TutorDashboard"));
 const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
 const SeedTutors = lazy(() => import("./pages/SeedTutors"));
