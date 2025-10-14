@@ -105,14 +105,14 @@ serve(async (req) => {
             .single()
 
           let tutorProfile = null
-          let tutorUserId = null
-          if (tutorProfileRow?.user_id) {
-            tutorUserId = tutorProfileRow.user_id
+          let tutorUserId = tutorProfileRow?.user_id || bookingBase.tutor_id
+          // Fallback: if booking stored tutor user_id instead of profile id, we still resolve name/email
+          if (tutorUserId) {
             const { data } = await supabase
               .from('profiles')
               .select('full_name')
               .eq('id', tutorUserId)
-              .single()
+              .maybeSingle()
             tutorProfile = data
           }
 
