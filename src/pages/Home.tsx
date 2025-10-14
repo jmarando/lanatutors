@@ -448,9 +448,6 @@ const Home = () => {
                 <Award className="w-6 h-6 text-primary" />
                 <span className="text-xl font-bold">ElimuConnect</span>
               </div>
-              <p className="text-sm text-muted-foreground mb-4">
-                Quality tutoring for Kenyan students - online and in-person
-              </p>
               <div className="text-sm text-muted-foreground space-y-1">
                 <p>First Floor, Arbor House,</p>
                 <p>Arboretum Drive, Nairobi</p>
