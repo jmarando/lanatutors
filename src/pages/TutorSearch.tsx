@@ -8,11 +8,15 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Slider } from "@/components/ui/slider";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Search, Star, SlidersHorizontal } from "lucide-react";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Search, Star, SlidersHorizontal, Calendar as CalendarIcon, Clock } from "lucide-react";
 import { SEO } from "@/components/SEO";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { TutorTierBadge, TierExplainer } from "@/components/TutorTierBadge";
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
 import tutor1 from "@/assets/tutor-1.jpg";
 import tutor2 from "@/assets/tutor-2.jpg";
 import tutor3 from "@/assets/tutor-3.jpg";
@@ -38,10 +42,81 @@ const TutorSearch = () => {
   const [minRating, setMinRating] = useState(0);
   const [tutors, setTutors] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  
+  // New availability filters
+  const [selectedDate, setSelectedDate] = useState<Date>();
+  const [selectedTimeSlot, setSelectedTimeSlot] = useState("all");
+  const [availabilityMap, setAvailabilityMap] = useState<Map<string, boolean>>(new Map());
 
   useEffect(() => {
     fetchTutors();
   }, []);
+
+  useEffect(() => {
+    if (selectedDate && selectedTimeSlot !== "all") {
+      fetchAvailability();
+    }
+  }, [selectedDate, selectedTimeSlot, tutors]);
+
+  const fetchAvailability = async () => {
+    if (!selectedDate || selectedTimeSlot === "all") return;
+
+    try {
+      // Parse time slot (e.g., "morning" -> 6-12)
+      const timeRanges: Record<string, { start: number; end: number }> = {
+        morning: { start: 6, end: 12 },
+        afternoon: { start: 12, end: 17 },
+        evening: { start: 17, end: 21 },
+      };
+
+      const range = timeRanges[selectedTimeSlot];
+      if (!range) return;
+
+      const startDate = new Date(selectedDate);
+      startDate.setHours(range.start, 0, 0, 0);
+      
+      const endDate = new Date(selectedDate);
+      endDate.setHours(range.end, 0, 0, 0);
+
+      // Fetch availability for all tutors for the selected date/time
+      const { data: availability } = await supabase
+        .from("tutor_availability")
+        .select("tutor_id")
+        .gte("start_time", startDate.toISOString())
+        .lte("start_time", endDate.toISOString())
+        .eq("is_booked", false);
+
+      // Create a map of tutor_id -> has availability
+      const newMap = new Map<string, boolean>();
+      
+      // Get tutor_id to profile_id mapping
+      tutors.forEach(tutor => {
+        const hasSlots = availability?.some(slot => 
+          tutors.find(t => t.id === slot.tutor_id)
+        ) || false;
+        newMap.set(tutor.id, hasSlots);
+      });
+
+      // Actually check properly by fetching tutor profiles
+      const { data: tutorProfiles } = await supabase
+        .from("tutor_profiles")
+        .select("id, user_id")
+        .in("id", tutors.map(t => t.id));
+
+      const tutorIdMap = new Map(tutorProfiles?.map(tp => [tp.id, tp.user_id]) || []);
+      
+      availability?.forEach(slot => {
+        const tutorProfileId = tutors.find(t => tutorIdMap.get(t.id) === slot.tutor_id)?.id;
+        if (tutorProfileId) {
+          newMap.set(tutorProfileId, true);
+        }
+      });
+
+      setAvailabilityMap(newMap);
+    } catch (error) {
+      console.error("Error fetching availability:", error);
+    }
+  };
 
   const fetchTutors = async () => {
     setLoading(true);
@@ -108,6 +183,13 @@ const TutorSearch = () => {
 
   const subjects = ["all", "Math", "Physics", "Chemistry", "Biology", "English", "Kiswahili", "History", "Geography"];
 
+  const timeSlots = [
+    { value: "all", label: "Any Time" },
+    { value: "morning", label: "Morning (6 AM - 12 PM)" },
+    { value: "afternoon", label: "Afternoon (12 PM - 5 PM)" },
+    { value: "evening", label: "Evening (5 PM - 9 PM)" },
+  ];
+
   const filteredTutors = tutors
     .filter(tutor => {
       const matchesSearch = 
@@ -120,7 +202,11 @@ const TutorSearch = () => {
       const matchesPrice = tutor.hourlyRate >= priceRange[0] && tutor.hourlyRate <= priceRange[1];
       const matchesRating = tutor.rating >= minRating;
       
-      return matchesSearch && matchesSubject && matchesCurriculum && matchesPrice && matchesRating;
+      // Availability filter
+      const matchesAvailability = !selectedDate || selectedTimeSlot === "all" || 
+        availabilityMap.get(tutor.id) === true;
+      
+      return matchesSearch && matchesSubject && matchesCurriculum && matchesPrice && matchesRating && matchesAvailability;
     })
     .sort((a, b) => {
       if (sortBy === "rating") return b.rating - a.rating;
@@ -214,6 +300,57 @@ const TutorSearch = () => {
             </SelectContent>
           </Select>
 
+          {/* Date Filter */}
+          <Popover>
+            <PopoverTrigger asChild>
+              <Button variant="outline" className={cn("h-12 justify-start text-left font-normal", !selectedDate && "text-muted-foreground")}>
+                <CalendarIcon className="mr-2 h-4 w-4" />
+                {selectedDate ? format(selectedDate, "MMM d, yyyy") : "Any Date"}
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-auto p-0 bg-background" align="start">
+              <Calendar
+                mode="single"
+                selected={selectedDate}
+                onSelect={setSelectedDate}
+                disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
+                initialFocus
+                className="pointer-events-auto"
+              />
+              {selectedDate && (
+                <div className="p-3 border-t">
+                  <Button 
+                    variant="ghost" 
+                    size="sm" 
+                    className="w-full"
+                    onClick={() => {
+                      setSelectedDate(undefined);
+                      setSelectedTimeSlot("all");
+                      setAvailabilityMap(new Map());
+                    }}
+                  >
+                    Clear Date
+                  </Button>
+                </div>
+              )}
+            </PopoverContent>
+          </Popover>
+
+          {/* Time Slot Filter */}
+          <Select value={selectedTimeSlot} onValueChange={setSelectedTimeSlot}>
+            <SelectTrigger className="w-56 h-12">
+              <Clock className="mr-2 h-4 w-4" />
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent className="bg-background">
+              {timeSlots.map(slot => (
+                <SelectItem key={slot.value} value={slot.value}>
+                  {slot.label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
           {/* Advanced Filters Sheet */}
           <Sheet>
             <SheetTrigger asChild>
@@ -283,13 +420,60 @@ const TutorSearch = () => {
 
         {/* Results Count */}
         <div className="max-w-7xl mx-auto mb-4">
-          <p className="text-sm text-muted-foreground">
-            Showing {filteredTutors.length} of {tutors.length} tutors
-          </p>
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            <p className="text-sm text-muted-foreground">
+              Showing {filteredTutors.length} of {tutors.length} tutors
+              {selectedDate && selectedTimeSlot !== "all" && (
+                <span className="ml-2 text-primary">
+                  • Available on {format(selectedDate, "MMM d")} ({timeSlots.find(t => t.value === selectedTimeSlot)?.label.split(' ')[0]})
+                </span>
+              )}
+            </p>
+            {(selectedDate || selectedTimeSlot !== "all" || selectedSubject !== "all" || selectedCurriculum !== "all" || minRating > 0) && (
+              <Button 
+                variant="ghost" 
+                size="sm"
+                onClick={() => {
+                  setSelectedDate(undefined);
+                  setSelectedTimeSlot("all");
+                  setSelectedSubject("all");
+                  setSelectedCurriculum("all");
+                  setMinRating(0);
+                  setPriceRange([0, 5000]);
+                  setAvailabilityMap(new Map());
+                }}
+              >
+                Clear All Filters
+              </Button>
+            )}
+          </div>
         </div>
 
         {/* Tutors Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto">
+        {filteredTutors.length === 0 ? (
+          <div className="text-center py-16">
+            <p className="text-xl font-semibold mb-2">No tutors found</p>
+            <p className="text-muted-foreground mb-6">
+              Try adjusting your filters or search criteria
+            </p>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setSearchQuery("");
+                setSelectedDate(undefined);
+                setSelectedTimeSlot("all");
+                setSelectedSubject("all");
+                setSelectedCurriculum("all");
+                setMinRating(0);
+                setPriceRange([0, 5000]);
+                setAvailabilityMap(new Map());
+              }}
+            >
+              Reset All Filters
+            </Button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto">
           {filteredTutors.map((tutor) => (
             <Card key={tutor.id} className="overflow-hidden hover:shadow-lg transition-all duration-300 border-border/50 bg-card">
               <CardContent className="p-6">
@@ -358,6 +542,7 @@ const TutorSearch = () => {
             </Card>
           ))}
         </div>
+        )}
       </div>
     </div>
   );
