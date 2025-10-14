@@ -5,6 +5,13 @@ import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { 
   Calendar,
   Clock,
   Video, 
@@ -17,13 +24,16 @@ import {
   ArrowRight,
   PlayCircle,
   Download,
-  ChevronRight
+  ChevronRight,
+  Sparkles,
+  Lock
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import Navigation from "@/components/Navigation";
+import { RecordingPayment } from "@/components/RecordingPayment";
 
 interface PackagePurchase {
   id: string;
@@ -67,6 +77,13 @@ const NewStudentDashboard = () => {
     totalSpent: 0
   });
   const [loading, setLoading] = useState(true);
+  
+  // Dialog states
+  const [summaryDialogOpen, setSummaryDialogOpen] = useState(false);
+  const [recordingDialogOpen, setRecordingDialogOpen] = useState(false);
+  const [paymentDialogOpen, setPaymentDialogOpen] = useState(false);
+  const [selectedBooking, setSelectedBooking] = useState<Booking | null>(null);
+  const [hasRecordingAccess, setHasRecordingAccess] = useState(false);
 
   useEffect(() => {
     fetchDashboardData();
@@ -234,6 +251,57 @@ const NewStudentDashboard = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleGenerateSummary = (booking: Booking) => {
+    setSelectedBooking(booking);
+    setSummaryDialogOpen(true);
+  };
+
+  const handleWatchRecording = async (booking: Booking) => {
+    setSelectedBooking(booking);
+
+    if (!user) {
+      toast({
+        title: "Please log in",
+        description: "You need to be logged in to access recordings",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const { data, error } = await supabase.rpc('has_recording_access', {
+      _user_id: user.id,
+      _class_id: booking.id
+    });
+
+    if (error) {
+      console.error('Error checking access:', error);
+      toast({
+        title: "Error",
+        description: "Failed to check recording access",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setHasRecordingAccess(data || false);
+    
+    if (data) {
+      setRecordingDialogOpen(true);
+    } else {
+      setPaymentDialogOpen(true);
+    }
+  };
+
+  const handlePaymentSuccess = () => {
+    setPaymentDialogOpen(false);
+    setHasRecordingAccess(true);
+    setRecordingDialogOpen(true);
+    toast({
+      title: "Payment Successful",
+      description: "You now have access to this recording!",
+    });
   };
 
   const getStatusBadge = (status: string) => {
@@ -519,12 +587,22 @@ const NewStudentDashboard = () => {
                           </div>
                         </div>
                         <div className="flex items-center gap-2">
-                          <Button variant="outline" size="sm" className="gap-2">
-                            <PlayCircle className="w-4 h-4" />
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="gap-2"
+                            onClick={() => handleWatchRecording(booking)}
+                          >
+                            <Lock className="w-4 h-4" />
                             Recording
                           </Button>
-                          <Button variant="outline" size="sm" className="gap-2">
-                            <Download className="w-4 h-4" />
+                          <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="gap-2"
+                            onClick={() => handleGenerateSummary(booking)}
+                          >
+                            <Sparkles className="w-4 h-4" />
                             Summary
                           </Button>
                         </div>
@@ -553,6 +631,116 @@ const NewStudentDashboard = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* AI Summary Dialog */}
+      <Dialog open={summaryDialogOpen} onOpenChange={setSummaryDialogOpen}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Sparkles className="w-5 h-5 text-yellow-500" />
+              AI-Generated Summary: {selectedBooking?.subject}
+            </DialogTitle>
+            <DialogDescription>
+              This summary was automatically generated from your class session.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="prose prose-sm max-w-none">
+            <div className="whitespace-pre-wrap text-sm leading-relaxed">
+              {`**Session Overview:**
+This was an engaging session covering key concepts in ${selectedBooking?.subject}. The tutor provided clear explanations and practical examples to help understand the material better.
+
+**Key Topics Covered:**
+• Introduction to fundamental principles
+• Step-by-step problem-solving techniques
+• Real-world applications and examples
+• Common mistakes to avoid
+• Practice problems and exercises
+
+**Main Takeaways:**
+1. Understanding the core concepts is essential before moving to advanced topics
+2. Practice regularly to build confidence and speed
+3. Review the examples provided during the session
+
+**Action Items:**
+- Complete the assigned practice problems
+- Review notes from this session
+- Prepare questions for the next class
+
+**Next Steps:**
+Continue practicing the concepts learned today and reach out if you need clarification on any topics.`}
+            </div>
+          </div>
+          <div className="flex gap-2 mt-4">
+            <Button variant="outline" className="flex-1">
+              Download PDF
+            </Button>
+            <Button variant="outline" className="flex-1">
+              Share Summary
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Payment Dialog */}
+      <Dialog open={paymentDialogOpen} onOpenChange={setPaymentDialogOpen}>
+        <DialogContent className="max-w-md">
+          {selectedBooking && (
+            <RecordingPayment 
+              classId={selectedBooking.id}
+              className={selectedBooking.subject}
+              onSuccess={handlePaymentSuccess}
+            />
+          )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Recording Dialog */}
+      <Dialog open={recordingDialogOpen} onOpenChange={setRecordingDialogOpen}>
+        <DialogContent className="max-w-4xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <PlayCircle className="w-5 h-5 text-primary" />
+              Class Recording: {selectedBooking?.subject}
+            </DialogTitle>
+            <DialogDescription>
+              Watch the recording of your previous class session.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            {/* Dummy Video Player */}
+            <div className="aspect-video bg-secondary rounded-lg flex items-center justify-center">
+              <div className="text-center">
+                <PlayCircle className="w-20 h-20 text-muted-foreground mx-auto mb-4" />
+                <p className="text-muted-foreground">Video Player Placeholder</p>
+                <p className="text-sm text-muted-foreground">Duration: 45:30</p>
+              </div>
+            </div>
+            
+            {/* Recording Info */}
+            <div className="grid grid-cols-2 gap-4 text-sm">
+              <div>
+                <p className="text-muted-foreground">Recorded on</p>
+                <p className="font-medium">
+                  {selectedBooking && format(new Date(selectedBooking.tutor_availability.start_time), "MMMM d, yyyy")}
+                </p>
+              </div>
+              <div>
+                <p className="text-muted-foreground">Quality</p>
+                <p className="font-medium">1080p HD</p>
+              </div>
+            </div>
+
+            <div className="flex gap-2">
+              <Button variant="outline" className="flex-1">
+                Download Recording
+              </Button>
+              <Button variant="outline" className="flex-1">
+                Generate Transcript
+              </Button>
+            </div>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
