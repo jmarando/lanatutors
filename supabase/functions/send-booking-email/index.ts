@@ -228,7 +228,7 @@ const handler = async (req: Request): Promise<Response> => {
                     </p>
                     <p style="margin: 0; font-size: 14px; color: #6b7280;">
                       Best regards,<br>
-                      <strong>The TutorMatch Team</strong>
+                      <strong>The ElimuConnect Team</strong>
                     </p>
                   </td>
                 </tr>
@@ -237,8 +237,8 @@ const handler = async (req: Request): Promise<Response> => {
                 <tr>
                   <td style="padding: 24px 40px; background-color: #f9fafb; border-radius: 0 0 12px 12px; text-align: center;">
                     <p style="margin: 0; font-size: 12px; color: #6b7280; line-height: 18px;">
-                      © 2025 TutorMatch. All rights reserved.<br>
-                      This is an automated message. Please do not reply to this email.
+                      © 2025 ElimuConnect. All rights reserved.<br>
+                      Questions? Reply to this email and we'll help you out!
                     </p>
                   </td>
                 </tr>
@@ -258,7 +258,7 @@ const handler = async (req: Request): Promise<Response> => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: "TutorMatch <onboarding@resend.dev>",
+        from: "ElimuConnect <info@elimuconnect.co.ke>",
         to: [studentEmail],
         subject: `✓ Booking Confirmed: ${subject} with ${tutorName}`,
         html: studentEmailHtml,
@@ -282,7 +282,7 @@ const handler = async (req: Request): Promise<Response> => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: "TutorMatch <onboarding@resend.dev>",
+        from: "ElimuConnect <info@elimuconnect.co.ke>",
         to: [tutorEmail],
         subject: `New Booking: ${subject} with ${studentName}`,
         html: `
@@ -299,7 +299,7 @@ const handler = async (req: Request): Promise<Response> => {
           </ul>
           
           <p>Please prepare for the session accordingly.</p>
-          <p>Best regards,<br>The TutorMatch Team</p>
+          <p>Best regards,<br>The ElimuConnect Team</p>
         `,
       }),
     });
