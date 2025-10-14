@@ -283,6 +283,48 @@ Deno.serve(async (req) => {
         continue
       }
 
+      // Create availability slots for verified tutors (next 14 days, 9am-5pm weekdays)
+      if (isVerified) {
+        const availabilitySlots = []
+        const today = new Date()
+        
+        // Generate slots for next 14 days
+        for (let dayOffset = 0; dayOffset < 14; dayOffset++) {
+          const date = new Date(today)
+          date.setDate(date.getDate() + dayOffset)
+          
+          // Skip weekends
+          if (date.getDay() === 0 || date.getDay() === 6) continue
+          
+          // Create slots from 9am to 5pm (8 one-hour slots)
+          for (let hour = 9; hour < 17; hour++) {
+            const startTime = new Date(date)
+            startTime.setHours(hour, 0, 0, 0)
+            
+            const endTime = new Date(date)
+            endTime.setHours(hour + 1, 0, 0, 0)
+            
+            availabilitySlots.push({
+              tutor_id: userId,
+              start_time: startTime.toISOString(),
+              end_time: endTime.toISOString(),
+              is_booked: false
+            })
+          }
+        }
+        
+        // Insert all slots
+        const { error: slotsError } = await supabaseAdmin
+          .from('tutor_availability')
+          .insert(availabilitySlots)
+        
+        if (slotsError) {
+          console.error(`Error creating availability slots for ${tutor.name}:`, slotsError)
+        } else {
+          console.log(`Created ${availabilitySlots.length} availability slots for ${tutor.name}`)
+        }
+      }
+
       createdTutors.push({ name: tutor.name, email })
     }
 
