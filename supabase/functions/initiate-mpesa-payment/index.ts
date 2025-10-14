@@ -88,11 +88,14 @@ serve(async (req) => {
             .single()
 
           // Fetch tutor profile to get user_id
+          // Note: bookings.tutor_id references tutor_profiles.id
           const { data: tutorProfileRow } = await supabase
             .from('tutor_profiles')
-            .select('user_id')
+            .select('id, user_id')
             .eq('id', bookingBase.tutor_id)
             .single()
+          
+          console.log('Tutor profile lookup:', { tutor_id: bookingBase.tutor_id, tutorProfileRow })
 
           // Get names from profiles
           const { data: studentProfile } = await supabase
