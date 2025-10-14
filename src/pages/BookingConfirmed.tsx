@@ -54,33 +54,37 @@ const BookingConfirmed = () => {
           tutor_availability!inner(start_time, end_time)
         `)
         .eq("id", bookingId)
-        .single();
+        .maybeSingle();
 
       if (bookingError) throw bookingError;
+      if (!bookingData) {
+        toast.error("Booking not found");
+        setLoading(false);
+        return;
+      }
 
       // Fetch student details
       const { data: studentData } = await supabase
         .from("profiles")
         .select("full_name, id")
         .eq("id", bookingData.student_id)
-        .single();
+        .maybeSingle();
 
-      const { data: studentUser } = await supabase.auth.admin.getUserById(bookingData.student_id);
+      const { data: studentUser } = await supabase.auth.getUser();
 
-      // Fetch tutor details
+      // Fetch tutor profile - note: tutor_id in bookings table IS the tutor_profile id
       const { data: tutorProfile } = await supabase
         .from("tutor_profiles")
         .select("user_id")
         .eq("id", bookingData.tutor_id)
-        .single();
+        .maybeSingle();
 
+      // Fetch tutor user profile
       const { data: tutorData } = await supabase
         .from("profiles")
         .select("full_name")
         .eq("id", tutorProfile?.user_id)
-        .single();
-
-      const { data: tutorUser } = await supabase.auth.admin.getUserById(tutorProfile?.user_id || "");
+        .maybeSingle();
 
       setBooking({
         id: bookingData.id,
@@ -94,7 +98,7 @@ const BookingConfirmed = () => {
         student_name: studentData?.full_name || "Student",
         student_email: studentUser?.user?.email || "",
         tutor_name: tutorData?.full_name || "Tutor",
-        tutor_email: tutorUser?.user?.email || "",
+        tutor_email: "",
         start_time: bookingData.tutor_availability.start_time,
         end_time: bookingData.tutor_availability.end_time,
       });
