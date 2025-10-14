@@ -227,10 +227,60 @@ const NewStudentDashboard = () => {
         }
       }
 
-      setPastBookings(past);
+      // Add dummy past sessions for testing if there are none
+      let finalPastBookings = past;
+      if (past.length === 0) {
+        const dummyPastSessions: Booking[] = [
+          {
+            id: 'dummy-1',
+            subject: 'Mathematics - Calculus',
+            status: 'completed',
+            amount: 1500,
+            balance_due: 0,
+            class_type: 'online',
+            meeting_link: null,
+            tutor_availability: {
+              start_time: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
+              end_time: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000 + 60 * 60 * 1000).toISOString()
+            },
+            tutorName: 'Dr. Sarah Johnson'
+          },
+          {
+            id: 'dummy-2',
+            subject: 'Physics - Kinematics',
+            status: 'completed',
+            amount: 1750,
+            balance_due: 0,
+            class_type: 'online',
+            meeting_link: null,
+            tutor_availability: {
+              start_time: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000).toISOString(),
+              end_time: new Date(Date.now() - 14 * 24 * 60 * 60 * 1000 + 60 * 60 * 1000).toISOString()
+            },
+            tutorName: 'Prof. Michael Chen'
+          },
+          {
+            id: 'dummy-3',
+            subject: 'Chemistry - Organic Chemistry',
+            status: 'completed',
+            amount: 1500,
+            balance_due: 0,
+            class_type: 'online',
+            meeting_link: null,
+            tutor_availability: {
+              start_time: new Date(Date.now() - 21 * 24 * 60 * 60 * 1000).toISOString(),
+              end_time: new Date(Date.now() - 21 * 24 * 60 * 60 * 1000 + 60 * 60 * 1000).toISOString()
+            },
+            tutorName: 'Dr. Emily Rodriguez'
+          }
+        ];
+        finalPastBookings = dummyPastSessions;
+      }
+
+      setPastBookings(finalPastBookings);
 
       // Calculate stats
-      const allBookings = [...(upcoming || []), ...(past || [])];
+      const allBookings = [...(upcoming || []), ...(finalPastBookings || [])];
       const completed = allBookings.filter(b => b.status === "completed").length;
       const totalSpent = allBookings.reduce((sum, b) => sum + (b.amount || 0), 0);
 
@@ -335,7 +385,7 @@ const NewStudentDashboard = () => {
       
       <div className="container mx-auto px-4 py-8 max-w-7xl">
         {/* Header */}
-        <div className="mb-8">
+        <div className="mb-8 mt-8">
           <h1 className="text-4xl font-bold mb-2">
             Welcome back, <span className="text-primary">{user?.email?.split('@')[0] || 'Student'}</span>!
           </h1>
