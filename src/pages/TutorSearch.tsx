@@ -70,9 +70,18 @@ const TutorSearch = () => {
 
       // 3) Merge and format
       const tutorImages = [tutor1, tutor2, tutor3, tutor4, tutor5, tutor6];
+      const tierRates = {
+        gold: 2000,
+        silver: 1750,
+        bronze: 1500,
+      };
+      
       const formattedTutors = (tutorProfiles || []).map((tp: any, index: number) => {
         const prof = profilesById.get(tp.user_id);
         const name = prof?.full_name || "Tutor";
+        const tier = tp.tier || "bronze";
+        const hourlyRate = tierRates[tier as keyof typeof tierRates];
+        
         return {
           id: tp.id,
           name,
@@ -81,8 +90,8 @@ const TutorSearch = () => {
           school: tp.current_institution || "Not specified",
           rating: Number(tp.rating) || 0,
           reviews: tp.total_reviews || 0,
-          hourlyRate: Number(tp.hourly_rate) || 0,
-          tier: tp.tier || "bronze",
+          hourlyRate,
+          tier,
           photo: name.split(' ').map((n: string) => n[0]).join('') || "T",
           photoUrl: tutorImages[index % tutorImages.length],
         };
