@@ -148,10 +148,18 @@ const TutorProfile = () => {
   };
 
   const handleBookingTypeSelect = async (type: 'paid' | 'free') => {
-    setBookingType(type);
     setIsBookingTypeDialogOpen(false);
     
-    // Fetch current user if not already fetched
+    if (type === 'free') {
+      // Redirect to consultation booking page
+      navigate('/book-consultation');
+      return;
+    }
+    
+    // For paid sessions, open calendar directly (no login required)
+    setBookingType(type);
+    
+    // Try to fetch current user if available, but don't require it
     if (!currentUser) {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
@@ -166,10 +174,6 @@ const TutorProfile = () => {
           email: user.email,
           name: profile?.full_name || "Student",
         });
-      } else {
-        toast.error("Please log in to continue");
-        navigate("/login");
-        return;
       }
     }
     
