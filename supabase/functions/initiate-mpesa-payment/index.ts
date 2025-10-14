@@ -101,30 +101,49 @@ serve(async (req) => {
             .eq('id', bookingBase.student_id)
             .single()
 
-          const { data: tutorProfile } = await supabase
-            .from('profiles')
-            .select('full_name')
-            .eq('id', tutorProfileRow?.user_id || '')
-            .single()
+          let tutorProfile = null
+          let tutorUserId = null
+          if (tutorProfileRow?.user_id) {
+            tutorUserId = tutorProfileRow.user_id
+            const { data } = await supabase
+              .from('profiles')
+              .select('full_name')
+              .eq('id', tutorUserId)
+              .single()
+            tutorProfile = data
+          }
 
-          // Get emails using service role
-          const supabaseAdmin = createClient(
-            Deno.env.get('SUPABASE_URL') ?? '',
-            Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
-          )
+          // Get emails using admin API only if we have valid UUIDs
+          let studentEmail = null
+          let tutorEmail = null
 
-          const { data: studentAuth } = await supabaseAdmin.auth.admin.getUserById(bookingBase.student_id)
-          const { data: tutorAuth } = await supabaseAdmin.auth.admin.getUserById(tutorProfileRow?.user_id || '')
+          if (bookingBase.student_id) {
+            try {
+              const { data: studentAuth } = await supabase.auth.admin.getUserById(bookingBase.student_id)
+              studentEmail = studentAuth?.user?.email
+            } catch (err) {
+              console.error('Error fetching student email:', err)
+            }
+          }
 
-          console.log('Student email:', studentAuth?.user?.email, 'Tutor email:', tutorAuth?.user?.email)
+          if (tutorUserId) {
+            try {
+              const { data: tutorAuth } = await supabase.auth.admin.getUserById(tutorUserId)
+              tutorEmail = tutorAuth?.user?.email
+            } catch (err) {
+              console.error('Error fetching tutor email:', err)
+            }
+          }
 
-          if (studentAuth?.user?.email && tutorAuth?.user?.email) {
+          console.log('Student email:', studentEmail, 'Tutor email:', tutorEmail)
+
+          if (studentEmail && tutorEmail) {
             console.log('Invoking send-booking-email function')
 
             const emailPayload = {
-              studentEmail: studentAuth.user.email,
+              studentEmail: studentEmail,
               studentName: studentProfile?.full_name || 'Student',
-              tutorEmail: tutorAuth.user.email,
+              tutorEmail: tutorEmail,
               tutorName: tutorProfile?.full_name || 'Tutor',
               subject: bookingBase.subject,
               startTime: slot?.start_time || new Date().toISOString(),
@@ -148,7 +167,7 @@ serve(async (req) => {
               console.log('Booking email sent successfully:', emailResult)
             }
           } else {
-            console.error('Missing email addresses - Student:', studentAuth?.user?.email, 'Tutor:', tutorAuth?.user?.email)
+            console.error('Missing email addresses - Student:', studentEmail, 'Tutor:', tutorEmail)
           }
         }
       }
