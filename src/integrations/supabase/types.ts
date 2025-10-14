@@ -25,6 +25,8 @@ export type Database = {
           id: string
           meeting_link: string | null
           notes: string | null
+          package_purchase_id: string | null
+          payment_option: string | null
           status: string | null
           student_id: string
           subject: string
@@ -41,6 +43,8 @@ export type Database = {
           id?: string
           meeting_link?: string | null
           notes?: string | null
+          package_purchase_id?: string | null
+          payment_option?: string | null
           status?: string | null
           student_id: string
           subject: string
@@ -57,6 +61,8 @@ export type Database = {
           id?: string
           meeting_link?: string | null
           notes?: string | null
+          package_purchase_id?: string | null
+          payment_option?: string | null
           status?: string | null
           student_id?: string
           subject?: string
@@ -69,6 +75,13 @@ export type Database = {
             columns: ["availability_slot_id"]
             isOneToOne: false
             referencedRelation: "tutor_availability"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookings_package_purchase_id_fkey"
+            columns: ["package_purchase_id"]
+            isOneToOne: false
+            referencedRelation: "package_purchases"
             referencedColumns: ["id"]
           },
         ]
@@ -123,6 +136,119 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      package_offers: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          discount_percentage: number | null
+          id: string
+          is_active: boolean | null
+          name: string
+          session_count: number
+          total_price: number
+          tutor_id: string
+          updated_at: string | null
+          validity_days: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          discount_percentage?: number | null
+          id?: string
+          is_active?: boolean | null
+          name: string
+          session_count: number
+          total_price: number
+          tutor_id: string
+          updated_at?: string | null
+          validity_days?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          discount_percentage?: number | null
+          id?: string
+          is_active?: boolean | null
+          name?: string
+          session_count?: number
+          total_price?: number
+          tutor_id?: string
+          updated_at?: string | null
+          validity_days?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "package_offers_tutor_id_fkey"
+            columns: ["tutor_id"]
+            isOneToOne: false
+            referencedRelation: "tutor_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      package_purchases: {
+        Row: {
+          amount_paid: number | null
+          created_at: string | null
+          expires_at: string | null
+          id: string
+          package_offer_id: string | null
+          payment_status: string | null
+          sessions_remaining: number
+          sessions_used: number | null
+          student_id: string
+          total_amount: number
+          total_sessions: number
+          tutor_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          amount_paid?: number | null
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          package_offer_id?: string | null
+          payment_status?: string | null
+          sessions_remaining: number
+          sessions_used?: number | null
+          student_id: string
+          total_amount: number
+          total_sessions: number
+          tutor_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          amount_paid?: number | null
+          created_at?: string | null
+          expires_at?: string | null
+          id?: string
+          package_offer_id?: string | null
+          payment_status?: string | null
+          sessions_remaining?: number
+          sessions_used?: number | null
+          student_id?: string
+          total_amount?: number
+          total_sessions?: number
+          tutor_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "package_purchases_package_offer_id_fkey"
+            columns: ["package_offer_id"]
+            isOneToOne: false
+            referencedRelation: "package_offers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "package_purchases_tutor_id_fkey"
+            columns: ["tutor_id"]
+            isOneToOne: false
+            referencedRelation: "tutor_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       payments: {
         Row: {

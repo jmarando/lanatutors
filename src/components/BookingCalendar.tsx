@@ -11,6 +11,7 @@ import { format, isSameDay } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, CreditCard, Smartphone } from "lucide-react";
+import { PaymentOptionsCard } from "./PaymentOptionsCard";
 
 interface AvailabilitySlot {
   id: string;
@@ -29,6 +30,22 @@ interface BookingCalendarProps {
   onBookingComplete?: () => void;
   classType?: 'online' | 'in-person';
   isTrialSession?: boolean;
+}
+
+interface PackageOffer {
+  id: string;
+  name: string;
+  description: string;
+  session_count: number;
+  total_price: number;
+  discount_percentage: number;
+  validity_days: number;
+}
+
+interface PackagePurchase {
+  id: string;
+  sessions_remaining: number;
+  expires_at: string;
 }
 
 export const BookingCalendar = ({
@@ -50,6 +67,11 @@ export const BookingCalendar = ({
   const [phoneNumber, setPhoneNumber] = useState("");
   const [selectedClassType, setSelectedClassType] = useState<'online' | 'in-person'>(classType);
   const [paymentMethod, setPaymentMethod] = useState<'mpesa' | 'card'>('mpesa');
+  const [paymentOption, setPaymentOption] = useState<'deposit' | 'full' | 'package'>('deposit');
+  const [packageOffers, setPackageOffers] = useState<PackageOffer[]>([]);
+  const [selectedPackage, setSelectedPackage] = useState<PackageOffer | null>(null);
+  const [existingPackages, setExistingPackages] = useState<PackagePurchase[]>([]);
+  const [selectedExistingPackage, setSelectedExistingPackage] = useState<PackagePurchase | null>(null);
   const [loading, setLoading] = useState(false);
   const [paymentInitiated, setPaymentInitiated] = useState(false);
   const { toast } = useToast();
@@ -60,6 +82,38 @@ export const BookingCalendar = ({
       fetchAvailableSlots();
     }
   }, [selectedDate, tutorId]);
+
+  useEffect(() => {
+    fetchPackageOffers();
+    fetchExistingPackages();
+  }, [tutorId]);
+
+  const fetchPackageOffers = async () => {
+    const { data } = await supabase
+      .from("package_offers")
+      .select("*")
+      .eq("tutor_id", tutorId)
+      .eq("is_active", true)
+      .order("session_count");
+    
+    if (data) setPackageOffers(data);
+  };
+
+  const fetchExistingPackages = async () => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const { data } = await supabase
+      .from("package_purchases")
+      .select("*")
+      .eq("student_id", user.id)
+      .eq("tutor_id", tutorId)
+      .eq("payment_status", "completed")
+      .gt("sessions_remaining", 0)
+      .gt("expires_at", new Date().toISOString());
+    
+    if (data) setExistingPackages(data);
+  };
 
   const fetchAvailableSlots = async () => {
     if (!selectedDate) return;
@@ -131,9 +185,57 @@ export const BookingCalendar = ({
         const rate = selectedClassType === 'in-person' ? hourlyRate * 1.3 : hourlyRate;
         totalAmount = duration * rate;
         
-        // Deposit is 30% of total
-        depositAmount = totalAmount * 0.3;
-        balanceDue = totalAmount - depositAmount;
+        // Handle different payment options
+        if (paymentOption === 'deposit') {
+          depositAmount = totalAmount * 0.3;
+          balanceDue = totalAmount - depositAmount;
+        } else if (paymentOption === 'full') {
+          depositAmount = totalAmount;
+          balanceDue = 0;
+        } else if (paymentOption === 'package') {
+          // Using existing package - no payment needed
+          if (selectedExistingPackage) {
+            depositAmount = 0;
+            balanceDue = 0;
+            totalAmount = 0;
+          } 
+          // Purchasing new package
+          else if (selectedPackage) {
+            totalAmount = selectedPackage.total_price;
+            depositAmount = selectedPackage.total_price;
+            balanceDue = 0;
+          } else {
+            throw new Error("Please select a package");
+          }
+        }
+      }
+
+      // For new package purchases, create package purchase first
+      let packagePurchaseId = null;
+      if (paymentOption === 'package' && selectedPackage && !selectedExistingPackage) {
+        const expiresAt = new Date();
+        expiresAt.setDate(expiresAt.getDate() + selectedPackage.validity_days);
+
+        const { data: pkgData, error: pkgError } = await supabase
+          .from("package_purchases")
+          .insert({
+            student_id: user.id,
+            tutor_id: tutorId,
+            package_offer_id: selectedPackage.id,
+            total_sessions: selectedPackage.session_count,
+            sessions_remaining: selectedPackage.session_count,
+            total_amount: selectedPackage.total_price,
+            amount_paid: 0,
+            payment_status: "pending",
+            expires_at: expiresAt.toISOString(),
+          })
+          .select()
+          .single();
+
+        if (pkgError) throw pkgError;
+        packagePurchaseId = pkgData.id;
+      } else if (paymentOption === 'package' && selectedExistingPackage) {
+        packagePurchaseId = selectedExistingPackage.id;
       }
 
       // Create booking with appropriate status
@@ -151,7 +253,9 @@ export const BookingCalendar = ({
           deposit_paid: depositAmount,
           balance_due: balanceDue,
           class_type: selectedClassType,
-          status: isTrialSession ? "confirmed" : "pending",
+          status: (isTrialSession || paymentOption === 'package') ? "pending" : "pending",
+          payment_option: isTrialSession ? 'deposit' : paymentOption,
+          package_purchase_id: packagePurchaseId,
         })
         .select()
         .single();
@@ -216,29 +320,85 @@ export const BookingCalendar = ({
         return;
       }
 
-      // Handle payment for regular sessions based on selected method
+      // Handle payment based on payment option
+      if (paymentOption === 'package' && selectedExistingPackage) {
+        // Using existing package - book for free, confirm immediately
+        await supabase
+          .from("bookings")
+          .update({ status: "confirmed" })
+          .eq("id", booking.id);
+
+        await supabase.functions.invoke("send-booking-email", {
+          body: {
+            studentEmail,
+            studentName,
+            tutorEmail,
+            tutorName,
+            subject: subject.trim(),
+            startTime: selectedSlot.start_time,
+            endTime: selectedSlot.end_time,
+            meetingLink: meetData?.meetLink,
+            classType: selectedClassType,
+            totalAmount: 0,
+            depositPaid: 0,
+            balanceDue: 0,
+          },
+        });
+
+        toast({
+          title: "Booking confirmed!",
+          description: "Your session has been booked using your package credits.",
+        });
+
+        window.location.href = `/booking-confirmed?bookingId=${booking.id}`;
+        return;
+      }
+
+      // For paid options (deposit, full, or new package), handle payment
+      const amountToPay = depositAmount;
+      
       if (paymentMethod === 'mpesa') {
-        // Initiate M-Pesa payment for deposit (WITH TEST MODE)
-        const { data: paymentData, error: paymentError } = await supabase.functions.invoke(
+        // Initiate M-Pesa payment
+        const { data: paymentData, error: paymentError} = await supabase.functions.invoke(
           "initiate-mpesa-payment",
           {
             body: {
               phoneNumber: `254${phoneNumber.substring(1)}`,
-              amount: Math.round(depositAmount),
-              paymentType: "tutor_booking_deposit",
-              referenceId: booking.id,
-              testMode: true  // ENABLE TEST MODE - bypasses actual M-Pesa payment
+              amount: Math.round(amountToPay),
+              paymentType: paymentOption === 'package' ? "package_purchase" : "tutor_booking_deposit",
+              referenceId: paymentOption === 'package' ? packagePurchaseId : booking.id,
+              testMode: true  // TEST MODE
             },
           }
         );
 
         if (paymentError) {
           await supabase.from("bookings").delete().eq("id", booking.id);
+          if (packagePurchaseId) {
+            await supabase.from("package_purchases").delete().eq("id", packagePurchaseId);
+          }
           throw paymentError;
         }
 
         // In test mode, payment is auto-confirmed
         if (paymentData?.testMode) {
+          // Update package payment status if applicable
+          if (paymentOption === 'package' && packagePurchaseId) {
+            await supabase
+              .from("package_purchases")
+              .update({ 
+                payment_status: "completed",
+                amount_paid: amountToPay
+              })
+              .eq("id", packagePurchaseId);
+          }
+
+          // Confirm booking
+          await supabase
+            .from("bookings")
+            .update({ status: "confirmed" })
+            .eq("id", booking.id);
+
           // Send confirmation email
           await supabase.functions.invoke("send-booking-email", {
             body: {
@@ -263,7 +423,7 @@ export const BookingCalendar = ({
         } else {
           setPaymentInitiated(true);
           toast({
-            title: "Deposit Payment Initiated",
+            title: "Payment Initiated",
             description: `Please check your phone and pay the deposit of KES ${depositAmount.toFixed(0)}. Balance of KES ${balanceDue.toFixed(0)} due before the session.`,
           });
 
@@ -534,6 +694,83 @@ export const BookingCalendar = ({
                 </>
               )}
 
+              {!isTrialSession && (
+                <>
+                  {selectedSlot && (() => {
+                    const duration = (new Date(selectedSlot.end_time).getTime() - new Date(selectedSlot.start_time).getTime()) / (1000 * 60 * 60);
+                    const rate = selectedClassType === 'in-person' ? hourlyRate * 1.3 : hourlyRate;
+                    const total = duration * rate;
+                    const deposit = total * 0.3;
+                    const balance = total - deposit;
+
+                    return (
+                      <PaymentOptionsCard
+                        paymentOption={paymentOption}
+                        onPaymentOptionChange={(option) => {
+                          setPaymentOption(option);
+                          if (option !== 'package') {
+                            setSelectedPackage(null);
+                            setSelectedExistingPackage(null);
+                          }
+                        }}
+                        totalAmount={total}
+                        depositAmount={deposit}
+                        balanceDue={balance}
+                        packageOffers={packageOffers}
+                        existingPackages={existingPackages}
+                        selectedPackage={selectedPackage}
+                        selectedExistingPackage={selectedExistingPackage}
+                        onPackageSelect={setSelectedPackage}
+                        onExistingPackageSelect={(pkg) => {
+                          setSelectedExistingPackage(pkg);
+                          if (pkg) {
+                            setPaymentOption('package');
+                          }
+                        }}
+                        disabled={paymentInitiated}
+                      />
+                    );
+                  })()}
+
+                  {(paymentOption !== 'package' || (paymentOption === 'package' && selectedPackage)) && (
+                    <>
+                      <div>
+                        <Label className="text-sm font-medium mb-2 block">Payment Method *</Label>
+                        <Tabs value={paymentMethod} onValueChange={(v) => setPaymentMethod(v as 'mpesa' | 'card')} className="w-full">
+                          <TabsList className="grid w-full grid-cols-2">
+                            <TabsTrigger value="mpesa" className="flex items-center gap-2">
+                              <Smartphone className="w-4 h-4" />
+                              M-Pesa
+                            </TabsTrigger>
+                            <TabsTrigger value="card" className="flex items-center gap-2">
+                              <CreditCard className="w-4 h-4" />
+                              Card
+                            </TabsTrigger>
+                          </TabsList>
+                        </Tabs>
+                      </div>
+
+                      {paymentMethod === 'mpesa' && (
+                        <div>
+                          <Label className="text-sm font-medium mb-2 block">M-Pesa Phone Number *</Label>
+                          <Input
+                            type="tel"
+                            placeholder="0712345678"
+                            value={phoneNumber}
+                            onChange={(e) => setPhoneNumber(e.target.value)}
+                            maxLength={10}
+                            disabled={paymentInitiated}
+                          />
+                          <p className="text-xs text-muted-foreground mt-1">
+                            Enter your Safaricom number (format: 07XXXXXXXX)
+                          </p>
+                        </div>
+                      )}
+                    </>
+                  )}
+                </>
+              )}
+
               <div className="text-sm space-y-1 bg-muted/50 p-3 rounded">
                 {isTrialSession ? (
                   <div>
@@ -542,26 +779,9 @@ export const BookingCalendar = ({
                       No payment required - this is a complimentary chemistry session to check compatibility
                     </p>
                   </div>
-                ) : (
-                  (() => {
-                    const duration = (new Date(selectedSlot.end_time).getTime() - new Date(selectedSlot.start_time).getTime()) / (1000 * 60 * 60);
-                    const rate = selectedClassType === 'in-person' ? hourlyRate * 1.3 : hourlyRate;
-                    const total = duration * rate;
-                    const deposit = total * 0.3;
-                    const balance = total - deposit;
-                    
-                    return (
-                      <>
-                        <p className="font-medium">Total Amount: KES {total.toFixed(2)} {selectedClassType === 'in-person' && <span className="text-xs">(+30% for in-person)</span>}</p>
-                        <p className="text-primary font-semibold">Deposit Now: KES {deposit.toFixed(2)} (30%)</p>
-                        <p className="text-muted-foreground text-xs">Balance Due: KES {balance.toFixed(2)} (before session)</p>
-                        {paymentInitiated && (
-                          <p className="text-amber-600">⏳ Waiting for M-Pesa deposit confirmation...</p>
-                        )}
-                      </>
-                    );
-                  })()
-                )}
+                ) : paymentInitiated ? (
+                  <p className="text-amber-600">⏳ Waiting for payment confirmation...</p>
+                ) : null}
               </div>
 
               <Button 
