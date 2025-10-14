@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Award } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,6 +16,9 @@ const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [resetEmail, setResetEmail] = useState("");
+  const [isResetLoading, setIsResetLoading] = useState(false);
+  const [showResetDialog, setShowResetDialog] = useState(false);
 
   const handleLogin = async (e: React.FormEvent, userType: "student" | "tutor") => {
     e.preventDefault();
@@ -65,6 +69,34 @@ const Login = () => {
     }
   };
 
+  const handlePasswordReset = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsResetLoading(true);
+
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
+        redirectTo: `${window.location.origin}/login`,
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Reset email sent",
+        description: "Check your email for the password reset link",
+      });
+      setShowResetDialog(false);
+      setResetEmail("");
+    } catch (error: any) {
+      toast({
+        title: "Reset failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    } finally {
+      setIsResetLoading(false);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-[image:var(--gradient-page)] flex items-center justify-center p-6">
       <div className="w-full max-w-md">
@@ -112,12 +144,21 @@ const Login = () => {
                   <Button type="submit" className="w-full" disabled={isLoading}>
                     {isLoading ? "Signing in..." : "Sign In as Student"}
                   </Button>
-                  <p className="text-sm text-center text-muted-foreground">
-                    Don't have an account?{" "}
-                    <Link to="/student-signup" className="text-primary hover:underline">
-                      Sign up
-                    </Link>
-                  </p>
+                  <div className="flex justify-between items-center text-sm">
+                    <p className="text-muted-foreground">
+                      Don't have an account?{" "}
+                      <Link to="/student-signup" className="text-primary hover:underline">
+                        Sign up
+                      </Link>
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setShowResetDialog(true)}
+                      className="text-primary hover:underline"
+                    >
+                      Forgot password?
+                    </button>
+                  </div>
                 </form>
               </TabsContent>
 
@@ -148,17 +189,53 @@ const Login = () => {
                   <Button type="submit" className="w-full" disabled={isLoading}>
                     {isLoading ? "Signing in..." : "Sign In as Tutor"}
                   </Button>
-                  <p className="text-sm text-center text-muted-foreground">
-                    Want to become a tutor?{" "}
-                    <Link to="/tutor-signup" className="text-primary hover:underline">
-                      Apply now
-                    </Link>
-                  </p>
+                  <div className="flex justify-between items-center text-sm">
+                    <p className="text-muted-foreground">
+                      Want to become a tutor?{" "}
+                      <Link to="/tutor-signup" className="text-primary hover:underline">
+                        Apply now
+                      </Link>
+                    </p>
+                    <button
+                      type="button"
+                      onClick={() => setShowResetDialog(true)}
+                      className="text-primary hover:underline"
+                    >
+                      Forgot password?
+                    </button>
+                  </div>
                 </form>
               </TabsContent>
             </Tabs>
           </CardContent>
         </Card>
+
+        <Dialog open={showResetDialog} onOpenChange={setShowResetDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Reset Password</DialogTitle>
+              <DialogDescription>
+                Enter your email address and we'll send you a link to reset your password.
+              </DialogDescription>
+            </DialogHeader>
+            <form onSubmit={handlePasswordReset} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="reset-email">Email</Label>
+                <Input
+                  id="reset-email"
+                  type="email"
+                  placeholder="your@email.com"
+                  value={resetEmail}
+                  onChange={(e) => setResetEmail(e.target.value)}
+                  required
+                />
+              </div>
+              <Button type="submit" className="w-full" disabled={isResetLoading}>
+                {isResetLoading ? "Sending..." : "Send Reset Link"}
+              </Button>
+            </form>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
