@@ -52,47 +52,61 @@ const Navigation = () => {
   };
 
   const navLinks = [
-    { to: "/tutors", label: "Find Tutors" },
-    { to: "/for-students", label: "ElimuConnect for Students" },
-    { to: "/for-tutors", label: "ElimuConnect for Tutors" },
-    { to: "/about", label: "About Us" },
+    { to: "/tutors", label: "Find Tutors", singleLine: true },
+    { to: "/for-students", label: "ElimuConnect for Students", line1: "ElimuConnect for", line2: "Students" },
+    { to: "/for-tutors", label: "ElimuConnect for Tutors", line1: "ElimuConnect for", line2: "Tutors" },
+    { to: "/about", label: "About Us", singleLine: true },
   ];
 
   return (
-    <nav className="border-b bg-background sticky top-0 z-50">
+    <nav className="border-b bg-background/95 backdrop-blur-sm sticky top-0 z-50 shadow-sm">
       <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-        <Link to="/" className="flex items-center gap-2">
-          <Award className="w-8 h-8 text-primary" />
-          <span className="text-2xl font-bold">ElimuConnect</span>
+        <Link to="/" className="flex items-center gap-2 group">
+          <Award className="w-8 h-8 text-primary transition-transform group-hover:scale-110" />
+          <span className="text-2xl font-bold bg-gradient-to-r from-foreground to-primary bg-clip-text">ElimuConnect</span>
         </Link>
 
         {/* Desktop Navigation */}
-        <div className="hidden lg:flex items-center gap-6 flex-1 justify-between ml-8">
-          <div className="flex items-center gap-6">
+        <div className="hidden lg:flex items-center gap-8 flex-1 justify-between ml-12">
+          <div className="flex items-center gap-8">
             {navLinks.map((link) => (
               <Link
                 key={link.to}
                 to={link.to}
-                className="text-sm font-medium hover:text-primary transition-colors"
+                className="group relative text-sm font-medium hover:text-primary transition-all duration-300"
               >
-                {link.label}
+                {link.singleLine ? (
+                  <span className="relative inline-block">
+                    {link.label}
+                    <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
+                  </span>
+                ) : (
+                  <span className="flex flex-col leading-tight text-center">
+                    <span className="text-xs opacity-90">{link.line1}</span>
+                    <span className="font-semibold">{link.line2}</span>
+                    <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
+                  </span>
+                )}
               </Link>
             ))}
             {isAdmin && (
-              <Link to="/admin" className="text-sm font-medium hover:text-primary transition-colors">
-                Admin
+              <Link to="/admin" className="group relative text-sm font-medium hover:text-primary transition-all duration-300">
+                <span className="relative inline-block">
+                  Admin
+                  <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
+                </span>
               </Link>
             )}
           </div>
           <div className="flex items-center gap-4">
-            <a href="tel:+254725252542" className="flex items-center gap-2 text-sm font-medium hover:text-primary transition-colors">
-              <Phone className="w-4 h-4" />
+            <a href="tel:+254725252542" className="group flex items-center gap-2 text-sm font-medium hover:text-primary transition-colors px-3 py-2 rounded-md hover:bg-primary/5">
+              <Phone className="w-4 h-4 transition-transform group-hover:scale-110" />
               <span>0725 - 252542</span>
             </a>
             {user ? (
               <>
-                <span className="text-sm text-muted-foreground">{user.email}</span>
-                <Button variant="outline" size="sm" onClick={handleSignOut}>
+                <span className="text-sm text-muted-foreground max-w-[150px] truncate">{user.email}</span>
+                <Button variant="outline" size="sm" onClick={handleSignOut} className="hover-scale">
                   <LogOut className="w-4 h-4 mr-2" />
                   Sign Out
                 </Button>
@@ -100,10 +114,10 @@ const Navigation = () => {
             ) : (
               <>
                 <Link to="/login">
-                  <Button variant="outline" size="sm">Sign In</Button>
+                  <Button variant="outline" size="sm" className="hover-scale">Sign In</Button>
                 </Link>
                 <Link to="/login">
-                  <Button size="sm">Get Started</Button>
+                  <Button size="sm" className="hover-scale">Get Started</Button>
                 </Link>
               </>
             )}
@@ -124,23 +138,30 @@ const Navigation = () => {
                   key={link.to}
                   to={link.to}
                   onClick={() => setOpen(false)}
-                  className="text-lg font-medium hover:text-primary transition-colors"
+                  className="text-lg font-medium hover:text-primary transition-colors px-2 py-1 hover:bg-primary/5 rounded-md"
                 >
-                  {link.label}
+                  {link.singleLine ? (
+                    link.label
+                  ) : (
+                    <span className="flex flex-col leading-tight">
+                      <span className="text-sm opacity-80">{link.line1}</span>
+                      <span className="font-semibold">{link.line2}</span>
+                    </span>
+                  )}
                 </Link>
               ))}
               {isAdmin && (
-                <Link to="/admin" onClick={() => setOpen(false)} className="text-lg font-medium hover:text-primary transition-colors">
+                <Link to="/admin" onClick={() => setOpen(false)} className="text-lg font-medium hover:text-primary transition-colors px-2 py-1 hover:bg-primary/5 rounded-md">
                   Admin Dashboard
                 </Link>
               )}
-              <a href="tel:+254725252542" className="flex items-center gap-2 text-lg font-medium hover:text-primary transition-colors">
+              <a href="tel:+254725252542" className="flex items-center gap-2 text-lg font-medium hover:text-primary transition-colors px-2 py-2 hover:bg-primary/5 rounded-md">
                 <Phone className="w-5 h-5" />
                 <span>0725 - 252542</span>
               </a>
               {user ? (
                 <>
-                  <span className="text-sm text-muted-foreground">{user.email}</span>
+                  <span className="text-sm text-muted-foreground px-2">{user.email}</span>
                   <Button variant="outline" className="w-full" onClick={handleSignOut}>
                     <LogOut className="w-4 h-4 mr-2" />
                     Sign Out
