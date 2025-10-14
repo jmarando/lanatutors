@@ -53,8 +53,8 @@ const Navigation = () => {
 
   const navLinks = [
     { to: "/tutors", label: "Find Tutors", singleLine: true },
-    { to: "/for-students", label: "ElimuConnect for Students", line1: "ElimuConnect for", line2: "Students" },
-    { to: "/for-tutors", label: "ElimuConnect for Tutors", line1: "ElimuConnect for", line2: "Tutors" },
+    { to: "/for-students", label: "ElimuConnect for Students", line1: "ElimuConnect for", line2: "Student Hub" },
+    { to: "/for-tutors", label: "ElimuConnect for Tutors", line1: "ElimuConnect for", line2: "Tutor Hub" },
     { to: "/about", label: "About Us", singleLine: true },
   ];
 
