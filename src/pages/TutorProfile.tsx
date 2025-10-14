@@ -36,6 +36,16 @@ const TutorProfile = () => {
     fetchReviews();
   }, [id]);
 
+  // Auto-open booking dialog when returning from login via redirect
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('openBooking') === '1') {
+      const type = (params.get('bookingType') as 'paid' | 'free') || 'paid';
+      setBookingType(type);
+      setIsBookingOpen(true);
+    }
+  }, []);
+
   const fetchCurrentUser = async () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
@@ -158,6 +168,10 @@ const TutorProfile = () => {
     
     // For paid sessions, open calendar directly (no login required)
     setBookingType(type);
+
+    // Persist intent in URL so we can resume after login
+    const urlWithIntent = `${window.location.pathname}?openBooking=1&bookingType=${type}`;
+    window.history.replaceState(null, '', urlWithIntent);
     
     // Try to fetch current user if available, but don't require it
     if (!currentUser) {
@@ -540,7 +554,7 @@ const TutorProfile = () => {
         </Dialog>
 
         {/* Booking Dialog */}
-        <Dialog open={isBookingOpen} onOpenChange={setIsBookingOpen}>
+        <Dialog open={isBookingOpen} onOpenChange={(open) => { setIsBookingOpen(open); if (!open) window.history.replaceState(null, '', window.location.pathname); }}>
           <DialogContent className="max-w-5xl max-h-[95vh] p-0 overflow-hidden flex flex-col">
             <DialogHeader className="px-6 pt-6 pb-4">
               <DialogTitle>
@@ -569,7 +583,15 @@ const TutorProfile = () => {
               ) : (
                 <div className="text-center py-8">
                   <p className="text-muted-foreground mb-4">Please sign in to book a session</p>
-                  <Button onClick={() => navigate('/login')}>Sign In</Button>
+                  <Button onClick={() => {
+                    // Ensure URL contains resume params
+                    const params = new URLSearchParams(window.location.search);
+                    if (params.get('openBooking') !== '1') {
+                      window.history.replaceState(null, '', `${window.location.pathname}?openBooking=1&bookingType=${bookingType}`);
+                    }
+                    const redirect = `${window.location.pathname}${window.location.search}`;
+                    navigate(`/login?redirect=${encodeURIComponent(redirect)}`);
+                  }}>Sign In</Button>
                 </div>
               )}
             </div>

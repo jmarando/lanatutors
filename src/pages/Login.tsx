@@ -28,19 +28,26 @@ const Login = () => {
 
       if (error) throw error;
 
-      // Check user role
-      const { data: roleData } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", data.user.id)
-        .single();
-
-      if (roleData?.role === "student") {
-        navigate("/student/dashboard");
-      } else if (roleData?.role === "tutor") {
-        navigate("/tutor/dashboard");
+      // If a redirect target is provided, go there first
+      const params = new URLSearchParams(window.location.search);
+      const redirect = params.get("redirect");
+      if (redirect) {
+        navigate(decodeURIComponent(redirect));
       } else {
-        navigate("/");
+        // Otherwise, route based on role
+        const { data: roleData } = await supabase
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", data.user.id)
+          .single();
+
+        if (roleData?.role === "student") {
+          navigate("/student/dashboard");
+        } else if (roleData?.role === "tutor") {
+          navigate("/tutor/dashboard");
+        } else {
+          navigate("/");
+        }
       }
 
       toast({
