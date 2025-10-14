@@ -328,6 +328,11 @@ const TutorSearch = () => {
                       <div className="text-xs text-muted-foreground">
                         In-Person: KES {Math.round(tutor.hourlyRate * 1.3).toLocaleString()}/hr
                       </div>
+                      <div className="text-xs text-muted-foreground/60 mt-1">
+                        {tutor.tier === 'gold' && '(Gold Tier: 2,000/hr online)'}
+                        {tutor.tier === 'silver' && '(Silver Tier: 1,750/hr online)'}
+                        {tutor.tier === 'bronze' && '(Bronze Tier: 1,500/hr online)'}
+                      </div>
                     </div>
                   </div>
                 </div>
