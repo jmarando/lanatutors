@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Award, Menu, LogOut, Phone } from "lucide-react";
+import { Award, Menu, LogOut, MessageCircle } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useState, useEffect } from "react";
@@ -92,8 +92,8 @@ const Navigation = () => {
           </div>
           <div className="flex items-center gap-4">
             <a href="https://wa.me/254725252542" target="_blank" rel="noopener noreferrer" className="group flex items-center gap-2 text-sm font-medium hover:text-primary transition-colors px-3 py-2 rounded-md hover:bg-primary/5">
-              <Phone className="w-4 h-4 transition-transform group-hover:scale-110" />
-              <span>0725 - 252542</span>
+              <MessageCircle className="w-4 h-4 transition-transform group-hover:scale-110" />
+              <span>WhatsApp: 0725 - 252542</span>
             </a>
             {user ? (
               <>
@@ -141,8 +141,8 @@ const Navigation = () => {
                 </Link>
               )}
               <a href="https://wa.me/254725252542" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-lg font-medium hover:text-primary transition-colors px-2 py-2 hover:bg-primary/5 rounded-md">
-                <Phone className="w-5 h-5" />
-                <span>0725 - 252542</span>
+                <MessageCircle className="w-5 h-5" />
+                <span>WhatsApp: 0725 - 252542</span>
               </a>
               {user ? (
                 <>

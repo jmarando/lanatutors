@@ -7,7 +7,7 @@ verify_jwt = true
 verify_jwt = false
 
 [functions.send-booking-email]
-verify_jwt = true
+verify_jwt = false
 
 [functions.create-stripe-checkout]
 verify_jwt = true
@@ -17,3 +17,6 @@ verify_jwt = true
 
 [functions.send-booking-reminder]
 verify_jwt = true
+
+[functions.send-test-email]
+verify_jwt = false

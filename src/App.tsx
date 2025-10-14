@@ -24,6 +24,7 @@ const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
 const SeedTutors = lazy(() => import("./pages/SeedTutors"));
 const BookConsultation = lazy(() => import("./pages/BookConsultation"));
 const NotFound = lazy(() => import("./pages/NotFound"));
+const TestEmail = lazy(() => import("./pages/TestEmail"));
 
 const queryClient = new QueryClient();
 
@@ -57,6 +58,7 @@ const App = () => {
               <Route path="/admin" element={<AdminDashboard />} />
               <Route path="/seed-tutors" element={<SeedTutors />} />
               <Route path="/book-consultation" element={<BookConsultation />} />
+              <Route path="/test-email" element={<TestEmail />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>

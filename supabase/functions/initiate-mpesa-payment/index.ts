@@ -66,74 +66,82 @@ serve(async (req) => {
       // Update booking to confirmed and send email
       if (referenceId) {
         console.log('Updating booking to confirmed:', referenceId)
-        
-        const { data: booking, error: bookingError } = await supabase
+
+        // Update status and fetch booking base fields
+        const { data: bookingBase, error: bookingUpdateError } = await supabase
           .from('bookings')
           .update({ status: 'confirmed' })
           .eq('id', referenceId)
-          .select(`
-            *,
-            tutor_availability!inner(start_time, end_time),
-            tutor_profiles!inner(user_id)
-          `)
+          .select('*')
           .single()
 
-        if (bookingError) {
-          console.error('Error updating booking:', bookingError)
-        } else if (booking) {
-          console.log('Booking confirmed, fetching user details for email')
-          
-          // Get student and tutor details
+        if (bookingUpdateError) {
+          console.error('Error updating booking:', bookingUpdateError)
+        } else if (bookingBase) {
+          console.log('Booking confirmed, fetching related details for email')
+
+          // Fetch slot times
+          const { data: slot } = await supabase
+            .from('tutor_availability')
+            .select('start_time, end_time')
+            .eq('id', bookingBase.availability_slot_id)
+            .single()
+
+          // Fetch tutor profile to get user_id
+          const { data: tutorProfileRow } = await supabase
+            .from('tutor_profiles')
+            .select('user_id')
+            .eq('id', bookingBase.tutor_id)
+            .single()
+
+          // Get names from profiles
           const { data: studentProfile } = await supabase
             .from('profiles')
             .select('full_name')
-            .eq('id', booking.student_id)
+            .eq('id', bookingBase.student_id)
             .single()
 
           const { data: tutorProfile } = await supabase
             .from('profiles')
             .select('full_name')
-            .eq('id', booking.tutor_profiles.user_id)
+            .eq('id', tutorProfileRow?.user_id || '')
             .single()
 
-          console.log('Student:', studentProfile, 'Tutor:', tutorProfile)
-
-          // Get emails using service role to access auth.users
+          // Get emails using service role
           const supabaseAdmin = createClient(
             Deno.env.get('SUPABASE_URL') ?? '',
             Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
           )
 
-          const { data: studentAuth } = await supabaseAdmin.auth.admin.getUserById(booking.student_id)
-          const { data: tutorAuth } = await supabaseAdmin.auth.admin.getUserById(booking.tutor_profiles.user_id)
+          const { data: studentAuth } = await supabaseAdmin.auth.admin.getUserById(bookingBase.student_id)
+          const { data: tutorAuth } = await supabaseAdmin.auth.admin.getUserById(tutorProfileRow?.user_id || '')
 
           console.log('Student email:', studentAuth?.user?.email, 'Tutor email:', tutorAuth?.user?.email)
 
-          // Send confirmation email
           if (studentAuth?.user?.email && tutorAuth?.user?.email) {
             console.log('Invoking send-booking-email function')
-            
+
             const emailPayload = {
               studentEmail: studentAuth.user.email,
               studentName: studentProfile?.full_name || 'Student',
               tutorEmail: tutorAuth.user.email,
               tutorName: tutorProfile?.full_name || 'Tutor',
-              subject: booking.subject,
-              startTime: booking.tutor_availability.start_time,
-              endTime: booking.tutor_availability.end_time,
-              meetingLink: booking.meeting_link,
-              depositPaid: booking.deposit_paid || 0,
-              balanceDue: booking.balance_due || 0,
-              totalAmount: booking.amount,
-              classType: booking.class_type
+              subject: bookingBase.subject,
+              startTime: slot?.start_time || new Date().toISOString(),
+              endTime: slot?.end_time || new Date(Date.now() + 60*60*1000).toISOString(),
+              meetingLink: bookingBase.meeting_link,
+              depositPaid: bookingBase.deposit_paid || 0,
+              balanceDue: bookingBase.balance_due || 0,
+              totalAmount: bookingBase.amount,
+              classType: bookingBase.class_type
             }
-            
+
             console.log('Email payload:', emailPayload)
-            
+
             const { data: emailResult, error: emailError } = await supabase.functions.invoke('send-booking-email', {
               body: emailPayload
             })
-            
+
             if (emailError) {
               console.error('Error sending booking email:', emailError)
             } else {
