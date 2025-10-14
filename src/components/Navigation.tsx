@@ -53,8 +53,8 @@ const Navigation = () => {
 
   const navLinks = [
     { to: "/tutors", label: "Find Tutors", singleLine: true },
-    { to: "/for-students", label: "ElimuConnect for Students", line1: "ElimuConnect for", line2: "Student Hub" },
-    { to: "/for-tutors", label: "ElimuConnect for Tutors", line1: "ElimuConnect for", line2: "Tutor Hub" },
+    { to: "/for-students", label: "Student Hub", singleLine: true },
+    { to: "/for-tutors", label: "Tutor Hub", singleLine: true },
     { to: "/about", label: "About Us", singleLine: true },
   ];
 
@@ -75,18 +75,10 @@ const Navigation = () => {
                 to={link.to}
                 className="group relative text-sm font-medium hover:text-primary transition-all duration-300"
               >
-                {link.singleLine ? (
-                  <span className="relative inline-block">
-                    {link.label}
-                    <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
-                  </span>
-                ) : (
-                  <span className="flex flex-col leading-tight text-center">
-                    <span className="text-xs opacity-90">{link.line1}</span>
-                    <span className="font-semibold">{link.line2}</span>
-                    <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
-                  </span>
-                )}
+                <span className="relative inline-block">
+                  {link.label}
+                  <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
+                </span>
               </Link>
             ))}
             {isAdmin && (
@@ -140,14 +132,7 @@ const Navigation = () => {
                   onClick={() => setOpen(false)}
                   className="text-lg font-medium hover:text-primary transition-colors px-2 py-1 hover:bg-primary/5 rounded-md"
                 >
-                  {link.singleLine ? (
-                    link.label
-                  ) : (
-                    <span className="flex flex-col leading-tight">
-                      <span className="text-sm opacity-80">{link.line1}</span>
-                      <span className="font-semibold">{link.line2}</span>
-                    </span>
-                  )}
+                  {link.label}
                 </Link>
               ))}
               {isAdmin && (
