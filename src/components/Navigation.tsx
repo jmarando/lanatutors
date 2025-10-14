@@ -67,13 +67,13 @@ const Navigation = () => {
         </Link>
 
         {/* Desktop Navigation */}
-        <div className="hidden lg:flex items-center gap-8 flex-1 justify-between ml-12">
-          <div className="flex items-center gap-8">
+        <div className="hidden lg:flex items-center gap-6 flex-1 justify-between ml-12">
+          <div className="flex items-center gap-6 whitespace-nowrap">
             {navLinks.map((link) => (
               <Link
                 key={link.to}
                 to={link.to}
-                className="group relative text-sm font-medium hover:text-primary transition-all duration-300"
+                className="group relative text-sm font-medium hover:text-primary transition-all duration-300 whitespace-nowrap"
               >
                 <span className="relative inline-block">
                   {link.label}
@@ -82,7 +82,7 @@ const Navigation = () => {
               </Link>
             ))}
             {isAdmin && (
-              <Link to="/admin" className="group relative text-sm font-medium hover:text-primary transition-all duration-300">
+              <Link to="/admin" className="group relative text-sm font-medium hover:text-primary transition-all duration-300 whitespace-nowrap">
                 <span className="relative inline-block">
                   Admin
                   <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
@@ -90,15 +90,15 @@ const Navigation = () => {
               </Link>
             )}
           </div>
-          <div className="flex items-center gap-4">
-            <a href="https://wa.me/254725252542" target="_blank" rel="noopener noreferrer" className="group flex items-center gap-2 text-sm font-medium hover:text-primary transition-colors px-3 py-2 rounded-md hover:bg-primary/5">
+          <div className="flex items-center gap-4 whitespace-nowrap">
+            <a href="https://wa.me/254725252542" target="_blank" rel="noopener noreferrer" className="group flex items-center gap-2 text-sm font-medium hover:text-primary transition-colors px-3 py-2 rounded-md hover:bg-primary/5 whitespace-nowrap">
               <MessageCircle className="w-4 h-4 transition-transform group-hover:scale-110" />
               <span>WhatsApp: 0725 - 252542</span>
             </a>
             {user ? (
               <>
                 <span className="text-sm text-muted-foreground max-w-[150px] truncate">{user.email}</span>
-                <Button variant="outline" size="sm" onClick={handleSignOut} className="hover-scale">
+                <Button variant="outline" size="sm" onClick={handleSignOut} className="hover-scale whitespace-nowrap">
                   <LogOut className="w-4 h-4 mr-2" />
                   Sign Out
                 </Button>
@@ -106,10 +106,10 @@ const Navigation = () => {
             ) : (
               <>
                 <Link to="/login">
-                  <Button variant="outline" size="sm" className="hover-scale">Sign In</Button>
+                  <Button variant="outline" size="sm" className="hover-scale whitespace-nowrap">Sign In</Button>
                 </Link>
                 <Link to="/login">
-                  <Button size="sm" className="hover-scale">Get Started</Button>
+                  <Button size="sm" className="hover-scale whitespace-nowrap">Get Started</Button>
                 </Link>
               </>
             )}
