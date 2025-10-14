@@ -182,7 +182,7 @@ export const BookingCalendar = ({
 
       // Handle payment for regular sessions based on selected method
       if (paymentMethod === 'mpesa') {
-        // Initiate M-Pesa payment for deposit
+        // Initiate M-Pesa payment for deposit (WITH TEST MODE)
         const { data: paymentData, error: paymentError } = await supabase.functions.invoke(
           "initiate-mpesa-payment",
           {
@@ -191,6 +191,7 @@ export const BookingCalendar = ({
               amount: Math.round(depositAmount),
               paymentType: "tutor_booking_deposit",
               referenceId: booking.id,
+              testMode: true  // ENABLE TEST MODE - bypasses actual M-Pesa payment
             },
           }
         );
@@ -200,14 +201,24 @@ export const BookingCalendar = ({
           throw paymentError;
         }
 
-        setPaymentInitiated(true);
-        toast({
-          title: "Deposit Payment Initiated",
-          description: `Please check your phone and pay the deposit of KES ${depositAmount.toFixed(0)}. Balance of KES ${balanceDue.toFixed(0)} due before the session.`,
-        });
+        // In test mode, payment is auto-confirmed
+        if (paymentData?.testMode) {
+          toast({
+            title: "TEST MODE: Booking Confirmed!",
+            description: `Test payment of KES ${depositAmount.toFixed(0)} was simulated. Your booking is confirmed. Balance of KES ${balanceDue.toFixed(0)} due before session.`,
+          });
 
-        // Poll for payment completion
-        pollMpesaPayment(booking.id, balanceDue);
+          resetForm();
+        } else {
+          setPaymentInitiated(true);
+          toast({
+            title: "Deposit Payment Initiated",
+            description: `Please check your phone and pay the deposit of KES ${depositAmount.toFixed(0)}. Balance of KES ${balanceDue.toFixed(0)} due before the session.`,
+          });
+
+          // Poll for payment completion
+          pollMpesaPayment(booking.id, balanceDue);
+        }
       } else {
         // Handle Stripe payment
         await handleStripePayment(booking.id, depositAmount, balanceDue);

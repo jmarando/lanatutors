@@ -24,9 +24,9 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    const { phoneNumber, amount, paymentType, referenceId, classId } = await req.json()
+    const { phoneNumber, amount, paymentType, referenceId, classId, testMode } = await req.json()
 
-    console.log('Initiating M-Pesa payment:', { phoneNumber, amount, paymentType, referenceId, classId })
+    console.log('Initiating M-Pesa payment:', { phoneNumber, amount, paymentType, referenceId, classId, testMode })
 
     // Get auth user
     const authHeader = req.headers.get('Authorization')!
@@ -37,6 +37,55 @@ serve(async (req) => {
       throw new Error('Unauthorized')
     }
 
+    // TEST MODE: Skip actual M-Pesa API call and auto-confirm
+    if (testMode === true) {
+      console.log('TEST MODE: Simulating successful payment')
+      
+      // Record test payment in database as completed
+      const { data: payment, error: paymentError } = await supabase
+        .from('payments')
+        .insert({
+          user_id: user.id,
+          phone_number: phoneNumber,
+          amount: amount,
+          payment_type: paymentType,
+          status: 'completed',
+          checkout_request_id: `TEST-${Date.now()}`,
+          merchant_request_id: `TEST-MERCHANT-${Date.now()}`,
+          mpesa_receipt_number: `TEST-RECEIPT-${Date.now()}`,
+          reference_id: referenceId || classId
+        })
+        .select()
+        .single()
+
+      if (paymentError) {
+        console.error('Error recording test payment:', paymentError)
+        throw paymentError
+      }
+
+      // Update booking to confirmed
+      if (referenceId) {
+        await supabase
+          .from('bookings')
+          .update({ status: 'confirmed' })
+          .eq('id', referenceId)
+      }
+
+      console.log('Test payment recorded and booking confirmed:', payment)
+
+      return new Response(
+        JSON.stringify({
+          success: true,
+          message: 'TEST MODE: Payment simulated successfully',
+          checkoutRequestId: payment.checkout_request_id,
+          paymentId: payment.id,
+          testMode: true
+        }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    // PRODUCTION MODE: Actual M-Pesa payment flow
     // Get M-Pesa access token
     const authString = btoa(`${MPESA_CONSUMER_KEY}:${MPESA_CONSUMER_SECRET}`)
     const tokenResponse = await fetch(
