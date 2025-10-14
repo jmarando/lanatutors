@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { SEO } from "@/components/SEO";
+import { TierExplainer } from "@/components/TutorTierBadge";
 
 const ForTutors = () => {
   const benefits = [
@@ -158,8 +159,21 @@ const ForTutors = () => {
         </div>
       </section>
 
-      {/* Benefits Section */}
+      {/* Tier System Section */}
       <section className="py-20 px-6">
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center mb-8">
+            <h2 className="text-4xl font-bold mb-4">Transparent Tier-Based Earnings</h2>
+            <p className="text-lg text-muted-foreground">
+              Your tier is determined fairly by AI based on your experience, ratings, and qualifications
+            </p>
+          </div>
+          <TierExplainer />
+        </div>
+      </section>
+
+      {/* Benefits Section */}
+      <section className="py-20 px-6 bg-muted/30">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-12">
             <h2 className="text-4xl font-bold mb-4">Why Teach with ElimuConnect?</h2>

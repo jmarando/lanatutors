@@ -12,6 +12,7 @@ import { Search, Star, SlidersHorizontal } from "lucide-react";
 import { SEO } from "@/components/SEO";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { TutorTierBadge, TierExplainer } from "@/components/TutorTierBadge";
 import tutor1 from "@/assets/tutor-1.jpg";
 import tutor2 from "@/assets/tutor-2.jpg";
 import tutor3 from "@/assets/tutor-3.jpg";
@@ -81,6 +82,7 @@ const TutorSearch = () => {
           rating: Number(tp.rating) || 0,
           reviews: tp.total_reviews || 0,
           hourlyRate: Number(tp.hourly_rate) || 0,
+          tier: tp.tier || "bronze",
           photo: name.split(' ').map((n: string) => n[0]).join('') || "T",
           photoUrl: tutorImages[index % tutorImages.length],
         };
@@ -137,11 +139,18 @@ const TutorSearch = () => {
       
       <div className="max-w-7xl mx-auto px-6 py-12">
         {/* Header */}
-        <div className="text-center mb-10">
-          <h1 className="text-5xl font-bold mb-3">Find Your Tutor</h1>
-          <p className="text-muted-foreground text-lg">
-            Search our network of expert tutors to find the right one for you.
-          </p>
+        <div className="mb-10">
+          <div className="text-center mb-8">
+            <h1 className="text-5xl font-bold mb-3">Find Your Tutor</h1>
+            <p className="text-muted-foreground text-lg">
+              Search our network of expert tutors to find the right one for you.
+            </p>
+          </div>
+          
+          {/* Tier Explainer */}
+          <div className="max-w-3xl mx-auto mb-8">
+            <TierExplainer />
+          </div>
         </div>
 
         {/* Filters */}
@@ -285,6 +294,9 @@ const TutorSearch = () => {
                       </AvatarFallback>
                     </Avatar>
                     <div className="flex-1 min-w-0">
+                      <div className="mb-2">
+                        <TutorTierBadge tier={tutor.tier} size="sm" showTooltip={false} />
+                      </div>
                       <h3 className="text-lg font-bold mb-1.5 leading-tight truncate">{tutor.name}</h3>
                       <p className="text-sm text-muted-foreground mb-1 leading-snug line-clamp-1">
                         {tutor.subjects.join(", ")}
