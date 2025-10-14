@@ -63,12 +63,58 @@ serve(async (req) => {
         throw paymentError
       }
 
-      // Update booking to confirmed
+      // Update booking to confirmed and send email
       if (referenceId) {
-        await supabase
+        const { data: booking } = await supabase
           .from('bookings')
           .update({ status: 'confirmed' })
           .eq('id', referenceId)
+          .select(`
+            *,
+            tutor_availability!inner(start_time, end_time),
+            tutor_profiles!inner(user_id)
+          `)
+          .single()
+
+        if (booking) {
+          // Get student and tutor details
+          const { data: studentProfile } = await supabase
+            .from('profiles')
+            .select('full_name')
+            .eq('id', booking.student_id)
+            .single()
+
+          const { data: tutorProfile } = await supabase
+            .from('profiles')
+            .select('full_name')
+            .eq('id', booking.tutor_profiles.user_id)
+            .single()
+
+          // Get emails
+          const { data: { users } } = await supabase.auth.admin.listUsers()
+          const studentUser = users?.find(u => u.id === booking.student_id)
+          const tutorUser = users?.find(u => u.id === booking.tutor_profiles.user_id)
+
+          // Send confirmation email
+          if (studentUser && tutorUser) {
+            await supabase.functions.invoke('send-booking-email', {
+              body: {
+                studentEmail: studentUser.email,
+                studentName: studentProfile?.full_name || 'Student',
+                tutorEmail: tutorUser.email,
+                tutorName: tutorProfile?.full_name || 'Tutor',
+                subject: booking.subject,
+                startTime: booking.tutor_availability.start_time,
+                endTime: booking.tutor_availability.end_time,
+                meetingLink: booking.meeting_link,
+                depositPaid: booking.deposit_paid || 0,
+                balanceDue: booking.balance_due || 0,
+                totalAmount: booking.amount,
+                classType: booking.class_type
+              }
+            })
+          }
+        }
       }
 
       console.log('Test payment recorded and booking confirmed:', payment)
