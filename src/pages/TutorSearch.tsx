@@ -291,71 +291,69 @@ const TutorSearch = () => {
         {/* Tutors Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto">
           {filteredTutors.map((tutor) => (
-            <Card key={tutor.id} className="overflow-hidden hover:shadow-lg transition-all duration-300 border-border/50">
-              <CardContent className="p-0">
-                {/* Header Section */}
-                <div className="p-6 pb-4 border-b border-border/50">
-                  <div className="flex items-start gap-4">
-                    <Avatar className="w-16 h-16 shrink-0">
-                      <AvatarImage src={tutor.photoUrl} alt={tutor.name} />
-                      <AvatarFallback className="text-base bg-primary text-primary-foreground font-semibold">
-                        {tutor.photo}
-                      </AvatarFallback>
-                    </Avatar>
-                    <div className="flex-1 min-w-0">
-                      <div className="mb-2">
-                        <TutorTierBadge tier={tutor.tier} size="sm" showTooltip={false} />
-                      </div>
-                      <h3 className="text-lg font-bold mb-1.5 leading-tight truncate">{tutor.name}</h3>
-                      <p className="text-sm text-muted-foreground mb-1 leading-snug line-clamp-1">
-                        {tutor.subjects.join(", ")}
-                      </p>
-                      <p className="text-xs text-muted-foreground/80 leading-snug">
-                        {tutor.school}
-                      </p>
+            <Card key={tutor.id} className="overflow-hidden hover:shadow-lg transition-all duration-300 border-border/50 bg-card">
+              <CardContent className="p-6">
+                {/* Avatar and Name Section */}
+                <div className="flex items-start gap-4 mb-4">
+                  <Avatar className="w-20 h-20 shrink-0 ring-2 ring-border/50">
+                    <AvatarImage src={tutor.photoUrl} alt={tutor.name} />
+                    <AvatarFallback className="text-lg bg-primary/10 text-primary font-semibold">
+                      {tutor.photo}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between gap-2 mb-2">
+                      <h3 className="text-xl font-bold leading-tight">{tutor.name}</h3>
+                      <TutorTierBadge tier={tutor.tier} size="sm" showTooltip={true} />
                     </div>
+                    <p className="text-sm text-muted-foreground mb-1 leading-snug">
+                      {tutor.subjects.join(", ")}
+                    </p>
+                    <p className="text-xs text-muted-foreground/80">
+                      {tutor.school}
+                    </p>
                   </div>
                 </div>
 
-                {/* Details Section */}
-                <div className="px-6 py-4 space-y-3">
-                  <div className="flex items-center justify-between text-xs text-muted-foreground">
-                    <span className="font-medium">{tutor.curriculum.join(" • ")}</span>
+                {/* Stats Section */}
+                <div className="flex items-center justify-between py-3 mb-4 border-y border-border/50">
+                  <div className="flex items-center gap-1.5">
+                    <Star className="w-4 h-4 shrink-0 fill-yellow-500 text-yellow-500" />
+                    <span className="font-semibold text-sm">{tutor.rating.toFixed(1)}</span>
+                    <span className="text-xs text-muted-foreground">({tutor.reviews})</span>
                   </div>
                   
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-1.5">
-                      <Star className="w-4 h-4 shrink-0 fill-yellow-500 text-yellow-500" />
-                      <span className="font-semibold text-sm">{tutor.rating.toFixed(1)}</span>
-                      <span className="text-xs text-muted-foreground">({tutor.reviews})</span>
-                    </div>
-                    
-                    <div className="text-sm space-y-0.5">
-                      <div className="font-bold text-foreground">
-                        Online: KES {tutor.hourlyRate.toLocaleString()}<span className="text-xs font-normal">/hr</span>
-                      </div>
-                      <div className="text-xs text-muted-foreground">
-                        In-Person: KES {Math.round(tutor.hourlyRate * 1.3).toLocaleString()}/hr
-                      </div>
-                      <div className="text-xs text-muted-foreground/60 mt-1">
-                        {tutor.tier === 'gold' && '(Gold Tier: 2,000/hr online)'}
-                        {tutor.tier === 'silver' && '(Silver Tier: 1,750/hr online)'}
-                        {tutor.tier === 'bronze' && '(Bronze Tier: 1,500/hr online)'}
-                      </div>
-                    </div>
+                  <div className="text-xs text-muted-foreground font-medium">
+                    {tutor.curriculum.join(" • ")}
+                  </div>
+                </div>
+
+                {/* Pricing Section */}
+                <div className="space-y-2 mb-4">
+                  <div className="flex items-baseline justify-between">
+                    <span className="text-xs text-muted-foreground">Online</span>
+                    <span className="text-lg font-bold text-foreground">
+                      KES {tutor.hourlyRate.toLocaleString()}
+                      <span className="text-xs font-normal text-muted-foreground">/hr</span>
+                    </span>
+                  </div>
+                  <div className="flex items-baseline justify-between">
+                    <span className="text-xs text-muted-foreground">In-Person</span>
+                    <span className="text-sm font-semibold text-muted-foreground">
+                      KES {Math.round(tutor.hourlyRate * 1.3).toLocaleString()}
+                      <span className="text-xs font-normal">/hr</span>
+                    </span>
                   </div>
                 </div>
 
                 {/* Action Button */}
-                <div className="px-6 pb-6">
-                  <Button 
-                    onClick={() => navigate(`/tutors/${tutor.id}`)}
-                    className="w-full h-10"
-                    variant="default"
-                  >
-                    View Profile
-                  </Button>
-                </div>
+                <Button 
+                  onClick={() => navigate(`/tutors/${tutor.id}`)}
+                  className="w-full"
+                  variant="default"
+                >
+                  View Profile
+                </Button>
               </CardContent>
             </Card>
           ))}
