@@ -91,8 +91,9 @@ const Navigation = () => {
             )}
           </div>
           <div className="flex items-center gap-4 whitespace-nowrap">
-            <a href="https://wa.me/254725252542" target="_blank" rel="noopener noreferrer" className="group flex items-center justify-center w-10 h-10 hover:text-primary transition-colors rounded-md hover:bg-primary/5" title="Chat on WhatsApp">
-              <MessageCircle className="w-5 h-5 transition-transform group-hover:scale-110" />
+            <a href="https://wa.me/254725252542" target="_blank" rel="noopener noreferrer" className="group flex items-center gap-2 text-sm font-medium hover:text-primary transition-colors px-3 py-2 rounded-md hover:bg-primary/5 whitespace-nowrap">
+              <MessageCircle className="w-4 h-4 transition-transform group-hover:scale-110" />
+              <span>Chat on WhatsApp</span>
             </a>
             {user ? (
               <>
@@ -141,7 +142,7 @@ const Navigation = () => {
               )}
               <a href="https://wa.me/254725252542" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-lg font-medium hover:text-primary transition-colors px-2 py-2 hover:bg-primary/5 rounded-md">
                 <MessageCircle className="w-5 h-5" />
-                <span>WhatsApp</span>
+                <span>Chat on WhatsApp</span>
               </a>
               {user ? (
                 <>
