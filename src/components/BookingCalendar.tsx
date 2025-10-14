@@ -204,8 +204,23 @@ export const BookingCalendar = ({
         // In test mode, payment is auto-confirmed
         if (paymentData?.testMode) {
           toast({
-            title: "TEST MODE: Booking Confirmed!",
-            description: `Test payment of KES ${depositAmount.toFixed(0)} was simulated. Your booking is confirmed. Balance of KES ${balanceDue.toFixed(0)} due before session.`,
+            title: "🎉 Booking Confirmed!",
+            description: (
+              <div className="space-y-2 mt-2">
+                <p className="font-semibold">Your tutoring session has been successfully booked!</p>
+                <div className="text-sm space-y-1">
+                  <p>✓ Deposit of KES {depositAmount.toFixed(0)} paid</p>
+                  {balanceDue > 0 && <p>• Balance of KES {balanceDue.toFixed(0)} due before the session</p>}
+                </div>
+                <div className="mt-3 pt-2 border-t border-border/50 text-sm">
+                  <p className="font-medium mb-1">Next Steps:</p>
+                  <p>📧 A confirmation email has been sent to your inbox with full booking details</p>
+                  <p>📚 Visit your Student Dashboard to view upcoming sessions and join the class</p>
+                </div>
+                <p className="text-xs text-muted-foreground mt-2">(Test mode - no actual payment processed)</p>
+              </div>
+            ),
+            duration: 10000,
           });
 
           resetForm();
