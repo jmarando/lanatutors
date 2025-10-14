@@ -314,29 +314,29 @@ export const BookingCalendar = ({
   };
 
   return (
-    <Card className="p-6">
-      <h3 className="text-lg font-semibold mb-4">
-        {isTrialSession ? "Book Free Consultation (30 min)" : "Book a Session"}
-      </h3>
-
+    <div className="space-y-6">
       <div className="grid md:grid-cols-2 gap-6">
-        <div>
-          <label className="text-sm font-medium mb-2 block">Select Date</label>
-          <Calendar
-            mode="single"
-            selected={selectedDate}
-            onSelect={setSelectedDate}
-            disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
-            className="rounded-md border pointer-events-auto"
-          />
+        <div className="space-y-2">
+          <label className="text-sm font-medium block">Select Date</label>
+          <div className="border rounded-lg p-3 bg-background">
+            <Calendar
+              mode="single"
+              selected={selectedDate}
+              onSelect={setSelectedDate}
+              disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
+              className="pointer-events-auto"
+            />
+          </div>
         </div>
 
         <div className="space-y-4">
-          <div>
-            <label className="text-sm font-medium mb-2 block">Available Time Slots</label>
-            <div className="space-y-2 max-h-64 overflow-y-auto">
+          <div className="space-y-2">
+            <label className="text-sm font-medium block">Available Time Slots</label>
+            <div className="space-y-2 max-h-72 overflow-y-auto border rounded-lg p-3 bg-background">
               {availableSlots.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No available slots for this date</p>
+                <p className="text-sm text-muted-foreground text-center py-8">
+                  No available slots for this date
+                </p>
               ) : (
                 availableSlots.map((slot) => (
                   <Button
@@ -529,6 +529,6 @@ export const BookingCalendar = ({
           )}
         </div>
       </div>
-    </Card>
+    </div>
   );
 };

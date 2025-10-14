@@ -541,8 +541,8 @@ const TutorProfile = () => {
 
         {/* Booking Dialog */}
         <Dialog open={isBookingOpen} onOpenChange={setIsBookingOpen}>
-          <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
+          <DialogContent className="max-w-5xl max-h-[95vh] p-0 overflow-hidden flex flex-col">
+            <DialogHeader className="px-6 pt-6 pb-4">
               <DialogTitle>
                 {bookingType === 'free' ? 'Book Free Consultation' : `Book a Session with ${tutor.name}`}
               </DialogTitle>
@@ -554,18 +554,25 @@ const TutorProfile = () => {
               </DialogDescription>
             </DialogHeader>
             
-            {currentUser && (
-              <BookingCalendar
-                tutorId={tutor.userId}
-                tutorName={tutor.name}
-                tutorEmail={tutor.email}
-                studentEmail={currentUser.email}
-                studentName={currentUser.name}
-                hourlyRate={bookingType === 'free' ? 0 : tutor.hourlyRate}
-                isTrialSession={bookingType === 'free'}
-                onBookingComplete={() => setIsBookingOpen(false)}
-              />
-            )}
+            <div className="overflow-y-auto flex-1 px-6 pb-6">
+              {currentUser ? (
+                <BookingCalendar
+                  tutorId={tutor.userId}
+                  tutorName={tutor.name}
+                  tutorEmail={tutor.email}
+                  studentEmail={currentUser.email}
+                  studentName={currentUser.name}
+                  hourlyRate={bookingType === 'free' ? 0 : tutor.hourlyRate}
+                  isTrialSession={bookingType === 'free'}
+                  onBookingComplete={() => setIsBookingOpen(false)}
+                />
+              ) : (
+                <div className="text-center py-8">
+                  <p className="text-muted-foreground mb-4">Please sign in to book a session</p>
+                  <Button onClick={() => navigate('/login')}>Sign In</Button>
+                </div>
+              )}
+            </div>
           </DialogContent>
         </Dialog>
       </div>
