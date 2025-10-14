@@ -130,10 +130,15 @@ const ForStudents = () => {
               one-on-one tutoring. Master KCSE, KCPE, and CBC curriculum from the comfort of home.
             </p>
             <div className="flex flex-wrap gap-4 justify-center">
-              <Link to="/book-consultation">
+              <Link to="/student-dashboard">
                 <Button size="lg" className="h-14 px-8 text-lg">
-                  Book Free Consultation
+                  Go to Student Dashboard
                   <ArrowRight className="ml-2 w-5 h-5" />
+                </Button>
+              </Link>
+              <Link to="/book-consultation">
+                <Button size="lg" variant="outline" className="h-14 px-8 text-lg">
+                  Book Free Consultation
                 </Button>
               </Link>
               <Link to="/tutors">
