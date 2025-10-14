@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { SEO } from "@/components/SEO";
 import { BookingCalendar } from "@/components/BookingCalendar";
+import { TutorTierBadge } from "@/components/TutorTierBadge";
 import tutor1 from "@/assets/tutor-1.jpg";
 import tutor2 from "@/assets/tutor-2.jpg";
 import tutor3 from "@/assets/tutor-3.jpg";
@@ -91,6 +92,7 @@ const TutorProfile = () => {
         rating: Number(tutorProfile.rating) || 0,
         reviews: tutorProfile.total_reviews || 0,
         hourlyRate: Number(tutorProfile.hourly_rate) || 0,
+        tier: tutorProfile.tier || "bronze",
         photo: profile?.full_name 
           ? profile.full_name.split(' ').map((n: string) => n[0]).join('') 
           : "T",
@@ -235,7 +237,10 @@ const TutorProfile = () => {
                 </Avatar>
                 
                 <div className="flex-1 min-w-0">
-                  <h1 className="text-3xl font-bold mb-2">{tutor.name}</h1>
+                  <div className="flex items-start justify-between gap-3 mb-2">
+                    <h1 className="text-3xl font-bold">{tutor.name}</h1>
+                    <TutorTierBadge tier={tutor.tier} size="md" showTooltip={true} />
+                  </div>
                   <p className="text-base text-muted-foreground mb-3">
                     {tutor.subjects.join(" • ")}
                   </p>
