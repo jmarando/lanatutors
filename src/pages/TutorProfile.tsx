@@ -244,15 +244,10 @@ const TutorProfile = () => {
                   <p className="text-base text-muted-foreground mb-3">
                     {tutor.subjects.join(" • ")}
                   </p>
-                  {tutor.teachingLocation && (
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground mb-2">
-                      <MapPin className="w-4 h-4" />
-                      <span>{tutor.teachingLocation}</span>
-                    </div>
-                  )}
-                  <p className="text-sm text-muted-foreground">
-                    {tutor.school}
-                  </p>
+                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                    <MapPin className="w-4 h-4" />
+                    <span>{tutor.school}</span>
+                  </div>
                 </div>
               </div>
             </div>
