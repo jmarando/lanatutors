@@ -158,6 +158,35 @@ export const BookingCalendar = ({
 
       if (bookingError) throw bookingError;
 
+      // Create Google Meet session for all bookings
+      console.log("Creating Google Meet session...");
+      const { data: meetData, error: meetError } = await supabase.functions.invoke(
+        "create-google-meet-session",
+        {
+          body: {
+            bookingId: booking.id,
+            tutorEmail: tutorEmail || "tutor@example.com",
+            studentEmail: studentEmail || "student@example.com",
+            studentName: studentName || "Student",
+            tutorName: tutorName,
+            subject,
+            startTime: selectedSlot.start_time,
+            endTime: selectedSlot.end_time,
+          },
+        }
+      );
+
+      if (meetError) {
+        console.error("Failed to create Google Meet session:", meetError);
+        toast({
+          title: "Warning",
+          description: "Booking created but failed to generate meeting link",
+          variant: "destructive",
+        });
+      } else {
+        console.log("Google Meet session created:", meetData);
+      }
+
       // For trial sessions, skip payment and send confirmation immediately
       if (isTrialSession) {
         // Send email notifications
@@ -170,6 +199,11 @@ export const BookingCalendar = ({
             subject: `FREE CONSULTATION: ${subject.trim()}`,
             startTime: selectedSlot.start_time,
             endTime: selectedSlot.end_time,
+            meetingLink: meetData?.meetLink,
+            classType: selectedClassType,
+            totalAmount: 0,
+            depositPaid: 0,
+            balanceDue: 0,
           },
         });
 
@@ -178,7 +212,7 @@ export const BookingCalendar = ({
           description: "Your free 30-minute chemistry session has been confirmed. Check your email for details.",
         });
 
-        resetForm();
+        window.location.href = `/booking-confirmed?bookingId=${booking.id}`;
         return;
       }
 
@@ -205,9 +239,26 @@ export const BookingCalendar = ({
 
         // In test mode, payment is auto-confirmed
         if (paymentData?.testMode) {
+          // Send confirmation email
+          await supabase.functions.invoke("send-booking-email", {
+            body: {
+              studentEmail,
+              studentName,
+              tutorEmail,
+              tutorName,
+              subject: subject.trim(),
+              startTime: selectedSlot.start_time,
+              endTime: selectedSlot.end_time,
+              meetingLink: meetData?.meetLink,
+              classType: selectedClassType,
+              totalAmount,
+              depositPaid: depositAmount,
+              balanceDue,
+            },
+          });
+
           // Redirect to booking confirmed page
-          navigate(`/booking-confirmed?bookingId=${booking.id}`);
-          
+          window.location.href = `/booking-confirmed?bookingId=${booking.id}`;
           resetForm();
         } else {
           setPaymentInitiated(true);
@@ -251,6 +302,13 @@ export const BookingCalendar = ({
       if (updatedBooking?.status === "confirmed") {
         clearInterval(checkPayment);
         
+        // Get the booking to fetch the meeting link
+        const { data: fullBooking } = await supabase
+          .from("bookings")
+          .select("meeting_link")
+          .eq("id", bookingId)
+          .single();
+
         // Send email notifications
         await supabase.functions.invoke("send-booking-email", {
           body: {
@@ -261,6 +319,11 @@ export const BookingCalendar = ({
             subject: subject.trim(),
             startTime: selectedSlot!.start_time,
             endTime: selectedSlot!.end_time,
+            meetingLink: fullBooking?.meeting_link,
+            classType: selectedClassType,
+            totalAmount: selectedSlot ? ((new Date(selectedSlot.end_time).getTime() - new Date(selectedSlot.start_time).getTime()) / (1000 * 60 * 60)) * (selectedClassType === 'in-person' ? hourlyRate * 1.3 : hourlyRate) : 0,
+            depositPaid: selectedSlot ? ((new Date(selectedSlot.end_time).getTime() - new Date(selectedSlot.start_time).getTime()) / (1000 * 60 * 60)) * (selectedClassType === 'in-person' ? hourlyRate * 1.3 : hourlyRate) * 0.3 : 0,
+            balanceDue,
           },
         });
 
@@ -269,6 +332,7 @@ export const BookingCalendar = ({
           description: `Deposit payment successful. Balance of KES ${balanceDue.toFixed(0)} due before the session. You'll receive a confirmation email shortly.`,
         });
 
+        window.location.href = `/booking-confirmed?bookingId=${bookingId}`;
         resetForm();
       } else if (attempts >= 24) { // 2 minutes (24 * 5 seconds)
         clearInterval(checkPayment);

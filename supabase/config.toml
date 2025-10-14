@@ -1,5 +1,8 @@
 project_id = "iccemuiqcdumgxiwxzdq"
 
+[functions.create-google-meet-session]
+verify_jwt = true
+
 [functions.initiate-mpesa-payment]
 verify_jwt = true
 
