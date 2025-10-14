@@ -732,7 +732,8 @@ export const BookingCalendar = ({
                     );
                   })()}
 
-                  {(paymentOption !== 'package' || (paymentOption === 'package' && selectedPackage)) && (
+                  {/* Show payment method when NOT using existing package */}
+                  {!(paymentOption === 'package' && selectedExistingPackage) && (
                     <>
                       <div>
                         <Label className="text-sm font-medium mb-2 block">Payment Method *</Label>
@@ -798,6 +799,18 @@ export const BookingCalendar = ({
                   "Waiting for Payment..."
                 ) : isTrialSession ? (
                   "Confirm Free Trial"
+                ) : selectedExistingPackage ? (
+                  "Book with Package"
+                ) : paymentOption === 'package' ? (
+                  <>
+                    {paymentMethod === 'mpesa' ? <Smartphone className="w-4 h-4 mr-2" /> : <CreditCard className="w-4 h-4 mr-2" />}
+                    Pay for Package & Book
+                  </>
+                ) : paymentOption === 'full' ? (
+                  <>
+                    {paymentMethod === 'mpesa' ? <Smartphone className="w-4 h-4 mr-2" /> : <CreditCard className="w-4 h-4 mr-2" />}
+                    Pay Full Amount & Confirm
+                  </>
                 ) : (
                   <>
                     {paymentMethod === 'mpesa' ? <Smartphone className="w-4 h-4 mr-2" /> : <CreditCard className="w-4 h-4 mr-2" />}
@@ -808,15 +821,49 @@ export const BookingCalendar = ({
 
               {!paymentInitiated && !isTrialSession && (
                 <div className="text-xs text-muted-foreground space-y-1">
-                  <p>• Pay only 30% deposit now to secure your booking</p>
-                  <p>• Balance due before the session starts</p>
-                  {paymentMethod === 'mpesa' ? (
+                  {selectedExistingPackage ? (
                     <>
-                      <p>• You will receive an M-Pesa prompt on your phone</p>
-                      <p>• Enter your M-Pesa PIN to complete the deposit</p>
+                      <p>✓ No payment needed - using your active package</p>
+                      <p>• 1 session will be deducted from your package</p>
+                    </>
+                  ) : paymentOption === 'package' ? (
+                    <>
+                      <p>• Pay now to purchase this package</p>
+                      <p>• Use sessions anytime within {selectedPackage?.validity_days} days</p>
+                      {paymentMethod === 'mpesa' ? (
+                        <>
+                          <p>• You will receive an M-Pesa prompt on your phone</p>
+                          <p>• Enter your M-Pesa PIN to complete the purchase</p>
+                        </>
+                      ) : (
+                        <p>• You'll be redirected to secure Stripe checkout</p>
+                      )}
+                    </>
+                  ) : paymentOption === 'full' ? (
+                    <>
+                      <p>• Pay the full amount now - no balance required later</p>
+                      {paymentMethod === 'mpesa' ? (
+                        <>
+                          <p>• You will receive an M-Pesa prompt on your phone</p>
+                          <p>• Enter your M-Pesa PIN to complete the payment</p>
+                        </>
+                      ) : (
+                        <p>• You'll be redirected to secure Stripe checkout</p>
+                      )}
                     </>
                   ) : (
-                    <p>• You'll be redirected to secure Stripe checkout</p>
+                    <>
+                      <p>• Pay only 30% deposit now to secure your booking</p>
+                      <p>• Balance due before the session starts</p>
+                      {paymentMethod === 'mpesa' ? (
+                        <>
+                          <p>• You will receive an M-Pesa prompt on your phone</p>
+                          <p>• Enter your M-Pesa PIN to complete the deposit</p>
+                        </>
+                      ) : (
+                        <p>• You'll be redirected to secure Stripe checkout</p>
+                      )}
+                    </>
                   )}
                 </div>
               )}
