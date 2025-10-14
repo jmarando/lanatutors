@@ -91,7 +91,7 @@ const Navigation = () => {
             )}
           </div>
           <div className="flex items-center gap-4">
-            <a href="tel:+254725252542" className="group flex items-center gap-2 text-sm font-medium hover:text-primary transition-colors px-3 py-2 rounded-md hover:bg-primary/5">
+            <a href="https://wa.me/254725252542" target="_blank" rel="noopener noreferrer" className="group flex items-center gap-2 text-sm font-medium hover:text-primary transition-colors px-3 py-2 rounded-md hover:bg-primary/5">
               <Phone className="w-4 h-4 transition-transform group-hover:scale-110" />
               <span>0725 - 252542</span>
             </a>
@@ -140,7 +140,7 @@ const Navigation = () => {
                   Admin Dashboard
                 </Link>
               )}
-              <a href="tel:+254725252542" className="flex items-center gap-2 text-lg font-medium hover:text-primary transition-colors px-2 py-2 hover:bg-primary/5 rounded-md">
+              <a href="https://wa.me/254725252542" target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-lg font-medium hover:text-primary transition-colors px-2 py-2 hover:bg-primary/5 rounded-md">
                 <Phone className="w-5 h-5" />
                 <span>0725 - 252542</span>
               </a>
