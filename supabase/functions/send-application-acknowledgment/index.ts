@@ -50,29 +50,27 @@ const handler = async (req: Request): Promise<Response> => {
           
           <h2 style="color: #2563eb; margin-top: 30px;">What Happens Next?</h2>
           
-          <p>Our vetting process includes the following steps:</p>
+          <p>Our vetting process consists of three simple steps:</p>
           
-          <ol style="line-height: 1.8;">
-            <li><strong>Application Review</strong> - We'll verify your credentials and teaching experience</li>
-            <li><strong>Background Check</strong> - Verification of your TSC number and certificate of good conduct</li>
-            <li><strong>Reference Verification</strong> - We'll contact your professional references</li>
-            <li><strong>Subject Expertise Assessment</strong> - Evaluation of your teaching materials and methods</li>
-            <li><strong>Interview</strong> - A comprehensive discussion about your teaching philosophy and experience</li>
-            <li><strong>Full Profile Setup</strong> - If approved, you'll complete your tutor profile with photos, teaching video, and detailed information</li>
-          </ol>
+          <div style="margin: 20px 0;">
+            <div style="padding: 15px; background-color: #f8fafc; border-left: 4px solid #2563eb; margin-bottom: 15px;">
+              <h3 style="color: #2563eb; margin: 0 0 10px 0;">Step 1: Initial Vetting</h3>
+              <p style="margin: 0;">We'll review your application and verify that you meet our requirements, including your TSC certification, teaching experience, and qualifications.</p>
+            </div>
+            
+            <div style="padding: 15px; background-color: #f8fafc; border-left: 4px solid #2563eb; margin-bottom: 15px;">
+              <h3 style="color: #2563eb; margin: 0 0 10px 0;">Step 2: Expert Conversation</h3>
+              <p style="margin: 0;">If you pass the initial vetting, you'll be invited for a 30-minute video conversation with an ElimuConnect Expert to discuss your teaching philosophy and experience.</p>
+            </div>
+            
+            <div style="padding: 15px; background-color: #f8fafc; border-left: 4px solid #2563eb;">
+              <h3 style="color: #2563eb; margin: 0 0 10px 0;">Step 3: Enrollment & Profile Setup</h3>
+              <p style="margin: 0;">Upon successfully passing the conversation, you'll become an official ElimuConnect tutor! You'll be enrolled in our system to complete your profile, upload your teaching video, and gain access to the tutor dashboard.</p>
+            </div>
+          </div>
           
           <h2 style="color: #2563eb; margin-top: 30px;">Timeline</h2>
-          <p>You can expect to hear from us within <strong>3-5 business days</strong> regarding the status of your application.</p>
-          
-          <h2 style="color: #2563eb; margin-top: 30px;">What We're Looking For</h2>
-          <p>We carefully vet all tutors to ensure they meet our high standards:</p>
-          <ul style="line-height: 1.8;">
-            <li>Valid TSC certification</li>
-            <li>Minimum 3 years teaching experience</li>
-            <li>Proven track record of student success</li>
-            <li>Strong communication and interpersonal skills</li>
-            <li>Commitment to educational excellence</li>
-          </ul>
+          <p>You can expect to hear from us within <strong>3-5 business days</strong> regarding the status of your initial vetting.</p>
           
           <p style="margin-top: 30px;">If you have any questions in the meantime, please don't hesitate to reach out to us at <a href="mailto:info@elimuconnect.co.ke">info@elimuconnect.co.ke</a>.</p>
           
