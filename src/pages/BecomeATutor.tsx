@@ -189,7 +189,7 @@ const BecomeATutor = () => {
       });
 
       // Move to success step
-      setStep(4);
+      setStep(3);
     } catch (error: any) {
       toast({
         title: "Submission failed",
@@ -201,7 +201,7 @@ const BecomeATutor = () => {
     }
   };
 
-  const progress = (step / 4) * 100;
+  const progress = (step / 3) * 100;
 
   return (
     <div className="min-h-screen bg-[image:var(--gradient-page)] flex items-center justify-center p-6">
@@ -221,7 +221,7 @@ const BecomeATutor = () => {
           <CardHeader>
             <div className="mb-4">
               <Progress value={progress} className="h-2" />
-              <p className="text-sm text-muted-foreground mt-2">Step {step} of 4</p>
+              <p className="text-sm text-muted-foreground mt-2">Step {step} of 3</p>
             </div>
             <CardTitle className="text-2xl">Become a Tutor</CardTitle>
             <CardDescription>
@@ -263,56 +263,13 @@ const BecomeATutor = () => {
                     <Button variant="outline">Cancel</Button>
                   </Link>
                   <Button onClick={() => setStep(2)}>
-                    I Meet These Requirements
+                    Continue to Application
                   </Button>
                 </div>
               </div>
             )}
 
             {step === 2 && (
-              <div className="space-y-6">
-                <div>
-                  <h3 className="font-semibold text-lg mb-2">Terms & Conditions</h3>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    Please read and accept our terms and conditions
-                  </p>
-                </div>
-
-                <div className="border rounded-lg p-4 h-96 overflow-y-auto bg-muted/30">
-                  <pre className="whitespace-pre-wrap text-sm font-sans">{TERMS_AND_CONDITIONS}</pre>
-                </div>
-
-                <div className="flex items-start space-x-2 p-4 border rounded-lg">
-                  <Checkbox
-                    id="terms"
-                    checked={agreedToTerms}
-                    onCheckedChange={(checked) => setAgreedToTerms(checked as boolean)}
-                  />
-                  <div className="grid gap-1.5 leading-none">
-                    <Label
-                      htmlFor="terms"
-                      className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-                    >
-                      I accept the terms and conditions
-                    </Label>
-                    <p className="text-sm text-muted-foreground">
-                      You agree to our Terms of Service and Privacy Policy
-                    </p>
-                  </div>
-                </div>
-
-                <div className="flex justify-between gap-4 pt-4">
-                  <Button variant="outline" onClick={() => setStep(1)}>
-                    Back
-                  </Button>
-                  <Button onClick={() => setStep(3)} disabled={!agreedToTerms}>
-                    Continue
-                  </Button>
-                </div>
-              </div>
-            )}
-
-            {step === 3 && (
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div>
                   <h3 className="font-semibold text-lg mb-2">Basic Information</h3>
@@ -421,10 +378,29 @@ const BecomeATutor = () => {
                       Accepted formats: PDF, DOC, DOCX (Max 5MB)
                     </p>
                   </div>
+
+                  <div className="flex items-start space-x-2 p-4 border rounded-lg bg-muted/30">
+                    <Checkbox
+                      id="terms"
+                      checked={agreedToTerms}
+                      onCheckedChange={(checked) => setAgreedToTerms(checked as boolean)}
+                    />
+                    <div className="grid gap-1.5 leading-none">
+                      <Label
+                        htmlFor="terms"
+                        className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                      >
+                        I accept the terms and conditions *
+                      </Label>
+                      <p className="text-xs text-muted-foreground">
+                        You agree to our Terms of Service and Privacy Policy. Platform retains 30% service fee from your hourly rate.
+                      </p>
+                    </div>
+                  </div>
                 </div>
 
                 <div className="flex justify-between gap-4 pt-4">
-                  <Button type="button" variant="outline" onClick={() => setStep(2)}>
+                  <Button type="button" variant="outline" onClick={() => setStep(1)}>
                     Back
                   </Button>
                   <Button type="submit" disabled={isLoading}>
@@ -434,7 +410,7 @@ const BecomeATutor = () => {
               </form>
             )}
 
-            {step === 4 && (
+            {step === 3 && (
               <div className="space-y-6 py-8 text-center">
                 <div className="flex justify-center">
                   <div className="rounded-full bg-primary/10 p-6">
