@@ -14,6 +14,7 @@ const AdminDashboard = () => {
   const navigate = useNavigate();
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [pendingApplications, setPendingApplications] = useState<any[]>([]);
   const [pendingTutors, setPendingTutors] = useState<any[]>([]);
   const [pendingReviews, setPendingReviews] = useState<any[]>([]);
 
@@ -42,9 +43,24 @@ const AdminDashboard = () => {
     }
 
     setIsAdmin(true);
+    fetchPendingApplications();
     fetchPendingTutors();
     fetchPendingReviews();
     setLoading(false);
+  };
+
+  const fetchPendingApplications = async () => {
+    const { data, error } = await supabase
+      .from("tutor_applications")
+      .select("*")
+      .eq("status", "pending")
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("Error fetching pending applications:", error);
+    } else {
+      setPendingApplications(data || []);
+    }
   };
 
   const fetchPendingTutors = async () => {
@@ -125,6 +141,40 @@ const AdminDashboard = () => {
     }
   };
 
+  const handleApplicationReview = async (applicationId: string, status: "approved" | "rejected", notes?: string) => {
+    const { error } = await supabase
+      .from("tutor_applications")
+      .update({ 
+        status,
+        admin_notes: notes || null,
+        updated_at: new Date().toISOString()
+      })
+      .eq("id", applicationId);
+
+    if (error) {
+      toast.error("Failed to update application status");
+      return;
+    }
+
+    if (status === "approved") {
+      // Send email invitation to complete full profile
+      const application = pendingApplications.find(app => app.id === applicationId);
+      if (application) {
+        await supabase.functions.invoke('send-tutor-approval-email', {
+          body: { 
+            email: application.email,
+            fullName: application.full_name 
+          }
+        });
+      }
+      toast.success("Application approved! Invitation email sent to complete full profile.");
+    } else {
+      toast.success("Application rejected");
+    }
+
+    fetchPendingApplications();
+  };
+
   const handleTutorApproval = async (tutorId: string, approved: boolean) => {
     const { error } = await supabase
       .from("tutor_profiles")
@@ -172,10 +222,16 @@ const AdminDashboard = () => {
       <div className="max-w-7xl mx-auto px-6 py-12">
         <h1 className="text-4xl font-bold mb-8">Admin Dashboard</h1>
 
-        <Tabs defaultValue="tutors" className="space-y-6">
+        <Tabs defaultValue="applications" className="space-y-6">
           <TabsList>
+            <TabsTrigger value="applications" className="relative">
+              Pending Applications
+              {pendingApplications.length > 0 && (
+                <Badge className="ml-2 bg-orange-600">{pendingApplications.length}</Badge>
+              )}
+            </TabsTrigger>
             <TabsTrigger value="tutors" className="relative">
-              Pending Tutors
+              Pending Tutors (Full Profile)
               {pendingTutors.length > 0 && (
                 <Badge className="ml-2 bg-orange-600">{pendingTutors.length}</Badge>
               )}
@@ -187,6 +243,24 @@ const AdminDashboard = () => {
               )}
             </TabsTrigger>
           </TabsList>
+
+          <TabsContent value="applications" className="space-y-4">
+            {pendingApplications.length === 0 ? (
+              <Card>
+                <CardContent className="p-8 text-center text-muted-foreground">
+                  No pending tutor applications
+                </CardContent>
+              </Card>
+            ) : (
+              pendingApplications.map((application) => (
+                <ApplicationReviewCard
+                  key={application.id}
+                  application={application}
+                  onReview={handleApplicationReview}
+                />
+              ))
+            )}
+          </TabsContent>
 
           <TabsContent value="tutors" className="space-y-4">
             {pendingTutors.length === 0 ? (
@@ -298,6 +372,86 @@ const AdminDashboard = () => {
         </Tabs>
       </div>
     </div>
+  );
+};
+
+const ApplicationReviewCard = ({ application, onReview }: any) => {
+  const [notes, setNotes] = useState("");
+
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-start justify-between">
+          <div>
+            <CardTitle className="text-xl">{application.full_name}</CardTitle>
+            <p className="text-sm text-muted-foreground">{application.email}</p>
+            <p className="text-sm text-muted-foreground">{application.phone_number}</p>
+            <Badge className="mt-2" variant="secondary">
+              Applied: {new Date(application.created_at).toLocaleDateString()}
+            </Badge>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="grid md:grid-cols-2 gap-4">
+          <div>
+            <p className="font-semibold text-sm">Current School</p>
+            <p className="text-sm text-muted-foreground">{application.current_school}</p>
+          </div>
+          <div>
+            <p className="font-semibold text-sm">Experience</p>
+            <p className="text-sm text-muted-foreground">{application.years_of_experience} years</p>
+          </div>
+          <div>
+            <p className="font-semibold text-sm">TSC Number</p>
+            <p className="text-sm text-muted-foreground">{application.tsc_number || "Not provided"}</p>
+          </div>
+          <div>
+            <p className="font-semibold text-sm">CV</p>
+            {application.cv_url ? (
+              <a 
+                href={application.cv_url} 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="text-sm text-primary hover:underline"
+              >
+                View CV
+              </a>
+            ) : (
+              <p className="text-sm text-muted-foreground">Not uploaded</p>
+            )}
+          </div>
+        </div>
+
+        <Textarea
+          placeholder="Admin notes (optional - for internal use only)"
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
+          className="mt-4"
+          rows={2}
+        />
+
+        <div className="flex gap-2 mt-4">
+          <Button
+            onClick={() => onReview(application.id, "approved", notes)}
+            className="bg-green-600 hover:bg-green-700"
+          >
+            <CheckCircle className="w-4 h-4 mr-2" />
+            Approve & Invite
+          </Button>
+          <Button
+            onClick={() => onReview(application.id, "rejected", notes)}
+            variant="destructive"
+          >
+            <XCircle className="w-4 h-4 mr-2" />
+            Reject
+          </Button>
+        </div>
+        <p className="text-xs text-muted-foreground mt-2">
+          Approving will send an invitation email to complete the full tutor profile including photos, references, and teaching video.
+        </p>
+      </CardContent>
+    </Card>
   );
 };
 

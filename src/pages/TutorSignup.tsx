@@ -314,7 +314,10 @@ const TutorSignup = () => {
               <div className="space-y-4">
                 <div>
                   <h3 className="font-semibold text-lg">Basic Information</h3>
-                  <p className="text-sm text-muted-foreground">This information will be visible on your public profile</p>
+                  <p className="text-sm text-muted-foreground">
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-green-100 text-green-800 text-xs font-medium mr-2">PUBLIC</span>
+                    This information will be visible on your public tutor profile
+                  </p>
                 </div>
                 
                 <div className="space-y-2">
@@ -357,7 +360,10 @@ const TutorSignup = () => {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="phoneNumber">Phone Number *</Label>
+                    <Label htmlFor="phoneNumber">
+                      Phone Number *
+                      <span className="ml-2 inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-gray-100 text-gray-700 text-xs font-medium">PRIVATE</span>
+                    </Label>
                     <Input
                       id="phoneNumber"
                       type="tel"
@@ -366,12 +372,16 @@ const TutorSignup = () => {
                       onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
                       required
                     />
+                    <p className="text-xs text-muted-foreground">Only visible to admin and students who book you</p>
                   </div>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="email">Email *</Label>
+                    <Label htmlFor="email">
+                      Email * 
+                      <span className="ml-2 inline-flex items-center gap-1 px-1.5 py-0.5 rounded bg-gray-100 text-gray-700 text-xs font-medium">PRIVATE</span>
+                    </Label>
                     <Input
                       id="email"
                       type="email"
@@ -379,6 +389,7 @@ const TutorSignup = () => {
                       onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                       required
                     />
+                    <p className="text-xs text-muted-foreground">Only visible to admin and students who book you</p>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="password">Password *</Label>
@@ -698,7 +709,10 @@ const TutorSignup = () => {
               <div className="space-y-4 pt-4 border-t">
                 <div>
                   <h3 className="font-semibold text-lg">Parent Referees</h3>
-                  <p className="text-sm text-muted-foreground">For verification purposes only - not shown publicly. We may contact these parents to verify your teaching experience.</p>
+                  <p className="text-sm text-muted-foreground">
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-gray-100 text-gray-700 text-xs font-medium mr-2">PRIVATE</span>
+                    For verification purposes only - not shown publicly. We may contact these parents to verify your teaching experience.
+                  </p>
                 </div>
                 
                 <div className="space-y-3">
