@@ -105,6 +105,9 @@ END:VCALENDAR`;
       </div>
     `;
 
+    console.log("Attempting to send email to:", email);
+    console.log("Using API key:", RESEND_API_KEY ? "API key is set" : "API key is MISSING");
+    
     const emailResponse = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {
@@ -121,9 +124,13 @@ END:VCALENDAR`;
 
     const emailData = await emailResponse.json();
     
+    console.log("Resend API response status:", emailResponse.status);
+    console.log("Resend API response:", JSON.stringify(emailData));
+    
     if (!emailResponse.ok) {
-      console.error("Email sending failed:", emailData);
-      throw new Error(emailData.message || "Failed to send email");
+      console.error("Email sending failed with status:", emailResponse.status);
+      console.error("Error details:", emailData);
+      throw new Error(emailData.message || `Failed to send email: ${JSON.stringify(emailData)}`);
     }
 
     console.log("Booking confirmation email sent successfully:", emailData);
