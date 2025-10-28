@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { CheckCircle, XCircle, AlertCircle, Star } from "lucide-react";
+import { CheckCircle, XCircle, AlertCircle, Star, Calendar, Clock, Mail, Phone, User, BookOpen, FileText, Video, Edit, Save, X, MessageCircle } from "lucide-react";
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -19,6 +19,9 @@ const AdminDashboard = () => {
   const [pendingApplications, setPendingApplications] = useState<any[]>([]);
   const [pendingTutors, setPendingTutors] = useState<any[]>([]);
   const [pendingReviews, setPendingReviews] = useState<any[]>([]);
+  const [consultationBookings, setConsultationBookings] = useState<any[]>([]);
+  const [editingNote, setEditingNote] = useState<string | null>(null);
+  const [noteContent, setNoteContent] = useState("");
 
   useEffect(() => {
     checkAdminAccess();
@@ -73,6 +76,7 @@ const AdminDashboard = () => {
     fetchPendingApplications();
     fetchPendingTutors();
     fetchPendingReviews();
+    fetchConsultationBookings();
     setLoading(false);
   };
 
@@ -327,6 +331,80 @@ const AdminDashboard = () => {
     fetchPendingReviews();
   };
 
+  const fetchConsultationBookings = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("consultation_bookings")
+        .select("*")
+        .order("consultation_date", { ascending: true })
+        .order("consultation_time", { ascending: true});
+
+      if (error) throw error;
+      setConsultationBookings(data || []);
+    } catch (error: any) {
+      console.error("Error fetching bookings:", error);
+      toast.error("Failed to load consultation bookings");
+    }
+  };
+
+  const handleEditNote = (bookingId: string, currentNote: string) => {
+    setEditingNote(bookingId);
+    setNoteContent(currentNote || "");
+  };
+
+  const handleSaveNote = async (bookingId: string) => {
+    try {
+      const { error } = await supabase
+        .from("consultation_bookings")
+        .update({ additional_notes: noteContent })
+        .eq("id", bookingId);
+
+      if (error) throw error;
+
+      toast.success("Note saved successfully");
+      setEditingNote(null);
+      fetchConsultationBookings();
+    } catch (error: any) {
+      toast.error("Failed to save note: " + error.message);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setEditingNote(null);
+    setNoteContent("");
+  };
+
+  const handleWhatsAppMessage = (booking: any) => {
+    const cleanPhone = booking.phone_number.replace(/[\s\-\(\)]/g, '');
+    const formatDate = (dateStr: string) => {
+      return new Date(dateStr).toLocaleDateString('en-US', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+    };
+    
+    const message = `Hi ${booking.parent_name}! 👋
+
+This is a reminder about your free consultation for ${booking.student_name}.
+
+📅 Date: ${formatDate(booking.consultation_date)}
+⏰ Time: ${booking.consultation_time}
+📚 Grade: ${booking.grade_level}
+📖 Subjects: ${booking.subjects_interest.join(', ')}
+
+We're looking forward to discussing ${booking.student_name}'s learning needs with you!
+
+If you have any questions before the consultation, feel free to reply to this message.
+
+Best regards,
+The ElimuConnect Team`;
+
+    const encodedMessage = encodeURIComponent(message);
+    window.open(`https://wa.me/${cleanPhone}?text=${encodedMessage}`, '_blank');
+  };
+
   if (loading) {
     return <div className="min-h-screen bg-[image:var(--gradient-page)] flex items-center justify-center">Loading...</div>;
   }
@@ -368,6 +446,12 @@ const AdminDashboard = () => {
               Student Reviews
               {pendingReviews.length > 0 && (
                 <Badge className="ml-2 bg-green-600">{pendingReviews.length}</Badge>
+              )}
+            </TabsTrigger>
+            <TabsTrigger value="consultations" className="relative">
+              Consultations
+              {consultationBookings.length > 0 && (
+                <Badge className="ml-2 bg-teal-600">{consultationBookings.length}</Badge>
               )}
             </TabsTrigger>
           </TabsList>
@@ -534,6 +618,173 @@ const AdminDashboard = () => {
                   review={review}
                   onModerate={handleReviewModeration}
                 />
+              ))
+            )}
+          </TabsContent>
+
+          <TabsContent value="consultations" className="space-y-4">
+            <div className="bg-muted/50 border rounded-lg p-4 mb-4">
+              <h3 className="font-semibold mb-2">Free Consultation Bookings</h3>
+              <p className="text-sm text-muted-foreground">
+                Manage all scheduled free consultations with parents and students.
+              </p>
+            </div>
+            {consultationBookings.length === 0 ? (
+              <Card>
+                <CardContent className="p-8 text-center text-muted-foreground">
+                  No consultation bookings yet.
+                </CardContent>
+              </Card>
+            ) : (
+              consultationBookings.map((booking) => (
+                <Card key={booking.id} className="hover:shadow-lg transition-shadow">
+                  <CardHeader>
+                    <div className="flex items-start justify-between">
+                      <div className="flex-1">
+                        <CardTitle className="text-2xl flex items-center gap-2">
+                          <User className="h-5 w-5" />
+                          {booking.student_name}
+                        </CardTitle>
+                        <p className="text-muted-foreground mt-1">
+                          Parent: {booking.parent_name}
+                        </p>
+                      </div>
+                      <Badge className={
+                        booking.status === 'confirmed' ? 'bg-green-500' :
+                        booking.status === 'pending' ? 'bg-yellow-500' :
+                        booking.status === 'cancelled' ? 'bg-red-500' :
+                        booking.status === 'completed' ? 'bg-blue-500' : 'bg-gray-500'
+                      }>
+                        {booking.status}
+                      </Badge>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-2 text-sm">
+                          <Calendar className="h-4 w-4 text-muted-foreground" />
+                          <span className="font-medium">Date:</span>
+                          <span>{new Date(booking.consultation_date).toLocaleDateString('en-US', {
+                            weekday: 'long',
+                            year: 'numeric',
+                            month: 'long',
+                            day: 'numeric'
+                          })}</span>
+                        </div>
+                        
+                        <div className="flex items-center gap-2 text-sm">
+                          <Clock className="h-4 w-4 text-muted-foreground" />
+                          <span className="font-medium">Time:</span>
+                          <span>{booking.consultation_time}</span>
+                        </div>
+
+                        <div className="flex items-center gap-2 text-sm">
+                          <Mail className="h-4 w-4 text-muted-foreground" />
+                          <span className="font-medium">Email:</span>
+                          <a href={`mailto:${booking.email}`} className="text-primary hover:underline">
+                            {booking.email}
+                          </a>
+                        </div>
+
+                        <div className="flex items-center gap-2 text-sm">
+                          <Phone className="h-4 w-4 text-muted-foreground" />
+                          <span className="font-medium">Phone:</span>
+                          <a href={`tel:${booking.phone_number}`} className="text-primary hover:underline">
+                            {booking.phone_number}
+                          </a>
+                        </div>
+                      </div>
+
+                      <div className="space-y-3">
+                        <div className="flex items-center gap-2 text-sm">
+                          <BookOpen className="h-4 w-4 text-muted-foreground" />
+                          <span className="font-medium">Grade:</span>
+                          <span>{booking.grade_level}</span>
+                        </div>
+
+                        <div className="flex items-start gap-2 text-sm">
+                          <FileText className="h-4 w-4 text-muted-foreground mt-0.5" />
+                          <div>
+                            <span className="font-medium">Subjects:</span>
+                            <div className="flex flex-wrap gap-1 mt-1">
+                              {booking.subjects_interest.map((subject: string, idx: number) => (
+                                <Badge key={idx} variant="outline" className="text-xs">
+                                  {subject}
+                                </Badge>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2 text-sm">
+                          <Video className="h-4 w-4 text-muted-foreground" />
+                          <span className="font-medium">Mode:</span>
+                          <Badge variant="secondary">{booking.preferred_mode}</Badge>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="pt-4 border-t space-y-4">
+                      <div className="flex items-center gap-2">
+                        <Button
+                          onClick={() => handleWhatsAppMessage(booking)}
+                          className="flex-1"
+                          variant="default"
+                        >
+                          <MessageCircle className="h-4 w-4 mr-2" />
+                          Send WhatsApp Message
+                        </Button>
+                      </div>
+
+                      <div className="flex items-start justify-between mb-2">
+                        <span className="font-medium text-sm flex items-center gap-2">
+                          <FileText className="h-4 w-4" />
+                          Admin Notes
+                        </span>
+                        {editingNote !== booking.id && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            onClick={() => handleEditNote(booking.id, booking.additional_notes || "")}
+                          >
+                            <Edit className="h-4 w-4 mr-1" />
+                            Edit
+                          </Button>
+                        )}
+                      </div>
+                      
+                      {editingNote === booking.id ? (
+                        <div className="space-y-2">
+                          <Textarea
+                            value={noteContent}
+                            onChange={(e) => setNoteContent(e.target.value)}
+                            placeholder="Add notes about this consultation..."
+                            className="min-h-[100px]"
+                          />
+                          <div className="flex gap-2">
+                            <Button size="sm" onClick={() => handleSaveNote(booking.id)}>
+                              <Save className="h-4 w-4 mr-1" />
+                              Save
+                            </Button>
+                            <Button size="sm" variant="outline" onClick={handleCancelEdit}>
+                              <X className="h-4 w-4 mr-1" />
+                              Cancel
+                            </Button>
+                          </div>
+                        </div>
+                      ) : (
+                        <p className="text-sm text-muted-foreground bg-muted p-3 rounded-md">
+                          {booking.additional_notes || "No notes added yet."}
+                        </p>
+                      )}
+                    </div>
+
+                    <div className="text-xs text-muted-foreground pt-2 border-t">
+                      Booked on: {new Date(booking.created_at).toLocaleString()}
+                    </div>
+                  </CardContent>
+                </Card>
               ))
             )}
           </TabsContent>
