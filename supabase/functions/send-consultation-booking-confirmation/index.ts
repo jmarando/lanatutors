@@ -112,7 +112,7 @@ END:VCALENDAR`;
         Authorization: `Bearer ${RESEND_API_KEY}`,
       },
       body: JSON.stringify({
-        from: "Yehtu Tutors <onboarding@resend.dev>",
+        from: "ElimuConnect <info@elimuconnect.co.ke>",
         to: [email],
         subject: "Your Free Consultation is Confirmed! 📚",
         html: emailHtml,
