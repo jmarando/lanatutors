@@ -57,7 +57,7 @@ const BookConsultation = () => {
   const progress = (step / 4) * 100;
 
   const validateStep1 = () => {
-    if (!formData.parentName || !formData.studentName || !formData.phoneNumber) {
+    if (!formData.parentName || !formData.studentName || !formData.phoneNumber || !formData.email) {
       toast.error("Please fill in all required fields");
       return false;
     }
@@ -252,13 +252,14 @@ const BookConsultation = () => {
                     <p className="text-xs text-muted-foreground">Accepts: +254, 254, or 0 prefix</p>
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="email">Email (Optional)</Label>
+                    <Label htmlFor="email">Email *</Label>
                     <Input
                       id="email"
                       type="email"
                       placeholder="your@email.com"
                       value={formData.email}
                       onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                      required
                     />
                   </div>
                 </div>
