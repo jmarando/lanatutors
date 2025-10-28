@@ -23,9 +23,8 @@ import calvinProfilePhoto from "@/assets/calvin-profile.png";
 const TutorProfile = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [isBookingTypeDialogOpen, setIsBookingTypeDialogOpen] = useState(false);
   const [isBookingOpen, setIsBookingOpen] = useState(false);
-  const [bookingType, setBookingType] = useState<'paid' | 'free'>('paid');
+  const [bookingType, setBookingType] = useState<'paid' | 'trial' | 'free'>('paid');
   const [tutor, setTutor] = useState<any>(null);
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -41,7 +40,7 @@ const TutorProfile = () => {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.get('openBooking') === '1') {
-      const type = (params.get('bookingType') as 'paid' | 'free') || 'paid';
+      const type = (params.get('bookingType') as 'paid' | 'trial' | 'free') || 'paid';
       setBookingType(type);
       setIsBookingOpen(true);
     }
@@ -157,20 +156,14 @@ const TutorProfile = () => {
     }
   };
 
-  const handleBookSession = () => {
-    setIsBookingTypeDialogOpen(true);
-  };
-
-  const handleBookingTypeSelect = async (type: 'paid' | 'free') => {
-    setIsBookingTypeDialogOpen(false);
-    
+  const handleBookingTypeSelect = async (type: 'paid' | 'trial' | 'free') => {
     if (type === 'free') {
       // Redirect to consultation booking page
       navigate('/book-consultation');
       return;
     }
     
-    // For paid sessions, open calendar directly (no login required)
+    // For paid and trial sessions, open calendar directly
     setBookingType(type);
 
     // Persist intent in URL so we can resume after login
@@ -279,37 +272,78 @@ const TutorProfile = () => {
               </div>
             </div>
 
-            <div className="p-6 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 bg-muted/30">
-              <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6">
-                <div className="flex items-center gap-2">
-                  <Star className="w-5 h-5 shrink-0 fill-yellow-500 text-yellow-500" />
-                  <span className="font-bold text-lg">{tutor.rating.toFixed(1)}</span>
-                  <span className="text-sm text-muted-foreground">({tutor.reviews} reviews)</span>
-                </div>
-                
-                <div className="h-8 w-px bg-border hidden sm:block" />
-                
-                <div className="space-y-1">
-                  <div className="flex items-baseline gap-2">
-                    <div className="text-xl font-bold">
-                      KES {tutor.hourlyRate.toLocaleString()}
-                      <span className="text-sm font-normal text-muted-foreground">/hr</span>
-                    </div>
-                    <span className="text-xs text-muted-foreground">online</span>
+            <div className="p-6 flex flex-col gap-4 bg-muted/30">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6">
+                  <div className="flex items-center gap-2">
+                    <Star className="w-5 h-5 shrink-0 fill-yellow-500 text-yellow-500" />
+                    <span className="font-bold text-lg">{tutor.rating.toFixed(1)}</span>
+                    <span className="text-sm text-muted-foreground">({tutor.reviews} reviews)</span>
                   </div>
-                  <div className="flex items-baseline gap-2">
-                    <div className="text-lg font-semibold text-muted-foreground">
-                      KES {(tutor.hourlyRate * 1.3).toLocaleString()}
-                      <span className="text-xs font-normal">/hr</span>
+                  
+                  <div className="h-8 w-px bg-border hidden sm:block" />
+                  
+                  <div className="space-y-1">
+                    <div className="flex items-baseline gap-2">
+                      <div className="text-xl font-bold">
+                        KES {tutor.hourlyRate.toLocaleString()}
+                        <span className="text-sm font-normal text-muted-foreground">/hr</span>
+                      </div>
+                      <span className="text-xs text-muted-foreground">online</span>
                     </div>
-                    <span className="text-xs text-muted-foreground">in-person</span>
+                    <div className="flex items-baseline gap-2">
+                      <div className="text-lg font-semibold text-muted-foreground">
+                        KES {(tutor.hourlyRate * 1.3).toLocaleString()}
+                        <span className="text-xs font-normal">/hr</span>
+                      </div>
+                      <span className="text-xs text-muted-foreground">in-person</span>
+                    </div>
                   </div>
                 </div>
               </div>
 
-              <div className="flex flex-col gap-2 w-full sm:w-auto">
-                <Button size="lg" onClick={handleBookSession} className="w-full sm:w-auto">
-                  Book Session
+              {/* Booking Options */}
+              <div className="grid sm:grid-cols-3 gap-3 pt-2">
+                <Button 
+                  size="lg" 
+                  variant="outline"
+                  onClick={() => handleBookingTypeSelect('trial')}
+                  className="w-full relative overflow-hidden border-2 border-primary/50 hover:bg-primary/10"
+                >
+                  <div className="absolute top-0 right-0 bg-primary text-primary-foreground text-xs px-2 py-0.5 rounded-bl-md font-bold">
+                    50% OFF
+                  </div>
+                  <div className="flex flex-col items-center gap-1 pt-2">
+                    <span className="font-bold">Book Trial Lesson</span>
+                    <span className="text-xs text-muted-foreground">
+                      KES {Math.floor(tutor.hourlyRate * 0.5).toLocaleString()}
+                    </span>
+                  </div>
+                </Button>
+
+                <Button 
+                  size="lg" 
+                  onClick={() => handleBookingTypeSelect('paid')}
+                  className="w-full"
+                >
+                  <div className="flex flex-col items-center gap-1">
+                    <span className="font-bold">Book Session</span>
+                    <span className="text-xs opacity-90">
+                      Full Price
+                    </span>
+                  </div>
+                </Button>
+
+                <Button 
+                  size="lg" 
+                  variant="secondary"
+                  onClick={() => handleBookingTypeSelect('free')}
+                  className="w-full"
+                >
+                  <div className="flex flex-col items-center gap-1">
+                    <span className="font-bold">Free Consultation</span>
+                    <span className="text-xs opacity-70">30 minutes</span>
+                  </div>
                 </Button>
               </div>
             </div>
@@ -546,46 +580,18 @@ const TutorProfile = () => {
           </Card>
         )}
 
-        {/* Booking Type Selection Dialog */}
-        <Dialog open={isBookingTypeDialogOpen} onOpenChange={setIsBookingTypeDialogOpen}>
-          <DialogContent className="max-w-md">
-            <DialogHeader>
-              <DialogTitle>Choose Booking Type</DialogTitle>
-              <DialogDescription>
-                Select the type of session you'd like to book with {tutor.name}
-              </DialogDescription>
-            </DialogHeader>
-            
-            <div className="space-y-3 pt-4">
-              <Button 
-                size="lg" 
-                className="w-full"
-                onClick={() => handleBookingTypeSelect('paid')}
-              >
-                Book Paid Session
-              </Button>
-              <Button 
-                size="lg" 
-                variant="outline"
-                className="w-full"
-                onClick={() => handleBookingTypeSelect('free')}
-              >
-                Book Free Consultation (30 min)
-              </Button>
-            </div>
-          </DialogContent>
-        </Dialog>
-
         {/* Booking Dialog */}
         <Dialog open={isBookingOpen} onOpenChange={(open) => { setIsBookingOpen(open); if (!open) window.history.replaceState(null, '', window.location.pathname); }}>
           <DialogContent className="max-w-5xl max-h-[95vh] p-0 overflow-hidden flex flex-col">
             <DialogHeader className="px-6 pt-6 pb-4">
               <DialogTitle>
-                {bookingType === 'free' ? 'Book Free Consultation' : `Book a Session with ${tutor.name}`}
+                {bookingType === 'trial' ? 'Book Trial Lesson (50% Off)' : bookingType === 'free' ? 'Book Free Consultation' : `Book a Session with ${tutor.name}`}
               </DialogTitle>
               <DialogDescription>
                 {bookingType === 'free' 
                   ? `Get to know ${tutor.name} with a complimentary 30-minute chemistry session to check compatibility`
+                  : bookingType === 'trial'
+                  ? `Special trial rate: KES ${Math.floor(tutor.hourlyRate * 0.5).toLocaleString()} per hour (50% off regular price)`
                   : 'Select a date and available time slot'
                 }
               </DialogDescription>
@@ -599,8 +605,8 @@ const TutorProfile = () => {
                   tutorEmail={tutor.email}
                   studentEmail={currentUser.email}
                   studentName={currentUser.name}
-                  hourlyRate={bookingType === 'free' ? 0 : tutor.hourlyRate}
-                  isTrialSession={bookingType === 'free'}
+                  hourlyRate={bookingType === 'trial' ? Math.floor(tutor.hourlyRate * 0.5) : bookingType === 'free' ? 0 : tutor.hourlyRate}
+                  isTrialSession={bookingType === 'free' || bookingType === 'trial'}
                   onBookingComplete={() => setIsBookingOpen(false)}
                 />
               ) : (
