@@ -362,3 +362,17 @@ export const getSubjectsForCurriculumLevel = (curriculum: string, level: string)
   const levelData = curriculumData.find(l => l.level === level);
   return levelData?.subjects || [];
 };
+
+export const getAllSubjects = () => {
+  const allSubjects = new Set<string>();
+  
+  Object.values(CURRICULUM_DATA).forEach(levels => {
+    levels.forEach(level => {
+      level.subjects.forEach(subject => {
+        allSubjects.add(subject);
+      });
+    });
+  });
+  
+  return Array.from(allSubjects).sort();
+};

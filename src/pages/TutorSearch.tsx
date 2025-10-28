@@ -14,6 +14,7 @@ import { Search, Star, SlidersHorizontal, Calendar as CalendarIcon, Clock, MapPi
 import { SEO } from "@/components/SEO";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { getCurriculums, getAllSubjects } from "@/utils/curriculumData";
 
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -188,7 +189,8 @@ const TutorSearch = () => {
     }
   };
 
-  const subjects = ["all", "Math", "Physics", "Chemistry", "Biology", "English", "Kiswahili", "History", "Geography"];
+  const curriculums = ["all", ...getCurriculums()];
+  const allSubjects = ["all", ...getAllSubjects()];
 
   const timeSlots = [
     { value: "all", label: "Any Time" },
@@ -262,27 +264,31 @@ const TutorSearch = () => {
             />
           </div>
           
-          <Select value={selectedCurriculum} onValueChange={setSelectedCurriculum}>
-            <SelectTrigger className="w-48 h-12">
+          <Select value={selectedCurriculum} onValueChange={(value) => {
+            setSelectedCurriculum(value);
+            // Reset subject when curriculum changes
+            if (value !== "all") {
+              setSelectedSubject("all");
+            }
+          }}>
+            <SelectTrigger className="w-48 h-12 bg-background z-50">
               <SelectValue placeholder="All Curricula" />
             </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">All Curricula</SelectItem>
-              <SelectItem value="CBC">CBC (Kenyan)</SelectItem>
-              <SelectItem value="IGCSE">IGCSE</SelectItem>
-              <SelectItem value="IB">IB</SelectItem>
-              <SelectItem value="A-Level">A-Level</SelectItem>
-              <SelectItem value="AP">AP</SelectItem>
-              <SelectItem value="8-4-4">8-4-4</SelectItem>
+            <SelectContent className="bg-background z-50">
+              {curriculums.map(curriculum => (
+                <SelectItem key={curriculum} value={curriculum}>
+                  {curriculum === "all" ? "All Curricula" : curriculum}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
 
           <Select value={selectedSubject} onValueChange={setSelectedSubject}>
-            <SelectTrigger className="w-48 h-12">
+            <SelectTrigger className="w-48 h-12 bg-background z-50">
               <SelectValue placeholder="All Subjects" />
             </SelectTrigger>
-            <SelectContent>
-              {subjects.map(subject => (
+            <SelectContent className="bg-background z-50 max-h-[300px]">
+              {allSubjects.map(subject => (
                 <SelectItem key={subject} value={subject}>
                   {subject === "all" ? "All Subjects" : subject}
                 </SelectItem>
