@@ -22,9 +22,9 @@ const handler = async (req: Request): Promise<Response> => {
     
     console.log("Sending application acknowledgment to:", email);
 
-    // TEMPORARY: Send to verified email for testing
-    // TODO: Verify domain at resend.com/domains and update 'from' address
-    const recipient = email;
+    // TEMPORARY: Send to verified test email for testing
+    // TODO: Change back to applicant's email when domain is verified
+    const recipient = "justin@glab.africa";
 
     const response = await fetch("https://api.resend.com/emails", {
       method: "POST",
@@ -43,6 +43,8 @@ const handler = async (req: Request): Promise<Response> => {
           <p>Dear ${fullName},</p>
           
           <p>We have successfully received your application to become a tutor at ElimuConnect. Thank you for your interest in joining Kenya's leading tutoring platform!</p>
+          
+          <p><strong>Testing Mode:</strong> This email was sent to justin@glab.africa. Applicant email: ${email}</p>
           
           <p>We will communicate with you via this email: <strong>${email}</strong>.</p>
           
