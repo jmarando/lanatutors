@@ -673,8 +673,7 @@ Yehtu Tutors`
       const { data, error } = await supabase
         .from("consultation_bookings")
         .select("*")
-        .order("consultation_date", { ascending: true })
-        .order("consultation_time", { ascending: true});
+        .order("created_at", { ascending: false });
 
       if (error) throw error;
       setConsultationBookings(data || []);
@@ -1390,28 +1389,47 @@ The ElimuConnect Team`;
                 </CardContent>
               </Card>
             ) : (
-              consultationBookings.map((booking) => (
-                <Card key={booking.id} className="hover:shadow-lg transition-shadow">
-                  <CardHeader>
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <CardTitle className="text-2xl flex items-center gap-2">
-                          <User className="h-5 w-5" />
-                          {booking.student_name}
-                        </CardTitle>
-                        <p className="text-muted-foreground mt-1">
-                          Parent: {booking.parent_name}
-                        </p>
-                      </div>
-                      <div className="flex flex-col gap-2 items-end">
-                        <Badge className={
-                          booking.status === 'confirmed' ? 'bg-green-500' :
-                          booking.status === 'pending' ? 'bg-yellow-500' :
-                          booking.status === 'cancelled' ? 'bg-red-500' :
-                          booking.status === 'completed' ? 'bg-blue-500' : 'bg-gray-500'
-                        }>
-                          {booking.status}
-                        </Badge>
+              consultationBookings.map((booking) => {
+                // Calculate if consultation is past, today, or upcoming
+                const consultationDate = new Date(booking.consultation_date);
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+                consultationDate.setHours(0, 0, 0, 0);
+                
+                const isPast = consultationDate < today;
+                const isToday = consultationDate.getTime() === today.getTime();
+                const isUpcoming = consultationDate > today;
+                
+                // Determine card border color based on timing
+                let borderClass = "";
+                if (isPast) borderClass = "border-l-4 border-l-muted-foreground/30";
+                else if (isToday) borderClass = "border-l-4 border-l-green-500";
+                else if (isUpcoming) borderClass = "border-l-4 border-l-blue-500";
+                
+                return (
+                  <Card key={booking.id} className={`hover:shadow-lg transition-shadow ${borderClass}`}>
+                    <CardHeader>
+                      <div className="flex items-start justify-between">
+                        <div className="flex-1">
+                          <CardTitle className="text-2xl flex items-center gap-2">
+                            <User className="h-5 w-5" />
+                            {booking.student_name}
+                            {isToday && <Badge className="bg-green-500 ml-2">Today</Badge>}
+                            {isPast && <Badge variant="outline" className="ml-2 opacity-60">Past</Badge>}
+                          </CardTitle>
+                          <p className="text-muted-foreground mt-1">
+                            Parent: {booking.parent_name}
+                          </p>
+                        </div>
+                        <div className="flex flex-col gap-2 items-end">
+                          <Badge className={
+                            booking.status === 'confirmed' ? 'bg-green-500' :
+                            booking.status === 'pending' ? 'bg-yellow-500' :
+                            booking.status === 'cancelled' ? 'bg-red-500' :
+                            booking.status === 'completed' ? 'bg-blue-500' : 'bg-gray-500'
+                          }>
+                            {booking.status}
+                          </Badge>
                         <Badge variant={
                           booking.follow_up_status === 'converted' ? 'default' :
                           booking.follow_up_status === 'follow_up_sent' ? 'secondary' :
@@ -1664,7 +1682,8 @@ The ElimuConnect Team`;
                     </div>
                   </CardContent>
                 </Card>
-              ))
+              );
+            })
             )}
       </TabsContent>
     </Tabs>
