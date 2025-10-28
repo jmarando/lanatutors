@@ -90,14 +90,23 @@ export type Database = {
         Row: {
           additional_notes: string | null
           consultation_date: string
+          consultation_outcome: string | null
           consultation_time: string
+          converted_at: string | null
+          converted_to_customer: boolean | null
           created_at: string | null
           email: string | null
+          follow_up_sent_at: string | null
+          follow_up_status: string | null
           grade_level: string
           id: string
+          next_action: string | null
+          next_action_date: string | null
           parent_name: string
           phone_number: string
           preferred_mode: string
+          recommended_subjects: string[] | null
+          recommended_tutors: string[] | null
           status: string
           student_name: string
           subjects_interest: string[]
@@ -106,14 +115,23 @@ export type Database = {
         Insert: {
           additional_notes?: string | null
           consultation_date: string
+          consultation_outcome?: string | null
           consultation_time: string
+          converted_at?: string | null
+          converted_to_customer?: boolean | null
           created_at?: string | null
           email?: string | null
+          follow_up_sent_at?: string | null
+          follow_up_status?: string | null
           grade_level: string
           id?: string
+          next_action?: string | null
+          next_action_date?: string | null
           parent_name: string
           phone_number: string
           preferred_mode: string
+          recommended_subjects?: string[] | null
+          recommended_tutors?: string[] | null
           status?: string
           student_name: string
           subjects_interest: string[]
@@ -122,14 +140,23 @@ export type Database = {
         Update: {
           additional_notes?: string | null
           consultation_date?: string
+          consultation_outcome?: string | null
           consultation_time?: string
+          converted_at?: string | null
+          converted_to_customer?: boolean | null
           created_at?: string | null
           email?: string | null
+          follow_up_sent_at?: string | null
+          follow_up_status?: string | null
           grade_level?: string
           id?: string
+          next_action?: string | null
+          next_action_date?: string | null
           parent_name?: string
           phone_number?: string
           preferred_mode?: string
+          recommended_subjects?: string[] | null
+          recommended_tutors?: string[] | null
           status?: string
           student_name?: string
           subjects_interest?: string[]

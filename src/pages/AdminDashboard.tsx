@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -10,7 +10,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { CheckCircle, XCircle, AlertCircle, Star, Calendar, Clock, Mail, Phone, User, BookOpen, FileText, Video, Edit, Save, X, MessageCircle } from "lucide-react";
+import { CheckCircle, XCircle, AlertCircle, Star, Calendar, Clock, Mail, Phone, User, BookOpen, FileText, Video, Edit, Save, X, MessageCircle, Send, TrendingUp, Users, DollarSign, Target } from "lucide-react";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -22,6 +24,16 @@ const AdminDashboard = () => {
   const [consultationBookings, setConsultationBookings] = useState<any[]>([]);
   const [editingNote, setEditingNote] = useState<string | null>(null);
   const [noteContent, setNoteContent] = useState("");
+  const [selectedBooking, setSelectedBooking] = useState<any>(null);
+  const [followUpDialog, setFollowUpDialog] = useState(false);
+  const [followUpData, setFollowUpData] = useState({
+    consultationOutcome: "",
+    recommendedSubjects: [] as string[],
+    recommendedTutors: [] as string[],
+    nextSteps: "",
+    nextAction: "",
+    nextActionDate: "",
+  });
 
   useEffect(() => {
     checkAdminAccess();
@@ -405,6 +417,110 @@ The ElimuConnect Team`;
     window.open(`https://wa.me/${cleanPhone}?text=${encodedMessage}`, '_blank');
   };
 
+  const openFollowUpDialog = (booking: any) => {
+    setSelectedBooking(booking);
+    setFollowUpData({
+      consultationOutcome: booking.consultation_outcome || "",
+      recommendedSubjects: booking.recommended_subjects || [],
+      recommendedTutors: booking.recommended_tutors || [],
+      nextSteps: "",
+      nextAction: booking.next_action || "",
+      nextActionDate: booking.next_action_date || "",
+    });
+    setFollowUpDialog(true);
+  };
+
+  const handleSendFollowUp = async () => {
+    if (!selectedBooking) return;
+    
+    try {
+      // Send follow-up email
+      const { error: emailError } = await supabase.functions.invoke("send-consultation-followup", {
+        body: {
+          email: selectedBooking.email,
+          parentName: selectedBooking.parent_name,
+          studentName: selectedBooking.student_name,
+          consultationOutcome: followUpData.consultationOutcome,
+          recommendedSubjects: followUpData.recommendedSubjects,
+          recommendedTutors: followUpData.recommendedTutors,
+          nextSteps: followUpData.nextSteps,
+        },
+      });
+
+      if (emailError) throw emailError;
+
+      // Update booking with follow-up details
+      const { error: updateError } = await supabase
+        .from("consultation_bookings")
+        .update({
+          consultation_outcome: followUpData.consultationOutcome,
+          recommended_subjects: followUpData.recommendedSubjects,
+          recommended_tutors: followUpData.recommendedTutors,
+          follow_up_status: 'follow_up_sent',
+          follow_up_sent_at: new Date().toISOString(),
+          next_action: followUpData.nextAction,
+          next_action_date: followUpData.nextActionDate || null,
+        })
+        .eq("id", selectedBooking.id);
+
+      if (updateError) throw updateError;
+
+      toast.success("Follow-up email sent successfully!");
+      setFollowUpDialog(false);
+      fetchConsultationBookings();
+    } catch (error: any) {
+      console.error("Error sending follow-up:", error);
+      toast.error("Failed to send follow-up: " + error.message);
+    }
+  };
+
+  const handleMarkAsConverted = async (bookingId: string) => {
+    try {
+      const { error } = await supabase
+        .from("consultation_bookings")
+        .update({
+          converted_to_customer: true,
+          converted_at: new Date().toISOString(),
+          follow_up_status: 'converted',
+        })
+        .eq("id", bookingId);
+
+      if (error) throw error;
+
+      toast.success("Marked as converted! 🎉");
+      fetchConsultationBookings();
+    } catch (error: any) {
+      toast.error("Failed to update status: " + error.message);
+    }
+  };
+
+  const handleUpdateFollowUpStatus = async (bookingId: string, status: string) => {
+    try {
+      const { error } = await supabase
+        .from("consultation_bookings")
+        .update({ follow_up_status: status })
+        .eq("id", bookingId);
+
+      if (error) throw error;
+
+      toast.success("Status updated successfully!");
+      fetchConsultationBookings();
+    } catch (error: any) {
+      toast.error("Failed to update status: " + error.message);
+    }
+  };
+
+  // Calculate conversion metrics
+  const conversionStats = {
+    total: consultationBookings.length,
+    pending: consultationBookings.filter(b => b.follow_up_status === 'pending').length,
+    followUpSent: consultationBookings.filter(b => b.follow_up_status === 'follow_up_sent').length,
+    converted: consultationBookings.filter(b => b.converted_to_customer).length,
+    conversionRate: consultationBookings.length > 0 
+      ? ((consultationBookings.filter(b => b.converted_to_customer).length / consultationBookings.length) * 100).toFixed(1)
+      : '0.0',
+  };
+
   if (loading) {
     return <div className="min-h-screen bg-[image:var(--gradient-page)] flex items-center justify-center">Loading...</div>;
   }
@@ -623,10 +739,61 @@ The ElimuConnect Team`;
           </TabsContent>
 
           <TabsContent value="consultations" className="space-y-4">
+            {/* Conversion Metrics Dashboard */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-muted-foreground">Total Consultations</p>
+                      <p className="text-3xl font-bold">{conversionStats.total}</p>
+                    </div>
+                    <Users className="h-10 w-10 text-muted-foreground" />
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-muted-foreground">Follow-ups Sent</p>
+                      <p className="text-3xl font-bold">{conversionStats.followUpSent}</p>
+                    </div>
+                    <Send className="h-10 w-10 text-blue-500" />
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-muted-foreground">Converted</p>
+                      <p className="text-3xl font-bold text-green-600">{conversionStats.converted}</p>
+                    </div>
+                    <DollarSign className="h-10 w-10 text-green-600" />
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm text-muted-foreground">Conversion Rate</p>
+                      <p className="text-3xl font-bold text-accent">{conversionStats.conversionRate}%</p>
+                    </div>
+                    <TrendingUp className="h-10 w-10 text-accent" />
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
             <div className="bg-muted/50 border rounded-lg p-4 mb-4">
-              <h3 className="font-semibold mb-2">Free Consultation Bookings</h3>
+              <h3 className="font-semibold mb-2">Consultation Conversion Journey</h3>
               <p className="text-sm text-muted-foreground">
-                Manage all scheduled free consultations with parents and students.
+                Track consultations, send follow-up emails with booking links, and convert parents into paying customers.
               </p>
             </div>
             {consultationBookings.length === 0 ? (
@@ -649,14 +816,36 @@ The ElimuConnect Team`;
                           Parent: {booking.parent_name}
                         </p>
                       </div>
-                      <Badge className={
-                        booking.status === 'confirmed' ? 'bg-green-500' :
-                        booking.status === 'pending' ? 'bg-yellow-500' :
-                        booking.status === 'cancelled' ? 'bg-red-500' :
-                        booking.status === 'completed' ? 'bg-blue-500' : 'bg-gray-500'
-                      }>
-                        {booking.status}
-                      </Badge>
+                      <div className="flex flex-col gap-2 items-end">
+                        <Badge className={
+                          booking.status === 'confirmed' ? 'bg-green-500' :
+                          booking.status === 'pending' ? 'bg-yellow-500' :
+                          booking.status === 'cancelled' ? 'bg-red-500' :
+                          booking.status === 'completed' ? 'bg-blue-500' : 'bg-gray-500'
+                        }>
+                          {booking.status}
+                        </Badge>
+                        <Badge variant={
+                          booking.follow_up_status === 'converted' ? 'default' :
+                          booking.follow_up_status === 'follow_up_sent' ? 'secondary' :
+                          booking.follow_up_status === 'needs_callback' ? 'destructive' : 'outline'
+                        } className={
+                          booking.follow_up_status === 'converted' ? 'bg-green-600' :
+                          booking.follow_up_status === 'follow_up_sent' ? 'bg-blue-600' :
+                          booking.follow_up_status === 'needs_callback' ? 'bg-orange-600' : ''
+                        }>
+                          {booking.follow_up_status === 'pending' ? '⏳ Pending' :
+                           booking.follow_up_status === 'follow_up_sent' ? '📧 Follow-up Sent' :
+                           booking.follow_up_status === 'needs_callback' ? '📞 Needs Callback' :
+                           booking.follow_up_status === 'converted' ? '✅ Converted' :
+                           booking.follow_up_status === 'not_interested' ? '❌ Not Interested' : booking.follow_up_status}
+                        </Badge>
+                        {booking.converted_to_customer && (
+                          <Badge className="bg-green-600">
+                            💰 Customer
+                          </Badge>
+                        )}
+                      </div>
                     </div>
                   </CardHeader>
                   <CardContent className="space-y-4">
@@ -726,16 +915,77 @@ The ElimuConnect Team`;
                     </div>
 
                     <div className="pt-4 border-t space-y-4">
-                      <div className="flex items-center gap-2">
+                      {/* Conversion Tracking Actions */}
+                      {booking.consultation_outcome && (
+                        <div className="bg-muted p-3 rounded-md">
+                          <p className="text-sm font-medium mb-1">Consultation Outcome:</p>
+                          <p className="text-sm text-muted-foreground">{booking.consultation_outcome}</p>
+                          {booking.follow_up_sent_at && (
+                            <p className="text-xs text-muted-foreground mt-2">
+                              Follow-up sent: {new Date(booking.follow_up_sent_at).toLocaleString()}
+                            </p>
+                          )}
+                        </div>
+                      )}
+
+                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                        <Button
+                          onClick={() => openFollowUpDialog(booking)}
+                          variant={booking.follow_up_status === 'follow_up_sent' ? 'secondary' : 'default'}
+                          className="w-full"
+                        >
+                          <Send className="h-4 w-4 mr-2" />
+                          {booking.follow_up_status === 'follow_up_sent' ? 'Resend Follow-up' : 'Send Follow-up Email'}
+                        </Button>
+
                         <Button
                           onClick={() => handleWhatsAppMessage(booking)}
-                          className="flex-1"
-                          variant="default"
+                          variant="outline"
+                          className="w-full"
                         >
                           <MessageCircle className="h-4 w-4 mr-2" />
-                          Send WhatsApp Message
+                          WhatsApp Message
                         </Button>
                       </div>
+
+                      {!booking.converted_to_customer && (
+                        <div className="flex gap-2">
+                          <Select
+                            value={booking.follow_up_status}
+                            onValueChange={(value) => handleUpdateFollowUpStatus(booking.id, value)}
+                          >
+                            <SelectTrigger className="flex-1">
+                              <SelectValue placeholder="Update status" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="pending">⏳ Pending</SelectItem>
+                              <SelectItem value="follow_up_sent">📧 Follow-up Sent</SelectItem>
+                              <SelectItem value="needs_callback">📞 Needs Callback</SelectItem>
+                              <SelectItem value="not_interested">❌ Not Interested</SelectItem>
+                            </SelectContent>
+                          </Select>
+
+                          <Button
+                            onClick={() => handleMarkAsConverted(booking.id)}
+                            className="bg-green-600 hover:bg-green-700"
+                          >
+                            <Target className="h-4 w-4 mr-2" />
+                            Mark as Converted
+                          </Button>
+                        </div>
+                      )}
+
+                      {booking.next_action && (
+                        <div className="bg-amber-50 dark:bg-amber-950/20 p-3 rounded-md border border-amber-200 dark:border-amber-800">
+                          <p className="text-sm font-medium mb-1">Next Action:</p>
+                          <p className="text-sm text-muted-foreground">{booking.next_action}</p>
+                          {booking.next_action_date && (
+                            <p className="text-xs text-muted-foreground mt-1">
+                              Due: {new Date(booking.next_action_date).toLocaleDateString()}
+                            </p>
+                          )}
+                        </div>
+                      )}
 
                       <div className="flex items-start justify-between mb-2">
                         <span className="font-medium text-sm flex items-center gap-2">
@@ -789,6 +1039,84 @@ The ElimuConnect Team`;
             )}
           </TabsContent>
         </Tabs>
+
+        {/* Follow-up Dialog */}
+        <Dialog open={followUpDialog} onOpenChange={setFollowUpDialog}>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Send Follow-up Email</DialogTitle>
+              <DialogDescription>
+                Send a personalized follow-up email to {selectedBooking?.parent_name} with consultation summary and booking links.
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="space-y-4 py-4">
+              <div>
+                <Label>Consultation Outcome *</Label>
+                <Textarea
+                  value={followUpData.consultationOutcome}
+                  onChange={(e) => setFollowUpData({...followUpData, consultationOutcome: e.target.value})}
+                  placeholder="Summarize what was discussed during the consultation..."
+                  rows={3}
+                />
+              </div>
+
+              <div>
+                <Label>Recommended Subjects (comma-separated)</Label>
+                <Input
+                  value={followUpData.recommendedSubjects.join(', ')}
+                  onChange={(e) => setFollowUpData({...followUpData, recommendedSubjects: e.target.value.split(',').map(s => s.trim()).filter(Boolean)})}
+                  placeholder="Mathematics, English, Science"
+                />
+              </div>
+
+              <div>
+                <Label>Recommended Tutors (comma-separated names)</Label>
+                <Input
+                  value={followUpData.recommendedTutors.join(', ')}
+                  onChange={(e) => setFollowUpData({...followUpData, recommendedTutors: e.target.value.split(',').map(s => s.trim()).filter(Boolean)})}
+                  placeholder="John Doe, Jane Smith"
+                />
+              </div>
+
+              <div>
+                <Label>Next Steps *</Label>
+                <Textarea
+                  value={followUpData.nextSteps}
+                  onChange={(e) => setFollowUpData({...followUpData, nextSteps: e.target.value})}
+                  placeholder="Browse our tutors and book your first session..."
+                  rows={2}
+                />
+              </div>
+
+              <div>
+                <Label>Next Action (Internal Tracking)</Label>
+                <Input
+                  value={followUpData.nextAction}
+                  onChange={(e) => setFollowUpData({...followUpData, nextAction: e.target.value})}
+                  placeholder="Call parent, send package pricing, etc."
+                />
+              </div>
+
+              <div>
+                <Label>Next Action Date</Label>
+                <Input
+                  type="date"
+                  value={followUpData.nextActionDate}
+                  onChange={(e) => setFollowUpData({...followUpData, nextActionDate: e.target.value})}
+                />
+              </div>
+            </div>
+
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setFollowUpDialog(false)}>Cancel</Button>
+              <Button onClick={handleSendFollowUp} disabled={!followUpData.consultationOutcome || !followUpData.nextSteps}>
+                <Send className="h-4 w-4 mr-2" />
+                Send Follow-up Email
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
