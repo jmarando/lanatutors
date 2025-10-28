@@ -176,25 +176,18 @@ const AdminDashboard = () => {
     applicationId: string, 
     action: "schedule_interview" | "reject", 
     notes?: string,
-    interviewDate?: string
+    interviewDate?: string,
+    meetLink?: string
   ) => {
     const application = pendingApplications.find(app => app.id === applicationId);
     if (!application) return;
 
     if (action === "schedule_interview") {
       try {
-        // Create Google Meet link
-        const { data: meetData, error: meetError } = await supabase.functions.invoke('create-google-meet-session', {
-          body: {
-            summary: `ElimuConnect Interview - ${application.full_name}`,
-            description: `30-minute interview conversation with ${application.full_name}`,
-            startTime: interviewDate,
-            duration: 30,
-            attendees: [application.email]
-          }
-        });
-
-        if (meetError) throw meetError;
+        if (!meetLink?.trim()) {
+          toast.error("Please enter a Google Meet link");
+          return;
+        }
 
         // Update application status
         const { error: updateError } = await supabase
@@ -202,7 +195,7 @@ const AdminDashboard = () => {
           .update({ 
             status: 'interview_scheduled',
             interview_scheduled_at: interviewDate,
-            interview_meet_link: meetData.meetLink,
+            interview_meet_link: meetLink,
             admin_notes: notes || null,
             updated_at: new Date().toISOString()
           })
@@ -215,7 +208,7 @@ const AdminDashboard = () => {
           body: { 
             email: application.email,
             fullName: application.full_name,
-            meetLink: meetData.meetLink,
+            meetLink: meetLink,
             interviewDate: interviewDate
           }
         });
@@ -553,6 +546,7 @@ const AdminDashboard = () => {
 const ApplicationReviewCard = ({ application, onReview }: any) => {
   const [notes, setNotes] = useState("");
   const [interviewDate, setInterviewDate] = useState("");
+  const [meetLink, setMeetLink] = useState("");
   const [loadingCv, setLoadingCv] = useState(false);
 
   const handleViewCv = async () => {
@@ -622,15 +616,34 @@ const ApplicationReviewCard = ({ application, onReview }: any) => {
           </div>
         </div>
 
-        <div className="space-y-2">
-          <Label htmlFor={`interview-date-${application.id}`}>Schedule Interview Date & Time</Label>
-          <Input
-            id={`interview-date-${application.id}`}
-            type="datetime-local"
-            value={interviewDate}
-            onChange={(e) => setInterviewDate(e.target.value)}
-            className="max-w-md"
-          />
+        <div className="space-y-4 border-t pt-4">
+          <h4 className="font-semibold text-sm">Schedule Interview</h4>
+          
+          <div className="space-y-2">
+            <Label htmlFor={`interview-date-${application.id}`}>Interview Date & Time *</Label>
+            <Input
+              id={`interview-date-${application.id}`}
+              type="datetime-local"
+              value={interviewDate}
+              onChange={(e) => setInterviewDate(e.target.value)}
+              className="max-w-md"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor={`meet-link-${application.id}`}>Google Meet Link *</Label>
+            <Input
+              id={`meet-link-${application.id}`}
+              type="url"
+              placeholder="https://meet.google.com/xxx-xxxx-xxx"
+              value={meetLink}
+              onChange={(e) => setMeetLink(e.target.value)}
+              className="max-w-md"
+            />
+            <p className="text-xs text-muted-foreground">
+              Create a meeting at <a href="https://meet.google.com" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">meet.google.com</a> and paste the link here
+            </p>
+          </div>
         </div>
 
         <Textarea
@@ -642,12 +655,12 @@ const ApplicationReviewCard = ({ application, onReview }: any) => {
 
         <div className="flex gap-2 mt-4">
           <Button
-            onClick={() => onReview(application.id, "schedule_interview", notes, interviewDate)}
+            onClick={() => onReview(application.id, "schedule_interview", notes, interviewDate, meetLink)}
             className="bg-blue-600 hover:bg-blue-700"
-            disabled={!interviewDate}
+            disabled={!interviewDate || !meetLink}
           >
             <CheckCircle className="w-4 h-4 mr-2" />
-            Schedule Interview
+            Schedule Interview & Send Invitation
           </Button>
           <Button
             onClick={() => onReview(application.id, "reject", notes)}
