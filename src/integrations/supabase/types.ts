@@ -398,6 +398,7 @@ export type Database = {
         Row: {
           admin_notes: string | null
           agreed_to_terms: boolean
+          cambridge_qualification: string | null
           created_at: string
           current_school: string
           cv_url: string | null
@@ -417,6 +418,7 @@ export type Database = {
         Insert: {
           admin_notes?: string | null
           agreed_to_terms?: boolean
+          cambridge_qualification?: string | null
           created_at?: string
           current_school: string
           cv_url?: string | null
@@ -436,6 +438,7 @@ export type Database = {
         Update: {
           admin_notes?: string | null
           agreed_to_terms?: boolean
+          cambridge_qualification?: string | null
           created_at?: string
           current_school?: string
           cv_url?: string | null

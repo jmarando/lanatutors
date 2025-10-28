@@ -17,12 +17,12 @@ const TUTOR_REQUIREMENTS = [
   {
     icon: GraduationCap,
     title: "Teaching Experience",
-    description: "Minimum 2 years of proven teaching or tutoring experience in accredited institutions with verifiable employment records"
+    description: "Minimum 2 years of proven teaching or tutoring experience"
   },
   {
     icon: FileText,
     title: "Qualifications",
-    description: "Bachelor's degree or Diploma in Education or relevant subject area required. Valid TSC (Teachers Service Commission) number mandatory"
+    description: "Bachelor's degree or Diploma in Education or relevant subject area required. Valid TSC (Teachers Service Commission) number or Cambridge professional development qualification number mandatory"
   },
   {
     icon: CheckCircle,
@@ -88,6 +88,7 @@ const BecomeATutor = () => {
     currentSchool: "",
     yearsOfExperience: "",
     tscNumber: "",
+    cambridgeQualification: "",
   });
 
   const handleCvChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -121,6 +122,16 @@ const BecomeATutor = () => {
       toast({
         title: "CV required",
         description: "Please upload your CV to continue",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Validate that at least one qualification number is provided
+    if (!formData.tscNumber && !formData.cambridgeQualification) {
+      toast({
+        title: "Qualification required",
+        description: "Please provide either TSC number or Cambridge qualification number",
         variant: "destructive"
       });
       return;
@@ -167,7 +178,8 @@ const BecomeATutor = () => {
           phone_number: phoneValidation.normalized,
           current_school: formData.currentSchool,
           years_of_experience: parseInt(formData.yearsOfExperience),
-          tsc_number: formData.tscNumber,
+          tsc_number: formData.tscNumber || null,
+          cambridge_qualification: formData.cambridgeQualification || null,
           cv_url: cvUrl,
           agreed_to_terms: agreedToTerms,
           status: 'pending'
@@ -379,16 +391,29 @@ const BecomeATutor = () => {
                     </div>
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="tscNumber">TSC Number *</Label>
-                    <Input
-                      id="tscNumber"
-                      placeholder="Teachers Service Commission number"
-                      value={formData.tscNumber}
-                      onChange={(e) => setFormData({ ...formData, tscNumber: e.target.value })}
-                      required
-                    />
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="tscNumber">TSC Number</Label>
+                      <Input
+                        id="tscNumber"
+                        placeholder="Teachers Service Commission number"
+                        value={formData.tscNumber}
+                        onChange={(e) => setFormData({ ...formData, tscNumber: e.target.value })}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="cambridgeQualification">Cambridge Qualification Number</Label>
+                      <Input
+                        id="cambridgeQualification"
+                        placeholder="Cambridge professional development number"
+                        value={formData.cambridgeQualification}
+                        onChange={(e) => setFormData({ ...formData, cambridgeQualification: e.target.value })}
+                      />
+                    </div>
                   </div>
+                  <p className="text-xs text-muted-foreground -mt-2">
+                    * At least one qualification number (TSC or Cambridge) is required
+                  </p>
 
                   <div className="space-y-2">
                     <Label>Upload CV/Resume *</Label>
