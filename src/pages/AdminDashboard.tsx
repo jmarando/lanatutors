@@ -10,9 +10,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { CheckCircle, XCircle, AlertCircle, Star, Calendar, Clock, Mail, Phone, User, BookOpen, FileText, Video, Edit, Save, X, MessageCircle, Send, TrendingUp, Users, DollarSign, Target, ExternalLink } from "lucide-react";
+import { CheckCircle, XCircle, AlertCircle, Star, Calendar, Clock, Mail, Phone, User, BookOpen, FileText, Video, Edit, Save, X, MessageCircle, Send, TrendingUp, Users, DollarSign, Target, ExternalLink, LayoutDashboard, GraduationCap, UserCheck, BookMarked, Activity, ArrowUpRight, ArrowDownRight } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { LineChart, Line, BarChart, Bar, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -22,6 +23,8 @@ const AdminDashboard = () => {
   const [pendingTutors, setPendingTutors] = useState<any[]>([]);
   const [pendingReviews, setPendingReviews] = useState<any[]>([]);
   const [consultationBookings, setConsultationBookings] = useState<any[]>([]);
+  const [dashboardMetrics, setDashboardMetrics] = useState<any>(null);
+  const [timeRange, setTimeRange] = useState<'7days' | '30days' | '90days'>('30days');
   const [editingNote, setEditingNote] = useState<string | null>(null);
   const [noteContent, setNoteContent] = useState("");
   const [selectedBooking, setSelectedBooking] = useState<any>(null);
@@ -285,11 +288,122 @@ Let us know! 🎓`
     }
 
     setIsAdmin(true);
+    fetchDashboardMetrics();
     fetchPendingApplications();
     fetchPendingTutors();
     fetchPendingReviews();
     fetchConsultationBookings();
     setLoading(false);
+  };
+
+  const fetchDashboardMetrics = async () => {
+    try {
+      const daysBack = timeRange === '7days' ? 7 : timeRange === '30days' ? 30 : 90;
+      const startDate = new Date();
+      startDate.setDate(startDate.getDate() - daysBack);
+
+      // Fetch consultations data
+      const { data: consultations } = await supabase
+        .from('consultation_bookings')
+        .select('*')
+        .gte('created_at', startDate.toISOString());
+
+      // Fetch bookings data
+      const { data: bookings } = await supabase
+        .from('bookings')
+        .select('*')
+        .gte('created_at', startDate.toISOString());
+
+      // Fetch payments data
+      const { data: payments } = await supabase
+        .from('payments')
+        .select('*')
+        .eq('status', 'completed')
+        .gte('created_at', startDate.toISOString());
+
+      // Fetch tutor profiles
+      const { data: tutors } = await supabase
+        .from('tutor_profiles')
+        .select('*')
+        .gte('created_at', startDate.toISOString());
+
+      // Fetch all profiles (students)
+      const { data: students } = await supabase
+        .from('profiles')
+        .select('*')
+        .gte('created_at', startDate.toISOString());
+
+      // Total counts
+      const { count: totalStudents } = await supabase
+        .from('profiles')
+        .select('*', { count: 'exact', head: true });
+
+      const { count: totalTutors } = await supabase
+        .from('tutor_profiles')
+        .select('*', { count: 'exact', head: true })
+        .eq('verified', true);
+
+      const { count: totalConsultations } = await supabase
+        .from('consultation_bookings')
+        .select('*', { count: 'exact', head: true });
+
+      const { count: totalBookings } = await supabase
+        .from('bookings')
+        .select('*', { count: 'exact', head: true });
+
+      // Calculate totals
+      const totalRevenue = payments?.reduce((sum, p) => sum + Number(p.amount), 0) || 0;
+      const convertedConsultations = consultations?.filter(c => c.converted_to_customer).length || 0;
+      const conversionRate = consultations?.length ? (convertedConsultations / consultations.length) * 100 : 0;
+
+      // Group data by day for charts
+      const groupByDay = (data: any[], dateField: string = 'created_at') => {
+        const grouped: any = {};
+        data?.forEach(item => {
+          const date = new Date(item[dateField]).toLocaleDateString();
+          grouped[date] = (grouped[date] || 0) + 1;
+        });
+        return Object.entries(grouped).map(([date, count]) => ({ date, count }));
+      };
+
+      const consultationsTrend = groupByDay(consultations || []);
+      const bookingsTrend = groupByDay(bookings || []);
+      const studentsTrend = groupByDay(students || []);
+      const tutorsTrend = groupByDay(tutors || []);
+
+      // Revenue trend
+      const revenueTrend = payments?.reduce((acc: any, p) => {
+        const date = new Date(p.created_at).toLocaleDateString();
+        const existing = acc.find((item: any) => item.date === date);
+        if (existing) {
+          existing.amount += Number(p.amount);
+        } else {
+          acc.push({ date, amount: Number(p.amount) });
+        }
+        return acc;
+      }, []) || [];
+
+      setDashboardMetrics({
+        totalStudents,
+        totalTutors,
+        totalConsultations,
+        totalBookings,
+        newStudents: students?.length || 0,
+        newTutors: tutors?.length || 0,
+        newConsultations: consultations?.length || 0,
+        newBookings: bookings?.length || 0,
+        totalRevenue,
+        conversionRate,
+        convertedConsultations,
+        consultationsTrend,
+        bookingsTrend,
+        studentsTrend,
+        tutorsTrend,
+        revenueTrend,
+      });
+    } catch (error: any) {
+      console.error('Error fetching dashboard metrics:', error);
+    }
   };
 
   const fetchPendingApplications = async () => {
@@ -779,10 +893,14 @@ The ElimuConnect Team`;
       <div className="max-w-7xl mx-auto px-6 py-12">
         <h1 className="text-4xl font-bold mb-8">Admin Dashboard</h1>
 
-        <Tabs defaultValue="applications" className="space-y-6">
+        <Tabs defaultValue="dashboard" className="space-y-6">
           <TabsList>
+            <TabsTrigger value="dashboard">
+              <LayoutDashboard className="h-4 w-4 mr-2" />
+              Dashboard
+            </TabsTrigger>
             <TabsTrigger value="applications" className="relative">
-              Initial Applications
+              Applications
               {pendingApplications.filter(a => a.status === 'pending').length > 0 && (
                 <Badge className="ml-2 bg-orange-600">
                   {pendingApplications.filter(a => a.status === 'pending').length}
@@ -790,7 +908,7 @@ The ElimuConnect Team`;
               )}
             </TabsTrigger>
             <TabsTrigger value="interviews" className="relative">
-              Scheduled Interviews
+              Interviews
               {pendingApplications.filter(a => a.status === 'interview_scheduled').length > 0 && (
                 <Badge className="ml-2 bg-blue-600">
                   {pendingApplications.filter(a => a.status === 'interview_scheduled').length}
@@ -798,13 +916,13 @@ The ElimuConnect Team`;
               )}
             </TabsTrigger>
             <TabsTrigger value="profiles" className="relative">
-              Profile Reviews
+              Profiles
               {pendingTutors.length > 0 && (
                 <Badge className="ml-2 bg-purple-600">{pendingTutors.length}</Badge>
               )}
             </TabsTrigger>
             <TabsTrigger value="reviews" className="relative">
-              Student Reviews
+              Reviews
               {pendingReviews.length > 0 && (
                 <Badge className="ml-2 bg-green-600">{pendingReviews.length}</Badge>
               )}
@@ -816,6 +934,220 @@ The ElimuConnect Team`;
               )}
             </TabsTrigger>
           </TabsList>
+
+          {/* Dashboard Tab */}
+          <TabsContent value="dashboard" className="space-y-6">
+            {/* Time Range Selector */}
+            <div className="flex justify-between items-center">
+              <div>
+                <h2 className="text-3xl font-bold">Business Pulse</h2>
+                <p className="text-muted-foreground">Key metrics and trends at a glance</p>
+              </div>
+              <Select value={timeRange} onValueChange={(value: any) => {
+                setTimeRange(value);
+                setTimeout(() => fetchDashboardMetrics(), 100);
+              }}>
+                <SelectTrigger className="w-40">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="7days">Last 7 days</SelectItem>
+                  <SelectItem value="30days">Last 30 days</SelectItem>
+                  <SelectItem value="90days">Last 90 days</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            {dashboardMetrics ? (
+              <>
+                {/* Key Metrics Cards */}
+                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                  <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                      <CardTitle className="text-sm font-medium">Total Students</CardTitle>
+                      <Users className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold">{dashboardMetrics.totalStudents || 0}</div>
+                      <p className="text-xs text-muted-foreground">
+                        <span className="text-green-600 flex items-center gap-1">
+                          <ArrowUpRight className="h-3 w-3" />
+                          {dashboardMetrics.newStudents} new
+                        </span>
+                      </p>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                      <CardTitle className="text-sm font-medium">Active Tutors</CardTitle>
+                      <GraduationCap className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold">{dashboardMetrics.totalTutors || 0}</div>
+                      <p className="text-xs text-muted-foreground">
+                        <span className="text-green-600 flex items-center gap-1">
+                          <ArrowUpRight className="h-3 w-3" />
+                          {dashboardMetrics.newTutors} new
+                        </span>
+                      </p>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                      <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
+                      <DollarSign className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold">KES {dashboardMetrics.totalRevenue?.toLocaleString() || 0}</div>
+                      <p className="text-xs text-muted-foreground">
+                        {dashboardMetrics.totalBookings || 0} bookings
+                      </p>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                      <CardTitle className="text-sm font-medium">Conversion Rate</CardTitle>
+                      <Target className="h-4 w-4 text-muted-foreground" />
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-2xl font-bold">{dashboardMetrics.conversionRate?.toFixed(1) || 0}%</div>
+                      <p className="text-xs text-muted-foreground">
+                        {dashboardMetrics.convertedConsultations}/{dashboardMetrics.totalConsultations} converted
+                      </p>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                {/* Pipeline Metrics */}
+                <div className="grid gap-4 md:grid-cols-3">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-base flex items-center gap-2">
+                        <Calendar className="h-5 w-5" />
+                        Consultations
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-3xl font-bold">{dashboardMetrics.newConsultations}</div>
+                      <p className="text-xs text-muted-foreground mt-2">Booked in period</p>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-base flex items-center gap-2">
+                        <BookMarked className="h-5 w-5" />
+                        Sessions
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-3xl font-bold">{dashboardMetrics.newBookings}</div>
+                      <p className="text-xs text-muted-foreground mt-2">Completed in period</p>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader>
+                      <CardTitle className="text-base flex items-center gap-2">
+                        <Activity className="h-5 w-5" />
+                        Daily Average
+                      </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="text-3xl font-bold">
+                        {(timeRange === '7days' ? (dashboardMetrics.newBookings / 7) :
+                         timeRange === '30days' ? (dashboardMetrics.newBookings / 30) :
+                         (dashboardMetrics.newBookings / 90)).toFixed(1)}
+                      </div>
+                      <p className="text-xs text-muted-foreground mt-2">Sessions per day</p>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                {/* Charts */}
+                <div className="grid gap-4 md:grid-cols-2">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Revenue Trend</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <ResponsiveContainer width="100%" height={250}>
+                        <AreaChart data={dashboardMetrics.revenueTrend || []}>
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis dataKey="date" />
+                          <YAxis />
+                          <Tooltip />
+                          <Area type="monotone" dataKey="amount" stroke="hsl(var(--primary))" fill="hsl(var(--primary) / 0.2)" />
+                        </AreaChart>
+                      </ResponsiveContainer>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Conversion Funnel</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <ResponsiveContainer width="100%" height={250}>
+                        <BarChart data={[
+                          { name: 'Consultations', value: dashboardMetrics.newConsultations },
+                          { name: 'Converted', value: dashboardMetrics.convertedConsultations },
+                          { name: 'Sessions', value: dashboardMetrics.newBookings }
+                        ]}>
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis dataKey="name" />
+                          <YAxis />
+                          <Tooltip />
+                          <Bar dataKey="value" fill="hsl(var(--primary))" />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Student Growth</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <ResponsiveContainer width="100%" height={250}>
+                        <LineChart data={dashboardMetrics.studentsTrend || []}>
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis dataKey="date" />
+                          <YAxis />
+                          <Tooltip />
+                          <Line type="monotone" dataKey="count" stroke="hsl(var(--chart-1))" strokeWidth={2} />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Tutor Onboarding</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <ResponsiveContainer width="100%" height={250}>
+                        <LineChart data={dashboardMetrics.tutorsTrend || []}>
+                          <CartesianGrid strokeDasharray="3 3" />
+                          <XAxis dataKey="date" />
+                          <YAxis />
+                          <Tooltip />
+                          <Line type="monotone" dataKey="count" stroke="hsl(var(--chart-2))" strokeWidth={2} />
+                        </LineChart>
+                      </ResponsiveContainer>
+                    </CardContent>
+                  </Card>
+                </div>
+              </>
+            ) : (
+              <div className="text-center py-12">
+                <p className="text-muted-foreground">Loading dashboard metrics...</p>
+              </div>
+            )}
+          </TabsContent>
 
           <TabsContent value="applications" className="space-y-4">
             <div className="bg-muted/50 border rounded-lg p-4 mb-4">
