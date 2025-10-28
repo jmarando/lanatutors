@@ -118,7 +118,33 @@ const BookConsultation = () => {
     setLoading(true);
 
     try {
-      const { error } = await supabase.from("consultation_bookings").insert({
+      // Step 1: Create Google Calendar event
+      const { data: calendarData, error: calendarError } = await supabase.functions.invoke(
+        "create-consultation-calendar-event",
+        {
+          body: {
+            parentName: formData.parentName,
+            studentName: formData.studentName,
+            email: formData.email,
+            phoneNumber: formData.phoneNumber,
+            consultationDate: selectedDate!.toISOString().split('T')[0],
+            consultationTime: selectedTime,
+            subjects: formData.subjects,
+            gradeLevel: `${formData.curriculum} - ${formData.gradeLevel}`,
+            notes: formData.additionalNotes,
+          },
+        }
+      );
+
+      if (calendarError) {
+        console.error("Calendar event error:", calendarError);
+        throw new Error("Failed to create calendar event");
+      }
+
+      const meetingLink = calendarData.meetingLink;
+
+      // Step 2: Insert booking into database
+      const { error: dbError } = await supabase.from("consultation_bookings").insert({
         parent_name: formData.parentName,
         student_name: formData.studentName,
         phone_number: formData.phoneNumber,
@@ -129,11 +155,36 @@ const BookConsultation = () => {
         additional_notes: formData.additionalNotes,
         consultation_date: selectedDate!.toISOString().split('T')[0],
         consultation_time: selectedTime,
-        status: "pending",
+        status: "confirmed",
       });
 
-      if (error) throw error;
+      if (dbError) throw dbError;
 
+      // Step 3: Send confirmation email
+      await supabase.functions.invoke("send-consultation-booking-confirmation", {
+        body: {
+          email: formData.email,
+          parentName: formData.parentName,
+          studentName: formData.studentName,
+          consultationDate: selectedDate!.toISOString().split('T')[0],
+          consultationTime: selectedTime,
+          meetingLink,
+        },
+      });
+
+      // Step 4: Send WhatsApp notification
+      await supabase.functions.invoke("send-consultation-whatsapp", {
+        body: {
+          phoneNumber: formData.phoneNumber,
+          parentName: formData.parentName,
+          studentName: formData.studentName,
+          consultationDate: selectedDate!.toISOString().split('T')[0],
+          consultationTime: selectedTime,
+          meetingLink,
+        },
+      });
+
+      toast.success("Consultation booked! Check your email and WhatsApp for details.");
       setStep(4);
     } catch (error: any) {
       console.error("Error booking consultation:", error);
@@ -457,6 +508,18 @@ const BookConsultation = () => {
                       </div>
                     </div>
                   </div>
+                </div>
+
+                <div className="bg-blue-50 dark:bg-blue-950 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
+                  <p className="text-sm text-blue-900 dark:text-blue-100">
+                    <strong>📧 What happens next:</strong><br/>
+                    After booking, you'll receive:
+                  </p>
+                  <ul className="text-sm text-blue-800 dark:text-blue-200 mt-2 space-y-1 ml-4 list-disc">
+                    <li>Email with meeting link and calendar invite</li>
+                    <li>WhatsApp confirmation with details</li>
+                    <li>Reminders 1 day before and 1 hour before</li>
+                  </ul>
                 </div>
 
                 <div className="flex justify-between gap-4 pt-4">

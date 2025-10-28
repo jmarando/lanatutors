@@ -28,6 +28,7 @@ const TestEmail = lazy(() => import("./pages/TestEmail"));
 const BookingConfirmed = lazy(() => import("./pages/BookingConfirmed"));
 const CreateCalvinProfile = lazy(() => import("./pages/CreateCalvinProfile"));
 const TutorProfileSetup = lazy(() => import("./pages/TutorProfileSetup"));
+const ConsultationAdmin = lazy(() => import("./pages/ConsultationAdmin"));
 
 const queryClient = new QueryClient();
 
@@ -65,6 +66,7 @@ const App = () => {
               <Route path="/test-email" element={<TestEmail />} />
               <Route path="/booking-confirmed" element={<BookingConfirmed />} />
               <Route path="/create-calvin-profile" element={<CreateCalvinProfile />} />
+              <Route path="/consultation-admin" element={<ConsultationAdmin />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
