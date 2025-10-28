@@ -27,6 +27,7 @@ const NotFound = lazy(() => import("./pages/NotFound"));
 const TestEmail = lazy(() => import("./pages/TestEmail"));
 const BookingConfirmed = lazy(() => import("./pages/BookingConfirmed"));
 const CreateCalvinProfile = lazy(() => import("./pages/CreateCalvinProfile"));
+const TutorProfileSetup = lazy(() => import("./pages/TutorProfileSetup"));
 
 const queryClient = new QueryClient();
 
@@ -57,6 +58,7 @@ const App = () => {
               <Route path="/become-a-tutor" element={<BecomeATutor />} />
               <Route path="/student/dashboard" element={<StudentDashboard />} />
               <Route path="/tutor/dashboard" element={<TutorDashboard />} />
+              <Route path="/tutor-profile-setup" element={<TutorProfileSetup />} />
               <Route path="/admin" element={<AdminDashboard />} />
               <Route path="/seed-tutors" element={<SeedTutors />} />
               <Route path="/book-consultation" element={<BookConsultation />} />
