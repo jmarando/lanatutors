@@ -77,18 +77,18 @@ const AdminDashboard = () => {
   };
 
   const fetchPendingApplications = async () => {
-    console.log("Fetching pending applications...");
+    console.log("Fetching applications...");
     const { data, error } = await supabase
       .from("tutor_applications")
       .select("*")
-      .eq("status", "pending")
+      .in("status", ["pending", "interview_scheduled"])
       .order("created_at", { ascending: false });
 
     console.log("Applications data:", data);
     console.log("Applications error:", error);
 
     if (error) {
-      console.error("Error fetching pending applications:", error);
+      console.error("Error fetching applications:", error);
     } else {
       setPendingApplications(data || []);
     }
