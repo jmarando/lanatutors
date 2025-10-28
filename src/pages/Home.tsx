@@ -143,67 +143,66 @@ const Home = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-[image:var(--gradient-page)]">
       <SEO 
         title="Quality Online Tutoring for Kenyan Students"
         description="Connect with verified teachers from top Kenyan schools for safe, convenient one-on-one tutoring. Master KCSE, KCPE, and CBC curriculum from home with ElimuConnect."
         structuredData={organizationSchema}
       />
       
-      {/* Hero Section - Centered with Subtle Background */}
-      <section className="relative min-h-screen flex items-center justify-center overflow-hidden">
-        {/* Subtle parallax video background */}
-        <div className="absolute inset-0 opacity-10">
-          <video 
-            src={heroVideo} 
-            autoPlay 
-            loop 
-            muted 
-            playsInline
-            className="w-full h-full object-cover"
-            aria-label="Background video"
-          >
-            Your browser does not support the video tag.
-          </video>
-          <div className="absolute inset-0 bg-gradient-to-b from-background/80 via-background/60 to-background" />
-        </div>
-        
-        <div className="max-w-4xl mx-auto px-6 text-center relative z-10 py-20">
-          <div className="animate-fade-in space-y-8">
-            <h1 className="text-5xl md:text-7xl font-bold leading-tight tracking-tight">
-              Expert Tutoring.<br />
-              <span className="text-primary">Safe. Verified. Kenyan.</span>
-            </h1>
-            <p className="text-xl md:text-2xl text-muted-foreground max-w-3xl mx-auto leading-relaxed font-light">
-              Learn from verified tutors from Kenya's top schools. Choose between online or in-person sessions.
-            </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center pt-4">
-              <Link to="/book-consultation">
-                <Button size="lg" className="h-16 px-12 text-lg hover-scale">
-                  Book Free Consultation
-                </Button>
-              </Link>
-              <Link to="/tutors">
-                <Button size="lg" variant="outline" className="h-16 px-12 text-lg hover-scale">
-                  Find Tutors
-                </Button>
-              </Link>
+      {/* Hero Section */}
+      <section>
+        <div className="max-w-7xl mx-auto px-6 py-12 md:py-20">
+          <div className="grid md:grid-cols-2 gap-12 items-center">
+            <div>
+              <h1 className="text-3xl md:text-5xl font-bold mb-6 leading-tight">
+                <span className="block whitespace-nowrap">Expert Tutoring.</span>
+                <span className="block whitespace-nowrap text-primary">Safe. Verified. Kenyan.</span>
+              </h1>
+              <p className="text-lg text-muted-foreground mb-8 leading-relaxed">
+                Learn from verified tutors from Kenya's top schools. Choose between online or in-person sessions. Rigorously vetted educators. Seamless payments via M-Pesa or Card. All CBC and IGCSE subjects covered.
+              </p>
+              <div className="flex flex-wrap gap-4">
+                <Link to="/book-consultation">
+                  <Button size="lg" className="h-14 px-8 text-lg">
+                    Book Free Consultation
+                  </Button>
+                </Link>
+                <Link to="/tutors">
+                  <Button size="lg" variant="outline" className="h-14 px-8 text-lg">
+                    Find Tutors
+                  </Button>
+                </Link>
+              </div>
+            </div>
+            <div className="relative">
+              <video 
+                src={heroVideo} 
+                autoPlay 
+                loop 
+                muted 
+                playsInline
+                className="rounded-lg shadow-2xl w-full h-auto object-cover"
+                aria-label="ElimuConnect online tutoring demo video"
+              >
+                Your browser does not support the video tag.
+              </video>
             </div>
           </div>
         </div>
       </section>
 
-      {/* Stats Section - Single Row with Large Numbers */}
-      <section className="py-20 border-y">
-        <div className="max-w-6xl mx-auto px-6">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-16 text-center">
+      {/* Stats Section */}
+      <section className="border-y bg-secondary/30">
+        <div className="max-w-7xl mx-auto px-6 py-12">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
             {stats.map((stat, index) => {
               const Icon = stat.icon;
               return (
-                <div key={index} className="space-y-4 animate-fade-in" style={{ animationDelay: `${index * 0.1}s` }}>
-                  <Icon className="w-12 h-12 mx-auto text-primary opacity-60" strokeWidth={1.5} />
-                  <div className="text-6xl md:text-7xl font-bold tracking-tight">{stat.value}</div>
-                  <div className="text-sm uppercase tracking-widest text-muted-foreground font-light">{stat.label}</div>
+                <div key={index} className="space-y-2">
+                  <Icon className="w-10 h-10 mx-auto text-primary mb-2" />
+                  <div className="text-3xl font-bold">{stat.value}</div>
+                  <div className="text-sm text-muted-foreground">{stat.label}</div>
                 </div>
               );
             })}
@@ -211,115 +210,118 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Services Section - Clean Icon Grid */}
-      <section className="py-32 px-6">
+      {/* Services Section */}
+      <section className="py-20 px-6 bg-muted/30">
         <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-20 animate-fade-in">
-            <h2 className="text-5xl md:text-6xl font-bold mb-6 tracking-tight">Our Services</h2>
-            <p className="text-xl text-muted-foreground font-light">
-              Comprehensive tutoring solutions
+          <div className="text-center mb-12">
+            <h2 className="text-4xl font-bold mb-4">Our Services</h2>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+              Comprehensive tutoring solutions tailored to your learning needs
             </p>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-12">
+          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
             {[
               {
-                icon: GraduationCap,
                 title: "After School Tuition",
-                description: "Regular sessions to reinforce classroom learning",
+                description: "Regular sessions to reinforce classroom learning and build strong fundamentals",
               },
               {
-                icon: Clock,
                 title: "Homework Assistance",
-                description: "Expert guidance for assignments",
+                description: "Expert guidance to help students complete assignments with confidence",
               },
               {
-                icon: Award,
                 title: "Exam Revision & Prep",
-                description: "Intensive preparation for major exams",
+                description: "Intensive preparation for KCSE, IGCSE, and other major examinations",
               },
               {
-                icon: Calendar,
                 title: "Holiday Tuition",
-                description: "Catch-up programs during breaks",
+                description: "Catch-up programs and advanced learning during school breaks",
               },
-            ].map((service, index) => {
-              const Icon = service.icon;
-              return (
-                <div 
-                  key={index} 
-                  className="text-center group cursor-pointer animate-fade-in" 
-                  style={{ animationDelay: `${index * 0.1}s` }}
-                >
-                  <div className="mb-6 transition-transform duration-300 group-hover:scale-110 group-hover:-translate-y-2">
-                    <div className="w-20 h-20 mx-auto rounded-full border-2 border-border flex items-center justify-center group-hover:border-primary group-hover:bg-primary/5 transition-all">
-                      <Icon className="w-9 h-9 text-muted-foreground group-hover:text-primary transition-colors" strokeWidth={1.5} />
-                    </div>
-                  </div>
-                  <h3 className="text-lg font-bold mb-3">{service.title}</h3>
-                  <p className="text-sm text-muted-foreground font-light leading-relaxed">{service.description}</p>
+            ].map((service, index) => (
+              <Card key={index} className="text-center p-6 hover:shadow-lg transition-shadow">
+                <h3 className="text-xl font-bold mb-3">{service.title}</h3>
+                <p className="text-sm text-muted-foreground">{service.description}</p>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* CTA Section - Between Services and How It Works */}
+      <section className="py-16 px-6">
+        <div className="max-w-4xl mx-auto">
+          <Card className="bg-gradient-to-r from-primary to-primary/90 text-primary-foreground border-0">
+            <CardContent className="p-10 text-center">
+              <h2 className="text-3xl font-bold mb-3">Ready to Get Started?</h2>
+              <p className="text-lg mb-6 opacity-90">
+                Book a free 30-minute consultation or browse our verified tutors
+              </p>
+              <div className="flex flex-wrap gap-4 justify-center">
+                <Link to="/book-consultation">
+                  <Button size="lg" variant="secondary" className="text-lg px-8 shadow-lg">
+                    Book Free Consultation
+                  </Button>
+                </Link>
+                <Link to="/tutors">
+                  <Button size="lg" variant="outline" className="text-lg px-8 shadow-lg bg-white/10 hover:bg-white/20 text-white border-white/30">
+                    Browse Tutors
+                  </Button>
+                </Link>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </section>
+
+      {/* How It Works Section */}
+      <section className="py-20 px-6">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-12">
+            <h2 className="text-4xl font-bold mb-4">How It Works</h2>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+              Get started in three simple steps
+            </p>
+          </div>
+          <div className="grid md:grid-cols-3 gap-8">
+            {[
+              {
+                step: "1",
+                title: "Book a Consultation",
+                description: "Schedule a free 30-minute consultation with an ElimuConnect consultant to discuss your learning goals",
+              },
+              {
+                step: "2",
+                title: "Get Matched",
+                description: "We'll match you with the perfect tutor based on your needs, curriculum, and learning style",
+              },
+              {
+                step: "3",
+                title: "Start Learning",
+                description: "Choose online or in-person sessions, pay securely, and begin your learning journey",
+              },
+            ].map((item, index) => (
+              <div key={index} className="text-center">
+                <div className="w-16 h-16 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-2xl font-bold mx-auto mb-4">
+                  {item.step}
                 </div>
-              );
-            })}
+                <h3 className="text-xl font-bold mb-3">{item.title}</h3>
+                <p className="text-muted-foreground">{item.description}</p>
+              </div>
+            ))}
           </div>
         </div>
       </section>
 
-      {/* How It Works - Horizontal Scroll Cards */}
-      <section className="py-32 px-6 bg-muted/30">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-20 animate-fade-in">
-            <h2 className="text-5xl md:text-6xl font-bold mb-6 tracking-tight">How It Works</h2>
-            <p className="text-xl text-muted-foreground font-light">
-              Three simple steps to start learning
+      {/* Reviews Section */}
+      <section className="py-20 px-6 bg-muted/30">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-12">
+            <h2 className="text-4xl font-bold mb-4">What Parents & Students Say</h2>
+            <p className="text-lg text-muted-foreground">
+              Real feedback from our ElimuConnect community
             </p>
           </div>
-          
-          {/* Horizontal scroll on mobile, grid on desktop */}
-          <div className="overflow-x-auto md:overflow-visible -mx-6 px-6 md:mx-0 md:px-0">
-            <div className="flex md:grid md:grid-cols-3 gap-8 min-w-max md:min-w-0">
-              {[
-                {
-                  step: "1",
-                  title: "Book a Consultation",
-                  description: "Schedule a free 30-minute consultation with an ElimuConnect consultant to discuss your learning goals",
-                },
-                {
-                  step: "2",
-                  title: "Get Matched",
-                  description: "We'll match you with the perfect tutor based on your needs, curriculum, and learning style",
-                },
-                {
-                  step: "3",
-                  title: "Start Learning",
-                  description: "Choose online or in-person sessions, pay securely, and begin your learning journey",
-                },
-              ].map((item, index) => (
-                <Card 
-                  key={index} 
-                  className="w-80 md:w-auto p-10 hover-scale transition-all animate-fade-in border-2 hover:border-primary" 
-                  style={{ animationDelay: `${index * 0.15}s` }}
-                >
-                  <div className="text-8xl font-bold text-primary/10 mb-6">{item.step}</div>
-                  <h3 className="text-2xl font-bold mb-4">{item.title}</h3>
-                  <p className="text-muted-foreground leading-relaxed font-light">{item.description}</p>
-                </Card>
-              ))}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Reviews - Centered Testimonial */}
-      <section className="py-32 px-6">
-        <div className="max-w-4xl mx-auto text-center">
-          <div className="mb-16 animate-fade-in">
-            <h2 className="text-5xl md:text-6xl font-bold mb-6 tracking-tight">What Parents & Students Say</h2>
-            <p className="text-xl text-muted-foreground font-light">
-              Real feedback from our community
-            </p>
-          </div>
-          
-          <div className="space-y-16">
+          <div className="grid md:grid-cols-3 gap-8">
             {[
               {
                 name: "Jane Wanjiru",
@@ -340,98 +342,54 @@ const Home = () => {
                 comment: "Safe, verified tutors from top schools. The M-Pesa payment is seamless. Best decision for my son's education!",
               },
             ].map((review, index) => (
-              <div key={index} className="animate-fade-in" style={{ animationDelay: `${index * 0.2}s` }}>
-                <div className="flex gap-2 justify-center mb-6">
+              <Card key={index} className="p-6">
+                <div className="flex gap-1 mb-3">
                   {[...Array(review.rating)].map((_, i) => (
-                    <Star key={i} className="w-6 h-6 fill-primary text-primary" />
+                    <Star key={i} className="w-4 h-4 fill-yellow-500 text-yellow-500" />
                   ))}
                 </div>
-                <p className="text-2xl md:text-3xl font-light text-foreground mb-8 leading-relaxed max-w-3xl mx-auto">
-                  "{review.comment}"
-                </p>
-                <div className="pt-6 border-t inline-block">
-                  <p className="font-bold text-lg">{review.name}</p>
-                  <p className="text-sm text-muted-foreground uppercase tracking-wider mt-1">{review.role}</p>
+                <p className="text-sm text-muted-foreground mb-4 leading-relaxed">"{review.comment}"</p>
+                <div className="border-t pt-4">
+                  <p className="font-semibold text-sm">{review.name}</p>
+                  <p className="text-xs text-muted-foreground">{review.role}</p>
                 </div>
-              </div>
+              </Card>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Featured Tutors - Overlapping Cards with Depth */}
-      <section className="py-32 px-6 border-y">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-20">
-            <h2 className="text-5xl md:text-6xl font-bold mb-6 tracking-tight">Featured Tutors</h2>
-            <p className="text-xl text-muted-foreground font-light">Meet some of our top-rated educators</p>
-          </div>
-          
-          {/* Desktop: Overlapping stack */}
-          <div className="hidden md:flex justify-center items-center gap-8">
-            {featuredTutors.map((tutor, index) => (
-              <Card 
-                key={tutor.id} 
-                className="w-80 p-8 hover-scale transition-all cursor-pointer border-2 hover:border-primary hover:shadow-2xl animate-fade-in"
-                style={{ 
-                  animationDelay: `${index * 0.15}s`,
-                  transform: `translateY(${index * 10}px) scale(${1 - index * 0.05})`
-                }}
-              >
-                <div className="flex flex-col items-center text-center space-y-4">
-                  <Avatar className="w-24 h-24">
-                    <AvatarFallback className="text-3xl bg-primary/10 text-primary">
-                      {tutor.photo}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <h3 className="text-xl font-bold mb-1">{tutor.name}</h3>
-                    <Badge variant="secondary" className="mb-2">{tutor.subjects}</Badge>
-                    <p className="text-sm text-muted-foreground">{tutor.school}</p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Star className="w-5 h-5 fill-primary text-primary" />
-                    <span className="font-bold">{tutor.rating.toFixed(1)}</span>
-                    <span className="text-sm text-muted-foreground">({tutor.reviews})</span>
-                  </div>
-                  <div className="text-3xl font-bold text-primary">
-                    KES {tutor.hourlyRate.toLocaleString()}<span className="text-sm font-normal text-muted-foreground">/hr</span>
-                  </div>
-                  <Link to="/tutors" className="w-full">
-                    <Button className="w-full" variant="outline">View Profile</Button>
-                  </Link>
-                </div>
-              </Card>
-            ))}
-          </div>
-
-          {/* Mobile: Regular grid */}
-          <div className="grid md:hidden gap-6">
+      {/* Featured Tutors */}
+      <section className="bg-secondary/30">
+        <div className="max-w-7xl mx-auto px-6 py-16">
+          <h2 className="text-3xl font-bold text-center mb-3">Featured Tutors</h2>
+          <p className="text-center text-muted-foreground mb-10">Meet some of our top-rated educators</p>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             {featuredTutors.map((tutor) => (
-              <Card key={tutor.id} className="p-6 hover:shadow-lg transition-all">
-                <div className="flex flex-col items-center text-center space-y-4">
-                  <Avatar className="w-20 h-20">
-                    <AvatarFallback className="text-2xl bg-primary/10 text-primary">
-                      {tutor.photo}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div>
+              <Card key={tutor.id} className="card-hover cursor-pointer">
+                <CardContent className="p-6">
+                  <div className="flex flex-col items-center text-center mb-4">
+                    <Avatar className="w-16 h-16 mb-3">
+                      <AvatarFallback className="text-xl bg-primary/10 text-primary">
+                        {tutor.photo}
+                      </AvatarFallback>
+                    </Avatar>
                     <h3 className="text-lg font-bold mb-1">{tutor.name}</h3>
                     <Badge variant="secondary" className="mb-2 text-xs">{tutor.subjects}</Badge>
-                    <p className="text-xs text-muted-foreground">{tutor.school}</p>
+                    <p className="text-xs text-muted-foreground mb-2">{tutor.school}</p>
+                    <div className="flex items-center gap-1 mb-2">
+                      <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                      <span className="font-semibold text-sm">{tutor.rating.toFixed(1)}</span>
+                      <span className="text-xs text-muted-foreground">({tutor.reviews})</span>
+                    </div>
+                    <div className="text-xl font-bold text-primary mb-3">
+                      KES {tutor.hourlyRate.toLocaleString()}/hr
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Star className="w-4 h-4 fill-primary text-primary" />
-                    <span className="font-semibold text-sm">{tutor.rating.toFixed(1)}</span>
-                    <span className="text-xs text-muted-foreground">({tutor.reviews})</span>
-                  </div>
-                  <div className="text-2xl font-bold text-primary">
-                    KES {tutor.hourlyRate.toLocaleString()}<span className="text-sm font-normal">/hr</span>
-                  </div>
-                  <Link to="/tutors" className="w-full">
+                  <Link to="/tutors">
                     <Button className="w-full" variant="outline" size="sm">View Profile</Button>
                   </Link>
-                </div>
+                </CardContent>
               </Card>
             ))}
           </div>
