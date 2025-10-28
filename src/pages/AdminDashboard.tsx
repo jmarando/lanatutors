@@ -7,6 +7,8 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { CheckCircle, XCircle, AlertCircle, Star } from "lucide-react";
 
@@ -170,38 +172,132 @@ const AdminDashboard = () => {
     }
   };
 
-  const handleApplicationReview = async (applicationId: string, status: "approved" | "rejected", notes?: string) => {
-    const { error } = await supabase
-      .from("tutor_applications")
-      .update({ 
-        status,
-        admin_notes: notes || null,
-        updated_at: new Date().toISOString()
-      })
-      .eq("id", applicationId);
+  const handleApplicationReview = async (
+    applicationId: string, 
+    action: "schedule_interview" | "reject", 
+    notes?: string,
+    interviewDate?: string
+  ) => {
+    const application = pendingApplications.find(app => app.id === applicationId);
+    if (!application) return;
 
-    if (error) {
-      toast.error("Failed to update application status");
-      return;
+    if (action === "schedule_interview") {
+      try {
+        // Create Google Meet link
+        const { data: meetData, error: meetError } = await supabase.functions.invoke('create-google-meet-session', {
+          body: {
+            summary: `ElimuConnect Interview - ${application.full_name}`,
+            description: `30-minute interview conversation with ${application.full_name}`,
+            startTime: interviewDate,
+            duration: 30,
+            attendees: [application.email]
+          }
+        });
+
+        if (meetError) throw meetError;
+
+        // Update application status
+        const { error: updateError } = await supabase
+          .from("tutor_applications")
+          .update({ 
+            status: 'interview_scheduled',
+            interview_scheduled_at: interviewDate,
+            interview_meet_link: meetData.meetLink,
+            admin_notes: notes || null,
+            updated_at: new Date().toISOString()
+          })
+          .eq("id", applicationId);
+
+        if (updateError) throw updateError;
+
+        // Send interview invitation email
+        await supabase.functions.invoke('send-interview-invitation', {
+          body: { 
+            email: application.email,
+            fullName: application.full_name,
+            meetLink: meetData.meetLink,
+            interviewDate: interviewDate
+          }
+        });
+
+        toast.success("Interview scheduled! Invitation email sent.");
+        fetchPendingApplications();
+      } catch (error: any) {
+        console.error("Error scheduling interview:", error);
+        toast.error("Failed to schedule interview: " + error.message);
+      }
+    } else if (action === "reject") {
+      const { error } = await supabase
+        .from("tutor_applications")
+        .update({ 
+          status: 'rejected',
+          admin_notes: notes || null,
+          updated_at: new Date().toISOString()
+        })
+        .eq("id", applicationId);
+
+      if (error) {
+        toast.error("Failed to reject application");
+        return;
+      }
+
+      toast.success("Application rejected");
+      fetchPendingApplications();
     }
+  };
 
-    if (status === "approved") {
-      // Send email invitation to complete full profile
-      const application = pendingApplications.find(app => app.id === applicationId);
-      if (application) {
+  const handleInterviewResult = async (
+    applicationId: string,
+    passed: boolean,
+    notes?: string
+  ) => {
+    const application = pendingApplications.find(app => app.id === applicationId);
+    if (!application) return;
+
+    try {
+      if (passed) {
+        // Update to interview_passed and send approval email
+        const { error: updateError } = await supabase
+          .from("tutor_applications")
+          .update({ 
+            status: 'interview_passed',
+            interview_notes: notes || null,
+            updated_at: new Date().toISOString()
+          })
+          .eq("id", applicationId);
+
+        if (updateError) throw updateError;
+
+        // Send approval email with profile setup link
         await supabase.functions.invoke('send-tutor-approval-email', {
           body: { 
             email: application.email,
             fullName: application.full_name 
           }
         });
-      }
-      toast.success("Application approved! Invitation email sent to complete full profile.");
-    } else {
-      toast.success("Application rejected");
-    }
 
-    fetchPendingApplications();
+        toast.success("Interview passed! Profile setup invitation sent.");
+      } else {
+        // Mark as interview failed
+        const { error: updateError } = await supabase
+          .from("tutor_applications")
+          .update({ 
+            status: 'interview_failed',
+            interview_notes: notes || null,
+            updated_at: new Date().toISOString()
+          })
+          .eq("id", applicationId);
+
+        if (updateError) throw updateError;
+
+        toast.success("Interview marked as failed");
+      }
+
+      fetchPendingApplications();
+    } catch (error: any) {
+      console.error("Error updating interview result:", error);
+      toast.error("Failed to update interview result");
+    }
   };
 
   const handleTutorApproval = async (tutorId: string, approved: boolean) => {
@@ -254,44 +350,94 @@ const AdminDashboard = () => {
         <Tabs defaultValue="applications" className="space-y-6">
           <TabsList>
             <TabsTrigger value="applications" className="relative">
-              Pending Applications
-              {pendingApplications.length > 0 && (
-                <Badge className="ml-2 bg-orange-600">{pendingApplications.length}</Badge>
+              Initial Applications
+              {pendingApplications.filter(a => a.status === 'pending').length > 0 && (
+                <Badge className="ml-2 bg-orange-600">
+                  {pendingApplications.filter(a => a.status === 'pending').length}
+                </Badge>
               )}
             </TabsTrigger>
-            <TabsTrigger value="tutors" className="relative">
-              Pending Tutors (Full Profile)
+            <TabsTrigger value="interviews" className="relative">
+              Scheduled Interviews
+              {pendingApplications.filter(a => a.status === 'interview_scheduled').length > 0 && (
+                <Badge className="ml-2 bg-blue-600">
+                  {pendingApplications.filter(a => a.status === 'interview_scheduled').length}
+                </Badge>
+              )}
+            </TabsTrigger>
+            <TabsTrigger value="profiles" className="relative">
+              Profile Reviews
               {pendingTutors.length > 0 && (
-                <Badge className="ml-2 bg-orange-600">{pendingTutors.length}</Badge>
+                <Badge className="ml-2 bg-purple-600">{pendingTutors.length}</Badge>
               )}
             </TabsTrigger>
             <TabsTrigger value="reviews" className="relative">
-              Pending Reviews
+              Student Reviews
               {pendingReviews.length > 0 && (
-                <Badge className="ml-2 bg-orange-600">{pendingReviews.length}</Badge>
+                <Badge className="ml-2 bg-green-600">{pendingReviews.length}</Badge>
               )}
             </TabsTrigger>
           </TabsList>
 
           <TabsContent value="applications" className="space-y-4">
-            {pendingApplications.length === 0 ? (
+            <div className="bg-muted/50 border rounded-lg p-4 mb-4">
+              <h3 className="font-semibold mb-2">Step 1: Initial Vetting</h3>
+              <p className="text-sm text-muted-foreground">
+                Review credentials and decide whether to invite for an expert conversation or reject.
+              </p>
+            </div>
+            {pendingApplications.filter(a => a.status === 'pending').length === 0 ? (
               <Card>
                 <CardContent className="p-8 text-center text-muted-foreground">
-                  No pending tutor applications
+                  No pending initial applications
                 </CardContent>
               </Card>
             ) : (
-              pendingApplications.map((application) => (
-                <ApplicationReviewCard
-                  key={application.id}
-                  application={application}
-                  onReview={handleApplicationReview}
-                />
-              ))
+              pendingApplications
+                .filter(a => a.status === 'pending')
+                .map((application) => (
+                  <ApplicationReviewCard
+                    key={application.id}
+                    application={application}
+                    onReview={handleApplicationReview}
+                  />
+                ))
             )}
           </TabsContent>
 
-          <TabsContent value="tutors" className="space-y-4">
+          <TabsContent value="interviews" className="space-y-4">
+            <div className="bg-muted/50 border rounded-lg p-4 mb-4">
+              <h3 className="font-semibold mb-2">Step 2: Expert Conversations</h3>
+              <p className="text-sm text-muted-foreground">
+                Scheduled interviews. After the interview, mark as passed or failed.
+              </p>
+            </div>
+            {pendingApplications.filter(a => a.status === 'interview_scheduled').length === 0 ? (
+              <Card>
+                <CardContent className="p-8 text-center text-muted-foreground">
+                  No scheduled interviews
+                </CardContent>
+              </Card>
+            ) : (
+              pendingApplications
+                .filter(a => a.status === 'interview_scheduled')
+                .map((application) => (
+                  <InterviewCard
+                    key={application.id}
+                    application={application}
+                    onResult={handleInterviewResult}
+                  />
+                ))
+            )}
+          </TabsContent>
+
+          <TabsContent value="profiles" className="space-y-4">
+            <div className="bg-muted/50 border rounded-lg p-4 mb-4">
+              <h3 className="font-semibold mb-2">Step 3: Profile Verification</h3>
+              <p className="text-sm text-muted-foreground">
+                Review completed tutor profiles and approve or reject for final activation.
+              </p>
+            </div>
             {pendingTutors.length === 0 ? (
               <Card>
                 <CardContent className="p-8 text-center text-muted-foreground">
@@ -406,7 +552,7 @@ const AdminDashboard = () => {
 
 const ApplicationReviewCard = ({ application, onReview }: any) => {
   const [notes, setNotes] = useState("");
-  const [cvUrl, setCvUrl] = useState<string>("");
+  const [interviewDate, setInterviewDate] = useState("");
   const [loadingCv, setLoadingCv] = useState(false);
 
   const handleViewCv = async () => {
@@ -414,7 +560,6 @@ const ApplicationReviewCard = ({ application, onReview }: any) => {
     
     setLoadingCv(true);
     try {
-      // Generate a signed URL for the private CV file (valid for 1 hour)
       const { data, error } = await supabase.storage
         .from('tutor-cvs')
         .createSignedUrl(application.cv_url, 3600);
@@ -477,33 +622,124 @@ const ApplicationReviewCard = ({ application, onReview }: any) => {
           </div>
         </div>
 
+        <div className="space-y-2">
+          <Label htmlFor={`interview-date-${application.id}`}>Schedule Interview Date & Time</Label>
+          <Input
+            id={`interview-date-${application.id}`}
+            type="datetime-local"
+            value={interviewDate}
+            onChange={(e) => setInterviewDate(e.target.value)}
+            className="max-w-md"
+          />
+        </div>
+
         <Textarea
           placeholder="Admin notes (optional - for internal use only)"
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
-          className="mt-4"
           rows={2}
         />
 
         <div className="flex gap-2 mt-4">
           <Button
-            onClick={() => onReview(application.id, "approved", notes)}
-            className="bg-green-600 hover:bg-green-700"
+            onClick={() => onReview(application.id, "schedule_interview", notes, interviewDate)}
+            className="bg-blue-600 hover:bg-blue-700"
+            disabled={!interviewDate}
           >
             <CheckCircle className="w-4 h-4 mr-2" />
-            Approve & Invite
+            Schedule Interview
           </Button>
           <Button
-            onClick={() => onReview(application.id, "rejected", notes)}
+            onClick={() => onReview(application.id, "reject", notes)}
             variant="destructive"
           >
             <XCircle className="w-4 h-4 mr-2" />
             Reject
           </Button>
         </div>
-        <p className="text-xs text-muted-foreground mt-2">
-          Approving will send an invitation email to complete the full tutor profile including photos, references, and teaching video.
-        </p>
+      </CardContent>
+    </Card>
+  );
+};
+
+const InterviewCard = ({ application, onResult }: any) => {
+  const [notes, setNotes] = useState(application.interview_notes || "");
+
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-start justify-between">
+          <div>
+            <CardTitle className="text-xl">{application.full_name}</CardTitle>
+            <p className="text-sm text-muted-foreground">{application.email}</p>
+            <p className="text-sm text-muted-foreground">{application.phone_number}</p>
+            <div className="flex gap-2 mt-2">
+              <Badge variant="secondary">
+                Interview: {new Date(application.interview_scheduled_at).toLocaleString('en-US', {
+                  weekday: 'short',
+                  month: 'short',
+                  day: 'numeric',
+                  hour: '2-digit',
+                  minute: '2-digit'
+                })}
+              </Badge>
+            </div>
+          </div>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="grid md:grid-cols-2 gap-4">
+          <div>
+            <p className="font-semibold text-sm">Current School</p>
+            <p className="text-sm text-muted-foreground">{application.current_school}</p>
+          </div>
+          <div>
+            <p className="font-semibold text-sm">Experience</p>
+            <p className="text-sm text-muted-foreground">{application.years_of_experience} years</p>
+          </div>
+          <div className="col-span-2">
+            <p className="font-semibold text-sm">Google Meet Link</p>
+            <a 
+              href={application.interview_meet_link} 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-sm text-primary hover:underline"
+            >
+              {application.interview_meet_link}
+            </a>
+          </div>
+        </div>
+
+        {application.admin_notes && (
+          <div className="bg-muted/50 p-3 rounded">
+            <p className="font-semibold text-sm mb-1">Initial Notes</p>
+            <p className="text-sm text-muted-foreground">{application.admin_notes}</p>
+          </div>
+        )}
+
+        <Textarea
+          placeholder="Interview notes - record your observations and decision rationale..."
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
+          rows={3}
+        />
+
+        <div className="flex gap-2 mt-4">
+          <Button
+            onClick={() => onResult(application.id, true, notes)}
+            className="bg-green-600 hover:bg-green-700"
+          >
+            <CheckCircle className="w-4 h-4 mr-2" />
+            Passed - Send Profile Setup Invite
+          </Button>
+          <Button
+            onClick={() => onResult(application.id, false, notes)}
+            variant="destructive"
+          >
+            <XCircle className="w-4 h-4 mr-2" />
+            Failed
+          </Button>
+        </div>
       </CardContent>
     </Card>
   );

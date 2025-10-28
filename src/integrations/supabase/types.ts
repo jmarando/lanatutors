@@ -404,6 +404,9 @@ export type Database = {
           email: string
           full_name: string
           id: string
+          interview_meet_link: string | null
+          interview_notes: string | null
+          interview_scheduled_at: string | null
           phone_number: string
           status: string
           tsc_number: string | null
@@ -420,6 +423,9 @@ export type Database = {
           email: string
           full_name: string
           id?: string
+          interview_meet_link?: string | null
+          interview_notes?: string | null
+          interview_scheduled_at?: string | null
           phone_number: string
           status?: string
           tsc_number?: string | null
@@ -436,6 +442,9 @@ export type Database = {
           email?: string
           full_name?: string
           id?: string
+          interview_meet_link?: string | null
+          interview_notes?: string | null
+          interview_scheduled_at?: string | null
           phone_number?: string
           status?: string
           tsc_number?: string | null
