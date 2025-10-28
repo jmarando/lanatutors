@@ -410,6 +410,8 @@ export type Database = {
           interview_scheduled_at: string | null
           phone_number: string
           status: string
+          subjects: string[] | null
+          teaching_level: string | null
           tsc_number: string | null
           updated_at: string
           user_id: string | null
@@ -430,6 +432,8 @@ export type Database = {
           interview_scheduled_at?: string | null
           phone_number: string
           status?: string
+          subjects?: string[] | null
+          teaching_level?: string | null
           tsc_number?: string | null
           updated_at?: string
           user_id?: string | null
@@ -450,6 +454,8 @@ export type Database = {
           interview_scheduled_at?: string | null
           phone_number?: string
           status?: string
+          subjects?: string[] | null
+          teaching_level?: string | null
           tsc_number?: string | null
           updated_at?: string
           user_id?: string | null

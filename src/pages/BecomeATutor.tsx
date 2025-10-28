@@ -89,6 +89,8 @@ const BecomeATutor = () => {
     yearsOfExperience: "",
     tscNumber: "",
     cambridgeQualification: "",
+    teachingLevel: "",
+    subjects: "",
   });
 
   const handleCvChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -180,6 +182,8 @@ const BecomeATutor = () => {
           years_of_experience: parseInt(formData.yearsOfExperience),
           tsc_number: formData.tscNumber || null,
           cambridge_qualification: formData.cambridgeQualification || null,
+          teaching_level: formData.teachingLevel || null,
+          subjects: formData.subjects ? formData.subjects.split(',').map(s => s.trim()) : [],
           cv_url: cvUrl,
           agreed_to_terms: agreedToTerms,
           status: 'pending'
@@ -327,7 +331,7 @@ const BecomeATutor = () => {
                 <div>
                   <h3 className="font-semibold text-lg mb-2">Basic Information</h3>
                   <p className="text-sm text-muted-foreground mb-4">
-                    Tell us about yourself and your teaching experience
+                    This is initial information for vetting purposes. You'll complete your full tutor profile after approval.
                   </p>
                 </div>
 
@@ -388,6 +392,30 @@ const BecomeATutor = () => {
                         onChange={(e) => setFormData({ ...formData, yearsOfExperience: e.target.value })}
                         required
                       />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="teachingLevel">Teaching Level *</Label>
+                      <Input
+                        id="teachingLevel"
+                        placeholder="e.g., KCSE, IGCSE, IB, Primary"
+                        value={formData.teachingLevel}
+                        onChange={(e) => setFormData({ ...formData, teachingLevel: e.target.value })}
+                        required
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="subjects">Subjects *</Label>
+                      <Input
+                        id="subjects"
+                        placeholder="e.g., Mathematics, Physics, Chemistry"
+                        value={formData.subjects}
+                        onChange={(e) => setFormData({ ...formData, subjects: e.target.value })}
+                        required
+                      />
+                      <p className="text-xs text-muted-foreground">Separate multiple subjects with commas</p>
                     </div>
                   </div>
 
