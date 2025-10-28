@@ -100,6 +100,7 @@ export type Database = {
           follow_up_status: string | null
           grade_level: string
           id: string
+          meeting_link: string | null
           next_action: string | null
           next_action_date: string | null
           parent_name: string
@@ -125,6 +126,7 @@ export type Database = {
           follow_up_status?: string | null
           grade_level: string
           id?: string
+          meeting_link?: string | null
           next_action?: string | null
           next_action_date?: string | null
           parent_name: string
@@ -150,6 +152,7 @@ export type Database = {
           follow_up_status?: string | null
           grade_level?: string
           id?: string
+          meeting_link?: string | null
           next_action?: string | null
           next_action_date?: string | null
           parent_name?: string

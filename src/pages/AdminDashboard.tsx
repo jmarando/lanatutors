@@ -778,11 +778,10 @@ The ElimuConnect Team`;
   };
 
   const handleJoinCall = (booking: any) => {
-    // This will be populated from the database when the meeting is created
     if (booking.meeting_link) {
       window.open(booking.meeting_link, '_blank');
     } else {
-      toast.error("Meeting link not available yet");
+      toast.error("Meeting link not available. Please create one manually or check the consultation settings.");
     }
   };
 
@@ -1502,17 +1501,51 @@ The ElimuConnect Team`;
                     </div>
 
                     <div className="pt-4 border-t space-y-4">
-                      {/* Join Call Button - Most Important Action */}
-                      {new Date(booking.consultation_date).toDateString() === new Date().toDateString() && (
-                        <Button
-                          onClick={() => handleJoinCall(booking)}
-                          className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold text-lg py-6"
-                          disabled={!booking.meeting_link}
-                        >
-                          <Video className="h-5 w-5 mr-2" />
-                          Join Consultation Call
-                          <ExternalLink className="h-4 w-4 ml-2" />
-                        </Button>
+                      {/* Meeting Link Section */}
+                      {booking.meeting_link ? (
+                        <div className="bg-green-50 dark:bg-green-950/20 p-3 rounded-md border border-green-200 dark:border-green-800">
+                          <div className="flex items-center gap-2 mb-2">
+                            <Video className="h-4 w-4 text-green-600" />
+                            <p className="text-sm font-medium text-green-900 dark:text-green-100">Meeting Link Available</p>
+                          </div>
+                          <Button
+                            onClick={() => handleJoinCall(booking)}
+                            className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold"
+                          >
+                            <Video className="h-4 w-4 mr-2" />
+                            Join Consultation Call
+                            <ExternalLink className="h-4 w-4 ml-2" />
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="bg-amber-50 dark:bg-amber-950/20 p-3 rounded-md border border-amber-200 dark:border-amber-800">
+                          <div className="flex items-center gap-2 mb-2">
+                            <AlertCircle className="h-4 w-4 text-amber-600" />
+                            <p className="text-sm font-medium text-amber-900 dark:text-amber-100">No Meeting Link Set</p>
+                          </div>
+                          <p className="text-xs text-amber-700 dark:text-amber-300 mb-2">
+                            Create a Google Meet link and add it manually, or it will be auto-created before the consultation.
+                          </p>
+                          <Button
+                            variant="outline"
+                            onClick={() => {
+                              const meetLink = prompt("Enter Google Meet link:");
+                              if (meetLink) {
+                                supabase
+                                  .from('consultation_bookings')
+                                  .update({ meeting_link: meetLink })
+                                  .eq('id', booking.id)
+                                  .then(() => {
+                                    toast.success("Meeting link added!");
+                                    fetchConsultationBookings();
+                                  });
+                              }
+                            }}
+                            className="w-full"
+                          >
+                            Add Meeting Link Manually
+                          </Button>
+                        </div>
                       )}
 
                       {/* Conversion Tracking Actions */}
