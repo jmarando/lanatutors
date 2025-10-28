@@ -183,6 +183,14 @@ const BecomeATutor = () => {
 
       if (applicationError) throw applicationError;
 
+      // Send acknowledgment email
+      await supabase.functions.invoke('send-application-acknowledgment', {
+        body: { 
+          email: formData.email,
+          fullName: formData.fullName 
+        }
+      });
+
       toast({
         title: "Application submitted!",
         description: "We'll review your application and contact you within 3-5 business days."
