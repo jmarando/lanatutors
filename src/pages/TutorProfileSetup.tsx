@@ -6,6 +6,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
 import { Award, Upload, ArrowLeft, ArrowRight, CheckCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -23,7 +26,6 @@ const TutorProfileSetup = () => {
   const [step, setStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
-  const videoInputRef = useRef<HTMLInputElement>(null);
   const photoInputRef = useRef<HTMLInputElement>(null);
   
   const [formData, setFormData] = useState({
@@ -41,7 +43,6 @@ const TutorProfileSetup = () => {
     teachingLocation: "",
   });
 
-  const [videoFile, setVideoFile] = useState<File | null>(null);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [subjectInput, setSubjectInput] = useState("");
 
@@ -60,22 +61,25 @@ const TutorProfileSetup = () => {
       navigate("/");
       return;
     }
-    setUserId(session.user.id);
-  };
-
-  const handleVideoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      if (file.size > 100 * 1024 * 1024) {
-        toast({
-          title: "File too large",
-          description: "Please upload a video smaller than 100MB",
-          variant: "destructive"
-        });
-        return;
-      }
-      setVideoFile(file);
+    
+    // Check if user has an approved tutor application
+    const { data: application } = await supabase
+      .from("tutor_applications")
+      .select("status")
+      .eq("user_id", session.user.id)
+      .single();
+    
+    if (!application || application.status !== 'approved') {
+      toast({
+        title: "Access Denied",
+        description: "Only approved tutors can set up their profile. Please wait for your application to be approved.",
+        variant: "destructive"
+      });
+      navigate("/");
+      return;
     }
+    
+    setUserId(session.user.id);
   };
 
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -119,21 +123,8 @@ const TutorProfileSetup = () => {
     setIsLoading(true);
 
     try {
-      // Upload video and photo if provided
-      let videoUrl = null;
+      // Upload photo if provided
       let photoUrl = null;
-
-      if (videoFile) {
-        const videoExt = videoFile.name.split('.').pop();
-        const videoPath = `${userId}/teaching-video.${videoExt}`;
-        
-        const { error: videoError } = await supabase.storage
-          .from('tutor-videos')
-          .upload(videoPath, videoFile, { upsert: true });
-
-        if (videoError) throw videoError;
-        videoUrl = videoPath;
-      }
 
       if (photoFile) {
         const photoExt = photoFile.name.split('.').pop();
@@ -212,7 +203,7 @@ const TutorProfileSetup = () => {
     }
   };
 
-  const progress = (step / 4) * 100;
+  const progress = (step / 3) * 100;
 
   return (
     <div className="min-h-screen bg-[image:var(--gradient-page)] flex items-center justify-center p-6">
@@ -222,25 +213,27 @@ const TutorProfileSetup = () => {
         keywords="tutor profile setup, online teaching, ElimuConnect"
       />
       
-      <div className="w-full max-w-4xl">
+      <div className="w-full max-w-7xl">
         <div className="flex items-center justify-center gap-2 mb-8">
           <Award className="w-10 h-10 text-primary" />
           <span className="text-3xl font-bold">ElimuConnect</span>
         </div>
 
-        <Card>
-          <CardHeader>
-            <div className="mb-4">
-              <Progress value={progress} className="h-2" />
-              <p className="text-sm text-muted-foreground mt-2">Step {step} of 4</p>
-            </div>
-            <CardTitle className="text-2xl">Complete Your Tutor Profile</CardTitle>
-            <CardDescription>
-              Set up your professional profile to start teaching on ElimuConnect
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="grid lg:grid-cols-2 gap-6">
+          {/* Form Section */}
+          <Card>
+            <CardHeader>
+              <div className="mb-4">
+                <Progress value={progress} className="h-2" />
+                <p className="text-sm text-muted-foreground mt-2">Step {step} of 3</p>
+              </div>
+              <CardTitle className="text-2xl">Complete Your Tutor Profile</CardTitle>
+              <CardDescription>
+                Set up your professional profile to start teaching on ElimuConnect
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleSubmit} className="space-y-6">
               {step === 1 && (
                 <div className="space-y-4">
                   <h3 className="font-semibold text-lg">Personal & Professional Information</h3>
@@ -401,7 +394,7 @@ const TutorProfileSetup = () => {
 
               {step === 3 && (
                 <div className="space-y-4">
-                  <h3 className="font-semibold text-lg">Services & Rates</h3>
+                  <h3 className="font-semibold text-lg">Services, Rates & Additional Info</h3>
                   
                   <div className="space-y-2">
                     <Label>Services Offered *</Label>
@@ -467,61 +460,6 @@ const TutorProfileSetup = () => {
                 </div>
               )}
 
-              {step === 4 && (
-                <div className="space-y-4">
-                  <h3 className="font-semibold text-lg">Teaching Video</h3>
-                  
-                  <div className="bg-muted/50 border rounded-lg p-4">
-                    <h4 className="font-semibold mb-2">Video Guidelines</h4>
-                    <ul className="text-sm space-y-1 text-muted-foreground">
-                      <li>• 2-3 minutes introducing yourself</li>
-                      <li>• Explain your teaching approach</li>
-                      <li>• Share what makes you unique</li>
-                      <li>• Be authentic and enthusiastic!</li>
-                      <li>• Good lighting and clear audio</li>
-                    </ul>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="videoUpload">Upload Teaching Video *</Label>
-                    <div className="flex items-center gap-4">
-                      {videoFile && (
-                        <span className="text-sm text-muted-foreground">{videoFile.name}</span>
-                      )}
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => videoInputRef.current?.click()}
-                      >
-                        <Upload className="mr-2 h-4 w-4" />
-                        {videoFile ? "Change Video" : "Upload Video"}
-                      </Button>
-                      <input
-                        ref={videoInputRef}
-                        type="file"
-                        accept="video/*"
-                        onChange={handleVideoChange}
-                        className="hidden"
-                      />
-                    </div>
-                    <p className="text-xs text-muted-foreground">
-                      Accepted formats: MP4, MOV, AVI (Max 100MB)
-                    </p>
-                  </div>
-
-                  <div className="bg-primary/10 border border-primary/20 rounded-lg p-4 mt-6">
-                    <div className="flex items-start gap-3">
-                      <CheckCircle className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
-                      <div className="text-sm">
-                        <p className="font-semibold mb-1">Final Step!</p>
-                        <p className="text-muted-foreground">
-                          Once you submit, your profile will be reviewed by our team. You'll be notified via email when approved (usually within 24-48 hours).
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
 
               <div className="flex justify-between gap-4 pt-4">
                 {step > 1 && (
@@ -530,7 +468,7 @@ const TutorProfileSetup = () => {
                     Back
                   </Button>
                 )}
-                {step < 4 ? (
+                {step < 3 ? (
                   <Button 
                     type="button" 
                     onClick={() => setStep(step + 1)}
@@ -546,11 +484,97 @@ const TutorProfileSetup = () => {
                 )}
               </div>
             </form>
+              </CardContent>
+            </Card>
+
+            {/* Preview Section */}
+            <Card className="sticky top-6">
+          <CardHeader>
+            <CardTitle className="text-lg">Profile Preview</CardTitle>
+            <CardDescription>See how your profile will appear to students</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              {/* Avatar & Name */}
+              <div className="flex items-center gap-4">
+                <Avatar className="w-16 h-16">
+                  {photoFile ? (
+                    <AvatarImage src={URL.createObjectURL(photoFile)} />
+                  ) : (
+                    <AvatarFallback className="text-xl bg-primary text-primary-foreground">
+                      {formData.currentInstitution.split(' ').map(n => n[0]).join('').slice(0, 2) || "T"}
+                    </AvatarFallback>
+                  )}
+                </Avatar>
+                <div>
+                  <p className="font-semibold">{formData.currentInstitution || "Your Name"}</p>
+                  <p className="text-sm text-muted-foreground">
+                    {formData.subjects.join(", ") || "Your Subjects"}
+                  </p>
+                </div>
+              </div>
+
+              <Separator />
+
+              {/* Bio */}
+              {formData.bio && (
+                <div>
+                  <h4 className="font-semibold text-sm mb-2">About Me</h4>
+                  <p className="text-sm text-muted-foreground">{formData.bio}</p>
+                </div>
+              )}
+
+              {/* Rate */}
+              {formData.hourlyRate && (
+                <div className="bg-muted/50 p-3 rounded-lg">
+                  <div className="flex items-baseline gap-2">
+                    <span className="text-2xl font-bold">KES {Number(formData.hourlyRate).toLocaleString()}</span>
+                    <span className="text-sm text-muted-foreground">/hr</span>
+                  </div>
+                </div>
+              )}
+
+              {/* Experience */}
+              {formData.experienceYears && (
+                <div className="flex items-center gap-2 text-sm">
+                  <Award className="w-4 h-4 text-primary" />
+                  <span>{formData.experienceYears}+ years experience</span>
+                </div>
+              )}
+
+              {/* Curriculum */}
+              {formData.curriculum.length > 0 && (
+                <div>
+                  <h4 className="font-semibold text-sm mb-2">Curriculum</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {formData.curriculum.map(curr => (
+                      <Badge key={curr} variant="secondary" className="text-xs">{curr}</Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Services */}
+              {formData.servicesOffered.length > 0 && (
+                <div>
+                  <h4 className="font-semibold text-sm mb-2">Services</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {formData.servicesOffered.map(service => (
+                      <Badge key={service} variant="outline" className="text-xs">
+                        <CheckCircle className="w-3 h-3 mr-1" />
+                        {service}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
           </CardContent>
-        </Card>
+            </Card>
+          </div>
+        </div>
       </div>
-    </div>
-  );
-};
+    );
+  };
 
 export default TutorProfileSetup;
