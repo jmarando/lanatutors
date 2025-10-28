@@ -14,6 +14,7 @@ import { CheckCircle, XCircle, AlertCircle, Star, Calendar, Clock, Mail, Phone, 
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { LineChart, Line, BarChart, Bar, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
+import { formatConsultationDate, formatToEAT, formatFullDateTime } from "@/utils/dateUtils";
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -53,7 +54,7 @@ const AdminDashboard = () => {
 Thank you for booking a consultation with Yehtu Tutors. We're pleased to confirm your appointment for ${booking.student_name}.
 
 Consultation Details:
-Date: ${new Date(booking.consultation_date).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
+Date: ${formatConsultationDate(booking.consultation_date)}
 Time: ${booking.consultation_time}
 Grade Level: ${booking.grade_level}
 Subjects of Interest: ${booking.subjects_interest.join(', ')}
@@ -1440,12 +1441,7 @@ The ElimuConnect Team`;
                         <div className="flex items-center gap-2 text-sm">
                           <Calendar className="h-4 w-4 text-muted-foreground" />
                           <span className="font-medium">Date:</span>
-                          <span>{new Date(booking.consultation_date).toLocaleDateString('en-US', {
-                            weekday: 'long',
-                            year: 'numeric',
-                            month: 'long',
-                            day: 'numeric'
-                          })}</span>
+                          <span>{formatConsultationDate(booking.consultation_date)}</span>
                         </div>
                         
                         <div className="flex items-center gap-2 text-sm">
@@ -1555,7 +1551,7 @@ The ElimuConnect Team`;
                           <p className="text-sm text-muted-foreground">{booking.consultation_outcome}</p>
                           {booking.follow_up_sent_at && (
                             <p className="text-xs text-muted-foreground mt-2">
-                              Follow-up sent: {new Date(booking.follow_up_sent_at).toLocaleString()}
+                              Follow-up sent: {formatFullDateTime(booking.follow_up_sent_at)}
                             </p>
                           )}
                         </div>
@@ -1614,7 +1610,7 @@ The ElimuConnect Team`;
                           <p className="text-sm text-muted-foreground">{booking.next_action}</p>
                           {booking.next_action_date && (
                             <p className="text-xs text-muted-foreground mt-1">
-                              Due: {new Date(booking.next_action_date).toLocaleDateString()}
+                              Due: {formatConsultationDate(booking.next_action_date)}
                             </p>
                           )}
                         </div>
@@ -1664,7 +1660,7 @@ The ElimuConnect Team`;
                     </div>
 
                     <div className="text-xs text-muted-foreground pt-2 border-t">
-                      Booked on: {new Date(booking.created_at).toLocaleString()}
+                      Booked on: {formatFullDateTime(booking.created_at)}
                     </div>
                   </CardContent>
                 </Card>
@@ -1859,7 +1855,7 @@ const ApplicationReviewCard = ({ application, onReview }: any) => {
             <p className="text-sm text-muted-foreground">{application.email}</p>
             <p className="text-sm text-muted-foreground">{application.phone_number}</p>
             <Badge className="mt-2" variant="secondary">
-              Applied: {new Date(application.created_at).toLocaleDateString()}
+              Applied: {formatConsultationDate(application.created_at)}
             </Badge>
           </div>
         </div>
@@ -1967,13 +1963,7 @@ const InterviewCard = ({ application, onResult }: any) => {
             <p className="text-sm text-muted-foreground">{application.phone_number}</p>
             <div className="flex gap-2 mt-2">
               <Badge variant="secondary">
-                Interview: {new Date(application.interview_scheduled_at).toLocaleString('en-US', {
-                  weekday: 'short',
-                  month: 'short',
-                  day: 'numeric',
-                  hour: '2-digit',
-                  minute: '2-digit'
-                })}
+                Interview: {formatFullDateTime(application.interview_scheduled_at)}
               </Badge>
             </div>
           </div>
