@@ -47,103 +47,104 @@ const AdminDashboard = () => {
     email: {
       confirmation: {
         title: "Consultation Confirmed",
-        subject: "Your Yehtu Tutors Consultation is Confirmed! 🎓",
-        body: (booking: any) => `Hi ${booking.parent_name},
+        subject: "Your Yehtu Tutors Consultation is Confirmed",
+        body: (booking: any) => `Dear ${booking.parent_name},
 
-Great news! Your free consultation for ${booking.student_name} is confirmed.
+Thank you for booking a consultation with Yehtu Tutors. We're pleased to confirm your appointment for ${booking.student_name}.
 
-📅 Date: ${new Date(booking.consultation_date).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
-⏰ Time: ${booking.consultation_time}
-👤 Grade: ${booking.grade_level}
-📚 Subjects: ${booking.subjects_interest.join(', ')}
+Consultation Details:
+Date: ${new Date(booking.consultation_date).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
+Time: ${booking.consultation_time}
+Grade Level: ${booking.grade_level}
+Subjects of Interest: ${booking.subjects_interest.join(', ')}
 
-We'll send you the meeting link 24 hours before your consultation.
+We will send you the meeting link 24 hours before your scheduled consultation.
 
-Looking forward to meeting you!
+We look forward to discussing ${booking.student_name}'s educational needs with you.
 
 Best regards,
 The Yehtu Tutors Team`
       },
       reminder_24h: {
         title: "24-Hour Reminder",
-        subject: "Your Consultation is Tomorrow! 📅",
-        body: (booking: any) => `Hi ${booking.parent_name},
+        subject: "Reminder: Your Consultation is Tomorrow",
+        body: (booking: any) => `Dear ${booking.parent_name},
 
-This is a friendly reminder that your consultation for ${booking.student_name} is tomorrow!
+This is a reminder that your consultation for ${booking.student_name} is scheduled for tomorrow.
 
-📅 Tomorrow: ${new Date(booking.consultation_date).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
-⏰ Time: ${booking.consultation_time}
-🔗 Meeting Link: [Insert meeting link]
+Consultation Details:
+Date: ${new Date(booking.consultation_date).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
+Time: ${booking.consultation_time}
+Meeting Link: [Insert meeting link]
 
-Tips to prepare:
-✅ Have a list of ${booking.student_name}'s current challenges
-✅ Think about your learning goals
-✅ Prepare any questions you have
+To help us make the most of our time together, please consider:
+- Specific academic challenges ${booking.student_name} is currently facing
+- Your learning goals for this academic year
+- Any questions you have about our tutoring programs
 
-See you tomorrow!
+If you need to reschedule, please contact us at info@yehtu.com.
 
 Best regards,
 The Yehtu Tutors Team`
       },
       reminder_1h: {
         title: "1-Hour Reminder",
-        subject: "Your Consultation Starts in 1 Hour! ⏰",
-        body: (booking: any) => `Hi ${booking.parent_name},
+        subject: "Your Consultation Starts in 1 Hour",
+        body: (booking: any) => `Dear ${booking.parent_name},
 
-Your consultation for ${booking.student_name} starts in 1 hour!
+Your consultation for ${booking.student_name} begins in one hour.
 
-⏰ Time: ${booking.consultation_time}
-🔗 Join here: [Insert meeting link]
+Time: ${booking.consultation_time}
+Meeting Link: [Insert meeting link]
 
-See you soon!
+We look forward to speaking with you shortly.
 
+Best regards,
 The Yehtu Tutors Team`
       },
       post_consultation: {
         title: "Post-Consultation Summary",
-        subject: "Great Meeting You! Here's Your Next Step 🚀",
-        body: (booking: any) => `Hi ${booking.parent_name},
+        subject: "Thank You - Next Steps for ${booking.student_name}",
+        body: (booking: any) => `Dear ${booking.parent_name},
 
-Thank you for taking the time to meet with us today! It was wonderful learning about ${booking.student_name}'s educational journey.
+Thank you for taking the time to meet with us today. We appreciated learning about ${booking.student_name}'s educational journey and goals.
 
-📝 What We Discussed:
-[Add key points from the consultation]
+Key Discussion Points:
+[Add summary of main topics discussed]
 
-🎯 Recommended Next Steps:
-[Add personalized recommendations]
+Recommended Next Steps:
+[Add personalized recommendations based on the consultation]
 
-📚 Suggested Subjects & Tutors:
-[Add recommended tutors and subjects]
+Suggested Tutors and Subjects:
+[Add recommended tutors and subject areas]
 
-🔗 Ready to Get Started?
-Book your first session here: [Add booking link]
+Ready to Get Started?
+You can book your first tutoring session here: [Add booking link]
 
-Special Offer: First session at 20% off when you book within 48 hours! ⏰
+Limited Time Offer: Book within 48 hours to receive 20% off your first session.
 
-Questions? Just reply to this email or call us at [phone number].
+If you have any questions or would like to discuss further, please don't hesitate to reply to this email or call us at [phone number].
 
 Best regards,
 The Yehtu Tutors Team`
       },
       follow_up_3days: {
         title: "3-Day Follow-up",
-        subject: "Still Interested in Tutoring for ${booking.student_name}? 🎓",
-        body: (booking: any) => `Hi ${booking.parent_name},
+        subject: "Following Up: Tutoring for ${booking.student_name}",
+        body: (booking: any) => `Dear ${booking.parent_name},
 
-I hope this email finds you well! 
+I hope this email finds you well.
 
-I wanted to follow up on our consultation about ${booking.student_name}'s tutoring needs.
+I wanted to follow up regarding ${booking.student_name}'s tutoring needs. We have experienced tutors available who specialize in ${booking.subjects_interest.join(' and ')}.
 
-We have some excellent tutors ready to help with ${booking.subjects_interest.join(' and ')}. 
+We can help you with:
+- Scheduling a trial tutoring session
+- Answering any questions about our programs
+- Providing more information about our recommended tutors
 
-Would you like to:
-📅 Schedule a trial session?
-💬 Discuss any questions?
-👥 Learn more about our tutors?
+Please note: Your 20% discount expires in 24 hours.
 
-Special reminder: Your 20% discount expires in 24 hours!
-
-Let me know what works best for you.
+Would you like to proceed with booking a session? Simply reply to this email or give us a call.
 
 Best regards,
 The Yehtu Tutors Team`
@@ -152,88 +153,97 @@ The Yehtu Tutors Team`
     whatsapp: {
       confirmation: {
         title: "Consultation Confirmed",
-        body: (booking: any) => `🎓 *Yehtu Tutors - Consultation Confirmed!*
+        body: (booking: any) => `Yehtu Tutors - Consultation Confirmed
 
-Hi ${booking.parent_name},
+Dear ${booking.parent_name},
 
-Your free consultation for *${booking.student_name}* is confirmed! ✅
+Your consultation for ${booking.student_name} has been confirmed.
 
-📅 *Date:* ${new Date(booking.consultation_date).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
-⏰ *Time:* ${booking.consultation_time}
-👤 *Grade:* ${booking.grade_level}
+Date: ${new Date(booking.consultation_date).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
+Time: ${booking.consultation_time}
+Grade: ${booking.grade_level}
 
-We'll send the meeting link 24 hours before.
+We will send the meeting link 24 hours before your appointment.
 
-Looking forward to meeting you! 😊`
+Best regards,
+Yehtu Tutors`
       },
       reminder_24h: {
         title: "24-Hour Reminder",
-        body: (booking: any) => `📅 *Reminder: Consultation Tomorrow!*
+        body: (booking: any) => `Reminder: Consultation Tomorrow
 
-Hi ${booking.parent_name},
+Dear ${booking.parent_name},
 
-Your consultation for *${booking.student_name}* is tomorrow!
+Your consultation for ${booking.student_name} is tomorrow.
 
-⏰ *Time:* ${booking.consultation_time}
-🔗 *Meeting Link:* [Insert link]
+Time: ${booking.consultation_time}
+Meeting Link: [Insert link]
 
-Tips to prepare:
-✅ List current challenges
-✅ Think about learning goals
-✅ Prepare questions
+Please prepare:
+- Current academic challenges
+- Learning goals
+- Questions about our programs
 
-See you tomorrow! 👋`
+Best regards,
+Yehtu Tutors`
       },
       reminder_1h: {
         title: "1-Hour Reminder",
-        body: (booking: any) => `⏰ *Starting in 1 Hour!*
+        body: (booking: any) => `Consultation Starting Soon
 
-Hi ${booking.parent_name},
+Dear ${booking.parent_name},
 
-Your consultation for *${booking.student_name}* starts soon!
+Your consultation for ${booking.student_name} begins in 1 hour.
 
-⏰ ${booking.consultation_time}
-🔗 Join: [Insert link]
+Time: ${booking.consultation_time}
+Link: [Insert link]
 
-See you soon! 🎓`
+See you soon.
+
+Yehtu Tutors`
       },
       post_consultation: {
         title: "Post-Consultation Follow-up",
-        body: (booking: any) => `🎓 *Thank You for Meeting Us!*
+        body: (booking: any) => `Thank You for Meeting With Us
 
-Hi ${booking.parent_name},
+Dear ${booking.parent_name},
 
-Great meeting you today! Here's what's next for *${booking.student_name}*:
+Thank you for discussing ${booking.student_name}'s educational needs with us today.
 
-📝 *Key Points:*
-[Add summary]
+Summary: [Add key points]
+Recommendations: [Add next steps]
+Suggested Tutors: [Add recommendations]
 
-🎯 *Recommended:*
-[Add recommendations]
+Book your first session: [Add link]
 
-🔗 *Book Your First Session:*
-[Add link]
+Special Offer: 20% off if you book within 48 hours.
 
-💥 *Special Offer:* 20% off if you book within 48 hours!
+Questions? Reply to this message or call us.
 
-Reply to this message or call us anytime! 📞`
+Best regards,
+Yehtu Tutors`
       },
       follow_up_3days: {
         title: "3-Day Follow-up",
-        body: (booking: any) => `👋 Hi ${booking.parent_name},
+        body: (booking: any) => `Following Up on ${booking.student_name}'s Tutoring
 
-Following up on ${booking.student_name}'s tutoring needs!
+Dear ${booking.parent_name},
 
-We have great tutors ready for ${booking.subjects_interest.join(' & ')}.
+I wanted to follow up regarding tutoring for ${booking.student_name}.
 
-Interested in:
-📅 Trial session?
-💬 Questions?
-👥 Meet tutors?
+We have qualified tutors ready to help with ${booking.subjects_interest.join(' and ')}.
 
-⏰ Your 20% discount expires in 24 hours!
+Can we help you with:
+- Scheduling a trial session
+- Answering questions
+- More tutor information
 
-Let us know! 🎓`
+Reminder: 20% discount expires in 24 hours.
+
+Let us know how we can assist.
+
+Best regards,
+Yehtu Tutors`
       }
     }
   };
