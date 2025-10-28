@@ -18,6 +18,7 @@ import tutor3 from "@/assets/tutor-3.jpg";
 import tutor4 from "@/assets/tutor-4.jpg";
 import tutor5 from "@/assets/tutor-5.jpg";
 import tutor6 from "@/assets/tutor-6.jpg";
+import calvinProfilePhoto from "@/assets/calvin-profile.png";
 
 const TutorProfile = () => {
   const { id } = useParams();
@@ -92,6 +93,9 @@ const TutorProfile = () => {
       const tutorImages = [tutor1, tutor2, tutor3, tutor4, tutor5, tutor6];
       const randomImage = tutorImages[Math.floor(Math.random() * tutorImages.length)];
       
+      // Check if this is Calvin's profile
+      const isCalvin = profile?.full_name === "Calvins Onuko";
+      
       setTutor({
         id: tutorProfile.id,
         userId: tutorProfile.user_id,
@@ -106,11 +110,11 @@ const TutorProfile = () => {
         photo: profile?.full_name 
           ? profile.full_name.split(' ').map((n: string) => n[0]).join('') 
           : "T",
-        photoUrl: randomImage,
+        photoUrl: isCalvin ? calvinProfilePhoto : randomImage,
         bio: tutorProfile.bio || "",
         education: Array.isArray(tutorProfile.qualifications) 
-          ? tutorProfile.qualifications.join(", ") 
-          : "Not specified",
+          ? tutorProfile.qualifications 
+          : [],
         graduationYear: tutorProfile.graduation_year,
         experience: tutorProfile.experience_years || 0,
         teachingExperience: tutorProfile.teaching_experience || [],
@@ -424,16 +428,30 @@ const TutorProfile = () => {
               <h2 className="font-bold text-lg">Education</h2>
             </div>
             <div className="space-y-3">
-              <div>
-                <p className="font-semibold text-sm mb-1">{tutor.education}</p>
-                <p className="text-sm text-muted-foreground">{tutor.school}</p>
-                {tutor.graduationYear && (
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Graduated: {tutor.graduationYear}
-                  </p>
-                )}
-              </div>
+              {Array.isArray(tutor.education) && tutor.education.length > 0 ? (
+                <ul className="space-y-2">
+                  {tutor.education.map((qual: string, idx: number) => (
+                    <li key={idx} className="flex gap-2">
+                      <span className="text-primary font-bold shrink-0">•</span>
+                      <span className="text-sm leading-relaxed">{qual}</span>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <div>
+                  <p className="font-semibold text-sm mb-1">{tutor.education}</p>
+                  <p className="text-sm text-muted-foreground">{tutor.school}</p>
+                  {tutor.graduationYear && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Graduated: {tutor.graduationYear}
+                    </p>
+                  )}
+                </div>
+              )}
             </div>
+            {!Array.isArray(tutor.education) && (
+              <p className="text-xs text-muted-foreground mt-3">{tutor.school}</p>
+            )}
           </CardContent>
         </Card>
 
