@@ -17,22 +17,22 @@ const TUTOR_REQUIREMENTS = [
   {
     icon: GraduationCap,
     title: "Teaching Experience",
-    description: "Minimum 2 years of teaching or tutoring experience in recognized schools or institutions"
+    description: "Minimum 3 years of proven teaching or tutoring experience in accredited institutions with verifiable employment records"
   },
   {
     icon: FileText,
     title: "Qualifications",
-    description: "Bachelor's degree in Education or relevant subject area. Teaching certification preferred"
+    description: "Bachelor's degree in Education or relevant subject area required. Valid TSC (Teachers Service Commission) number mandatory"
   },
   {
     icon: Shield,
     title: "Background Check",
-    description: "Successful completion of background verification and reference checks"
+    description: "Comprehensive background verification, certificate of good conduct, and verification of three professional references required"
   },
   {
     icon: CheckCircle,
     title: "Subject Expertise",
-    description: "Demonstrated mastery in CBC, IGCSE, or both curriculum subjects you wish to teach"
+    description: "Proven mastery and teaching track record in CBC, IGCSE, or both curriculum subjects with documented student success rates"
   }
 ];
 
