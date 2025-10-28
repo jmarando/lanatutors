@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { Calendar, Clock, Mail, Phone, User, BookOpen, FileText, Video, Edit, Save, X } from "lucide-react";
+import { Calendar, Clock, Mail, Phone, User, BookOpen, FileText, Video, Edit, Save, X, MessageCircle } from "lucide-react";
 
 interface ConsultationBooking {
   id: string;
@@ -100,6 +100,34 @@ export default function ConsultationAdmin() {
       month: 'long',
       day: 'numeric'
     });
+  };
+
+  const handleWhatsAppMessage = (booking: ConsultationBooking) => {
+    // Format phone number (remove spaces and special characters)
+    const cleanPhone = booking.phone_number.replace(/[\s\-\(\)]/g, '');
+    
+    // Construct the WhatsApp message
+    const message = `Hi ${booking.parent_name}! 👋
+
+This is a reminder about your free consultation for ${booking.student_name}.
+
+📅 Date: ${formatDate(booking.consultation_date)}
+⏰ Time: ${booking.consultation_time}
+📚 Grade: ${booking.grade_level}
+📖 Subjects: ${booking.subjects_interest.join(', ')}
+
+We're looking forward to discussing ${booking.student_name}'s learning needs with you!
+
+If you have any questions before the consultation, feel free to reply to this message.
+
+Best regards,
+The ElimuConnect Team`;
+
+    // Encode the message for URL
+    const encodedMessage = encodeURIComponent(message);
+    
+    // Open WhatsApp Web with pre-filled message
+    window.open(`https://wa.me/${cleanPhone}?text=${encodedMessage}`, '_blank');
   };
 
   if (loading) {
@@ -211,7 +239,18 @@ export default function ConsultationAdmin() {
                     </div>
                   </div>
 
-                  <div className="pt-4 border-t">
+                  <div className="pt-4 border-t space-y-4">
+                    <div className="flex items-center gap-2">
+                      <Button
+                        onClick={() => handleWhatsAppMessage(booking)}
+                        className="flex-1"
+                        variant="default"
+                      >
+                        <MessageCircle className="h-4 w-4 mr-2" />
+                        Send WhatsApp Message
+                      </Button>
+                    </div>
+
                     <div className="flex items-start justify-between mb-2">
                       <span className="font-medium text-sm flex items-center gap-2">
                         <FileText className="h-4 w-4" />
