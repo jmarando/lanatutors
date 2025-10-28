@@ -37,28 +37,29 @@ const handler = async (req: Request): Promise<Response> => {
           
           <p>We're excited to inform you that your initial application to become an ElimuConnect tutor has been approved!</p>
           
-          <h2>Next Steps:</h2>
-          <p>To complete your registration and start accepting students, please complete your full tutor profile by clicking the link below:</p>
+          <h2>Next Step: Schedule Your Interview</h2>
+          <p>Before completing your full tutor profile, we'd like to have a brief 30-minute session with you to discuss your teaching experience and answer any questions you may have about working with ElimuConnect.</p>
           
           <p style="margin: 30px 0;">
-            <a href="${Deno.env.get('VITE_SUPABASE_URL')?.replace('/rest/v1', '')}/tutor/signup" 
+            <a href="mailto:info@elimuconnect.co.ke?subject=Interview Booking - ${encodeURIComponent(fullName)}&body=Hello, I would like to schedule my 30-minute interview session. Please share available times.%0D%0A%0D%0AName: ${encodeURIComponent(fullName)}%0D%0AEmail: ${encodeURIComponent(email)}" 
                style="background-color: #4CAF50; color: white; padding: 14px 28px; text-decoration: none; border-radius: 4px; display: inline-block;">
-              Complete Your Profile
+              Book Your Interview Session
             </a>
           </p>
           
-          <p>Your full profile will include:</p>
+          <p><strong>What to expect:</strong></p>
           <ul>
-            <li>Professional photo</li>
-            <li>Teaching experience and qualifications</li>
-            <li>Subject specializations</li>
-            <li>References</li>
-            <li>A short teaching video (optional but recommended)</li>
+            <li>A 30-minute video call with our team</li>
+            <li>Discussion about your teaching experience and approach</li>
+            <li>Overview of how ElimuConnect works</li>
+            <li>Opportunity to ask any questions</li>
           </ul>
           
-          <p>Once your full profile is submitted, our team will conduct a final review before making your profile visible to students.</p>
+          <p>After your interview session, you'll receive an invitation to complete your full tutor profile, which will include your professional photo, detailed qualifications, and teaching preferences.</p>
           
-          <p>If you have any questions, feel free to reach out to our support team at support@elimuconnect.co.ke</p>
+          <p>To schedule your session, please click the button above to email us at info@elimuconnect.co.ke with your preferred times.</p>
+          
+          <p>We look forward to speaking with you soon!</p>
           
           <p>Best regards,<br>
           The ElimuConnect Team</p>
