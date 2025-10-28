@@ -19,72 +19,79 @@ const handler = async (req: Request): Promise<Response> => {
 
   try {
     const { email, fullName }: AcknowledgmentEmailRequest = await req.json();
-
+    
     console.log("Sending application acknowledgment to:", email);
 
-    const emailResponse = await fetch("https://api.resend.com/emails", {
+    // TEMPORARY: Send to verified email for testing
+    // TODO: Verify domain at resend.com/domains and update 'from' address
+    const testEmail = "justin@glab.africa";
+
+    const response = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         Authorization: `Bearer ${RESEND_API_KEY}`,
       },
       body: JSON.stringify({
-        from: "ElimuConnect <info@resend.dev>",
-        to: [email],
-        subject: "Application Received - ElimuConnect Tutor Program",
+        from: "ElimuConnect <onboarding@resend.dev>",
+        to: [testEmail], // Temporarily sending to verified email
+        subject: `Application Received - ${fullName}`,
         html: `
-          <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <h1 style="color: #333;">Thank You for Your Interest, ${fullName}!</h1>
-            
-            <p>We have successfully received your application to join the ElimuConnect tutor community.</p>
-            
-            <div style="background-color: #f4f4f4; padding: 20px; border-radius: 8px; margin: 20px 0;">
-              <h2 style="color: #333; margin-top: 0;">What Happens Next?</h2>
-              <ol style="line-height: 1.8; color: #555;">
-                <li><strong>Application Review</strong> - Our team will carefully review your credentials, CV, and teaching experience (3-5 business days)</li>
-                <li><strong>Verification</strong> - We'll verify your TSC number, references, and conduct background checks</li>
-                <li><strong>Approval & Invitation</strong> - If approved, you'll receive an email invitation to complete your full tutor profile</li>
-                <li><strong>Profile Completion</strong> - Submit your complete profile including professional photo, detailed experience, and references</li>
-                <li><strong>Final Review</strong> - We'll conduct a final review before making your profile live on our platform</li>
-                <li><strong>Go Live!</strong> - Once approved, you can start accepting students and earning</li>
-              </ol>
-            </div>
-
-            <div style="background-color: #e8f5e9; padding: 15px; border-radius: 8px; margin: 20px 0;">
-              <h3 style="color: #2e7d32; margin-top: 0;">⏱️ Timeline</h3>
-              <p style="margin: 0; color: #555;">You can expect to hear from us within <strong>3-5 business days</strong>. We review all applications thoroughly to maintain our high standards.</p>
-            </div>
-
-            <div style="background-color: #fff3e0; padding: 15px; border-radius: 8px; margin: 20px 0;">
-              <h3 style="color: #e65100; margin-top: 0;">📋 What We're Looking For</h3>
-              <p style="color: #555; margin-bottom: 10px;">As we review your application, we'll be assessing:</p>
-              <ul style="color: #555; line-height: 1.6;">
-                <li>Teaching experience and credentials</li>
-                <li>TSC registration status</li>
-                <li>Subject expertise and qualifications</li>
-                <li>Professional background and references</li>
-              </ul>
-            </div>
-
-            <p style="color: #555;">In the meantime, if you have any questions about the application process, feel free to reach out to us at <a href="mailto:support@elimuconnect.co.ke" style="color: #2754C5;">support@elimuconnect.co.ke</a></p>
-
-            <hr style="border: none; border-top: 1px solid #eee; margin: 30px 0;" />
-            
-            <p style="color: #888; font-size: 12px;">
-              Best regards,<br>
-              <strong>The ElimuConnect Team</strong><br>
-              Building Kenya's Premier Tutoring Network
-            </p>
-          </div>
-        `,
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+          <h1 style="color: #2563eb;">Thank You for Your Application!</h1>
+          
+          <p>Dear ${fullName},</p>
+          
+          <p>We have successfully received your application to become a tutor at ElimuConnect. Thank you for your interest in joining Kenya's leading tutoring platform!</p>
+          
+          <p><strong>Note:</strong> This acknowledgment was sent to ${testEmail} (testing mode). The applicant's email was: ${email}</p>
+          
+          <h2 style="color: #2563eb; margin-top: 30px;">What Happens Next?</h2>
+          
+          <p>Our vetting process includes the following steps:</p>
+          
+          <ol style="line-height: 1.8;">
+            <li><strong>Application Review</strong> - We'll verify your credentials and teaching experience</li>
+            <li><strong>Background Check</strong> - Verification of your TSC number and certificate of good conduct</li>
+            <li><strong>Reference Verification</strong> - We'll contact your professional references</li>
+            <li><strong>Subject Expertise Assessment</strong> - Evaluation of your teaching materials and methods</li>
+            <li><strong>Interview</strong> - A comprehensive discussion about your teaching philosophy and experience</li>
+            <li><strong>Full Profile Setup</strong> - If approved, you'll complete your tutor profile with photos, teaching video, and detailed information</li>
+          </ol>
+          
+          <h2 style="color: #2563eb; margin-top: 30px;">Timeline</h2>
+          <p>You can expect to hear from us within <strong>3-5 business days</strong> regarding the status of your application.</p>
+          
+          <h2 style="color: #2563eb; margin-top: 30px;">What We're Looking For</h2>
+          <p>We carefully vet all tutors to ensure they meet our high standards:</p>
+          <ul style="line-height: 1.8;">
+            <li>Valid TSC certification</li>
+            <li>Minimum 3 years teaching experience</li>
+            <li>Proven track record of student success</li>
+            <li>Strong communication and interpersonal skills</li>
+            <li>Commitment to educational excellence</li>
+          </ul>
+          
+          <p style="margin-top: 30px;">If you have any questions in the meantime, please don't hesitate to reach out to us at <a href="mailto:support@elimuconnect.com">support@elimuconnect.com</a>.</p>
+          
+          <p style="margin-top: 30px;">Best regards,<br>
+          <strong>The ElimuConnect Team</strong></p>
+          
+          <hr style="margin: 30px 0; border: none; border-top: 1px solid #e5e7eb;">
+          
+          <p style="font-size: 12px; color: #6b7280;">
+            This is an automated message. Please do not reply directly to this email.
+          </p>
+        </div>
+      `,
       }),
     });
 
-    const data = await emailResponse.json();
+    const emailResponse = await response.json();
 
-    console.log("Acknowledgment email sent successfully:", data);
+    console.log("Acknowledgment email sent successfully:", emailResponse);
 
-    return new Response(JSON.stringify(data), {
+    return new Response(JSON.stringify(emailResponse), {
       status: 200,
       headers: {
         "Content-Type": "application/json",
@@ -92,7 +99,7 @@ const handler = async (req: Request): Promise<Response> => {
       },
     });
   } catch (error: any) {
-    console.error("Error in send-application-acknowledgment:", error);
+    console.error("Error in send-application-acknowledgment function:", error);
     return new Response(
       JSON.stringify({ error: error.message }),
       {
