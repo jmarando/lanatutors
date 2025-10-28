@@ -23,6 +23,7 @@ import tutor3 from "@/assets/tutor-3.jpg";
 import tutor4 from "@/assets/tutor-4.jpg";
 import tutor5 from "@/assets/tutor-5.jpg";
 import tutor6 from "@/assets/tutor-6.jpg";
+import calvinProfilePhoto from "@/assets/calvin-profile.png";
 import {
   Sheet,
   SheetContent,
@@ -151,6 +152,9 @@ const TutorSearch = () => {
         const name = prof?.full_name || "Tutor";
         const hourlyRate = Number(tp.hourly_rate) || 2500;
         
+        // Check if this is Calvin
+        const isCalvin = name === "Calvins Onuko";
+        
         return {
           id: tp.id,
           name,
@@ -163,8 +167,16 @@ const TutorSearch = () => {
           reviews: tp.total_reviews || 0,
           hourlyRate,
           photo: name.split(' ').map((n: string) => n[0]).join('') || "T",
-          photoUrl: tutorImages[index % tutorImages.length],
+          photoUrl: isCalvin ? calvinProfilePhoto : tutorImages[index % tutorImages.length],
+          isCalvin, // Flag to sort Calvin first
         };
+      });
+
+      // Sort to put Calvin first
+      formattedTutors.sort((a, b) => {
+        if (a.isCalvin) return -1;
+        if (b.isCalvin) return 1;
+        return 0;
       });
 
       setTutors(formattedTutors);
