@@ -185,7 +185,9 @@ const BookConsultation = () => {
       });
 
       toast.success("Consultation booked! Check your email and WhatsApp for details.");
-      setStep(4);
+      
+      // Navigate to confirmation page with details
+      navigate(`/consultation-confirmed?parentName=${encodeURIComponent(formData.parentName)}&studentName=${encodeURIComponent(formData.studentName)}&date=${selectedDate!.toISOString().split('T')[0]}&time=${encodeURIComponent(selectedTime)}&email=${encodeURIComponent(formData.email)}`);
     } catch (error: any) {
       console.error("Error booking consultation:", error);
       toast.error(error.message || "Failed to book consultation");
