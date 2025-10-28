@@ -70,8 +70,8 @@ END:VCALENDAR`;
           .detail-row:last-child { border-bottom: none; }
           .detail-label { font-weight: 600; color: #1A1A1A; min-width: 120px; }
           .detail-value { color: #737373; }
-          .button { display: inline-block; background: linear-gradient(135deg, #ED3F27 0%, #c73420 100%); color: #ffffff; padding: 16px 32px; text-decoration: none; border-radius: 8px; font-weight: 600; margin: 10px 5px; box-shadow: 0 4px 12px rgba(237, 63, 39, 0.3); }
-          .button-secondary { background: linear-gradient(135deg, #1D9DB8 0%, #178ca3 100%); box-shadow: 0 4px 12px rgba(29, 157, 184, 0.3); }
+          .button { display: inline-block; background: linear-gradient(135deg, #ED3F27 0%, #c73420 100%); color: #ffffff !important; padding: 16px 32px; text-decoration: none; border-radius: 8px; font-weight: 600; margin: 10px 5px; box-shadow: 0 4px 12px rgba(237, 63, 39, 0.3); }
+          .button-secondary { background: linear-gradient(135deg, #1D9DB8 0%, #178ca3 100%); color: #ffffff !important; box-shadow: 0 4px 12px rgba(29, 157, 184, 0.3); }
           .info-box { background: #E8F7FA; border-left: 4px solid #1D9DB8; padding: 20px; border-radius: 8px; margin: 20px 0; }
           .info-box h3 { color: #1D9DB8; margin: 0 0 15px 0; font-size: 18px; }
           .info-box ul { margin: 0; padding-left: 20px; color: #1A1A1A; line-height: 1.8; }
