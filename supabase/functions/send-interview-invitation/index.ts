@@ -38,82 +38,134 @@ const handler = async (req: Request): Promise<Response> => {
         to: [recipient],
         subject: `Great News ${fullName} - Interview Invitation!`,
         html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h1 style="color: #2563eb;">Congratulations! You've Passed Initial Vetting 🎉</h1>
-          
-          <p>Dear ${fullName},</p>
-          
-          <p><strong>Testing Mode:</strong> This email was sent to justin@glab.africa. Applicant email: ${email}</p>
-          
-          <p>We're pleased to inform you that you've successfully passed the initial vetting stage of our application process!</p>
-          
-          <div style="background-color: #f0f9ff; border-left: 4px solid #2563eb; padding: 20px; margin: 30px 0;">
-            <h2 style="color: #2563eb; margin-top: 0;">📅 Next Step: Expert Conversation</h2>
-            <p style="margin: 0;">You're invited to a 30-minute video conversation with an ElimuConnect Expert to discuss your teaching philosophy and experience.</p>
-          </div>
-          
-          <h2 style="color: #2563eb; margin-top: 30px;">Interview Details</h2>
-          
-          <div style="background-color: #fef3c7; border-left: 4px solid #f59e0b; padding: 15px; margin: 20px 0;">
-            <p style="margin: 0 0 10px 0;"><strong>📆 Date & Time:</strong> ${new Date(interviewDate).toLocaleString('en-US', { 
-              weekday: 'long', 
-              year: 'numeric', 
-              month: 'long', 
-              day: 'numeric',
-              hour: '2-digit',
-              minute: '2-digit',
-              timeZone: 'Africa/Nairobi'
-            })} EAT</p>
-            <p style="margin: 0 0 10px 0;"><strong>⏱️ Duration:</strong> 30 minutes</p>
-            <p style="margin: 0;"><strong>💻 Platform:</strong> Google Meet</p>
-          </div>
-          
-          <div style="text-align: center; margin: 40px 0;">
-            <a href="${meetLink}" 
-               style="background-color: #2563eb; color: white; padding: 16px 32px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">
-              Join Video Interview
-            </a>
-          </div>
-          
-          <h2 style="color: #2563eb; margin-top: 30px;">How to Prepare</h2>
-          
-          <ul style="line-height: 1.8;">
-            <li><strong>Test your equipment</strong> - Ensure your camera and microphone work properly</li>
-            <li><strong>Find a quiet space</strong> - Choose a location with minimal background noise</li>
-            <li><strong>Review your application</strong> - Be ready to discuss your teaching experience and methods</li>
-            <li><strong>Prepare questions</strong> - Feel free to ask about the platform, students, and expectations</li>
-            <li><strong>Be yourself</strong> - We want to see your authentic teaching personality</li>
-          </ul>
-          
-          <h2 style="color: #2563eb; margin-top: 30px;">What We'll Discuss</h2>
-          
-          <ul style="line-height: 1.8;">
-            <li>Your teaching philosophy and approach</li>
-            <li>Experience with different curricula (CBC, IGCSE, etc.)</li>
-            <li>How you handle challenging students</li>
-            <li>Your availability and preferred teaching mode</li>
-            <li>Questions about the ElimuConnect platform</li>
-          </ul>
-          
-          <div style="background-color: #f0f9ff; border-left: 4px solid #2563eb; padding: 15px; margin: 20px 0;">
-            <p style="margin: 0;"><strong>💡 Pro Tip:</strong> Have examples ready of successful teaching moments or student transformations. We love hearing real stories!</p>
-          </div>
-          
-          <h2 style="color: #2563eb; margin-top: 30px;">Need to Reschedule?</h2>
-          <p>If the scheduled time doesn't work for you, please reply to this email as soon as possible so we can arrange an alternative time.</p>
-          
-          <p style="margin-top: 30px;">We're excited to meet you and learn more about your teaching journey!</p>
-          
-          <p style="margin-top: 30px;">Best regards,<br>
-          <strong>The ElimuConnect Team</strong></p>
-          
-          <hr style="margin: 30px 0; border: none; border-top: 1px solid #e5e7eb;">
-          
-          <p style="font-size: 12px; color: #6b7280;">
-            Interview Link: <a href="${meetLink}">${meetLink}</a><br>
-            This is an automated message. For questions, contact info@elimuconnect.co.ke
-          </p>
-        </div>
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        </head>
+        <body style="margin: 0; padding: 0; background-color: #f5f5f5; font-family: Arial, sans-serif;">
+          <table role="presentation" style="width: 100%; border-collapse: collapse;">
+            <tr>
+              <td align="center" style="padding: 40px 20px;">
+                <table role="presentation" style="max-width: 600px; width: 100%; background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                  <!-- Header -->
+                  <tr>
+                    <td style="padding: 40px 40px 30px; text-align: center; background: linear-gradient(135deg, #ed2644 0%, #c91d39 100%); border-radius: 8px 8px 0 0;">
+                      <h1 style="color: #ffffff; margin: 0; font-size: 28px; font-weight: bold;">🎉 You've Passed Initial Vetting!</h1>
+                    </td>
+                  </tr>
+                  
+                  <!-- Content -->
+                  <tr>
+                    <td style="padding: 40px;">
+                      <p style="margin: 0 0 20px; color: #333333; font-size: 16px; line-height: 1.6;">Dear ${fullName},</p>
+                      
+                      <div style="background-color: #fef2f2; border-left: 4px solid #ed2644; padding: 16px; margin: 20px 0;">
+                        <p style="margin: 0; color: #666666; font-size: 14px;"><strong>Testing Mode:</strong> This email was sent to justin@glab.africa. Applicant email: ${email}</p>
+                      </div>
+                      
+                      <p style="margin: 0 0 30px; color: #333333; font-size: 16px; line-height: 1.6;">We're pleased to inform you that you've successfully passed the initial vetting stage of our application process!</p>
+                      
+                      <!-- Next Step Box -->
+                      <table role="presentation" style="width: 100%; margin: 30px 0; background: linear-gradient(135deg, #fef2f2 0%, #ffe5e8 100%); border-radius: 8px;">
+                        <tr>
+                          <td style="padding: 24px; border-left: 4px solid #ed2644;">
+                            <h2 style="color: #ed2644; margin: 0 0 12px; font-size: 20px;">📅 Next Step: Expert Conversation</h2>
+                            <p style="margin: 0; color: #666666; font-size: 15px; line-height: 1.6;">You're invited to a 30-minute video conversation with an ElimuConnect Expert to discuss your teaching philosophy and experience.</p>
+                          </td>
+                        </tr>
+                      </table>
+                      
+                      <!-- Interview Details -->
+                      <h2 style="color: #ed2644; margin: 30px 0 20px; font-size: 22px;">Interview Details</h2>
+                      
+                      <table role="presentation" style="width: 100%; margin: 20px 0; background-color: #fffbeb; border-radius: 8px; border-left: 4px solid #f59e0b;">
+                        <tr>
+                          <td style="padding: 20px;">
+                            <p style="margin: 0 0 12px; color: #333333; font-size: 15px;"><strong style="color: #ed2644;">📆 Date & Time:</strong> ${new Date(interviewDate).toLocaleString('en-US', { 
+                              weekday: 'long', 
+                              year: 'numeric', 
+                              month: 'long', 
+                              day: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit',
+                              timeZone: 'Africa/Nairobi'
+                            })} EAT</p>
+                            <p style="margin: 0 0 12px; color: #333333; font-size: 15px;"><strong style="color: #ed2644;">⏱️ Duration:</strong> 30 minutes</p>
+                            <p style="margin: 0; color: #333333; font-size: 15px;"><strong style="color: #ed2644;">💻 Platform:</strong> Google Meet</p>
+                          </td>
+                        </tr>
+                      </table>
+                      
+                      <!-- CTA Button -->
+                      <table role="presentation" style="width: 100%; margin: 40px 0;">
+                        <tr>
+                          <td align="center">
+                            <a href="${meetLink}" style="display: inline-block; background-color: #ed2644; color: #ffffff; padding: 16px 40px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px; box-shadow: 0 4px 12px rgba(237, 38, 68, 0.3);">
+                              Join Video Interview
+                            </a>
+                          </td>
+                        </tr>
+                      </table>
+                      
+                      <!-- Preparation Tips -->
+                      <h2 style="color: #ed2644; margin: 30px 0 20px; font-size: 20px;">How to Prepare</h2>
+                      
+                      <ul style="margin: 0 0 30px; padding-left: 24px; color: #666666; font-size: 15px; line-height: 1.8;">
+                        <li style="margin-bottom: 8px;"><strong>Test your equipment</strong> - Ensure your camera and microphone work properly</li>
+                        <li style="margin-bottom: 8px;"><strong>Find a quiet space</strong> - Choose a location with minimal background noise</li>
+                        <li style="margin-bottom: 8px;"><strong>Review your application</strong> - Be ready to discuss your teaching experience and methods</li>
+                        <li style="margin-bottom: 8px;"><strong>Prepare questions</strong> - Feel free to ask about the platform, students, and expectations</li>
+                        <li><strong>Be yourself</strong> - We want to see your authentic teaching personality</li>
+                      </ul>
+                      
+                      <!-- What We'll Discuss -->
+                      <h2 style="color: #ed2644; margin: 30px 0 20px; font-size: 20px;">What We'll Discuss</h2>
+                      
+                      <ul style="margin: 0 0 30px; padding-left: 24px; color: #666666; font-size: 15px; line-height: 1.8;">
+                        <li style="margin-bottom: 8px;">Your teaching philosophy and approach</li>
+                        <li style="margin-bottom: 8px;">Experience with different curricula (CBC, IGCSE, etc.)</li>
+                        <li style="margin-bottom: 8px;">How you handle challenging students</li>
+                        <li style="margin-bottom: 8px;">Your availability and preferred teaching mode</li>
+                        <li>Questions about the ElimuConnect platform</li>
+                      </ul>
+                      
+                      <!-- Pro Tip -->
+                      <table role="presentation" style="width: 100%; margin: 30px 0; background: linear-gradient(135deg, #fef2f2 0%, #ffe5e8 100%); border-radius: 8px;">
+                        <tr>
+                          <td style="padding: 20px; border-left: 4px solid #ed2644;">
+                            <p style="margin: 0; color: #666666; font-size: 15px; line-height: 1.6;"><strong style="color: #ed2644;">💡 Pro Tip:</strong> Have examples ready of successful teaching moments or student transformations. We love hearing real stories!</p>
+                          </td>
+                        </tr>
+                      </table>
+                      
+                      <h2 style="color: #ed2644; margin: 30px 0 15px; font-size: 20px;">Need to Reschedule?</h2>
+                      <p style="margin: 0 0 30px; color: #666666; font-size: 15px; line-height: 1.6;">If the scheduled time doesn't work for you, please reply to this email as soon as possible so we can arrange an alternative time.</p>
+                      
+                      <p style="margin: 30px 0 10px; color: #666666; font-size: 15px; line-height: 1.6;">We're excited to meet you and learn more about your teaching journey!</p>
+                      
+                      <p style="margin: 30px 0 5px; color: #666666; font-size: 15px; line-height: 1.6;">Best regards,<br><strong style="color: #333333;">The ElimuConnect Team</strong></p>
+                    </td>
+                  </tr>
+                  
+                  <!-- Footer -->
+                  <tr>
+                    <td style="padding: 30px 40px; background-color: #f9f9f9; border-radius: 0 0 8px 8px; text-align: center;">
+                      <p style="margin: 0 0 10px; font-size: 13px; color: #666666;">
+                        Interview Link: <a href="${meetLink}" style="color: #ed2644; text-decoration: none;">${meetLink}</a>
+                      </p>
+                      <p style="margin: 0; font-size: 12px; color: #999999; line-height: 1.6;">
+                        This is an automated message. For questions, contact info@elimuconnect.co.ke
+                      </p>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+          </table>
+        </body>
+        </html>
       `,
       }),
     });

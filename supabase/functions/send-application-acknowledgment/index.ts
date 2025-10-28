@@ -37,52 +37,122 @@ const handler = async (req: Request): Promise<Response> => {
         to: [recipient],
         subject: `Application Received - ${fullName}`,
         html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-          <h1 style="color: #2563eb;">Thank You for Your Application!</h1>
-          
-          <p>Dear ${fullName},</p>
-          
-          <p>We have successfully received your application to become a tutor at ElimuConnect. Thank you for your interest in joining Kenya's leading tutoring platform!</p>
-          
-          <p><strong>Testing Mode:</strong> This email was sent to justin@glab.africa. Applicant email: ${email}</p>
-          
-          <p>We will communicate with you via this email: <strong>${email}</strong>.</p>
-          
-          <h2 style="color: #2563eb; margin-top: 30px;">What Happens Next?</h2>
-          
-          <p>Our vetting process consists of three simple steps:</p>
-          
-          <div style="margin: 20px 0;">
-            <div style="padding: 15px; background-color: #f8fafc; border-left: 4px solid #2563eb; margin-bottom: 15px;">
-              <h3 style="color: #2563eb; margin: 0 0 10px 0;">Step 1: Initial Vetting</h3>
-              <p style="margin: 0;">We'll review your application and verify that you meet our requirements, including your TSC certification, teaching experience, and qualifications.</p>
-            </div>
-            
-            <div style="padding: 15px; background-color: #f8fafc; border-left: 4px solid #2563eb; margin-bottom: 15px;">
-              <h3 style="color: #2563eb; margin: 0 0 10px 0;">Step 2: Expert Conversation</h3>
-              <p style="margin: 0;">If you pass the initial vetting, you'll be invited for a 30-minute video conversation with an ElimuConnect Expert to discuss your teaching philosophy and experience.</p>
-            </div>
-            
-            <div style="padding: 15px; background-color: #f8fafc; border-left: 4px solid #2563eb;">
-              <h3 style="color: #2563eb; margin: 0 0 10px 0;">Step 3: Enrollment & Profile Setup</h3>
-              <p style="margin: 0;">Upon successfully passing the conversation, you'll become an official ElimuConnect tutor! You'll be enrolled in our system to complete your profile, upload your teaching video, and gain access to the tutor dashboard.</p>
-            </div>
-          </div>
-          
-          <h2 style="color: #2563eb; margin-top: 30px;">Timeline</h2>
-          <p>You can expect to hear from us within <strong>3-5 business days</strong> regarding the status of your initial vetting.</p>
-          
-          <p style="margin-top: 30px;">If you have any questions in the meantime, please don't hesitate to reach out to us at <a href="mailto:info@elimuconnect.co.ke">info@elimuconnect.co.ke</a>.</p>
-          
-          <p style="margin-top: 30px;">Best regards,<br>
-          <strong>The ElimuConnect Team</strong></p>
-          
-          <hr style="margin: 30px 0; border: none; border-top: 1px solid #e5e7eb;">
-          
-          <p style="font-size: 12px; color: #6b7280;">
-            This is an automated message. Please do not reply directly to this email.
-          </p>
-        </div>
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        </head>
+        <body style="margin: 0; padding: 0; background-color: #f5f5f5; font-family: Arial, sans-serif;">
+          <table role="presentation" style="width: 100%; border-collapse: collapse;">
+            <tr>
+              <td align="center" style="padding: 40px 20px;">
+                <table role="presentation" style="max-width: 600px; width: 100%; background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                  <!-- Header -->
+                  <tr>
+                    <td style="padding: 40px 40px 30px; text-align: center; background: linear-gradient(135deg, #ed2644 0%, #c91d39 100%); border-radius: 8px 8px 0 0;">
+                      <h1 style="color: #ffffff; margin: 0; font-size: 28px; font-weight: bold;">Thank You for Your Application!</h1>
+                    </td>
+                  </tr>
+                  
+                  <!-- Content -->
+                  <tr>
+                    <td style="padding: 40px;">
+                      <p style="margin: 0 0 20px; color: #333333; font-size: 16px; line-height: 1.6;">Dear ${fullName},</p>
+                      
+                      <div style="background-color: #fef2f2; border-left: 4px solid #ed2644; padding: 16px; margin: 20px 0;">
+                        <p style="margin: 0; color: #666666; font-size: 14px;"><strong>Testing Mode:</strong> This email was sent to justin@glab.africa. Applicant email: ${email}</p>
+                      </div>
+                      
+                      <p style="margin: 0 0 20px; color: #333333; font-size: 16px; line-height: 1.6;">We have successfully received your application to become a tutor at ElimuConnect. Thank you for your interest in joining Kenya's leading tutoring platform!</p>
+                      
+                      <p style="margin: 0 0 30px; color: #666666; font-size: 15px; line-height: 1.6;">We will communicate with you via this email: <strong style="color: #ed2644;">${email}</strong></p>
+                      
+                      <!-- Vetting Process -->
+                      <h2 style="color: #ed2644; margin: 30px 0 20px; font-size: 22px;">What Happens Next?</h2>
+                      
+                      <p style="margin: 0 0 20px; color: #666666; font-size: 15px; line-height: 1.6;">Our vetting process consists of three simple steps:</p>
+                      
+                      <!-- Step 1 -->
+                      <table role="presentation" style="width: 100%; margin-bottom: 16px; background-color: #fef2f2; border-radius: 8px;">
+                        <tr>
+                          <td style="padding: 20px; border-left: 4px solid #ed2644;">
+                            <table role="presentation">
+                              <tr>
+                                <td style="width: 48px; vertical-align: top;">
+                                  <div style="background-color: #ed2644; color: white; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; text-align: center; line-height: 32px; font-weight: bold; font-size: 18px;">1</div>
+                                </td>
+                                <td style="vertical-align: top;">
+                                  <h3 style="color: #ed2644; margin: 0 0 8px; font-size: 16px;">Initial Vetting</h3>
+                                  <p style="margin: 0; color: #666666; font-size: 14px; line-height: 1.6;">We'll review your credentials within 3-5 business days</p>
+                                </td>
+                              </tr>
+                            </table>
+                          </td>
+                        </tr>
+                      </table>
+                      
+                      <!-- Step 2 -->
+                      <table role="presentation" style="width: 100%; margin-bottom: 16px; background-color: #fef2f2; border-radius: 8px;">
+                        <tr>
+                          <td style="padding: 20px; border-left: 4px solid #ed2644;">
+                            <table role="presentation">
+                              <tr>
+                                <td style="width: 48px; vertical-align: top;">
+                                  <div style="background-color: #ed2644; color: white; width: 32px; height: 32px; border-radius: 50%; text-align: center; line-height: 32px; font-weight: bold; font-size: 18px;">2</div>
+                                </td>
+                                <td style="vertical-align: top;">
+                                  <h3 style="color: #ed2644; margin: 0 0 8px; font-size: 16px;">Expert Conversation</h3>
+                                  <p style="margin: 0; color: #666666; font-size: 14px; line-height: 1.6;">If you pass, we'll schedule a 30-minute video call with you</p>
+                                </td>
+                              </tr>
+                            </table>
+                          </td>
+                        </tr>
+                      </table>
+                      
+                      <!-- Step 3 -->
+                      <table role="presentation" style="width: 100%; margin-bottom: 30px; background-color: #fef2f2; border-radius: 8px;">
+                        <tr>
+                          <td style="padding: 20px; border-left: 4px solid #ed2644;">
+                            <table role="presentation">
+                              <tr>
+                                <td style="width: 48px; vertical-align: top;">
+                                  <div style="background-color: #ed2644; color: white; width: 32px; height: 32px; border-radius: 50%; text-align: center; line-height: 32px; font-weight: bold; font-size: 18px;">3</div>
+                                </td>
+                                <td style="vertical-align: top;">
+                                  <h3 style="color: #ed2644; margin: 0 0 8px; font-size: 16px;">Enrollment & Dashboard Access</h3>
+                                  <p style="margin: 0; color: #666666; font-size: 14px; line-height: 1.6;">Upon approval, complete your profile and start teaching!</p>
+                                </td>
+                              </tr>
+                            </table>
+                          </td>
+                        </tr>
+                      </table>
+                      
+                      <h2 style="color: #ed2644; margin: 30px 0 15px; font-size: 20px;">Timeline</h2>
+                      <p style="margin: 0 0 30px; color: #666666; font-size: 15px; line-height: 1.6;">You can expect to hear from us within <strong style="color: #ed2644;">3-5 business days</strong> regarding the status of your initial vetting.</p>
+                      
+                      <p style="margin: 30px 0 10px; color: #666666; font-size: 15px; line-height: 1.6;">If you have any questions in the meantime, please don't hesitate to reach out to us at <a href="mailto:info@elimuconnect.co.ke" style="color: #ed2644; text-decoration: none;">info@elimuconnect.co.ke</a>.</p>
+                      
+                      <p style="margin: 30px 0 5px; color: #666666; font-size: 15px; line-height: 1.6;">Best regards,<br><strong style="color: #333333;">The ElimuConnect Team</strong></p>
+                    </td>
+                  </tr>
+                  
+                  <!-- Footer -->
+                  <tr>
+                    <td style="padding: 30px 40px; background-color: #f9f9f9; border-radius: 0 0 8px 8px; text-align: center;">
+                      <p style="margin: 0; font-size: 12px; color: #999999; line-height: 1.6;">
+                        This is an automated message. Please do not reply directly to this email.
+                      </p>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+          </table>
+        </body>
+        </html>
       `,
       }),
     });
