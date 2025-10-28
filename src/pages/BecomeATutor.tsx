@@ -17,17 +17,12 @@ const TUTOR_REQUIREMENTS = [
   {
     icon: GraduationCap,
     title: "Teaching Experience",
-    description: "Minimum 3 years of proven teaching or tutoring experience in accredited institutions with verifiable employment records"
+    description: "Minimum 2 years of proven teaching or tutoring experience in accredited institutions with verifiable employment records"
   },
   {
     icon: FileText,
     title: "Qualifications",
-    description: "Bachelor's degree in Education or relevant subject area required. Valid TSC (Teachers Service Commission) number mandatory"
-  },
-  {
-    icon: Shield,
-    title: "Background Check",
-    description: "Comprehensive background verification, certificate of good conduct, and verification of three professional references required"
+    description: "Bachelor's degree or Diploma in Education or relevant subject area required. Valid TSC (Teachers Service Commission) number mandatory"
   },
   {
     icon: CheckCircle,
