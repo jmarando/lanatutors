@@ -7,12 +7,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
 import { Progress } from "@/components/ui/progress";
+import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Link, useNavigate } from "react-router-dom";
 import { CalendarIcon, Clock, CheckCircle, Users, GraduationCap, Target, Award } from "lucide-react";
 import { validateAndNormalizePhone } from "@/utils/phoneValidation";
 import { SEO } from "@/components/SEO";
+import { getCurriculums, getLevelsForCurriculum, getSubjectsForCurriculumLevel } from "@/utils/curriculumData";
 
 const CONSULTATION_BENEFITS = [
   {
@@ -42,11 +44,18 @@ const BookConsultation = () => {
     studentName: "",
     phoneNumber: "",
     email: "",
+    curriculum: "",
     gradeLevel: "",
-    subjects: "",
+    subjects: [] as string[],
     preferredMode: "",
     additionalNotes: "",
   });
+
+  const curriculums = getCurriculums();
+  const availableLevels = formData.curriculum ? getLevelsForCurriculum(formData.curriculum) : [];
+  const availableSubjects = formData.curriculum && formData.gradeLevel 
+    ? getSubjectsForCurriculumLevel(formData.curriculum, formData.gradeLevel) 
+    : [];
   const [loading, setLoading] = useState(false);
 
   const availableTimeSlots = [
@@ -74,7 +83,7 @@ const BookConsultation = () => {
   };
 
   const validateStep2 = () => {
-    if (!formData.gradeLevel || !formData.subjects || !formData.preferredMode) {
+    if (!formData.curriculum || !formData.gradeLevel || formData.subjects.length === 0 || !formData.preferredMode) {
       toast.error("Please fill in all required fields");
       return false;
     }
@@ -114,8 +123,8 @@ const BookConsultation = () => {
         student_name: formData.studentName,
         phone_number: formData.phoneNumber,
         email: formData.email,
-        grade_level: formData.gradeLevel,
-        subjects_interest: formData.subjects.split(",").map(s => s.trim()),
+        grade_level: `${formData.curriculum} - ${formData.gradeLevel}`,
+        subjects_interest: formData.subjects,
         preferred_mode: formData.preferredMode,
         additional_notes: formData.additionalNotes,
         consultation_date: selectedDate!.toISOString().split('T')[0],
@@ -285,20 +294,47 @@ const BookConsultation = () => {
                   </p>
                 </div>
 
+                <div className="space-y-2">
+                  <Label htmlFor="curriculum">Curriculum *</Label>
+                  <Select 
+                    value={formData.curriculum} 
+                    onValueChange={(value) => setFormData({ 
+                      ...formData, 
+                      curriculum: value, 
+                      gradeLevel: "",
+                      subjects: []
+                    })}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select curriculum" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-background z-50">
+                      {curriculums.map(curriculum => (
+                        <SelectItem key={curriculum} value={curriculum}>
+                          {curriculum}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
                 <div className="grid md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="gradeLevel">Grade Level *</Label>
-                    <Select value={formData.gradeLevel} onValueChange={(value) => setFormData({ ...formData, gradeLevel: value })}>
+                    <Label htmlFor="gradeLevel">Level/Year *</Label>
+                    <Select 
+                      value={formData.gradeLevel} 
+                      onValueChange={(value) => setFormData({ ...formData, gradeLevel: value, subjects: [] })}
+                      disabled={!formData.curriculum}
+                    >
                       <SelectTrigger>
-                        <SelectValue placeholder="Select grade level" />
+                        <SelectValue placeholder={formData.curriculum ? "Select level" : "Select curriculum first"} />
                       </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="grade-1-3">Grade 1-3 (Lower Primary)</SelectItem>
-                        <SelectItem value="grade-4-6">Grade 4-6 (Upper Primary)</SelectItem>
-                        <SelectItem value="grade-7-9">Grade 7-9 (Junior Secondary)</SelectItem>
-                        <SelectItem value="form-1-2">Form 1-2</SelectItem>
-                        <SelectItem value="form-3-4">Form 3-4 (KCSE)</SelectItem>
-                        <SelectItem value="igcse">IGCSE</SelectItem>
+                      <SelectContent className="bg-background z-50">
+                        {availableLevels.map(level => (
+                          <SelectItem key={level.value} value={level.value}>
+                            {level.label}
+                          </SelectItem>
+                        ))}
                       </SelectContent>
                     </Select>
                   </div>
@@ -308,7 +344,7 @@ const BookConsultation = () => {
                       <SelectTrigger>
                         <SelectValue placeholder="Select mode" />
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent className="bg-background z-50">
                         <SelectItem value="online">Online Sessions</SelectItem>
                         <SelectItem value="in-person">In-Person Sessions</SelectItem>
                         <SelectItem value="both">Either/Both</SelectItem>
@@ -319,14 +355,59 @@ const BookConsultation = () => {
 
                 <div className="space-y-2">
                   <Label htmlFor="subjects">Subjects of Interest *</Label>
-                  <Input
-                    id="subjects"
-                    placeholder="e.g., Mathematics, Physics, Chemistry"
-                    value={formData.subjects}
-                    onChange={(e) => setFormData({ ...formData, subjects: e.target.value })}
-                    required
-                  />
-                  <p className="text-xs text-muted-foreground">Separate multiple subjects with commas</p>
+                  <div className="border rounded-md p-3 min-h-[100px] bg-muted/30">
+                    {formData.subjects.length > 0 ? (
+                      <div className="flex flex-wrap gap-2 mb-2">
+                        {formData.subjects.map(subject => (
+                          <Badge key={subject} variant="secondary" className="cursor-pointer" onClick={() => {
+                            setFormData({
+                              ...formData,
+                              subjects: formData.subjects.filter(s => s !== subject)
+                            });
+                          }}>
+                            {subject} ×
+                          </Badge>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="text-sm text-muted-foreground mb-2">
+                        {!formData.curriculum || !formData.gradeLevel 
+                          ? "Please select curriculum and level first" 
+                          : "Select subjects from the dropdown below"}
+                      </p>
+                    )}
+                    <Select
+                      disabled={!formData.curriculum || !formData.gradeLevel}
+                      onValueChange={(value) => {
+                        if (!formData.subjects.includes(value)) {
+                          setFormData({
+                            ...formData,
+                            subjects: [...formData.subjects, value]
+                          });
+                        }
+                      }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder={
+                          !formData.curriculum || !formData.gradeLevel 
+                            ? "Select curriculum and level first" 
+                            : "Add a subject..."
+                        } />
+                      </SelectTrigger>
+                      <SelectContent className="bg-background z-50 max-h-[300px]">
+                        {availableSubjects.map(subject => (
+                          <SelectItem 
+                            key={subject} 
+                            value={subject}
+                            disabled={formData.subjects.includes(subject)}
+                          >
+                            {subject}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <p className="text-xs text-muted-foreground">Click on badges to remove subjects</p>
                 </div>
 
                 <div className="space-y-2">
