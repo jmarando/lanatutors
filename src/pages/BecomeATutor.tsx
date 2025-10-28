@@ -11,7 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Progress } from "@/components/ui/progress";
 import { validateAndNormalizePhone } from "@/utils/phoneValidation";
 import { SEO } from "@/components/SEO";
-import { TierExplainer } from "@/components/TutorTierBadge";
+
 
 const TUTOR_REQUIREMENTS = [
   {
@@ -50,16 +50,12 @@ ElimuConnect Tutor Terms & Conditions
    - Arrive punctually for all scheduled sessions
    - Provide quality, engaging instruction
 
- 3. TIER-BASED COMPENSATION
-   - Your earnings tier (Bronze, Silver, or Gold) is determined by AI analysis based on:
-     * Years of teaching experience
-     * Student ratings and reviews
-     * Curriculum expertise (IGCSE, IB, A-Level, KCSE, CBC)
-     * Qualifications and credentials
-   - Bronze Tier: KES 1,500/hr (tutors keep 70% = KES 1,050/hr)
-   - Silver Tier: KES 1,750/hr (tutors keep 70% = KES 1,225/hr)
-   - Gold Tier: KES 2,000/hr (tutors keep 70% = KES 1,400/hr)
-   - Tiers are reviewed automatically as you gain more experience and reviews
+ 3. COMPENSATION
+   - Set your own hourly rate between KES 2,000 - 6,000
+   - Platform retains 30% service fee
+   - You receive 70% of your set rate
+   - Example: KES 3,000/hr rate = KES 2,100/hr earnings
+   - Rates can be adjusted based on market feedback
 
 4. SESSION REQUIREMENTS
    - Maintain 95% attendance rate for scheduled sessions
@@ -261,9 +257,6 @@ const BecomeATutor = () => {
                   })}
                 </div>
 
-                <div className="mt-6">
-                  <TierExplainer />
-                </div>
 
                 <div className="flex justify-end gap-4 pt-4">
                   <Link to="/">

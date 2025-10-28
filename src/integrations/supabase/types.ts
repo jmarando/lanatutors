@@ -482,9 +482,10 @@ export type Database = {
           created_at: string | null
           current_institution: string | null
           curriculum: string[] | null
+          display_institution: boolean | null
           experience_years: number | null
           graduation_year: number | null
-          hourly_rate: number
+          hourly_rate: number | null
           id: string
           institution_years: number | null
           qualifications: string[] | null
@@ -496,9 +497,6 @@ export type Database = {
           teaching_experience: Json | null
           teaching_location: string | null
           teaching_mode: string[] | null
-          tier: Database["public"]["Enums"]["tutor_tier"] | null
-          tier_justification: string | null
-          tier_last_updated: string | null
           total_reviews: number | null
           tutoring_experience: string | null
           updated_at: string | null
@@ -512,9 +510,10 @@ export type Database = {
           created_at?: string | null
           current_institution?: string | null
           curriculum?: string[] | null
+          display_institution?: boolean | null
           experience_years?: number | null
           graduation_year?: number | null
-          hourly_rate: number
+          hourly_rate?: number | null
           id?: string
           institution_years?: number | null
           qualifications?: string[] | null
@@ -526,9 +525,6 @@ export type Database = {
           teaching_experience?: Json | null
           teaching_location?: string | null
           teaching_mode?: string[] | null
-          tier?: Database["public"]["Enums"]["tutor_tier"] | null
-          tier_justification?: string | null
-          tier_last_updated?: string | null
           total_reviews?: number | null
           tutoring_experience?: string | null
           updated_at?: string | null
@@ -542,9 +538,10 @@ export type Database = {
           created_at?: string | null
           current_institution?: string | null
           curriculum?: string[] | null
+          display_institution?: boolean | null
           experience_years?: number | null
           graduation_year?: number | null
-          hourly_rate?: number
+          hourly_rate?: number | null
           id?: string
           institution_years?: number | null
           qualifications?: string[] | null
@@ -556,9 +553,6 @@ export type Database = {
           teaching_experience?: Json | null
           teaching_location?: string | null
           teaching_mode?: string[] | null
-          tier?: Database["public"]["Enums"]["tutor_tier"] | null
-          tier_justification?: string | null
-          tier_last_updated?: string | null
           total_reviews?: number | null
           tutoring_experience?: string | null
           updated_at?: string | null
@@ -655,10 +649,6 @@ export type Database = {
         Args: { _role: string; _user_id: string }
         Returns: undefined
       }
-      get_rate_for_tier: {
-        Args: { _tier: Database["public"]["Enums"]["tutor_tier"] }
-        Returns: number
-      }
       has_recording_access: {
         Args: { _class_id: string; _user_id: string }
         Returns: boolean
@@ -675,7 +665,6 @@ export type Database = {
       app_role: "student" | "tutor" | "admin"
       payment_status: "pending" | "completed" | "failed" | "cancelled"
       subscription_status: "active" | "expired" | "cancelled"
-      tutor_tier: "bronze" | "silver" | "gold"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -806,7 +795,6 @@ export const Constants = {
       app_role: ["student", "tutor", "admin"],
       payment_status: ["pending", "completed", "failed", "cancelled"],
       subscription_status: ["active", "expired", "cancelled"],
-      tutor_tier: ["bronze", "silver", "gold"],
     },
   },
 } as const

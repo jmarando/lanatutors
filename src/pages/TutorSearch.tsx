@@ -10,11 +10,11 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Search, Star, SlidersHorizontal, Calendar as CalendarIcon, Clock } from "lucide-react";
+import { Search, Star, SlidersHorizontal, Calendar as CalendarIcon, Clock, MapPin, Award } from "lucide-react";
 import { SEO } from "@/components/SEO";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { TutorTierBadge, TierExplainer } from "@/components/TutorTierBadge";
+
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import tutor1 from "@/assets/tutor-1.jpg";
@@ -38,7 +38,7 @@ const TutorSearch = () => {
   const [selectedSubject, setSelectedSubject] = useState("all");
   const [selectedCurriculum, setSelectedCurriculum] = useState("all");
   const [sortBy, setSortBy] = useState("rating");
-  const [priceRange, setPriceRange] = useState([0, 5000]);
+  const [priceRange, setPriceRange] = useState([2000, 6000]);
   const [minRating, setMinRating] = useState(0);
   const [tutors, setTutors] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -145,17 +145,11 @@ const TutorSearch = () => {
 
       // 3) Merge and format
       const tutorImages = [tutor1, tutor2, tutor3, tutor4, tutor5, tutor6];
-      const tierRates = {
-        gold: 2000,
-        silver: 1750,
-        bronze: 1500,
-      };
       
       const formattedTutors = (tutorProfiles || []).map((tp: any, index: number) => {
         const prof = profilesById.get(tp.user_id);
         const name = prof?.full_name || "Tutor";
-        const tier = tp.tier || "bronze";
-        const hourlyRate = tierRates[tier as keyof typeof tierRates];
+        const hourlyRate = Number(tp.hourly_rate) || 2500;
         
         return {
           id: tp.id,
@@ -163,10 +157,11 @@ const TutorSearch = () => {
           subjects: tp.subjects || [],
           curriculum: tp.curriculum || [],
           school: tp.current_institution || "Not specified",
+          displayInstitution: tp.display_institution || false,
+          experienceYears: tp.experience_years || 0,
           rating: Number(tp.rating) || 0,
           reviews: tp.total_reviews || 0,
           hourlyRate,
-          tier,
           photo: name.split(' ').map((n: string) => n[0]).join('') || "T",
           photoUrl: tutorImages[index % tutorImages.length],
         };
@@ -238,13 +233,8 @@ const TutorSearch = () => {
           <div className="text-center mb-8">
             <h1 className="text-5xl font-bold mb-3">Find Your Tutor</h1>
             <p className="text-muted-foreground text-lg">
-              Search our network of expert tutors to find the right one for you.
+              Browse verified tutors with rates from KES 2,000-6,000/hr
             </p>
-          </div>
-          
-          {/* Tier Explainer */}
-          <div className="max-w-3xl mx-auto mb-8">
-            <TierExplainer />
           </div>
         </div>
 
@@ -253,7 +243,7 @@ const TutorSearch = () => {
           <div className="relative flex-1 min-w-64">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
             <Input
-              placeholder="Search by name, subject, school..."
+              placeholder="Search by name, subject..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pl-10 h-12"
@@ -268,10 +258,10 @@ const TutorSearch = () => {
               <SelectItem value="all">All Curricula</SelectItem>
               <SelectItem value="CBC">CBC (Kenyan)</SelectItem>
               <SelectItem value="IGCSE">IGCSE</SelectItem>
-              <SelectItem value="IB">IB (International Baccalaureate)</SelectItem>
+              <SelectItem value="IB">IB</SelectItem>
               <SelectItem value="A-Level">A-Level</SelectItem>
-              <SelectItem value="AP">AP (Advanced Placement)</SelectItem>
-              <SelectItem value="8-4-4">8-4-4 (Kenyan)</SelectItem>
+              <SelectItem value="AP">AP</SelectItem>
+              <SelectItem value="8-4-4">8-4-4</SelectItem>
             </SelectContent>
           </Select>
 
@@ -300,57 +290,6 @@ const TutorSearch = () => {
             </SelectContent>
           </Select>
 
-          {/* Date Filter */}
-          <Popover>
-            <PopoverTrigger asChild>
-              <Button variant="outline" className={cn("h-12 justify-start text-left font-normal", !selectedDate && "text-muted-foreground")}>
-                <CalendarIcon className="mr-2 h-4 w-4" />
-                {selectedDate ? format(selectedDate, "MMM d, yyyy") : "Any Date"}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent className="w-auto p-0 bg-background" align="start">
-              <Calendar
-                mode="single"
-                selected={selectedDate}
-                onSelect={setSelectedDate}
-                disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
-                initialFocus
-                className="pointer-events-auto"
-              />
-              {selectedDate && (
-                <div className="p-3 border-t">
-                  <Button 
-                    variant="ghost" 
-                    size="sm" 
-                    className="w-full"
-                    onClick={() => {
-                      setSelectedDate(undefined);
-                      setSelectedTimeSlot("all");
-                      setAvailabilityMap(new Map());
-                    }}
-                  >
-                    Clear Date
-                  </Button>
-                </div>
-              )}
-            </PopoverContent>
-          </Popover>
-
-          {/* Time Slot Filter */}
-          <Select value={selectedTimeSlot} onValueChange={setSelectedTimeSlot}>
-            <SelectTrigger className="w-56 h-12">
-              <Clock className="mr-2 h-4 w-4" />
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent className="bg-background">
-              {timeSlots.map(slot => (
-                <SelectItem key={slot.value} value={slot.value}>
-                  {slot.label}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-
           {/* Advanced Filters Sheet */}
           <Sheet>
             <SheetTrigger asChild>
@@ -370,19 +309,19 @@ const TutorSearch = () => {
                 {/* Price Range */}
                 <div>
                   <Label className="mb-3 block">
-                    Price Range: KES {priceRange[0]} - KES {priceRange[1]}/hr
+                    Hourly Rate: KES {priceRange[0]} - KES {priceRange[1]}
                   </Label>
                   <Slider
                     value={priceRange}
                     onValueChange={setPriceRange}
-                    max={5000}
-                    min={0}
+                    max={6000}
+                    min={2000}
                     step={100}
                     className="mb-2"
                   />
                   <div className="flex justify-between text-xs text-muted-foreground">
-                    <span>KES 0</span>
-                    <span>KES 5,000</span>
+                    <span>KES 2,000</span>
+                    <span>KES 6,000</span>
                   </div>
                 </div>
 
@@ -403,15 +342,70 @@ const TutorSearch = () => {
                   </div>
                 </div>
 
+                {/* Date Filter */}
+                <div>
+                  <Label className="mb-3 block">Filter by Availability</Label>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="outline" className={cn("w-full justify-start text-left font-normal", !selectedDate && "text-muted-foreground")}>
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {selectedDate ? format(selectedDate, "PPP") : "Select date"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={selectedDate}
+                        onSelect={setSelectedDate}
+                        disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
+                        initialFocus
+                      />
+                      {selectedDate && (
+                        <div className="p-3 border-t">
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="w-full"
+                            onClick={() => setSelectedDate(undefined)}
+                          >
+                            Clear Date
+                          </Button>
+                        </div>
+                      )}
+                    </PopoverContent>
+                  </Popover>
+                </div>
+
+                {/* Time Slot */}
+                <div>
+                  <Label className="mb-3 block">Time Slot</Label>
+                  <Select value={selectedTimeSlot} onValueChange={setSelectedTimeSlot}>
+                    <SelectTrigger className="w-full">
+                      <Clock className="mr-2 h-4 w-4" />
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {timeSlots.map(slot => (
+                        <SelectItem key={slot.value} value={slot.value}>
+                          {slot.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
                 <Button 
                   variant="outline" 
                   className="w-full" 
                   onClick={() => {
-                    setPriceRange([0, 5000]);
+                    setPriceRange([2000, 6000]);
                     setMinRating(0);
+                    setSelectedDate(undefined);
+                    setSelectedTimeSlot("all");
+                    setAvailabilityMap(new Map());
                   }}
                 >
-                  Reset Filters
+                  Reset All Filters
                 </Button>
               </div>
             </SheetContent>
@@ -429,7 +423,7 @@ const TutorSearch = () => {
                 </span>
               )}
             </p>
-            {(selectedDate || selectedTimeSlot !== "all" || selectedSubject !== "all" || selectedCurriculum !== "all" || minRating > 0) && (
+            {(selectedDate || selectedTimeSlot !== "all" || selectedSubject !== "all" || selectedCurriculum !== "all" || minRating > 0 || priceRange[0] !== 2000 || priceRange[1] !== 6000) && (
               <Button 
                 variant="ghost" 
                 size="sm"
@@ -439,7 +433,7 @@ const TutorSearch = () => {
                   setSelectedSubject("all");
                   setSelectedCurriculum("all");
                   setMinRating(0);
-                  setPriceRange([0, 5000]);
+                  setPriceRange([2000, 6000]);
                   setAvailabilityMap(new Map());
                 }}
               >
@@ -465,7 +459,7 @@ const TutorSearch = () => {
                 setSelectedSubject("all");
                 setSelectedCurriculum("all");
                 setMinRating(0);
-                setPriceRange([0, 5000]);
+                setPriceRange([2000, 6000]);
                 setAvailabilityMap(new Map());
               }}
             >
@@ -486,16 +480,21 @@ const TutorSearch = () => {
                     </AvatarFallback>
                   </Avatar>
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-start justify-between gap-2 mb-2">
-                      <h3 className="text-xl font-bold leading-tight">{tutor.name}</h3>
-                      <TutorTierBadge tier={tutor.tier} size="sm" showTooltip={true} />
-                    </div>
+                    <h3 className="text-xl font-bold leading-tight mb-2">{tutor.name}</h3>
                     <p className="text-sm text-muted-foreground mb-1 leading-snug">
-                      {tutor.subjects.join(", ")}
+                      {tutor.subjects.slice(0, 3).join(", ")}{tutor.subjects.length > 3 ? "..." : ""}
                     </p>
-                    <p className="text-xs text-muted-foreground/80">
-                      {tutor.school}
-                    </p>
+                    {tutor.displayInstitution ? (
+                      <p className="text-xs text-muted-foreground/80 flex items-center gap-1">
+                        <MapPin className="w-3 h-3" />
+                        {tutor.school}
+                      </p>
+                    ) : (
+                      <p className="text-xs text-muted-foreground/80 flex items-center gap-1">
+                        <Award className="w-3 h-3" />
+                        {tutor.experienceYears}+ years experience
+                      </p>
+                    )}
                   </div>
                 </div>
 

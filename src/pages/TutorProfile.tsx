@@ -11,7 +11,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { SEO } from "@/components/SEO";
 import { BookingCalendar } from "@/components/BookingCalendar";
-import { TutorTierBadge } from "@/components/TutorTierBadge";
+
 import tutor1 from "@/assets/tutor-1.jpg";
 import tutor2 from "@/assets/tutor-2.jpg";
 import tutor3 from "@/assets/tutor-3.jpg";
@@ -99,10 +99,10 @@ const TutorProfile = () => {
         email: tutorUser?.email || "",
         subjects: tutorProfile.subjects || [],
         school: tutorProfile.current_institution || "Not specified",
+        displayInstitution: tutorProfile.display_institution || false,
         rating: Number(tutorProfile.rating) || 0,
         reviews: tutorProfile.total_reviews || 0,
         hourlyRate: Number(tutorProfile.hourly_rate) || 0,
-        tier: tutorProfile.tier || "bronze",
         photo: profile?.full_name 
           ? profile.full_name.split(' ').map((n: string) => n[0]).join('') 
           : "T",
@@ -255,17 +255,22 @@ const TutorProfile = () => {
                 </Avatar>
                 
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-start justify-between gap-3 mb-2">
-                    <h1 className="text-3xl font-bold">{tutor.name}</h1>
-                    <TutorTierBadge tier={tutor.tier} size="md" showTooltip={true} />
-                  </div>
+                  <h1 className="text-3xl font-bold mb-2">{tutor.name}</h1>
                   <p className="text-base text-muted-foreground mb-3">
                     {tutor.subjects.join(" • ")}
                   </p>
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <MapPin className="w-4 h-4" />
-                    <span>{tutor.school}</span>
-                  </div>
+                  {tutor.displayInstitution && tutor.school && (
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <MapPin className="w-4 h-4" />
+                      <span>{tutor.school}</span>
+                    </div>
+                  )}
+                  {!tutor.displayInstitution && (
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Award className="w-4 h-4" />
+                      <span>{tutor.experience}+ years teaching experience</span>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>

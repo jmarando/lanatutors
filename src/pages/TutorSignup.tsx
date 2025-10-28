@@ -38,7 +38,7 @@ const TutorSignup = () => {
     password: "",
     fullName: "",
     phoneNumber: "",
-    hourlyRate: "",
+    hourlyRate: "2500",
     experienceYears: "",
     bio: "",
     qualifications: "",
@@ -58,6 +58,7 @@ const TutorSignup = () => {
     referee3Name: "",
     referee3Phone: "",
     referee3Relation: "",
+    displayInstitution: false,
   });
 
   const [selectedServices, setSelectedServices] = useState<string[]>([]);
@@ -261,7 +262,8 @@ const TutorSignup = () => {
           teaching_experience: teachingExperience.length > 0 ? teachingExperience : null,
           tutoring_experience: formData.tutoringExperience || null,
           referees: referees,
-          verified: false
+          verified: false,
+          display_institution: formData.displayInstitution
         });
 
       if (tutorProfileError) throw tutorProfileError;
@@ -438,23 +440,35 @@ const TutorSignup = () => {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="hourlyRate">Hourly Rate (KES) *</Label>
+                    <Label htmlFor="hourlyRate">Your Hourly Rate (KES) *</Label>
                     <Input
                       id="hourlyRate"
                       type="number"
-                      min="0"
-                      placeholder="500"
+                      min="2000"
+                      max="6000"
+                      step="100"
+                      placeholder="2500"
                       value={formData.hourlyRate}
                       onChange={(e) => setFormData({ ...formData, hourlyRate: e.target.value })}
                       required
+                      className="text-lg font-semibold"
                     />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Range: KES 2,000 - 6,000/hr
+                    </p>
+                    <div className="text-xs space-y-1 mt-2 p-2 bg-muted/50 rounded">
+                      <p className="font-medium text-foreground">Rate Guidance:</p>
+                      <p>• IGCSE/A-Level subjects: KES 3,500 - 6,000</p>
+                      <p>• CBC/KCSE STEM subjects: KES 2,800 - 4,500</p>
+                      <p>• CBC/KCSE Humanities: KES 2,000 - 3,500</p>
+                    </div>
                   </div>
                 </div>
 
                 <div className="space-y-4 pt-4 border-t">
                   <div>
                     <h4 className="font-medium">Current Employment</h4>
-                    <p className="text-xs text-muted-foreground">For verification purposes only - not shown publicly</p>
+                    <p className="text-xs text-muted-foreground">Used for verification purposes</p>
                   </div>
                   
                   <div className="grid grid-cols-2 gap-4">
@@ -478,6 +492,24 @@ const TutorSignup = () => {
                         onChange={(e) => setFormData({ ...formData, institutionYears: e.target.value })}
                         required
                       />
+                    </div>
+                  </div>
+                  
+                  <div className="flex items-center space-x-2 p-3 bg-muted/30 rounded-lg">
+                    <Checkbox
+                      id="displayInstitution"
+                      checked={formData.displayInstitution}
+                      onCheckedChange={(checked) => 
+                        setFormData({ ...formData, displayInstitution: checked as boolean })
+                      }
+                    />
+                    <div className="flex-1">
+                      <Label htmlFor="displayInstitution" className="cursor-pointer font-normal">
+                        Display my institution name on my public profile
+                      </Label>
+                      <p className="text-xs text-muted-foreground mt-1">
+                        If unchecked, your profile will show your credentials without the school name
+                      </p>
                     </div>
                   </div>
                 </div>
