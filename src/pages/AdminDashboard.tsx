@@ -10,7 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { CheckCircle, XCircle, AlertCircle, Star, Calendar, Clock, Mail, Phone, User, BookOpen, FileText, Video, Edit, Save, X, MessageCircle, Send, TrendingUp, Users, DollarSign, Target } from "lucide-react";
+import { CheckCircle, XCircle, AlertCircle, Star, Calendar, Clock, Mail, Phone, User, BookOpen, FileText, Video, Edit, Save, X, MessageCircle, Send, TrendingUp, Users, DollarSign, Target, ExternalLink } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
@@ -26,6 +26,10 @@ const AdminDashboard = () => {
   const [noteContent, setNoteContent] = useState("");
   const [selectedBooking, setSelectedBooking] = useState<any>(null);
   const [followUpDialog, setFollowUpDialog] = useState(false);
+  const [messageDialog, setMessageDialog] = useState(false);
+  const [messageType, setMessageType] = useState<'email' | 'whatsapp'>('email');
+  const [selectedTemplate, setSelectedTemplate] = useState('');
+  const [customMessage, setCustomMessage] = useState('');
   const [followUpData, setFollowUpData] = useState({
     consultationOutcome: "",
     recommendedSubjects: [] as string[],
@@ -34,6 +38,202 @@ const AdminDashboard = () => {
     nextAction: "",
     nextActionDate: "",
   });
+
+  // Message templates for customer journey
+  const messageTemplates = {
+    email: {
+      confirmation: {
+        title: "Consultation Confirmed",
+        subject: "Your Yehtu Tutors Consultation is Confirmed! 🎓",
+        body: (booking: any) => `Hi ${booking.parent_name},
+
+Great news! Your free consultation for ${booking.student_name} is confirmed.
+
+📅 Date: ${new Date(booking.consultation_date).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
+⏰ Time: ${booking.consultation_time}
+👤 Grade: ${booking.grade_level}
+📚 Subjects: ${booking.subjects_interest.join(', ')}
+
+We'll send you the meeting link 24 hours before your consultation.
+
+Looking forward to meeting you!
+
+Best regards,
+The Yehtu Tutors Team`
+      },
+      reminder_24h: {
+        title: "24-Hour Reminder",
+        subject: "Your Consultation is Tomorrow! 📅",
+        body: (booking: any) => `Hi ${booking.parent_name},
+
+This is a friendly reminder that your consultation for ${booking.student_name} is tomorrow!
+
+📅 Tomorrow: ${new Date(booking.consultation_date).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
+⏰ Time: ${booking.consultation_time}
+🔗 Meeting Link: [Insert meeting link]
+
+Tips to prepare:
+✅ Have a list of ${booking.student_name}'s current challenges
+✅ Think about your learning goals
+✅ Prepare any questions you have
+
+See you tomorrow!
+
+Best regards,
+The Yehtu Tutors Team`
+      },
+      reminder_1h: {
+        title: "1-Hour Reminder",
+        subject: "Your Consultation Starts in 1 Hour! ⏰",
+        body: (booking: any) => `Hi ${booking.parent_name},
+
+Your consultation for ${booking.student_name} starts in 1 hour!
+
+⏰ Time: ${booking.consultation_time}
+🔗 Join here: [Insert meeting link]
+
+See you soon!
+
+The Yehtu Tutors Team`
+      },
+      post_consultation: {
+        title: "Post-Consultation Summary",
+        subject: "Great Meeting You! Here's Your Next Step 🚀",
+        body: (booking: any) => `Hi ${booking.parent_name},
+
+Thank you for taking the time to meet with us today! It was wonderful learning about ${booking.student_name}'s educational journey.
+
+📝 What We Discussed:
+[Add key points from the consultation]
+
+🎯 Recommended Next Steps:
+[Add personalized recommendations]
+
+📚 Suggested Subjects & Tutors:
+[Add recommended tutors and subjects]
+
+🔗 Ready to Get Started?
+Book your first session here: [Add booking link]
+
+Special Offer: First session at 20% off when you book within 48 hours! ⏰
+
+Questions? Just reply to this email or call us at [phone number].
+
+Best regards,
+The Yehtu Tutors Team`
+      },
+      follow_up_3days: {
+        title: "3-Day Follow-up",
+        subject: "Still Interested in Tutoring for ${booking.student_name}? 🎓",
+        body: (booking: any) => `Hi ${booking.parent_name},
+
+I hope this email finds you well! 
+
+I wanted to follow up on our consultation about ${booking.student_name}'s tutoring needs.
+
+We have some excellent tutors ready to help with ${booking.subjects_interest.join(' and ')}. 
+
+Would you like to:
+📅 Schedule a trial session?
+💬 Discuss any questions?
+👥 Learn more about our tutors?
+
+Special reminder: Your 20% discount expires in 24 hours!
+
+Let me know what works best for you.
+
+Best regards,
+The Yehtu Tutors Team`
+      }
+    },
+    whatsapp: {
+      confirmation: {
+        title: "Consultation Confirmed",
+        body: (booking: any) => `🎓 *Yehtu Tutors - Consultation Confirmed!*
+
+Hi ${booking.parent_name},
+
+Your free consultation for *${booking.student_name}* is confirmed! ✅
+
+📅 *Date:* ${new Date(booking.consultation_date).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
+⏰ *Time:* ${booking.consultation_time}
+👤 *Grade:* ${booking.grade_level}
+
+We'll send the meeting link 24 hours before.
+
+Looking forward to meeting you! 😊`
+      },
+      reminder_24h: {
+        title: "24-Hour Reminder",
+        body: (booking: any) => `📅 *Reminder: Consultation Tomorrow!*
+
+Hi ${booking.parent_name},
+
+Your consultation for *${booking.student_name}* is tomorrow!
+
+⏰ *Time:* ${booking.consultation_time}
+🔗 *Meeting Link:* [Insert link]
+
+Tips to prepare:
+✅ List current challenges
+✅ Think about learning goals
+✅ Prepare questions
+
+See you tomorrow! 👋`
+      },
+      reminder_1h: {
+        title: "1-Hour Reminder",
+        body: (booking: any) => `⏰ *Starting in 1 Hour!*
+
+Hi ${booking.parent_name},
+
+Your consultation for *${booking.student_name}* starts soon!
+
+⏰ ${booking.consultation_time}
+🔗 Join: [Insert link]
+
+See you soon! 🎓`
+      },
+      post_consultation: {
+        title: "Post-Consultation Follow-up",
+        body: (booking: any) => `🎓 *Thank You for Meeting Us!*
+
+Hi ${booking.parent_name},
+
+Great meeting you today! Here's what's next for *${booking.student_name}*:
+
+📝 *Key Points:*
+[Add summary]
+
+🎯 *Recommended:*
+[Add recommendations]
+
+🔗 *Book Your First Session:*
+[Add link]
+
+💥 *Special Offer:* 20% off if you book within 48 hours!
+
+Reply to this message or call us anytime! 📞`
+      },
+      follow_up_3days: {
+        title: "3-Day Follow-up",
+        body: (booking: any) => `👋 Hi ${booking.parent_name},
+
+Following up on ${booking.student_name}'s tutoring needs!
+
+We have great tutors ready for ${booking.subjects_interest.join(' & ')}.
+
+Interested in:
+📅 Trial session?
+💬 Questions?
+👥 Meet tutors?
+
+⏰ Your 20% discount expires in 24 hours!
+
+Let us know! 🎓`
+      }
+    }
+  };
 
   useEffect(() => {
     checkAdminAccess();
@@ -415,6 +615,51 @@ The ElimuConnect Team`;
 
     const encodedMessage = encodeURIComponent(message);
     window.open(`https://wa.me/${cleanPhone}?text=${encodedMessage}`, '_blank');
+  };
+
+  const openMessageDialog = (booking: any, type: 'email' | 'whatsapp') => {
+    setSelectedBooking(booking);
+    setMessageType(type);
+    setSelectedTemplate('');
+    setCustomMessage('');
+    setMessageDialog(true);
+  };
+
+  const handleTemplateSelect = (templateKey: string) => {
+    setSelectedTemplate(templateKey);
+    const templates = messageType === 'email' ? messageTemplates.email : messageTemplates.whatsapp;
+    const template = templates[templateKey as keyof typeof templates];
+    if (template && selectedBooking) {
+      setCustomMessage(template.body(selectedBooking));
+    }
+  };
+
+  const handleSendMessage = async () => {
+    if (!selectedBooking || !customMessage) {
+      toast.error("Please select a template or write a message");
+      return;
+    }
+
+    if (messageType === 'whatsapp') {
+      const phoneNumber = selectedBooking.phone_number.replace(/\D/g, '');
+      window.open(`https://wa.me/${phoneNumber}?text=${encodeURIComponent(customMessage)}`, '_blank');
+      toast.success("WhatsApp opened with message");
+    } else {
+      // For email, copy to clipboard
+      navigator.clipboard.writeText(customMessage);
+      toast.success("Email content copied to clipboard!");
+    }
+
+    setMessageDialog(false);
+  };
+
+  const handleJoinCall = (booking: any) => {
+    // This will be populated from the database when the meeting is created
+    if (booking.meeting_link) {
+      window.open(booking.meeting_link, '_blank');
+    } else {
+      toast.error("Meeting link not available yet");
+    }
   };
 
   const openFollowUpDialog = (booking: any) => {
@@ -915,6 +1160,19 @@ The ElimuConnect Team`;
                     </div>
 
                     <div className="pt-4 border-t space-y-4">
+                      {/* Join Call Button - Most Important Action */}
+                      {new Date(booking.consultation_date).toDateString() === new Date().toDateString() && (
+                        <Button
+                          onClick={() => handleJoinCall(booking)}
+                          className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold text-lg py-6"
+                          disabled={!booking.meeting_link}
+                        >
+                          <Video className="h-5 w-5 mr-2" />
+                          Join Consultation Call
+                          <ExternalLink className="h-4 w-4 ml-2" />
+                        </Button>
+                      )}
+
                       {/* Conversion Tracking Actions */}
                       {booking.consultation_outcome && (
                         <div className="bg-muted p-3 rounded-md">
@@ -930,21 +1188,21 @@ The ElimuConnect Team`;
 
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                         <Button
-                          onClick={() => openFollowUpDialog(booking)}
-                          variant={booking.follow_up_status === 'follow_up_sent' ? 'secondary' : 'default'}
+                          onClick={() => openMessageDialog(booking, 'email')}
+                          variant="default"
                           className="w-full"
                         >
-                          <Send className="h-4 w-4 mr-2" />
-                          {booking.follow_up_status === 'follow_up_sent' ? 'Resend Follow-up' : 'Send Follow-up Email'}
+                          <Mail className="h-4 w-4 mr-2" />
+                          Send Email
                         </Button>
 
                         <Button
-                          onClick={() => handleWhatsAppMessage(booking)}
+                          onClick={() => openMessageDialog(booking, 'whatsapp')}
                           variant="outline"
                           className="w-full"
                         >
                           <MessageCircle className="h-4 w-4 mr-2" />
-                          WhatsApp Message
+                          Send WhatsApp
                         </Button>
                       </div>
 
@@ -1037,11 +1295,78 @@ The ElimuConnect Team`;
                 </Card>
               ))
             )}
-          </TabsContent>
-        </Tabs>
+      </TabsContent>
+    </Tabs>
 
-        {/* Follow-up Dialog */}
-        <Dialog open={followUpDialog} onOpenChange={setFollowUpDialog}>
+    {/* Message Template Dialog */}
+    <Dialog open={messageDialog} onOpenChange={setMessageDialog}>
+      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>
+            {messageType === 'email' ? '📧 Send Email' : '💬 Send WhatsApp Message'}
+          </DialogTitle>
+          <DialogDescription>
+            Select a template or write a custom message for {selectedBooking?.parent_name}
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-4">
+          <div>
+            <Label>Select Message Template</Label>
+            <Select value={selectedTemplate} onValueChange={handleTemplateSelect}>
+              <SelectTrigger>
+                <SelectValue placeholder="Choose a template..." />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="confirmation">
+                  ✅ Consultation Confirmed
+                </SelectItem>
+                <SelectItem value="reminder_24h">
+                  📅 24-Hour Reminder
+                </SelectItem>
+                <SelectItem value="reminder_1h">
+                  ⏰ 1-Hour Reminder
+                </SelectItem>
+                <SelectItem value="post_consultation">
+                  📝 Post-Consultation Summary
+                </SelectItem>
+                <SelectItem value="follow_up_3days">
+                  🔔 3-Day Follow-up
+                </SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div>
+            <Label>Message Content</Label>
+            <Textarea
+              value={customMessage}
+              onChange={(e) => setCustomMessage(e.target.value)}
+              placeholder={messageType === 'email' ? 
+                "Type your email message here or select a template above..." :
+                "Type your WhatsApp message here or select a template above..."}
+              className="min-h-[300px] font-mono text-sm"
+            />
+            <p className="text-xs text-muted-foreground mt-1">
+              {customMessage.length} characters
+            </p>
+          </div>
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setMessageDialog(false)}>
+            Cancel
+          </Button>
+          <Button onClick={handleSendMessage} disabled={!customMessage}>
+            <Send className="h-4 w-4 mr-2" />
+            {messageType === 'email' ? 'Prepare Email' : 'Open WhatsApp'}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+
+    {/* Follow-up Dialog */}
+    <Dialog open={followUpDialog} onOpenChange={setFollowUpDialog}>
           <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>Send Follow-up Email</DialogTitle>
