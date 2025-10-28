@@ -72,7 +72,7 @@ const handler = async (req: Request): Promise<Response> => {
             <li>Commitment to educational excellence</li>
           </ul>
           
-          <p style="margin-top: 30px;">If you have any questions in the meantime, please don't hesitate to reach out to us at <a href="mailto:support@elimuconnect.com">support@elimuconnect.com</a>.</p>
+          <p style="margin-top: 30px;">If you have any questions in the meantime, please don't hesitate to reach out to us at <a href="mailto:info@elimuconnect.co.ke">info@elimuconnect.co.ke</a>.</p>
           
           <p style="margin-top: 30px;">Best regards,<br>
           <strong>The ElimuConnect Team</strong></p>
