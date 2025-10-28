@@ -219,14 +219,9 @@ const ConsultationConfirmed = () => {
             <p className="text-muted-foreground text-sm">
               Check your email for the meeting link and full details
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button size="lg" onClick={() => navigate("/")}>
-                Return to Home
-              </Button>
-              <Button size="lg" variant="outline" onClick={() => navigate("/book-consultation")}>
-                Book Another Consultation
-              </Button>
-            </div>
+            <Button size="lg" onClick={() => navigate("/")}>
+              Return to Home
+            </Button>
             <p className="text-sm text-muted-foreground pt-4">
               Need to reschedule?{" "}
               <a href="mailto:info@elimuconnect.co.ke" className="text-accent hover:underline">
