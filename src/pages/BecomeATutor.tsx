@@ -160,11 +160,8 @@ const BecomeATutor = () => {
 
       if (uploadError) throw uploadError;
 
-      const { data: { publicUrl } } = supabase.storage
-        .from('tutor-cvs')
-        .getPublicUrl(filePath);
-      
-      cvUrl = publicUrl;
+      // Store the file path (not public URL) since bucket is private
+      cvUrl = filePath;
 
       // Submit application with normalized phone number
       const { error: applicationError } = await supabase

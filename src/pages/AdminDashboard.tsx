@@ -406,6 +406,31 @@ const AdminDashboard = () => {
 
 const ApplicationReviewCard = ({ application, onReview }: any) => {
   const [notes, setNotes] = useState("");
+  const [cvUrl, setCvUrl] = useState<string>("");
+  const [loadingCv, setLoadingCv] = useState(false);
+
+  const handleViewCv = async () => {
+    if (!application.cv_url) return;
+    
+    setLoadingCv(true);
+    try {
+      // Generate a signed URL for the private CV file (valid for 1 hour)
+      const { data, error } = await supabase.storage
+        .from('tutor-cvs')
+        .createSignedUrl(application.cv_url, 3600);
+
+      if (error) throw error;
+      
+      if (data?.signedUrl) {
+        window.open(data.signedUrl, '_blank');
+      }
+    } catch (error: any) {
+      console.error("Error generating CV URL:", error);
+      toast.error("Failed to load CV");
+    } finally {
+      setLoadingCv(false);
+    }
+  };
 
   return (
     <Card>
@@ -438,14 +463,14 @@ const ApplicationReviewCard = ({ application, onReview }: any) => {
           <div>
             <p className="font-semibold text-sm">CV</p>
             {application.cv_url ? (
-              <a 
-                href={application.cv_url} 
-                target="_blank" 
-                rel="noopener noreferrer"
-                className="text-sm text-primary hover:underline"
+              <Button
+                variant="link"
+                className="h-auto p-0 text-sm text-primary hover:underline"
+                onClick={handleViewCv}
+                disabled={loadingCv}
               >
-                View CV
-              </a>
+                {loadingCv ? "Loading..." : "View CV"}
+              </Button>
             ) : (
               <p className="text-sm text-muted-foreground">Not uploaded</p>
             )}
