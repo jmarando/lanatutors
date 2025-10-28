@@ -22,6 +22,31 @@ const AdminDashboard = () => {
     checkAdminAccess();
   }, []);
 
+  useEffect(() => {
+    if (!isAdmin) return;
+
+    // Set up realtime subscription for new applications
+    const channel = supabase
+      .channel('tutor-applications-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'tutor_applications'
+        },
+        (payload) => {
+          console.log('Application change detected:', payload);
+          fetchPendingApplications();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [isAdmin]);
+
   const checkAdminAccess = async () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
@@ -50,11 +75,15 @@ const AdminDashboard = () => {
   };
 
   const fetchPendingApplications = async () => {
+    console.log("Fetching pending applications...");
     const { data, error } = await supabase
       .from("tutor_applications")
       .select("*")
       .eq("status", "pending")
       .order("created_at", { ascending: false });
+
+    console.log("Applications data:", data);
+    console.log("Applications error:", error);
 
     if (error) {
       console.error("Error fetching pending applications:", error);
