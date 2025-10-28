@@ -1,7 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { Resend } from "npm:resend@2.0.0";
 
-const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
+const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -51,70 +50,85 @@ STATUS:CONFIRMED
 END:VEVENT
 END:VCALENDAR`;
 
-    const emailResponse = await resend.emails.send({
-      from: "Yehtu Tutors <info@yehtu.com>",
-      to: [email],
-      subject: "Your Free Consultation is Confirmed! 📚",
-      html: `
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
-          <h1 style="color: #2563eb;">Consultation Confirmed! ✅</h1>
-          
-          <p>Hi ${parentName},</p>
-          
-          <p>Great news! Your free consultation for ${studentName} has been successfully scheduled.</p>
-          
-          <div style="background-color: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
-            <h2 style="margin-top: 0; color: #1f2937;">Consultation Details</h2>
-            <p><strong>Date:</strong> ${formattedDate}</p>
-            <p><strong>Time:</strong> ${consultationTime}</p>
-            <p><strong>Duration:</strong> 30 minutes</p>
-          </div>
-          
-          <div style="background-color: #dbeafe; padding: 20px; border-radius: 8px; margin: 20px 0;">
-            <h3 style="margin-top: 0; color: #1e40af;">How to Join</h3>
-            <p>Click the button below to join your consultation:</p>
-            <a href="${meetingLink}" style="display: inline-block; background-color: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 10px 0;">Join Meeting</a>
-            <p style="font-size: 14px; color: #6b7280;">Or copy this link: ${meetingLink}</p>
-          </div>
-          
-          <div style="background-color: #fef3c7; padding: 15px; border-radius: 8px; margin: 20px 0;">
-            <p style="margin: 0;"><strong>📅 Add to Calendar:</strong></p>
-            <p style="margin: 10px 0 0 0; font-size: 14px;">Click below to add this to your calendar:</p>
-            <a href="data:text/calendar;charset=utf-8,${encodeURIComponent(calendarData)}" download="yehtu-consultation.ics" style="display: inline-block; background-color: #f59e0b; color: white; padding: 10px 20px; text-decoration: none; border-radius: 6px; margin: 10px 0;">Add to Calendar</a>
-          </div>
-          
-          <div style="background-color: #d1fae5; padding: 15px; border-radius: 8px; margin: 20px 0;">
-            <p style="margin: 0;"><strong>🔔 Reminders:</strong></p>
-            <p style="margin: 10px 0 0 0; font-size: 14px;">We'll send you email and WhatsApp reminders:</p>
-            <ul style="font-size: 14px; margin: 10px 0 0 20px;">
-              <li>1 day before your consultation</li>
-              <li>1 hour before your consultation</li>
-            </ul>
-          </div>
-          
-          <h3 style="color: #1f2937;">What to Prepare</h3>
-          <ul>
-            <li>Any questions about your child's learning needs</li>
-            <li>Information about subjects they need help with</li>
-            <li>Your child's current academic challenges</li>
-          </ul>
-          
-          <p>If you need to reschedule, please contact us at info@yehtu.com</p>
-          
-          <p>Looking forward to meeting you!</p>
-          
-          <p style="color: #6b7280; font-size: 14px; margin-top: 30px; border-top: 1px solid #e5e7eb; padding-top: 20px;">
-            Best regards,<br>
-            The Yehtu Tutors Team<br>
-            <a href="https://yehtu.com" style="color: #2563eb;">www.yehtu.com</a>
-          </p>
+    const emailHtml = `
+      <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+        <h1 style="color: #2563eb;">Consultation Confirmed! ✅</h1>
+        
+        <p>Hi ${parentName},</p>
+        
+        <p>Great news! Your free consultation for ${studentName} has been successfully scheduled.</p>
+        
+        <div style="background-color: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
+          <h2 style="margin-top: 0; color: #1f2937;">Consultation Details</h2>
+          <p><strong>Date:</strong> ${formattedDate}</p>
+          <p><strong>Time:</strong> ${consultationTime}</p>
+          <p><strong>Duration:</strong> 30 minutes</p>
         </div>
-      `,
+        
+        <div style="background-color: #dbeafe; padding: 20px; border-radius: 8px; margin: 20px 0;">
+          <h3 style="margin-top: 0; color: #1e40af;">How to Join</h3>
+          <p>Click the button below to join your consultation:</p>
+          <a href="${meetingLink}" style="display: inline-block; background-color: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 10px 0;">Join Meeting</a>
+          <p style="font-size: 14px; color: #6b7280;">Or copy this link: ${meetingLink}</p>
+        </div>
+        
+        <div style="background-color: #fef3c7; padding: 15px; border-radius: 8px; margin: 20px 0;">
+          <p style="margin: 0;"><strong>📅 Add to Calendar:</strong></p>
+          <p style="margin: 10px 0 0 0; font-size: 14px;">Download the calendar attachment to add this to your calendar</p>
+        </div>
+        
+        <div style="background-color: #d1fae5; padding: 15px; border-radius: 8px; margin: 20px 0;">
+          <p style="margin: 0;"><strong>🔔 Reminders:</strong></p>
+          <p style="margin: 10px 0 0 0; font-size: 14px;">We'll send you email and WhatsApp reminders:</p>
+          <ul style="font-size: 14px; margin: 10px 0 0 20px;">
+            <li>1 day before your consultation</li>
+            <li>1 hour before your consultation</li>
+          </ul>
+        </div>
+        
+        <h3 style="color: #1f2937;">What to Prepare</h3>
+        <ul>
+          <li>Any questions about your child's learning needs</li>
+          <li>Information about subjects they need help with</li>
+          <li>Your child's current academic challenges</li>
+        </ul>
+        
+        <p>If you need to reschedule, please contact us at info@yehtu.com</p>
+        
+        <p>Looking forward to meeting you!</p>
+        
+        <p style="color: #6b7280; font-size: 14px; margin-top: 30px; border-top: 1px solid #e5e7eb; padding-top: 20px;">
+          Best regards,<br>
+          The Yehtu Tutors Team<br>
+          <a href="https://yehtu.com" style="color: #2563eb;">www.yehtu.com</a>
+        </p>
+      </div>
+    `;
+
+    const emailResponse = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${RESEND_API_KEY}`,
+      },
+      body: JSON.stringify({
+        from: "Yehtu Tutors <onboarding@resend.dev>",
+        to: [email],
+        subject: "Your Free Consultation is Confirmed! 📚",
+        html: emailHtml,
+      }),
     });
 
-    console.log("Booking confirmation email sent successfully:", emailResponse);
+    const emailData = await emailResponse.json();
+    
+    if (!emailResponse.ok) {
+      console.error("Email sending failed:", emailData);
+      throw new Error(emailData.message || "Failed to send email");
+    }
 
-    return new Response(JSON.stringify(emailResponse), {
+    console.log("Booking confirmation email sent successfully:", emailData);
+
+    return new Response(JSON.stringify(emailData), {
       status: 200,
       headers: {
         "Content-Type": "application/json",
