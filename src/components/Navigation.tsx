@@ -108,7 +108,7 @@ const Navigation = () => {
                 <Link to="/login">
                   <Button variant="outline" size="sm" className="hover-scale whitespace-nowrap">Sign In</Button>
                 </Link>
-                <Link to="/login">
+                <Link to="/book-consultation">
                   <Button size="sm" className="hover-scale whitespace-nowrap">Get Started</Button>
                 </Link>
               </>
@@ -157,7 +157,7 @@ const Navigation = () => {
                   <Link to="/login" onClick={() => setOpen(false)}>
                     <Button variant="outline" className="w-full">Sign In</Button>
                   </Link>
-                  <Link to="/login" onClick={() => setOpen(false)}>
+                  <Link to="/book-consultation" onClick={() => setOpen(false)}>
                     <Button className="w-full">Get Started</Button>
                   </Link>
                 </>
