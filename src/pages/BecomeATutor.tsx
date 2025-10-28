@@ -230,12 +230,53 @@ const BecomeATutor = () => {
             </div>
             <CardTitle className="text-2xl">Become a Tutor</CardTitle>
             <CardDescription>
-              Join Kenya's leading tutoring platform. This application starts our vetting process - once approved, you'll complete your full tutor profile.
+              Join Kenya's leading tutoring platform through our simple 3-step vetting process.
             </CardDescription>
           </CardHeader>
           <CardContent>
             {step === 1 && (
               <div className="space-y-6">
+                <div>
+                  <h3 className="font-semibold text-lg mb-4">Our Vetting Process</h3>
+                  <div className="space-y-3 mb-6">
+                    <div className="flex gap-3 p-3 bg-primary/5 rounded-lg border border-primary/20">
+                      <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-semibold">
+                        1
+                      </div>
+                      <div>
+                        <h4 className="font-semibold text-sm">Initial Vetting</h4>
+                        <p className="text-sm text-muted-foreground">
+                          We review your application and verify you meet our requirements below
+                        </p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex gap-3 p-3 bg-muted/50 rounded-lg">
+                      <div className="flex-shrink-0 w-8 h-8 rounded-full bg-muted-foreground text-background flex items-center justify-center font-semibold">
+                        2
+                      </div>
+                      <div>
+                        <h4 className="font-semibold text-sm">Expert Conversation</h4>
+                        <p className="text-sm text-muted-foreground">
+                          If you pass, we'll invite you for a 30-minute video call with an ElimuConnect Expert
+                        </p>
+                      </div>
+                    </div>
+                    
+                    <div className="flex gap-3 p-3 bg-muted/50 rounded-lg">
+                      <div className="flex-shrink-0 w-8 h-8 rounded-full bg-muted-foreground text-background flex items-center justify-center font-semibold">
+                        3
+                      </div>
+                      <div>
+                        <h4 className="font-semibold text-sm">Enrollment & Profile Setup</h4>
+                        <p className="text-sm text-muted-foreground">
+                          Upon approval, you'll be enrolled to complete your profile and access the tutor dashboard
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
                 <div>
                   <h3 className="font-semibold text-lg mb-4">Tutor Requirements</h3>
                   <p className="text-sm text-muted-foreground mb-6">
@@ -426,24 +467,45 @@ const BecomeATutor = () => {
                 <div>
                   <h3 className="font-semibold text-2xl mb-2">Application Submitted!</h3>
                   <p className="text-muted-foreground max-w-md mx-auto">
-                    Thank you for applying to become an ElimuConnect tutor. Our team will review your application and contact you within 3-5 business days. If you pass the initial screening, we'll be in touch to schedule an interview.
+                    Thank you for applying to become an ElimuConnect tutor. We've received your application and will begin the vetting process.
                   </p>
                 </div>
 
                 <div className="bg-muted/50 border rounded-lg p-6 max-w-md mx-auto">
                   <h4 className="font-semibold mb-3">What Happens Next?</h4>
-                  <ul className="text-sm text-left space-y-2">
+                  <ul className="text-sm text-left space-y-3">
                     <li className="flex gap-2">
-                      <CheckCircle className="w-5 h-5 text-primary flex-shrink-0" />
-                      <span>We'll verify your credentials and references</span>
+                      <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-semibold">
+                        1
+                      </div>
+                      <div>
+                        <span className="font-medium">Initial Vetting</span>
+                        <p className="text-muted-foreground text-xs mt-0.5">
+                          We'll review your credentials within 3-5 business days
+                        </p>
+                      </div>
                     </li>
                     <li className="flex gap-2">
-                      <CheckCircle className="w-5 h-5 text-primary flex-shrink-0" />
-                      <span>If approved, we'll send you the comprehensive tutor profile form</span>
+                      <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-semibold">
+                        2
+                      </div>
+                      <div>
+                        <span className="font-medium">Expert Conversation</span>
+                        <p className="text-muted-foreground text-xs mt-0.5">
+                          If you pass, we'll schedule a 30-minute video call with you
+                        </p>
+                      </div>
                     </li>
                     <li className="flex gap-2">
-                      <CheckCircle className="w-5 h-5 text-primary flex-shrink-0" />
-                      <span>Complete your profile and start teaching!</span>
+                      <div className="flex-shrink-0 w-6 h-6 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-xs font-semibold">
+                        3
+                      </div>
+                      <div>
+                        <span className="font-medium">Enrollment & Dashboard Access</span>
+                        <p className="text-muted-foreground text-xs mt-0.5">
+                          Upon approval, complete your profile and start teaching!
+                        </p>
+                      </div>
                     </li>
                   </ul>
                 </div>
