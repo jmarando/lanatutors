@@ -143,66 +143,69 @@ const Home = () => {
   ];
 
   return (
-    <div className="min-h-screen bg-[image:var(--gradient-page)]">
+    <div className="min-h-screen bg-[image:var(--gradient-page)] overflow-hidden">
       <SEO 
         title="Quality Online Tutoring for Kenyan Students"
         description="Connect with verified teachers from top Kenyan schools for safe, convenient one-on-one tutoring. Master KCSE, KCPE, and CBC curriculum from home with ElimuConnect."
         structuredData={organizationSchema}
       />
       
-      {/* Hero Section */}
-      <section>
-        <div className="max-w-7xl mx-auto px-6 py-12 md:py-20">
+      {/* Hero Section with Floating Stats */}
+      <section className="relative min-h-[90vh] flex items-center">
+        {/* Animated gradient backdrop */}
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-secondary/5 animate-pulse" style={{ animationDuration: '8s' }} />
+        
+        <div className="max-w-7xl mx-auto px-6 py-12 md:py-20 relative z-10 w-full">
           <div className="grid md:grid-cols-2 gap-12 items-center">
-            <div>
-              <h1 className="text-3xl md:text-5xl font-bold mb-6 leading-tight">
-                <span className="block whitespace-nowrap">Expert Tutoring.</span>
-                <span className="block whitespace-nowrap text-primary">Safe. Verified. Kenyan.</span>
+            <div className="animate-fade-in">
+              <h1 className="text-4xl md:text-6xl font-bold mb-6 leading-tight">
+                <span className="block">Expert Tutoring.</span>
+                <span className="block bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">Safe. Verified. Kenyan.</span>
               </h1>
-              <p className="text-lg text-muted-foreground mb-8 leading-relaxed">
+              <p className="text-lg md:text-xl text-muted-foreground mb-8 leading-relaxed">
                 Learn from verified tutors from Kenya's top schools. Choose between online or in-person sessions. Rigorously vetted educators. Seamless payments via M-Pesa or Card. All CBC and IGCSE subjects covered.
               </p>
               <div className="flex flex-wrap gap-4">
                 <Link to="/book-consultation">
-                  <Button size="lg" className="h-14 px-8 text-lg">
+                  <Button size="lg" className="h-14 px-8 text-lg hover-scale shadow-lg">
                     Book Free Consultation
                   </Button>
                 </Link>
                 <Link to="/tutors">
-                  <Button size="lg" variant="outline" className="h-14 px-8 text-lg">
+                  <Button size="lg" variant="outline" className="h-14 px-8 text-lg hover-scale">
                     Find Tutors
                   </Button>
                 </Link>
               </div>
             </div>
-            <div className="relative">
+            <div className="relative animate-fade-in" style={{ animationDelay: '0.2s' }}>
+              <div className="absolute -inset-4 bg-gradient-to-r from-primary/20 to-secondary/20 rounded-2xl blur-2xl opacity-50" />
               <video 
                 src={heroVideo} 
                 autoPlay 
                 loop 
                 muted 
                 playsInline
-                className="rounded-lg shadow-2xl w-full h-auto object-cover"
+                className="rounded-2xl shadow-2xl w-full h-auto object-cover relative z-10 border border-border/50"
                 aria-label="ElimuConnect online tutoring demo video"
               >
                 Your browser does not support the video tag.
               </video>
             </div>
           </div>
-        </div>
-      </section>
 
-      {/* Stats Section */}
-      <section className="border-y bg-secondary/30">
-        <div className="max-w-7xl mx-auto px-6 py-12">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
+          {/* Floating Glassmorphism Stats */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-16 animate-fade-in" style={{ animationDelay: '0.4s' }}>
             {stats.map((stat, index) => {
               const Icon = stat.icon;
               return (
-                <div key={index} className="space-y-2">
-                  <Icon className="w-10 h-10 mx-auto text-primary mb-2" />
-                  <div className="text-3xl font-bold">{stat.value}</div>
-                  <div className="text-sm text-muted-foreground">{stat.label}</div>
+                <div 
+                  key={index} 
+                  className="backdrop-blur-lg bg-background/60 border border-border/50 rounded-2xl p-6 shadow-xl hover-scale hover:shadow-2xl transition-all"
+                >
+                  <Icon className="w-10 h-10 text-primary mb-3" />
+                  <div className="text-4xl font-bold bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">{stat.value}</div>
+                  <div className="text-sm text-muted-foreground mt-1">{stat.label}</div>
                 </div>
               );
             })}
@@ -210,39 +213,56 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Services Section */}
-      <section className="py-20 px-6 bg-muted/30">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-4xl font-bold mb-4">Our Services</h2>
+      {/* Bento Grid Services Section */}
+      <section className="py-20 px-6 bg-muted/20">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-12 animate-fade-in">
+            <h2 className="text-4xl md:text-5xl font-bold mb-4">Our Services</h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
               Comprehensive tutoring solutions tailored to your learning needs
             </p>
           </div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {[
-              {
-                title: "After School Tuition",
-                description: "Regular sessions to reinforce classroom learning and build strong fundamentals",
-              },
-              {
-                title: "Homework Assistance",
-                description: "Expert guidance to help students complete assignments with confidence",
-              },
-              {
-                title: "Exam Revision & Prep",
-                description: "Intensive preparation for KCSE, IGCSE, and other major examinations",
-              },
-              {
-                title: "Holiday Tuition",
-                description: "Catch-up programs and advanced learning during school breaks",
-              },
-            ].map((service, index) => (
-              <Card key={index} className="text-center p-6 hover:shadow-lg transition-shadow">
-                <h3 className="text-xl font-bold mb-3">{service.title}</h3>
-                <p className="text-sm text-muted-foreground">{service.description}</p>
-              </Card>
-            ))}
+          {/* Asymmetric Bento Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-4 md:grid-rows-3 gap-4 auto-rows-fr">
+            {/* Large Card - After School */}
+            <Card className="md:col-span-2 md:row-span-2 p-8 hover-scale hover:shadow-2xl transition-all bg-gradient-to-br from-primary/5 to-transparent border-primary/20">
+              <GraduationCap className="w-12 h-12 text-primary mb-4" />
+              <h3 className="text-2xl font-bold mb-3">After School Tuition</h3>
+              <p className="text-muted-foreground leading-relaxed">
+                Regular sessions to reinforce classroom learning and build strong fundamentals. Our expert tutors provide personalized attention to help students excel in their studies.
+              </p>
+            </Card>
+
+            {/* Small Card - Homework */}
+            <Card className="md:col-span-2 md:row-span-1 p-6 hover-scale hover:shadow-xl transition-all">
+              <div className="flex items-start gap-4">
+                <Clock className="w-10 h-10 text-primary flex-shrink-0" />
+                <div>
+                  <h3 className="text-xl font-bold mb-2">Homework Assistance</h3>
+                  <p className="text-sm text-muted-foreground">Expert guidance to help students complete assignments with confidence</p>
+                </div>
+              </div>
+            </Card>
+
+            {/* Medium Card - Exam Prep */}
+            <Card className="md:col-span-2 md:row-span-2 p-8 hover-scale hover:shadow-2xl transition-all bg-gradient-to-br from-secondary/5 to-transparent border-secondary/20">
+              <Award className="w-12 h-12 text-primary mb-4" />
+              <h3 className="text-2xl font-bold mb-3">Exam Revision & Prep</h3>
+              <p className="text-muted-foreground leading-relaxed">
+                Intensive preparation for KCSE, IGCSE, and other major examinations. Proven strategies and practice materials to boost your exam performance.
+              </p>
+            </Card>
+
+            {/* Small Card - Holiday */}
+            <Card className="md:col-span-2 md:row-span-1 p-6 hover-scale hover:shadow-xl transition-all">
+              <div className="flex items-start gap-4">
+                <Calendar className="w-10 h-10 text-primary flex-shrink-0" />
+                <div>
+                  <h3 className="text-xl font-bold mb-2">Holiday Tuition</h3>
+                  <p className="text-sm text-muted-foreground">Catch-up programs and advanced learning during school breaks</p>
+                </div>
+              </div>
+            </Card>
           </div>
         </div>
       </section>
@@ -273,16 +293,52 @@ const Home = () => {
         </div>
       </section>
 
-      {/* How It Works Section */}
+      {/* Horizontal Timeline - How It Works */}
       <section className="py-20 px-6">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-4xl font-bold mb-4">How It Works</h2>
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-16 animate-fade-in">
+            <h2 className="text-4xl md:text-5xl font-bold mb-4">How It Works</h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
               Get started in three simple steps
             </p>
           </div>
-          <div className="grid md:grid-cols-3 gap-8">
+          
+          {/* Desktop Timeline */}
+          <div className="hidden md:block relative">
+            {/* Connecting Line */}
+            <div className="absolute top-16 left-0 right-0 h-1 bg-gradient-to-r from-primary via-primary to-primary/30" />
+            
+            <div className="grid grid-cols-3 gap-8 relative">
+              {[
+                {
+                  step: "1",
+                  title: "Book a Consultation",
+                  description: "Schedule a free 30-minute consultation with an ElimuConnect consultant to discuss your learning goals",
+                },
+                {
+                  step: "2",
+                  title: "Get Matched",
+                  description: "We'll match you with the perfect tutor based on your needs, curriculum, and learning style",
+                },
+                {
+                  step: "3",
+                  title: "Start Learning",
+                  description: "Choose online or in-person sessions, pay securely, and begin your learning journey",
+                },
+              ].map((item, index) => (
+                <div key={index} className="text-center animate-fade-in" style={{ animationDelay: `${index * 0.2}s` }}>
+                  <div className="w-32 h-32 rounded-full bg-gradient-to-br from-primary to-primary/70 text-primary-foreground flex items-center justify-center text-4xl font-bold mx-auto mb-6 shadow-2xl hover-scale relative z-10 border-4 border-background">
+                    {item.step}
+                  </div>
+                  <h3 className="text-xl font-bold mb-3">{item.title}</h3>
+                  <p className="text-muted-foreground leading-relaxed">{item.description}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Mobile Timeline */}
+          <div className="md:hidden space-y-8">
             {[
               {
                 step: "1",
@@ -300,58 +356,77 @@ const Home = () => {
                 description: "Choose online or in-person sessions, pay securely, and begin your learning journey",
               },
             ].map((item, index) => (
-              <div key={index} className="text-center">
-                <div className="w-16 h-16 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-2xl font-bold mx-auto mb-4">
+              <div key={index} className="flex gap-4">
+                <div className="w-16 h-16 rounded-full bg-gradient-to-br from-primary to-primary/70 text-primary-foreground flex items-center justify-center text-2xl font-bold flex-shrink-0 shadow-lg">
                   {item.step}
                 </div>
-                <h3 className="text-xl font-bold mb-3">{item.title}</h3>
-                <p className="text-muted-foreground">{item.description}</p>
+                <div>
+                  <h3 className="text-xl font-bold mb-2">{item.title}</h3>
+                  <p className="text-muted-foreground">{item.description}</p>
+                </div>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* Reviews Section */}
-      <section className="py-20 px-6 bg-muted/30">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-4xl font-bold mb-4">What Parents & Students Say</h2>
+      {/* Masonry Reviews Section */}
+      <section className="py-20 px-6 bg-muted/20">
+        <div className="max-w-7xl mx-auto">
+          <div className="text-center mb-12 animate-fade-in">
+            <h2 className="text-4xl md:text-5xl font-bold mb-4">What Parents & Students Say</h2>
             <p className="text-lg text-muted-foreground">
               Real feedback from our ElimuConnect community
             </p>
           </div>
-          <div className="grid md:grid-cols-3 gap-8">
+          {/* Masonry-style grid with varying heights */}
+          <div className="grid md:grid-cols-3 gap-6 auto-rows-auto">
             {[
               {
                 name: "Jane Wanjiru",
                 role: "Parent",
                 rating: 5,
                 comment: "My daughter's grades improved from C to A- in just 3 months! The tutors are professional and really care about the students.",
+                size: "large"
               },
               {
                 name: "David Omondi",
                 role: "Form 3 Student",
                 rating: 5,
                 comment: "I love that I can choose online classes. It's so convenient and I don't have to travel. My tutor makes Math actually fun!",
+                size: "medium"
               },
               {
                 name: "Mary Kamau",
                 role: "Parent",
                 rating: 5,
                 comment: "Safe, verified tutors from top schools. The M-Pesa payment is seamless. Best decision for my son's education!",
+                size: "medium"
               },
             ].map((review, index) => (
-              <Card key={index} className="p-6">
-                <div className="flex gap-1 mb-3">
+              <Card 
+                key={index} 
+                className={`p-6 hover-scale hover:shadow-2xl transition-all ${
+                  review.size === 'large' 
+                    ? 'md:row-span-2 bg-gradient-to-br from-primary/5 to-transparent border-primary/20' 
+                    : ''
+                }`}
+              >
+                <div className="flex gap-1 mb-4">
                   {[...Array(review.rating)].map((_, i) => (
-                    <Star key={i} className="w-4 h-4 fill-yellow-500 text-yellow-500" />
+                    <Star key={i} className="w-5 h-5 fill-yellow-500 text-yellow-500" />
                   ))}
                 </div>
-                <p className="text-sm text-muted-foreground mb-4 leading-relaxed">"{review.comment}"</p>
+                <p className={`text-muted-foreground mb-6 leading-relaxed ${
+                  review.size === 'large' ? 'text-lg' : 'text-sm'
+                }`}>
+                  "{review.comment}"
+                </p>
                 <div className="border-t pt-4">
-                  <p className="font-semibold text-sm">{review.name}</p>
-                  <p className="text-xs text-muted-foreground">{review.role}</p>
+                  <p className={`font-semibold ${review.size === 'large' ? 'text-base' : 'text-sm'}`}>
+                    {review.name}
+                  </p>
+                  <p className="text-xs text-muted-foreground mt-1">{review.role}</p>
                 </div>
               </Card>
             ))}
