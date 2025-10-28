@@ -225,7 +225,7 @@ const BecomeATutor = () => {
             </div>
             <CardTitle className="text-2xl">Become a Tutor</CardTitle>
             <CardDescription>
-              Join Kenya's leading tutoring platform
+              Join Kenya's leading tutoring platform. This application starts our vetting process - once approved, you'll complete your full tutor profile.
             </CardDescription>
           </CardHeader>
           <CardContent>
