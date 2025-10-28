@@ -24,7 +24,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     // TEMPORARY: Send to verified email for testing
     // TODO: Verify domain at resend.com/domains and update 'from' address
-    const testEmail = "justin@glab.africa";
+    const recipient = email;
 
     const response = await fetch("https://api.resend.com/emails", {
       method: "POST",
@@ -34,7 +34,7 @@ const handler = async (req: Request): Promise<Response> => {
       },
       body: JSON.stringify({
         from: "ElimuConnect <onboarding@resend.dev>",
-        to: [testEmail], // Temporarily sending to verified email
+        to: [recipient],
         subject: `Application Received - ${fullName}`,
         html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
@@ -44,7 +44,7 @@ const handler = async (req: Request): Promise<Response> => {
           
           <p>We have successfully received your application to become a tutor at ElimuConnect. Thank you for your interest in joining Kenya's leading tutoring platform!</p>
           
-          <p><strong>Note:</strong> This acknowledgment was sent to ${testEmail} (testing mode). The applicant's email was: ${email}</p>
+          <p>We will communicate with you via this email: <strong>${email}</strong>.</p>
           
           <h2 style="color: #2563eb; margin-top: 30px;">What Happens Next?</h2>
           
