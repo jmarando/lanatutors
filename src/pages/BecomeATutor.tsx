@@ -22,7 +22,7 @@ const TUTOR_REQUIREMENTS = [
   {
     icon: FileText,
     title: "Qualifications",
-    description: "Bachelor's degree or Diploma in Education or relevant subject area required. Valid TSC (Teachers Service Commission) number or Cambridge professional development qualification number mandatory"
+    description: "Bachelor's degree or Diploma in Education or relevant subject area required. Valid TSC (Teachers Service Commission) number or equivalent qualification number mandatory"
   },
   {
     icon: CheckCircle,
@@ -131,7 +131,7 @@ const BecomeATutor = () => {
     if (!formData.tscNumber && !formData.cambridgeQualification) {
       toast({
         title: "Qualification required",
-        description: "Please provide either TSC number or Cambridge qualification number",
+        description: "Please provide either TSC number or equivalent qualification number",
         variant: "destructive"
       });
       return;
@@ -402,17 +402,17 @@ const BecomeATutor = () => {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="cambridgeQualification">Cambridge Qualification Number</Label>
+                      <Label htmlFor="cambridgeQualification">Equivalent Qualification Number</Label>
                       <Input
                         id="cambridgeQualification"
-                        placeholder="Cambridge professional development number"
+                        placeholder="e.g., Cambridge, other teaching qualification"
                         value={formData.cambridgeQualification}
                         onChange={(e) => setFormData({ ...formData, cambridgeQualification: e.target.value })}
                       />
                     </div>
                   </div>
                   <p className="text-xs text-muted-foreground -mt-2">
-                    * At least one qualification number (TSC or Cambridge) is required
+                    * At least one qualification number (TSC or equivalent) is required
                   </p>
 
                   <div className="space-y-2">
