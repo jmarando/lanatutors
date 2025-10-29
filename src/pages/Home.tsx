@@ -175,14 +175,15 @@ const Home = () => {
                 </Link>
               </div>
             </div>
-            <div className="relative">
+            <div className="relative overflow-hidden rounded-lg shadow-2xl">
               <video 
                 src={heroVideo} 
                 autoPlay 
                 loop 
                 muted 
                 playsInline
-                className="rounded-lg shadow-2xl w-full h-auto object-cover"
+                className="w-full h-auto object-cover scale-150"
+                style={{ transformOrigin: 'center 30%' }}
                 aria-label="ElimuConnect online tutoring demo video"
               >
                 Your browser does not support the video tag.
