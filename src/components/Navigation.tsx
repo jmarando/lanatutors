@@ -61,9 +61,13 @@ const Navigation = () => {
 
   return (
     <nav className="border-b bg-background/95 backdrop-blur-sm sticky top-0 z-50 shadow-sm">
-      <div className="max-w-7xl mx-auto px-6 py-3 flex items-center justify-between">
-        <Link to="/" className="flex items-center gap-2 group">
-          <img src={lanaLogo} alt="Lana - Your Trusted Tutoring Partner" className="w-[100px] h-[100px] object-contain transition-transform group-hover:scale-105" />
+      <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
+        <Link to="/" className="flex items-center group py-2">
+          <img 
+            src={lanaLogo} 
+            alt="Lana - Your Trusted Tutoring Partner" 
+            className="h-16 w-auto transition-transform group-hover:scale-105" 
+          />
         </Link>
 
         {/* Desktop Navigation */}
