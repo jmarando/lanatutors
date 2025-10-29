@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -123,6 +123,35 @@ const Login = () => {
       });
     }
   };
+
+  // Check if user is already authenticated and redirect accordingly
+  useEffect(() => {
+    const checkAuthAndRedirect = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (session?.user) {
+        // Check user role and redirect
+        const { data: roleData } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', session.user.id)
+          .maybeSingle();
+
+        if (roleData?.role === 'admin') {
+          navigate('/admin');
+        } else if (roleData?.role === 'tutor') {
+          navigate('/tutor-dashboard');
+        } else if (roleData?.role === 'student') {
+          navigate('/student-dashboard');
+        } else {
+          // Default redirect if no role found
+          navigate('/');
+        }
+      }
+    };
+
+    checkAuthAndRedirect();
+  }, [navigate]);
 
   return (
     <div className="min-h-screen bg-[image:var(--gradient-page)] flex items-center justify-center p-6">
