@@ -66,12 +66,12 @@ const Navigation = () => {
           <img 
             src={lanaLogo} 
             alt="Lana - Your Trusted Tutoring Partner" 
-            className="h-16 w-auto transition-transform group-hover:scale-105" 
+            className="h-16 sm:h-20 md:h-24 lg:h-28 xl:h-32 w-auto transition-transform group-hover:scale-105" 
           />
         </Link>
 
         {/* Desktop Navigation */}
-        <div className="hidden lg:flex items-center gap-6 flex-1 justify-between ml-12">
+        <div className="hidden lg:flex items-center gap-6 flex-1 justify-between ml-6">
           <div className="flex items-center gap-6 whitespace-nowrap">
             {navLinks.map((link) => (
               <Link
