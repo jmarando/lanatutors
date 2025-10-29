@@ -62,12 +62,15 @@ const Navigation = () => {
   return (
     <nav className="border-b bg-background/95 backdrop-blur-sm sticky top-0 z-50 shadow-sm">
       <div className="max-w-7xl mx-auto px-6 py-2 flex items-center justify-between">
-        <Link to="/" className="flex items-center group">
-          <img 
-            src={lanaLogo} 
-            alt="Lana - Your Trusted Tutoring Partner" 
-            className="h-12 sm:h-14 md:h-16 lg:h-20 xl:h-24 w-auto transition-transform group-hover:scale-105" 
-          />
+        <Link to="/" className="flex items-center" aria-label="Lana Home">
+          <div className="h-20 sm:h-24 md:h-24 lg:h-24 xl:h-24 overflow-hidden flex items-center">
+            <img 
+              src={lanaLogo} 
+              alt="Lana - Your Trusted Tutoring Partner" 
+              className="h-[140%] sm:h-[120%] md:h-full w-auto -translate-y-[6%] sm:-translate-y-[2%]" 
+              style={{ transformOrigin: 'left center' }}
+            />
+          </div>
         </Link>
 
         {/* Desktop Navigation */}
