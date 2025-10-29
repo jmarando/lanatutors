@@ -61,12 +61,12 @@ const Navigation = () => {
 
   return (
     <nav className="border-b bg-background/95 backdrop-blur-sm sticky top-0 z-50 shadow-sm">
-      <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-        <Link to="/" className="flex items-center group py-2">
+      <div className="max-w-7xl mx-auto px-6 py-2 flex items-center justify-between">
+        <Link to="/" className="flex items-center group">
           <img 
             src={lanaLogo} 
             alt="Lana - Your Trusted Tutoring Partner" 
-            className="h-16 sm:h-20 md:h-24 lg:h-28 xl:h-32 w-auto transition-transform group-hover:scale-105" 
+            className="h-12 sm:h-14 md:h-16 lg:h-20 xl:h-24 w-auto transition-transform group-hover:scale-105" 
           />
         </Link>
 
