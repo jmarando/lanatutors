@@ -247,7 +247,7 @@ const TutorSearch = () => {
           <div className="text-center mb-8">
             <h1 className="text-5xl font-bold mb-3">Find Your Tutor</h1>
             <p className="text-muted-foreground text-lg">
-              Browse verified tutors with rates from KES 2,000-6,000/hr
+              Browse verified tutors with rates from KES 2,000+/hr
             </p>
           </div>
         </div>
