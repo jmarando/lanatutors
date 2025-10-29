@@ -42,10 +42,9 @@ const AboutUs = () => {
   ];
 
   const stats = [
-    { icon: Users, value: "500+", label: "Verified Tutors", sublabel: "From Kenya's top schools" },
-    { icon: GraduationCap, value: "10,000+", label: "Happy Students", sublabel: "Across all counties" },
-    { icon: Award, value: "4.9★", label: "Average Rating", sublabel: "From student reviews" },
-    { icon: TrendingUp, value: "94%", label: "Success Rate", sublabel: "Students improve grades" }
+    { icon: Users, value: "50+", label: "Verified Tutors", sublabel: "From Kenya's top schools" },
+    { icon: GraduationCap, value: "500+", label: "Happy Students", sublabel: "Across all counties" },
+    { icon: Award, value: "All Curricula", label: "CBC, IGCSE & 8-4-4", sublabel: "Comprehensive coverage" }
   ];
 
   const story = {
@@ -205,7 +204,7 @@ const AboutUs = () => {
       {/* Stats Section */}
       <section className="border-y bg-secondary/30">
         <div className="max-w-7xl mx-auto px-6 py-12">
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
             {stats.map((stat, index) => {
               const Icon = stat.icon;
               return (
