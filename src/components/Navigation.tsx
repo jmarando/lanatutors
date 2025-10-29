@@ -1,10 +1,11 @@
 import { Button } from "@/components/ui/button";
-import { Award, Menu, LogOut, MessageCircle } from "lucide-react";
+import { Menu, LogOut, MessageCircle } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { User } from "@supabase/supabase-js";
+import lanaLogo from "@/assets/lana-header-logo.png";
 
 const Navigation = () => {
   const [open, setOpen] = useState(false);
@@ -62,8 +63,7 @@ const Navigation = () => {
     <nav className="border-b bg-background/95 backdrop-blur-sm sticky top-0 z-50 shadow-sm">
       <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
         <Link to="/" className="flex items-center gap-2 group">
-          <Award className="w-8 h-8 text-primary transition-transform group-hover:scale-110" />
-          <span className="text-2xl font-bold bg-gradient-to-r from-foreground to-primary bg-clip-text">Lana</span>
+          <img src={lanaLogo} alt="Lana - Your Trusted Tutoring Partner" className="h-12 transition-transform group-hover:scale-105" />
         </Link>
 
         {/* Desktop Navigation */}
