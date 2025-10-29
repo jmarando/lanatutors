@@ -155,7 +155,7 @@ const Home = () => {
         <div className="max-w-7xl mx-auto px-6 py-12 md:py-20">
           <div className="grid md:grid-cols-2 gap-12 items-center">
             <div>
-              <h1 className="text-3xl md:text-5xl font-bold mb-6 leading-tight">
+              <h1 className="text-3xl md:text-5xl font-bold mb-6 leading-snug">
                 <span className="block whitespace-nowrap">Expert Tutoring.</span>
                 <span className="block whitespace-nowrap text-primary">Safe. Verified. Trusted.</span>
               </h1>
