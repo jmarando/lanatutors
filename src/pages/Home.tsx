@@ -50,7 +50,7 @@ const Home = () => {
   const stats = [
     { icon: Users, value: "50+", label: "Verified Tutors" },
     { icon: GraduationCap, value: "500+", label: "Happy Students" },
-    { icon: Award, value: "1000+", label: "Sessions Completed" }
+    { icon: Award, value: "All Curricula", label: "CBC, IGCSE & 8-4-4" }
   ];
 
   const steps = [
