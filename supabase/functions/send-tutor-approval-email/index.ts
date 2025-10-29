@@ -124,11 +124,11 @@ const handler = async (req: Request): Promise<Response> => {
                       </ul>
                       
                       <h2 style="color: #ed2644; margin: 30px 0 15px; font-size: 20px;">Need Help?</h2>
-                      <p style="margin: 0 0 30px; color: #666666; font-size: 15px; line-height: 1.6;">If you have any questions while setting up your profile, our team is here to help at <a href="mailto:info@elimuconnect.co.ke" style="color: #ed2644; text-decoration: none;">info@elimuconnect.co.ke</a>.</p>
+                      <p style="margin: 0 0 30px; color: #666666; font-size: 15px; line-height: 1.6;">If you have any questions while setting up your profile, our team is here to help at <a href="mailto:info@learnwithlana.com" style="color: #ed2644; text-decoration: none;">info@learnwithlana.com</a>.</p>
                       
                       <p style="margin: 30px 0 10px; color: #666666; font-size: 15px; line-height: 1.6;">We're excited to have you on board and can't wait to see you make an impact on students' lives!</p>
                       
-                      <p style="margin: 30px 0 5px; color: #666666; font-size: 15px; line-height: 1.6;">Best regards,<br><strong style="color: #333333;">The ElimuConnect Team</strong></p>
+                      <p style="margin: 30px 0 5px; color: #666666; font-size: 15px; line-height: 1.6;">Best regards,<br><strong style="color: #333333;">The Lana Team</strong></p>
                     </td>
                   </tr>
                   

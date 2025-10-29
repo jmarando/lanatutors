@@ -37,9 +37,9 @@ serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: "ElimuConnect <info@elimuconnect.co.ke>",
+        from: "Lana <info@learnwithlana.com>",
         to: [to],
-        subject: "ElimuConnect Test Email",
+        subject: "Lana Test Email",
         html,
       }),
     });

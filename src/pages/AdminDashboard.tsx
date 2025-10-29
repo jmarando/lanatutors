@@ -735,7 +735,7 @@ We're looking forward to discussing ${booking.student_name}'s learning needs wit
 If you have any questions before the consultation, feel free to reply to this message.
 
 Best regards,
-The ElimuConnect Team`;
+The Lana Team`;
 
     const encodedMessage = encodeURIComponent(message);
     window.open(`https://wa.me/${cleanPhone}?text=${encodedMessage}`, '_blank');

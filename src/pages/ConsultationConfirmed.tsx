@@ -108,7 +108,7 @@ const ConsultationConfirmed = () => {
                   <div>
                     <p className="font-semibold">Meet Your Expert</p>
                     <p className="text-sm text-muted-foreground">
-                      You'll chat with an ElimuConnect curriculum specialist who understands your child's learning system
+                      You'll chat with a Lana curriculum specialist who understands your child's learning system
                     </p>
                   </div>
                 </li>
@@ -141,7 +141,7 @@ const ConsultationConfirmed = () => {
                   <div>
                     <p className="font-semibold">Ask Questions</p>
                     <p className="text-sm text-muted-foreground">
-                      Learn about our tutoring methods, pricing packages, and how ElimuConnect can help {studentName} excel
+                      Learn about our tutoring methods, pricing packages, and how Lana can help {studentName} excel
                     </p>
                   </div>
                 </li>
@@ -224,7 +224,7 @@ const ConsultationConfirmed = () => {
             </Button>
             <p className="text-sm text-muted-foreground pt-4">
               Need to reschedule?{" "}
-              <a href="mailto:info@elimuconnect.co.ke" className="text-accent hover:underline">
+              <a href="mailto:info@learnwithlana.com" className="text-accent hover:underline">
                 Contact us
               </a>
             </p>

@@ -37,14 +37,14 @@ const handler = async (req: Request): Promise<Response> => {
 
     const calendarData = `BEGIN:VCALENDAR
 VERSION:2.0
-PRODID:-//Yehtu Tutors//EN
+PRODID:-//Lana//EN
 BEGIN:VEVENT
-UID:${crypto.randomUUID()}@yehtu.com
+UID:${crypto.randomUUID()}@learnwithlana.com
 DTSTAMP:${new Date().toISOString().replace(/[-:]/g, '').split('.')[0]}Z
 DTSTART:${startDateTime.toISOString().replace(/[-:]/g, '').split('.')[0]}Z
 DTEND:${endDateTime.toISOString().replace(/[-:]/g, '').split('.')[0]}Z
-SUMMARY:Free Consultation with Yehtu Tutors
-DESCRIPTION:Your free consultation session with Yehtu Tutors. Join here: ${meetingLink}
+SUMMARY:Free Consultation with Lana
+DESCRIPTION:Your free consultation session with Lana. Join here: ${meetingLink}
 LOCATION:${meetingLink}
 STATUS:CONFIRMED
 END:VEVENT
@@ -148,12 +148,12 @@ END:VCALENDAR`;
             </div>
 
             <div style="text-align: center; margin: 30px 0;">
-              <a href="mailto:info@elimuconnect.co.ke?subject=Reschedule Consultation - ${studentName}" class="button button-secondary">📅 Need to Reschedule?</a>
+              <a href="mailto:info@learnwithlana.com?subject=Reschedule Consultation - ${studentName}" class="button button-secondary">📅 Need to Reschedule?</a>
             </div>
 
             <p style="color: #737373; text-align: center; font-size: 14px; margin: 30px 0;">
               If you need to reschedule or have any questions, simply reply to this email or contact us at 
-              <a href="mailto:info@elimuconnect.co.ke" style="color: #1D9DB8;">info@elimuconnect.co.ke</a>
+              <a href="mailto:info@learnwithlana.com" style="color: #1D9DB8;">info@learnwithlana.com</a>
             </p>
 
             <div style="text-align: center; margin-top: 40px; padding-top: 30px; border-top: 2px solid #F1EDEA;">
@@ -162,10 +162,10 @@ END:VCALENDAR`;
           </div>
 
           <div class="footer">
-            <p style="margin: 0 0 10px 0; font-size: 16px;">The ElimuConnect Team</p>
+            <p style="margin: 0 0 10px 0; font-size: 16px;">The Lana Team</p>
             <p style="margin: 0; font-size: 14px; color: #B0B0B0;">Empowering Kenyan Students Through Quality Education</p>
             <p style="margin: 20px 0 0 0;">
-              <a href="https://elimuconnect.co.ke" style="color: #1D9DB8;">www.elimuconnect.co.ke</a>
+              <a href="https://learnwithlana.com" style="color: #1D9DB8;">www.learnwithlana.com</a>
             </p>
           </div>
         </div>
@@ -183,7 +183,7 @@ END:VCALENDAR`;
         Authorization: `Bearer ${RESEND_API_KEY}`,
       },
       body: JSON.stringify({
-        from: "ElimuConnect <info@elimuconnect.co.ke>",
+        from: "Lana <info@learnwithlana.com>",
         to: [email],
         subject: "Your Free Consultation is Confirmed! 📚",
         html: emailHtml,

@@ -23,7 +23,7 @@ const Home = () => {
   const organizationSchema = {
     "@context": "https://schema.org",
     "@type": "EducationalOrganization",
-    "name": "ElimuConnect",
+    "name": "Lana",
     "description": "Quality online tutoring for Kenyan students with verified teachers from top schools",
     "url": window.location.origin,
     "logo": `${window.location.origin}/favicon.ico`,
@@ -37,7 +37,7 @@ const Home = () => {
       "@type": "ContactPoint",
       "telephone": "+254-725252542",
       "contactType": "customer service",
-      "email": "info@elimuconnect.co.ke"
+      "email": "info@learnwithlana.com"
     },
     "sameAs": [],
     "aggregateRating": {
@@ -80,7 +80,7 @@ const Home = () => {
     {
       icon: ShieldCheck,
       title: "Verified Expert Tutors",
-      description: "Every tutor on ElimuConnect comes from recognized Kenyan schools including Alliance, Starehe, Kenya High, and more. We verify teaching credentials, academic qualifications, and conduct background checks. Only the top 15% of applicants are accepted to ensure quality education."
+      description: "Every tutor on Lana comes from recognized Kenyan schools including Alliance, Starehe, Kenya High, and more. We verify teaching credentials, academic qualifications, and conduct background checks. Only the top 15% of applicants are accepted to ensure quality education."
     },
     {
       icon: Clock,
@@ -105,7 +105,7 @@ const Home = () => {
     {
       icon: Users,
       title: "Proven Results",
-      description: "Students who use ElimuConnect see an average grade improvement of 2 levels within 3 months. 94% of students report increased confidence in their subjects. Our tutors have helped over 10,000 students excel in KCPE and KCSE examinations."
+      description: "Students who use Lana see an average grade improvement of 2 levels within 3 months. 94% of students report increased confidence in their subjects. Our tutors have helped over 10,000 students excel in KCPE and KCSE examinations."
     }
   ];
 
@@ -146,7 +146,7 @@ const Home = () => {
     <div className="min-h-screen bg-[image:var(--gradient-page)]">
       <SEO 
         title="Quality Online Tutoring for Kenyan Students"
-        description="Connect with verified teachers from top Kenyan schools for safe, convenient one-on-one tutoring. Master KCSE, KCPE, and CBC curriculum from home with ElimuConnect."
+        description="Connect with verified teachers from top Kenyan schools for safe, convenient one-on-one tutoring. Master KCSE, KCPE, and CBC curriculum from home with Lana."
         structuredData={organizationSchema}
       />
       
@@ -184,7 +184,7 @@ const Home = () => {
                 playsInline
                 className="w-full h-auto object-cover scale-150"
                 style={{ transformOrigin: 'center 30%' }}
-                aria-label="ElimuConnect online tutoring demo video"
+                aria-label="Lana online tutoring demo video"
               >
                 Your browser does not support the video tag.
               </video>
@@ -288,7 +288,7 @@ const Home = () => {
               {
                 step: "1",
                 title: "Book a Consultation",
-                description: "Schedule a free 30-minute consultation with an ElimuConnect consultant to discuss your learning goals",
+                description: "Schedule a free 30-minute consultation with a Lana consultant to discuss your learning goals",
               },
               {
                 step: "2",
@@ -319,7 +319,7 @@ const Home = () => {
           <div className="text-center mb-12">
             <h2 className="text-4xl font-bold mb-4">What Parents & Students Say</h2>
             <p className="text-lg text-muted-foreground">
-              Real feedback from our ElimuConnect community
+              Real feedback from our Lana community
             </p>
           </div>
           <div className="grid md:grid-cols-3 gap-8">
@@ -401,9 +401,9 @@ const Home = () => {
       <section id="about" className="py-20 px-6">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-12">
-            <h2 className="text-4xl font-bold mb-4">About ElimuConnect</h2>
+            <h2 className="text-4xl font-bold mb-4">About Lana</h2>
             <p className="text-lg text-muted-foreground max-w-3xl mx-auto leading-relaxed">
-              ElimuConnect connects Kenyan students with the country's best educators from top institutions. Our mission is to make quality education accessible, safe, and convenient for every student, whether they prefer learning online or in-person.
+              Lana connects Kenyan students with the country's best educators from top institutions. Our mission is to make quality education accessible, safe, and convenient for every student, whether they prefer learning online or in-person.
             </p>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -429,7 +429,7 @@ const Home = () => {
           <Card className="bg-gradient-to-r from-primary to-primary/90 text-primary-foreground border-0">
             <CardContent className="p-10 text-center">
               <h2 className="text-3xl font-bold mb-3">Ready to Excel in Your Studies?</h2>
-              <p className="text-lg mb-6 opacity-90">Join thousands of students learning with ElimuConnect</p>
+              <p className="text-lg mb-6 opacity-90">Join thousands of students learning with Lana</p>
               <Link to="/tutors">
                 <Button size="lg" variant="secondary" className="text-lg px-8 shadow-lg">
                   Find Your Tutor Now
@@ -447,13 +447,13 @@ const Home = () => {
             <div>
               <div className="flex items-center gap-2 mb-4">
                 <Award className="w-6 h-6 text-primary" />
-                <span className="text-xl font-bold">ElimuConnect</span>
+                <span className="text-xl font-bold">Lana</span>
               </div>
               <div className="text-sm text-muted-foreground space-y-1">
                 <p>First Floor, Arbor House,</p>
                 <p>Arboretum Drive, Nairobi</p>
                 <p>(+254) 725252542</p>
-                <p>info@elimuconnect.co.ke</p>
+                <p>info@learnwithlana.com</p>
               </div>
             </div>
             <div>
@@ -481,7 +481,7 @@ const Home = () => {
             </div>
           </div>
           <div className="pt-8 border-t text-center text-sm text-muted-foreground">
-            <p>© 2025 ElimuConnect. All rights reserved. Built for Kenyan education.</p>
+            <p>© 2025 Lana. All rights reserved. Built for Kenyan education.</p>
           </div>
         </div>
       </footer>

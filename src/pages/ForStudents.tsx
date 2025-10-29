@@ -202,7 +202,7 @@ const ForStudents = () => {
       <section className="py-20 px-6 bg-muted/30">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-12">
-            <h2 className="text-4xl font-bold mb-4">Why Choose ElimuConnect?</h2>
+            <h2 className="text-4xl font-bold mb-4">Why Choose Lana?</h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
               The most trusted tutoring platform in Kenya
             </p>

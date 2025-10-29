@@ -17,7 +17,7 @@ export const SEO = ({
   structuredData,
   canonical
 }: SEOProps) => {
-  const fullTitle = `${title} | ElimuConnect`;
+  const fullTitle = `${title} | Lana`;
   
   return (
     <Helmet>

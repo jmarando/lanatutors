@@ -133,9 +133,9 @@ const handler = async (req: Request): Promise<Response> => {
                       <h2 style="color: #ed2644; margin: 30px 0 15px; font-size: 20px;">Timeline</h2>
                       <p style="margin: 0 0 30px; color: #666666; font-size: 15px; line-height: 1.6;">You can expect to hear from us within <strong style="color: #ed2644;">3-5 business days</strong> regarding the status of your initial vetting.</p>
                       
-                      <p style="margin: 30px 0 10px; color: #666666; font-size: 15px; line-height: 1.6;">If you have any questions in the meantime, please don't hesitate to reach out to us at <a href="mailto:info@elimuconnect.co.ke" style="color: #ed2644; text-decoration: none;">info@elimuconnect.co.ke</a>.</p>
+                      <p style="margin: 30px 0 10px; color: #666666; font-size: 15px; line-height: 1.6;">If you have any questions in the meantime, please don't hesitate to reach out to us at <a href="mailto:info@learnwithlana.com" style="color: #ed2644; text-decoration: none;">info@learnwithlana.com</a>.</p>
                       
-                      <p style="margin: 30px 0 5px; color: #666666; font-size: 15px; line-height: 1.6;">Best regards,<br><strong style="color: #333333;">The ElimuConnect Team</strong></p>
+                      <p style="margin: 30px 0 5px; color: #666666; font-size: 15px; line-height: 1.6;">Best regards,<br><strong style="color: #333333;">The Lana Team</strong></p>
                     </td>
                   </tr>
                   

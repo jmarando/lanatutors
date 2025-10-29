@@ -108,7 +108,7 @@ const ForTutors = () => {
   return (
     <div className="min-h-screen bg-[image:var(--gradient-page)]">
       <SEO 
-        title="Become a Tutor - Teach & Earn with ElimuConnect"
+        title="Become a Tutor - Teach & Earn with Lana"
         description="Join Kenya's premier online tutoring platform. Earn KES 2,000-3,500/hour teaching students from top schools. Flexible schedule, secure payments, growing student base."
       />
       
@@ -125,7 +125,7 @@ const ForTutors = () => {
               <span className="text-primary">Transform Lives. Earn More.</span>
             </h1>
             <p className="text-xl text-muted-foreground mb-8 leading-relaxed">
-              Join ElimuConnect's network of elite tutors from Kenya's top schools. 
+              Join Lana's network of elite tutors from Kenya's top schools. 
               Teach students across the country, set your own schedule, and earn competitive rates.
             </p>
             <div className="flex flex-wrap gap-4 justify-center">
@@ -176,7 +176,7 @@ const ForTutors = () => {
       <section className="py-20 px-6 bg-muted/30">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-12">
-            <h2 className="text-4xl font-bold mb-4">Why Teach with ElimuConnect?</h2>
+            <h2 className="text-4xl font-bold mb-4">Why Teach with Lana?</h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
               Join a platform that values quality education and supports your growth as an educator
             </p>

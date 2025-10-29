@@ -50,7 +50,7 @@ const AboutUs = () => {
 
   const story = {
     problem: "Many Kenyan students struggle to access quality tutoring. Traditional in-person tutoring is expensive, requires travel, and has limited availability. Top tutors are concentrated in major cities, leaving students in rural areas without options.",
-    solution: "ElimuConnect bridges this gap by bringing Kenya's best tutors online. Our platform makes quality education accessible to any student with an internet connection, at affordable rates, with flexible scheduling.",
+    solution: "Lana bridges this gap by bringing Kenya's best tutors online. Our platform makes quality education accessible to any student with an internet connection, at affordable rates, with flexible scheduling.",
     impact: "Since launch, we've connected thousands of students with expert tutors, helping them improve grades, build confidence, and achieve their academic goals. We're democratizing education across Kenya, one session at a time."
   };
 
@@ -149,7 +149,7 @@ const AboutUs = () => {
     {
       icon: Award,
       title: "Proven Academic Results",
-      description: "Our students see real, measurable improvement. On average, students using ElimuConnect improve their grades by 2 levels within 3 months. We've helped over 10,000 students excel in KCPE and KCSE examinations.",
+      description: "Our students see real, measurable improvement. On average, students using Lana improve their grades by 2 levels within 3 months. We've helped over 10,000 students excel in KCPE and KCSE examinations.",
       highlights: [
         "2-level average grade improvement",
         "94% report increased confidence",
@@ -186,14 +186,14 @@ const AboutUs = () => {
     <div className="min-h-screen bg-[image:var(--gradient-page)]">
       <SEO
         title="About Us - Our Mission to Democratize Quality Education in Kenya"
-        description="Learn about ElimuConnect's mission to make quality tutoring accessible to all Kenyan students. Discover how we work, our values, and why thousands of families trust us."
+        description="Learn about Lana's mission to make quality tutoring accessible to all Kenyan students. Discover how we work, our values, and why thousands of families trust us."
       />
 
       {/* Hero Section */}
       <section className="py-20 px-6">
         <div className="max-w-4xl mx-auto text-center">
           <h1 className="text-4xl md:text-5xl font-bold mb-6">
-            About <span className="text-primary">ElimuConnect</span>
+            About <span className="text-primary">Lana</span>
           </h1>
           <p className="text-xl text-muted-foreground leading-relaxed">
             We're on a mission to democratize quality education across Kenya by connecting students 
@@ -266,7 +266,7 @@ const AboutUs = () => {
           <div className="text-center mb-12">
             <h2 className="text-4xl font-bold mb-4">How It Works</h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              Getting started with ElimuConnect is simple and straightforward
+              Getting started with Lana is simple and straightforward
             </p>
           </div>
           <div className="space-y-8">
@@ -323,7 +323,7 @@ const AboutUs = () => {
       <section className="py-20 px-6">
         <div className="max-w-6xl mx-auto">
           <div className="text-center mb-12">
-            <h2 className="text-4xl font-bold mb-4">Why Choose ElimuConnect?</h2>
+            <h2 className="text-4xl font-bold mb-4">Why Choose Lana?</h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
               The most trusted tutoring platform in Kenya
             </p>
@@ -358,7 +358,7 @@ const AboutUs = () => {
             <CardContent className="p-10 text-center">
               <h2 className="text-3xl font-bold mb-3">Ready to Get Started?</h2>
               <p className="text-lg mb-6 opacity-90">
-                Join thousands of families who trust ElimuConnect for quality tutoring
+                Join thousands of families who trust Lana for quality tutoring
               </p>
               <div className="flex flex-wrap gap-4 justify-center">
                 <Link to="/book-consultation">

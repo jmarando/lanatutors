@@ -134,7 +134,7 @@ const handler = async (req: Request): Promise<Response> => {
                 Reply to this email or call us anytime. We're here to help!
               </p>
               <p style="margin: 15px 0;">
-                <a href="mailto:info@elimuconnect.co.ke" style="color: #1D9DB8; font-weight: 600;">info@elimuconnect.co.ke</a>
+                <a href="mailto:info@learnwithlana.com" style="color: #1D9DB8; font-weight: 600;">info@learnwithlana.com</a>
               </p>
             </div>
 
@@ -144,10 +144,10 @@ const handler = async (req: Request): Promise<Response> => {
           </div>
 
           <div class="footer">
-            <p style="margin: 0 0 10px 0; font-size: 16px;">The ElimuConnect Team</p>
+            <p style="margin: 0 0 10px 0; font-size: 16px;">The Lana Team</p>
             <p style="margin: 0; font-size: 14px; color: #B0B0B0;">Empowering Kenyan Students Through Quality Education</p>
             <p style="margin: 20px 0 0 0;">
-              <a href="https://elimuconnect.co.ke">www.elimuconnect.co.ke</a>
+              <a href="https://learnwithlana.com">www.learnwithlana.com</a>
             </p>
           </div>
         </div>
@@ -165,7 +165,7 @@ const handler = async (req: Request): Promise<Response> => {
         Authorization: `Bearer ${RESEND_API_KEY}`,
       },
       body: JSON.stringify({
-        from: "ElimuConnect <info@elimuconnect.co.ke>",
+        from: "Lana <info@learnwithlana.com>",
         to: [email],
         subject: `Next Steps for ${studentName}'s Learning Journey 🎓`,
         html: emailHtml,

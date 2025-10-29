@@ -32,7 +32,7 @@ const TUTOR_REQUIREMENTS = [
 ];
 
 const TERMS_AND_CONDITIONS = `
-ElimuConnect Tutor Terms & Conditions
+Lana Tutor Terms & Conditions
 
 1. TUTOR QUALIFICATIONS
    - You must have at least 2 years of teaching/tutoring experience
@@ -60,7 +60,7 @@ ElimuConnect Tutor Terms & Conditions
 
 5. PLATFORM POLICIES
    - No direct payment from students outside the platform
-   - Use only ElimuConnect platform for session coordination
+   - Use only Lana platform for session coordination
    - Maintain a minimum 4.0-star rating
    - Complete at least 10 sessions per month to remain active
 
@@ -69,7 +69,7 @@ ElimuConnect Tutor Terms & Conditions
    - Immediate termination for policy violations
    - All pending payments will be settled upon termination
 
-By accepting these terms, you agree to uphold ElimuConnect's standards of excellence and professionalism.
+By accepting these terms, you agree to uphold Lana's standards of excellence and professionalism.
 `;
 
 const BecomeATutor = () => {
@@ -223,14 +223,14 @@ const BecomeATutor = () => {
     <div className="min-h-screen bg-[image:var(--gradient-page)] flex items-center justify-center p-6">
       <SEO
         title="Become a Tutor - Share Your Knowledge, Earn Income"
-        description="Join ElimuConnect as a tutor and help Kenyan students excel. Earn competitive rates, set your own schedule, and make an impact. Apply today if you're a qualified teacher."
+        description="Join Lana as a tutor and help Kenyan students excel. Earn competitive rates, set your own schedule, and make an impact. Apply today if you're a qualified teacher."
         keywords="become tutor Kenya, online teaching jobs Kenya, tutoring opportunities, earn teaching Kenya, KCSE tutor jobs"
       />
       
       <div className="w-full max-w-4xl">
-        <Link to="/" className="flex items-center justify-center gap-2 mb-8" aria-label="ElimuConnect Home">
+        <Link to="/" className="flex items-center justify-center gap-2 mb-8" aria-label="Lana Home">
           <Award className="w-10 h-10 text-primary" />
-          <span className="text-3xl font-bold">ElimuConnect</span>
+          <span className="text-3xl font-bold">Lana</span>
         </Link>
 
         <Card>
@@ -269,7 +269,7 @@ const BecomeATutor = () => {
                       <div>
                         <h4 className="font-semibold text-sm">Expert Conversation</h4>
                         <p className="text-sm text-muted-foreground">
-                          If you pass, we'll invite you for a 30-minute video call with an ElimuConnect Expert
+                          If you pass, we'll invite you for a 30-minute video call with a Lana Expert
                         </p>
                       </div>
                     </div>
@@ -515,7 +515,7 @@ const BecomeATutor = () => {
                 <div>
                   <h3 className="font-semibold text-2xl mb-2">Application Submitted!</h3>
                   <p className="text-muted-foreground max-w-md mx-auto">
-                    Thank you for applying to become an ElimuConnect tutor. We've received your application and will begin the vetting process.
+                    Thank you for applying to become a Lana tutor. We've received your application and will begin the vetting process.
                   </p>
                 </div>
 
@@ -569,7 +569,7 @@ const BecomeATutor = () => {
         <div className="text-center mt-6">
           <p className="text-sm text-muted-foreground">
             Questions?{" "}
-            <a href="mailto:support@elimuconnect.co.ke" className="text-primary hover:underline">
+            <a href="mailto:support@learnwithlana.com" className="text-primary hover:underline">
               Contact our support team
             </a>
           </p>

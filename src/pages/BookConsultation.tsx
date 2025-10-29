@@ -200,14 +200,14 @@ const BookConsultation = () => {
     <div className="min-h-screen bg-[image:var(--gradient-page)] py-12 px-6">
       <SEO
         title="Book Free Consultation - Get Expert Tutor Matching"
-        description="Schedule a free 30-minute consultation with ElimuConnect education experts. Get personalized tutor recommendations, custom learning plan, and expert guidance for your child's success."
+        description="Schedule a free 30-minute consultation with Lana education experts. Get personalized tutor recommendations, custom learning plan, and expert guidance for your child's success."
         keywords="free tutoring consultation Kenya, education consultation, tutor matching Kenya, academic counseling, learning plan Kenya"
       />
       
       <div className="max-w-4xl mx-auto">
-        <Link to="/" className="flex items-center justify-center gap-2 mb-8" aria-label="ElimuConnect Home">
+        <Link to="/" className="flex items-center justify-center gap-2 mb-8" aria-label="Lana Home">
           <Award className="w-10 h-10 text-primary" />
-          <span className="text-3xl font-bold">ElimuConnect</span>
+          <span className="text-3xl font-bold">Lana</span>
         </Link>
 
         <Card>
@@ -253,7 +253,7 @@ const BookConsultation = () => {
 
                 <div className="bg-primary/5 border border-primary/20 rounded-lg p-4">
                   <p className="text-sm font-medium">
-                    ✨ <strong>Absolutely Free</strong> - No commitment required. We'll help you understand how ElimuConnect can support your student's success.
+                    ✨ <strong>Absolutely Free</strong> - No commitment required. We'll help you understand how Lana can support your student's success.
                   </p>
                 </div>
 
@@ -547,7 +547,7 @@ const BookConsultation = () => {
                 <div>
                   <h3 className="font-semibold text-2xl mb-2">Consultation Booked!</h3>
                   <p className="text-muted-foreground max-w-md mx-auto">
-                    Thank you for booking a consultation with ElimuConnect. We'll contact you shortly to confirm your appointment.
+                    Thank you for booking a consultation with Lana. We'll contact you shortly to confirm your appointment.
                   </p>
                 </div>
 
