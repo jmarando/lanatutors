@@ -63,11 +63,11 @@ const Navigation = () => {
     <nav className="border-b bg-background/95 backdrop-blur-sm sticky top-0 z-50 shadow-sm">
       <div className="max-w-7xl mx-auto px-6 py-2 flex items-center justify-between">
         <Link to="/" className="flex items-center" aria-label="Lana Home">
-          <div className="h-20 sm:h-24 md:h-24 lg:h-24 xl:h-24 overflow-hidden flex items-center">
+          <div className="h-16 sm:h-20 md:h-20 lg:h-22 xl:h-24 overflow-hidden flex items-center">
             <img 
               src={lanaLogo} 
               alt="Lana - Your Trusted Tutoring Partner" 
-              className="h-[140%] sm:h-[120%] md:h-full w-auto -translate-y-[6%] sm:-translate-y-[2%]" 
+              className="h-[135%] sm:h-[125%] md:h-[110%] lg:h-full w-auto -translate-y-[5%] sm:-translate-y-[3%] md:-translate-y-[1%]" 
               style={{ transformOrigin: 'left center' }}
             />
           </div>
