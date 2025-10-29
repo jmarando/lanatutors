@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Award } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
@@ -20,7 +20,7 @@ const Login = () => {
   const [isResetLoading, setIsResetLoading] = useState(false);
   const [showResetDialog, setShowResetDialog] = useState(false);
 
-  const handleLogin = async (e: React.FormEvent, userType: "student" | "tutor") => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
 
@@ -37,21 +37,29 @@ const Login = () => {
       const redirect = params.get("redirect");
       if (redirect) {
         navigate(decodeURIComponent(redirect));
-      } else {
-        // Otherwise, route based on role
-        const { data: roleData } = await supabase
-          .from("user_roles")
-          .select("role")
-          .eq("user_id", data.user.id)
-          .single();
+        toast({
+          title: "Welcome back!",
+          description: "You've successfully signed in"
+        });
+        return;
+      }
 
-        if (roleData?.role === "student") {
-          navigate("/student/dashboard");
-        } else if (roleData?.role === "tutor") {
-          navigate("/tutor/dashboard");
-        } else {
-          navigate("/");
-        }
+      // Otherwise, route based on role
+      const { data: roleData } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", data.user.id)
+        .maybeSingle();
+
+      if (roleData?.role === "student") {
+        navigate("/student/dashboard");
+      } else if (roleData?.role === "tutor") {
+        navigate("/tutor/dashboard");
+      } else if (roleData?.role === "admin") {
+        navigate("/admin");
+      } else {
+        // No role assigned, send to home
+        navigate("/");
       }
 
       toast({
@@ -111,102 +119,56 @@ const Login = () => {
             <CardDescription>Sign in to your account to continue</CardDescription>
           </CardHeader>
           <CardContent>
-            <Tabs defaultValue="student" className="w-full">
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="student">Student</TabsTrigger>
-                <TabsTrigger value="tutor">Tutor</TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="student">
-                <form onSubmit={(e) => handleLogin(e, "student")} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="student-email">Email</Label>
-                    <Input
-                      id="student-email"
-                      type="email"
-                      placeholder="student@example.com"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="student-password">Password</Label>
-                    <Input
-                      id="student-password"
-                      type="password"
-                      placeholder="Enter your password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      required
-                    />
-                  </div>
-                  <Button type="submit" className="w-full" disabled={isLoading}>
-                    {isLoading ? "Signing in..." : "Sign In as Student"}
-                  </Button>
-                  <div className="flex justify-between items-center text-sm">
-                    <p className="text-muted-foreground">
-                      Don't have an account?{" "}
-                      <Link to="/student-signup" className="text-primary hover:underline">
-                        Sign up
-                      </Link>
-                    </p>
-                    <button
-                      type="button"
-                      onClick={() => setShowResetDialog(true)}
-                      className="text-primary hover:underline"
-                    >
-                      Forgot password?
-                    </button>
-                  </div>
-                </form>
-              </TabsContent>
-
-              <TabsContent value="tutor">
-                <form onSubmit={(e) => handleLogin(e, "tutor")} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="tutor-email">Email</Label>
-                    <Input
-                      id="tutor-email"
-                      type="email"
-                      placeholder="tutor@example.com"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="tutor-password">Password</Label>
-                    <Input
-                      id="tutor-password"
-                      type="password"
-                      placeholder="Enter your password"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      required
-                    />
-                  </div>
-                  <Button type="submit" className="w-full" disabled={isLoading}>
-                    {isLoading ? "Signing in..." : "Sign In as Tutor"}
-                  </Button>
-                  <div className="flex justify-between items-center text-sm">
-                    <p className="text-muted-foreground">
-                      Want to become a tutor?{" "}
-                      <Link to="/tutor-signup" className="text-primary hover:underline">
-                        Apply now
-                      </Link>
-                    </p>
-                    <button
-                      type="button"
-                      onClick={() => setShowResetDialog(true)}
-                      className="text-primary hover:underline"
-                    >
-                      Forgot password?
-                    </button>
-                  </div>
-                </form>
-              </TabsContent>
-            </Tabs>
+            <form onSubmit={handleLogin} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
+                <Input
+                  id="email"
+                  type="email"
+                  placeholder="your@email.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="password">Password</Label>
+                <Input
+                  id="password"
+                  type="password"
+                  placeholder="Enter your password"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  required
+                />
+              </div>
+              <Button type="submit" className="w-full" disabled={isLoading}>
+                {isLoading ? "Signing in..." : "Sign In"}
+              </Button>
+              <div className="flex flex-col gap-3 text-sm">
+                <div className="flex justify-between items-center">
+                  <p className="text-muted-foreground">
+                    New student?{" "}
+                    <Link to="/student-signup" className="text-primary hover:underline font-medium">
+                      Create account
+                    </Link>
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setShowResetDialog(true)}
+                    className="text-primary hover:underline"
+                  >
+                    Forgot password?
+                  </button>
+                </div>
+                <p className="text-muted-foreground text-center">
+                  Want to become a tutor?{" "}
+                  <Link to="/tutor-signup" className="text-primary hover:underline font-medium">
+                    Apply now
+                  </Link>
+                </p>
+              </div>
+            </form>
           </CardContent>
         </Card>
 
