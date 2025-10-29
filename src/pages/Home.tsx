@@ -18,6 +18,7 @@ import {
 import { Link } from "react-router-dom";
 import { SEO } from "@/components/SEO";
 import heroVideo from "@/assets/hero-video.mp4";
+import heroImage from "@/assets/hero-image.jpg";
 
 const Home = () => {
   const organizationSchema = {
@@ -151,8 +152,19 @@ const Home = () => {
       />
       
       {/* Hero Section */}
-      <section>
-        <div className="max-w-7xl mx-auto px-6 py-12 md:py-20">
+      <section className="relative overflow-hidden">
+        {/* Background Image with Overlay */}
+        <div className="absolute inset-0 z-0">
+          <img 
+            src={heroImage} 
+            alt="" 
+            className="w-full h-full object-cover opacity-[0.08]"
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-background/95 via-background/90 to-background"></div>
+        </div>
+        
+        {/* Content */}
+        <div className="relative z-10 max-w-7xl mx-auto px-6 py-12 md:py-20">
           <div className="grid md:grid-cols-2 gap-12 items-center">
             <div>
               <h1 className="text-3xl md:text-5xl font-bold mb-6 leading-snug">
@@ -164,12 +176,12 @@ const Home = () => {
               </p>
               <div className="flex flex-wrap gap-4">
                 <Link to="/book-consultation">
-                  <Button size="lg" className="h-14 px-8 text-lg">
+                  <Button size="lg" className="h-14 px-8 text-lg hover-scale">
                     Book Free Consultation
                   </Button>
                 </Link>
                 <Link to="/tutors">
-                  <Button size="lg" variant="outline" className="h-14 px-8 text-lg">
+                  <Button size="lg" variant="outline" className="h-14 px-8 text-lg hover-scale">
                     Find Tutors
                   </Button>
                 </Link>
