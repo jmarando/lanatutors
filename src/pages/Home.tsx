@@ -48,9 +48,9 @@ const Home = () => {
   };
 
   const stats = [
-    { icon: Users, value: "500+", label: "Verified Tutors" },
-    { icon: GraduationCap, value: "10,000+", label: "Happy Students" },
-    { icon: Star, value: "4.9★", label: "Average Rating" }
+    { icon: Users, value: "50+", label: "Verified Tutors" },
+    { icon: GraduationCap, value: "500+", label: "Happy Students" },
+    { icon: Award, value: "1000+", label: "Sessions Completed" }
   ];
 
   const steps = [
