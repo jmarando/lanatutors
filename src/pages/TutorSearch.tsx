@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Search, Star, SlidersHorizontal, Calendar as CalendarIcon, Clock, MapPin, Award, Sparkles, ArrowRight } from "lucide-react";
+import { Search, Star, SlidersHorizontal, Calendar as CalendarIcon, Clock, MapPin, Award, Sparkles, ArrowRight, CheckCircle, Loader2 } from "lucide-react";
 import { SEO } from "@/components/SEO";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -31,6 +31,15 @@ const TutorSearch = () => {
   const [selectedSubject, setSelectedSubject] = useState("all");
   const [selectedCurriculum, setSelectedCurriculum] = useState("all");
   const [sortBy, setSortBy] = useState("rating");
+  const [smartMatchOpen, setSmartMatchOpen] = useState(false);
+  const [matchStep, setMatchStep] = useState(1);
+  const [matchLoading, setMatchLoading] = useState(false);
+  const [matchPreferences, setMatchPreferences] = useState({
+    curriculum: "",
+    gradeLevel: "",
+    subjects: [] as string[],
+    learningStyle: ""
+  });
   const [priceRange, setPriceRange] = useState([2000, 6000]);
   const [minRating, setMinRating] = useState(0);
   const [tutors, setTutors] = useState<any[]>([]);
@@ -216,30 +225,24 @@ const TutorSearch = () => {
           </div>
 
           {/* Smart Tutor Match CTA */}
-          <Card className="max-w-4xl mx-auto mb-8 border-primary/20 bg-gradient-to-r from-primary/5 to-primary/10">
-            <CardHeader>
+          <Card className="max-w-4xl mx-auto mb-8 border-2 border-primary/30 bg-gradient-to-br from-primary/5 to-primary/10">
+            <CardContent className="p-6">
               <div className="flex items-start gap-4">
-                <div className="p-3 rounded-full bg-primary/10">
-                  <Sparkles className="w-6 h-6 text-primary" />
+                <div className="p-3 bg-primary rounded-lg">
+                  <Sparkles className="w-6 h-6 text-primary-foreground" />
                 </div>
                 <div className="flex-1">
-                  <CardTitle className="text-xl mb-2">Not sure where to start?</CardTitle>
-                  <CardDescription className="text-base">
+                  <h3 className="font-semibold text-lg mb-1">Not sure where to start?</h3>
+                  <p className="text-sm text-muted-foreground mb-4">
                     Let our AI analyze your learning needs and instantly match you with the perfect tutor based on your curriculum, subjects, and learning style.
-                  </CardDescription>
+                  </p>
+                  <Button onClick={() => setSmartMatchOpen(true)} className="group">
+                    <Sparkles className="w-4 h-4 mr-2" />
+                    Try Smart Tutor Match
+                    <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                  </Button>
                 </div>
               </div>
-            </CardHeader>
-            <CardContent>
-              <Button 
-                onClick={() => navigate("/learning-assessment")}
-                className="w-full sm:w-auto group"
-                size="lg"
-              >
-                <Sparkles className="w-4 h-4 mr-2 group-hover:rotate-12 transition-transform" />
-                Try Smart Tutor Match
-                <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
-              </Button>
             </CardContent>
           </Card>
         </div>
@@ -486,6 +489,225 @@ const TutorSearch = () => {
             </Card>)}
         </div>}
       </div>
+
+      {/* Smart Match Interactive Sheet */}
+      <Sheet open={smartMatchOpen} onOpenChange={setSmartMatchOpen}>
+        <SheetContent side="right" className="w-full sm:max-w-lg overflow-y-auto">
+          <SheetHeader>
+            <SheetTitle className="flex items-center gap-2">
+              <Sparkles className="w-5 h-5 text-primary" />
+              Smart Tutor Match
+            </SheetTitle>
+            <SheetDescription>
+              Answer a few quick questions to find your perfect tutor
+            </SheetDescription>
+          </SheetHeader>
+
+          <div className="mt-6 space-y-6">
+            {/* Progress Indicator */}
+            <div className="flex gap-2">
+              {[1, 2, 3, 4].map((step) => (
+                <div
+                  key={step}
+                  className={`h-1.5 flex-1 rounded-full transition-colors ${
+                    step <= matchStep ? "bg-primary" : "bg-muted"
+                  }`}
+                />
+              ))}
+            </div>
+
+            {/* Step 1: Curriculum */}
+            {matchStep === 1 && (
+              <div className="space-y-4 animate-in fade-in slide-in-from-right-5">
+                <div>
+                  <h3 className="font-semibold mb-1">What curriculum do you follow?</h3>
+                  <p className="text-sm text-muted-foreground">This helps us match you with the right tutors</p>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  {["CBC", "IGCSE", "8-4-4", "IB"].map((curr) => (
+                    <Button
+                      key={curr}
+                      variant={matchPreferences.curriculum === curr ? "default" : "outline"}
+                      className="h-20 text-base"
+                      onClick={() => {
+                        setMatchPreferences({ ...matchPreferences, curriculum: curr });
+                        setTimeout(() => setMatchStep(2), 200);
+                      }}
+                    >
+                      {curr}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Step 2: Grade Level */}
+            {matchStep === 2 && (
+              <div className="space-y-4 animate-in fade-in slide-in-from-right-5">
+                <div>
+                  <h3 className="font-semibold mb-1">What grade are you in?</h3>
+                  <p className="text-sm text-muted-foreground">Select your current grade level</p>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  {matchPreferences.curriculum === "CBC" && 
+                    ["Grade 4", "Grade 5", "Grade 6", "Grade 7", "Grade 8", "Grade 9"].map((grade) => (
+                      <Button
+                        key={grade}
+                        variant={matchPreferences.gradeLevel === grade ? "default" : "outline"}
+                        onClick={() => {
+                          setMatchPreferences({ ...matchPreferences, gradeLevel: grade });
+                          setTimeout(() => setMatchStep(3), 200);
+                        }}
+                      >
+                        {grade}
+                      </Button>
+                    ))
+                  }
+                  {matchPreferences.curriculum === "IGCSE" && 
+                    ["Year 7", "Year 8", "Year 9", "Year 10", "Year 11"].map((grade) => (
+                      <Button
+                        key={grade}
+                        variant={matchPreferences.gradeLevel === grade ? "default" : "outline"}
+                        onClick={() => {
+                          setMatchPreferences({ ...matchPreferences, gradeLevel: grade });
+                          setTimeout(() => setMatchStep(3), 200);
+                        }}
+                      >
+                        {grade}
+                      </Button>
+                    ))
+                  }
+                  {(matchPreferences.curriculum === "8-4-4" || matchPreferences.curriculum === "IB") && 
+                    ["Form 1", "Form 2", "Form 3", "Form 4"].map((grade) => (
+                      <Button
+                        key={grade}
+                        variant={matchPreferences.gradeLevel === grade ? "default" : "outline"}
+                        onClick={() => {
+                          setMatchPreferences({ ...matchPreferences, gradeLevel: grade });
+                          setTimeout(() => setMatchStep(3), 200);
+                        }}
+                      >
+                        {grade}
+                      </Button>
+                    ))
+                  }
+                </div>
+                <Button variant="ghost" onClick={() => setMatchStep(1)}>← Back</Button>
+              </div>
+            )}
+
+            {/* Step 3: Subjects */}
+            {matchStep === 3 && (
+              <div className="space-y-4 animate-in fade-in slide-in-from-right-5">
+                <div>
+                  <h3 className="font-semibold mb-1">Which subjects need help?</h3>
+                  <p className="text-sm text-muted-foreground">Select all that apply</p>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  {["Mathematics", "English", "Physics", "Chemistry", "Biology", "Kiswahili", "History", "Geography"].map((subject) => (
+                    <Button
+                      key={subject}
+                      variant={matchPreferences.subjects.includes(subject) ? "default" : "outline"}
+                      className="h-auto py-3 justify-start"
+                      onClick={() => {
+                        const newSubjects = matchPreferences.subjects.includes(subject)
+                          ? matchPreferences.subjects.filter(s => s !== subject)
+                          : [...matchPreferences.subjects, subject];
+                        setMatchPreferences({ ...matchPreferences, subjects: newSubjects });
+                      }}
+                    >
+                      <div className="flex items-center gap-2">
+                        {matchPreferences.subjects.includes(subject) && <CheckCircle className="w-4 h-4 flex-shrink-0" />}
+                        <span className="text-sm">{subject}</span>
+                      </div>
+                    </Button>
+                  ))}
+                </div>
+                <div className="flex gap-2 pt-4">
+                  <Button variant="ghost" onClick={() => setMatchStep(2)}>← Back</Button>
+                  <Button 
+                    className="flex-1" 
+                    onClick={() => setMatchStep(4)}
+                    disabled={matchPreferences.subjects.length === 0}
+                  >
+                    Continue
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {/* Step 4: Learning Style & Apply */}
+            {matchStep === 4 && (
+              <div className="space-y-4 animate-in fade-in slide-in-from-right-5">
+                <div>
+                  <h3 className="font-semibold mb-1">How do you learn best?</h3>
+                  <p className="text-sm text-muted-foreground">This helps personalize your matches</p>
+                </div>
+                <div className="space-y-3">
+                  {[
+                    { value: "visual", label: "Visual", desc: "Charts, diagrams, videos" },
+                    { value: "practical", label: "Hands-on", desc: "Practice problems, experiments" },
+                    { value: "discussion", label: "Discussion", desc: "Talking through concepts" },
+                    { value: "structured", label: "Structured", desc: "Step-by-step guidance" }
+                  ].map((style) => (
+                    <Button
+                      key={style.value}
+                      variant={matchPreferences.learningStyle === style.value ? "default" : "outline"}
+                      className="w-full h-auto py-4 justify-start"
+                      onClick={async () => {
+                        setMatchPreferences({ ...matchPreferences, learningStyle: style.value });
+                        setMatchLoading(true);
+                        
+                        try {
+                          // Apply filters immediately without AI call for now
+                          setSelectedCurriculum(matchPreferences.curriculum);
+                          
+                          // Filter to first selected subject
+                          if (matchPreferences.subjects.length > 0) {
+                            setSelectedSubject(matchPreferences.subjects[0]);
+                          }
+
+                          toast.success(`Showing tutors for ${matchPreferences.curriculum} - ${matchPreferences.subjects.join(", ")}`);
+                          setSmartMatchOpen(false);
+                          
+                          // Reset for next time
+                          setTimeout(() => {
+                            setMatchStep(1);
+                            setMatchPreferences({
+                              curriculum: "",
+                              gradeLevel: "",
+                              subjects: [],
+                              learningStyle: ""
+                            });
+                          }, 500);
+                        } catch (error) {
+                          console.error("Smart match error:", error);
+                          toast.error("Something went wrong. Please try manual filters.");
+                        } finally {
+                          setMatchLoading(false);
+                        }
+                      }}
+                      disabled={matchLoading}
+                    >
+                      <div className="text-left flex-1">
+                        <div className="font-semibold flex items-center gap-2">
+                          {matchPreferences.learningStyle === style.value && <CheckCircle className="w-4 h-4" />}
+                          {style.label}
+                        </div>
+                        <div className="text-xs text-muted-foreground mt-0.5">{style.desc}</div>
+                      </div>
+                      {matchLoading && matchPreferences.learningStyle === style.value && (
+                        <Loader2 className="w-4 h-4 ml-2 animate-spin flex-shrink-0" />
+                      )}
+                    </Button>
+                  ))}
+                </div>
+                <Button variant="ghost" onClick={() => setMatchStep(3)}>← Back</Button>
+              </div>
+            )}
+          </div>
+        </SheetContent>
+      </Sheet>
     </div>;
 };
 export default TutorSearch;
