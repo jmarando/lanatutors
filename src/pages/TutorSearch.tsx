@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -10,7 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Search, Star, SlidersHorizontal, Calendar as CalendarIcon, Clock, MapPin, Award } from "lucide-react";
+import { Search, Star, SlidersHorizontal, Calendar as CalendarIcon, Clock, MapPin, Award, Sparkles, ArrowRight } from "lucide-react";
 import { SEO } from "@/components/SEO";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -213,8 +213,35 @@ const TutorSearch = () => {
         <div className="mb-10">
           <div className="text-center mb-8">
             <h1 className="text-5xl font-bold mb-3">Find Your Tutor</h1>
-            
           </div>
+
+          {/* Smart Tutor Match CTA */}
+          <Card className="max-w-4xl mx-auto mb-8 border-primary/20 bg-gradient-to-r from-primary/5 to-primary/10">
+            <CardHeader>
+              <div className="flex items-start gap-4">
+                <div className="p-3 rounded-full bg-primary/10">
+                  <Sparkles className="w-6 h-6 text-primary" />
+                </div>
+                <div className="flex-1">
+                  <CardTitle className="text-xl mb-2">Not sure where to start?</CardTitle>
+                  <CardDescription className="text-base">
+                    Let our AI analyze your learning needs and instantly match you with the perfect tutor based on your curriculum, subjects, and learning style.
+                  </CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <Button 
+                onClick={() => navigate("/learning-assessment")}
+                className="w-full sm:w-auto group"
+                size="lg"
+              >
+                <Sparkles className="w-4 h-4 mr-2 group-hover:rotate-12 transition-transform" />
+                Try Smart Tutor Match
+                <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+              </Button>
+            </CardContent>
+          </Card>
         </div>
 
         {/* Filters */}
