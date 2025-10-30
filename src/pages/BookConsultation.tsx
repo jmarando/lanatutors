@@ -232,7 +232,53 @@ const BookConsultation = () => {
                   </p>
                 </div>
 
-                {/* AI Assessment Option */}
+                {/* Traditional Consultation - Now First */}
+                <Card className="border-2 hover:shadow-md transition-shadow">
+                  <CardContent className="p-6">
+                    <div className="flex items-start gap-4">
+                      <div className="p-3 bg-muted rounded-lg">
+                        <Users className="w-8 h-8 text-primary" />
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="font-semibold text-lg mb-2">Free 30-Min Consultation</h4>
+                        <p className="text-sm text-muted-foreground mb-4">
+                          Speak with our education consultants for personalized guidance
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="grid gap-3 mt-4">
+                      {CONSULTATION_BENEFITS.map((benefit, index) => {
+                        const Icon = benefit.icon;
+                        return (
+                          <div key={index} className="flex gap-3">
+                            <Icon className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
+                            <div>
+                              <h5 className="font-medium text-sm">{benefit.title}</h5>
+                              <p className="text-xs text-muted-foreground">{benefit.description}</p>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    <Button className="w-full mt-4" onClick={() => setStep(2)}>
+                      Book Consultation
+                    </Button>
+                  </CardContent>
+                </Card>
+
+                {/* Divider */}
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t border-muted"></div>
+                  </div>
+                  <div className="relative flex justify-center text-xs">
+                    <span className="bg-background px-4 text-muted-foreground">or try our AI assessment</span>
+                  </div>
+                </div>
+
+                {/* AI Assessment Option - Now Second */}
                 <Card className="border-2 border-primary/30 bg-gradient-to-br from-primary/5 to-primary/10 hover:shadow-lg transition-shadow cursor-pointer"
                       onClick={() => navigate(`/learning-assessment?studentName=${formData.studentName || 'Student'}&email=${formData.email || ''}`)}>
                   <CardContent className="p-6">
@@ -267,7 +313,7 @@ const BookConsultation = () => {
                             <span>Saves time - no need to wait for consultation</span>
                           </li>
                         </ul>
-                        <Button className="w-full group">
+                        <Button variant="outline" className="w-full group">
                           Start AI Assessment
                           <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
                         </Button>
@@ -276,51 +322,6 @@ const BookConsultation = () => {
                   </CardContent>
                 </Card>
 
-                {/* Divider */}
-                <div className="relative">
-                  <div className="absolute inset-0 flex items-center">
-                    <div className="w-full border-t border-muted"></div>
-                  </div>
-                  <div className="relative flex justify-center text-xs">
-                    <span className="bg-background px-4 text-muted-foreground">or book a consultation</span>
-                  </div>
-                </div>
-
-                {/* Traditional Consultation */}
-                <Card className="border-2 hover:shadow-md transition-shadow">
-                  <CardContent className="p-6">
-                    <div className="flex items-start gap-4">
-                      <div className="p-3 bg-muted rounded-lg">
-                        <Users className="w-8 h-8 text-primary" />
-                      </div>
-                      <div className="flex-1">
-                        <h4 className="font-semibold text-lg mb-2">Free 30-Min Consultation</h4>
-                        <p className="text-sm text-muted-foreground mb-4">
-                          Speak with our education consultants for personalized guidance
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="grid gap-3 mt-4">
-                      {CONSULTATION_BENEFITS.map((benefit, index) => {
-                        const Icon = benefit.icon;
-                        return (
-                          <div key={index} className="flex gap-3">
-                            <Icon className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
-                            <div>
-                              <h5 className="font-medium text-sm">{benefit.title}</h5>
-                              <p className="text-xs text-muted-foreground">{benefit.description}</p>
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-
-                    <Button variant="outline" className="w-full mt-4" onClick={() => setStep(2)}>
-                      Book Consultation
-                    </Button>
-                  </CardContent>
-                </Card>
 
                 <div className="flex justify-center pt-4">
                   <Link to="/">
