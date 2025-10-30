@@ -298,7 +298,7 @@ const TutorSignup = () => {
       <div className="w-full max-w-2xl">
         <Link to="/" className="flex items-center justify-center gap-2 mb-8">
           <Award className="w-10 h-10 text-primary" />
-          <span className="text-3xl font-bold">ElimuConnect</span>
+          <span className="text-3xl font-bold">Lana</span>
         </Link>
 
         <Card>

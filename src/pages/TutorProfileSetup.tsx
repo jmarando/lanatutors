@@ -208,15 +208,15 @@ const TutorProfileSetup = () => {
   return (
     <div className="min-h-screen bg-[image:var(--gradient-page)] flex items-center justify-center p-6">
       <SEO
-        title="Complete Your Tutor Profile - ElimuConnect"
-        description="Set up your tutor profile to start teaching on ElimuConnect"
-        keywords="tutor profile setup, online teaching, ElimuConnect"
+        title="Complete Your Tutor Profile - Lana"
+        description="Set up your tutor profile to start teaching on Lana"
+        keywords="tutor profile setup, online teaching, Lana"
       />
       
       <div className="w-full max-w-7xl">
         <div className="flex items-center justify-center gap-2 mb-8">
           <Award className="w-10 h-10 text-primary" />
-          <span className="text-3xl font-bold">ElimuConnect</span>
+          <span className="text-3xl font-bold">Lana</span>
         </div>
 
         <div className="grid lg:grid-cols-2 gap-6">
@@ -229,7 +229,7 @@ const TutorProfileSetup = () => {
               </div>
               <CardTitle className="text-2xl">Complete Your Tutor Profile</CardTitle>
               <CardDescription>
-                Set up your professional profile to start teaching on ElimuConnect
+                Set up your professional profile to start teaching on Lana
               </CardDescription>
             </CardHeader>
             <CardContent>

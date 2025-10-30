@@ -130,7 +130,7 @@ const HowItWorks = () => {
     <div className="min-h-screen bg-[image:var(--gradient-page)]">
       <SEO 
         title="How It Works - Online Tutoring Process"
-        description="Learn how to get started with ElimuConnect. Book a free consultation, browse verified tutors, schedule sessions, and start learning. Simple online booking and M-Pesa payment."
+        description="Learn how to get started with Lana. Book a free consultation, browse verified tutors, schedule sessions, and start learning. Simple online booking and M-Pesa payment."
         keywords="how online tutoring works, book tutor Kenya, tutoring process, M-Pesa tutor payment"
       />
       
@@ -138,7 +138,7 @@ const HowItWorks = () => {
       <section>
         <div className="max-w-7xl mx-auto px-6 py-16 text-center">
           <h1 className="text-4xl md:text-5xl font-bold mb-6">
-            How ElimuConnect Works
+            How Lana Works
           </h1>
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto mb-8">
             Getting started is simple. Book a free consultation, get matched with expert tutors, and choose between convenient online or in-person sessions.

@@ -2,13 +2,13 @@
 @tailwind components;
 @tailwind utilities;
 
-/* ElimuConnect Design System - Kenya Online Tutoring Platform 
+/* Lana Design System - Kenya Online Tutoring Platform 
 All colors MUST be HSL for proper theme integration.
 */
 
 @layer base {
   :root {
-    /* Brand Colors - ElimuConnect Identity */
+    /* Brand Colors - Lana Identity */
     --primary: 7 79% 54%;              /* #ED3F27 - Primary Red for CTAs */
     --primary-foreground: 0 0% 100%;   /* White text on red */
     
