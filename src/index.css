@@ -39,6 +39,8 @@ All colors MUST be HSL for proper theme integration.
     --destructive: 0 73% 56%;          /* #E63946 - Error red */
     --destructive-foreground: 0 0% 100%;
     
+    --rating-star: 45 93% 47%;         /* #F59E0B - Yellow for ratings */
+    
     --radius: 0.5rem;                  /* 8px default border radius */
     
     /* Custom gradients */
@@ -100,5 +102,9 @@ All colors MUST be HSL for proper theme integration.
   
   .card-hover {
     @apply transition-all duration-200 hover:shadow-lg;
+  }
+  
+  .hover-scale {
+    @apply transition-transform duration-200 hover:scale-105;
   }
 }

@@ -690,7 +690,16 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      public_tutor_profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string | null
+          curriculum: string | null
+          full_name: string | null
+          id: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       assign_user_role: {
