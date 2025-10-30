@@ -303,19 +303,19 @@ const TutorProfile = () => {
               </div>
 
               {/* Booking Options */}
-              <div className="grid sm:grid-cols-3 gap-3 pt-2">
+              <div className="grid sm:grid-cols-2 gap-4 pt-2 max-w-2xl">
                 <Button 
                   size="lg" 
                   variant="outline"
                   onClick={() => handleBookingTypeSelect('trial')}
-                  className="w-full relative overflow-hidden border-2 border-primary/50 hover:bg-primary/10"
+                  className="w-full relative overflow-hidden border-2 border-primary/50 hover:bg-primary/10 h-auto py-4"
                 >
-                  <div className="absolute top-0 right-0 bg-primary text-primary-foreground text-xs px-2 py-0.5 rounded-bl-md font-bold">
+                  <div className="absolute top-0 right-0 bg-primary text-primary-foreground text-xs px-3 py-1 rounded-bl-lg font-bold shadow-sm">
                     50% OFF
                   </div>
-                  <div className="flex flex-col items-center gap-1 pt-2">
-                    <span className="font-bold">Book Trial Lesson</span>
-                    <span className="text-xs text-muted-foreground">
+                  <div className="flex flex-col items-center gap-1.5 pt-1">
+                    <span className="font-bold text-base">Book Trial Lesson</span>
+                    <span className="text-sm text-muted-foreground">
                       KES {Math.floor(tutor.hourlyRate * 0.5).toLocaleString()}
                     </span>
                   </div>
@@ -324,25 +324,13 @@ const TutorProfile = () => {
                 <Button 
                   size="lg" 
                   onClick={() => handleBookingTypeSelect('paid')}
-                  className="w-full"
+                  className="w-full h-auto py-4"
                 >
-                  <div className="flex flex-col items-center gap-1">
-                    <span className="font-bold">Book Session</span>
-                    <span className="text-xs opacity-90">
+                  <div className="flex flex-col items-center gap-1.5">
+                    <span className="font-bold text-base">Book Session</span>
+                    <span className="text-sm opacity-90">
                       Full Price
                     </span>
-                  </div>
-                </Button>
-
-                <Button 
-                  size="lg" 
-                  variant="secondary"
-                  onClick={() => handleBookingTypeSelect('free')}
-                  className="w-full"
-                >
-                  <div className="flex flex-col items-center gap-1">
-                    <span className="font-bold">Free Consultation</span>
-                    <span className="text-xs opacity-70">30 minutes</span>
                   </div>
                 </Button>
               </div>
