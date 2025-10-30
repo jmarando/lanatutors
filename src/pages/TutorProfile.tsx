@@ -599,16 +599,27 @@ const TutorProfile = () => {
                 />
               ) : (
                 <div className="text-center py-8">
-                  <p className="text-muted-foreground mb-4">Please sign in to book a session</p>
-                  <Button onClick={() => {
-                    // Ensure URL contains resume params
-                    const params = new URLSearchParams(window.location.search);
-                    if (params.get('openBooking') !== '1') {
-                      window.history.replaceState(null, '', `${window.location.pathname}?openBooking=1&bookingType=${bookingType}`);
-                    }
-                    const redirect = `${window.location.pathname}${window.location.search}`;
-                    navigate(`/login?redirect=${encodeURIComponent(redirect)}`);
-                  }}>Sign In</Button>
+                  <p className="text-muted-foreground mb-6">Please sign in to book a session</p>
+                  <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                    <Button onClick={() => {
+                      // Ensure URL contains resume params
+                      const params = new URLSearchParams(window.location.search);
+                      if (params.get('openBooking') !== '1') {
+                        window.history.replaceState(null, '', `${window.location.pathname}?openBooking=1&bookingType=${bookingType}`);
+                      }
+                      const redirect = `${window.location.pathname}${window.location.search}`;
+                      navigate(`/login?redirect=${encodeURIComponent(redirect)}`);
+                    }}>Sign In</Button>
+                    <Button variant="outline" onClick={() => {
+                      // Ensure URL contains resume params
+                      const params = new URLSearchParams(window.location.search);
+                      if (params.get('openBooking') !== '1') {
+                        window.history.replaceState(null, '', `${window.location.pathname}?openBooking=1&bookingType=${bookingType}`);
+                      }
+                      const redirect = `${window.location.pathname}${window.location.search}`;
+                      navigate(`/student-signup?redirect=${encodeURIComponent(redirect)}`);
+                    }}>Sign Up</Button>
+                  </div>
                 </div>
               )}
             </div>
