@@ -12,6 +12,7 @@ import Navigation from "@/components/Navigation";
 interface Message {
   role: "user" | "assistant";
   content: string;
+  options?: string[];
 }
 
 const LearningAssessment = () => {
@@ -50,6 +51,62 @@ const LearningAssessment = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
+  const parseMessageWithOptions = (message: string): { content: string; options: string[] } => {
+    const optionsMatch = message.match(/OPTIONS:\s*((?:- .+\n?)+)/);
+    if (optionsMatch) {
+      const content = message.replace(/OPTIONS:\s*(?:- .+\n?)+/, '').trim();
+      const options = optionsMatch[1]
+        .split('\n')
+        .map(opt => opt.replace(/^- /, '').trim())
+        .filter(opt => opt.length > 0);
+      return { content, options };
+    }
+    return { content: message, options: [] };
+  };
+
+  const handleOptionClick = (option: string) => {
+    setInput(option);
+    // Auto-send after selecting an option
+    setTimeout(() => {
+      const userMessage: Message = { role: "user", content: option };
+      const updatedMessages = [...messages, userMessage];
+      setMessages(updatedMessages);
+      setIsLoading(true);
+
+      supabase.functions.invoke("ai-learning-assessment", {
+        body: {
+          assessmentId,
+          studentName,
+          email,
+          messages: updatedMessages,
+        },
+      })
+      .then(({ data, error }) => {
+        if (error) throw error;
+        const { content, options } = parseMessageWithOptions(data.message);
+        setMessages([...updatedMessages, { role: "assistant", content, options }]);
+        setAssessmentId(data.assessmentId);
+        if (data.assessmentComplete) {
+          setIsComplete(true);
+          setTimeout(() => {
+            navigate(`/assessment-results?assessmentId=${data.assessmentId}`);
+          }, 2000);
+        }
+      })
+      .catch((error) => {
+        console.error("Error sending message:", error);
+        toast({
+          title: "Error",
+          description: "Failed to send message. Please try again.",
+          variant: "destructive",
+        });
+      })
+      .finally(() => {
+        setIsLoading(false);
+      });
+    }, 100);
+  };
+
   const startAssessment = async () => {
     setIsLoading(true);
     try {
@@ -63,7 +120,8 @@ const LearningAssessment = () => {
 
       if (error) throw error;
 
-      setMessages([{ role: "assistant", content: data.message }]);
+      const { content, options } = parseMessageWithOptions(data.message);
+      setMessages([{ role: "assistant", content, options }]);
       setAssessmentId(data.assessmentId);
     } catch (error) {
       console.error("Error starting assessment:", error);
@@ -98,7 +156,8 @@ const LearningAssessment = () => {
 
       if (error) throw error;
 
-      setMessages([...updatedMessages, { role: "assistant", content: data.message }]);
+      const { content, options } = parseMessageWithOptions(data.message);
+      setMessages([...updatedMessages, { role: "assistant", content, options }]);
       setAssessmentId(data.assessmentId);
 
       if (data.assessmentComplete) {
@@ -220,19 +279,35 @@ const LearningAssessment = () => {
           <Card className="p-6 shadow-lg">
             <div className="space-y-4 mb-6 h-[500px] overflow-y-auto">
               {messages.map((message, index) => (
-                <div
-                  key={index}
-                  className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
-                >
+                <div key={index} className="space-y-3">
                   <div
-                    className={`max-w-[80%] rounded-lg px-4 py-3 ${
-                      message.role === "user"
-                        ? "bg-primary text-primary-foreground"
-                        : "bg-muted"
-                    }`}
+                    className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
                   >
-                    <p className="whitespace-pre-wrap">{message.content}</p>
+                    <div
+                      className={`max-w-[80%] rounded-lg px-4 py-3 ${
+                        message.role === "user"
+                          ? "bg-primary text-primary-foreground"
+                          : "bg-muted"
+                      }`}
+                    >
+                      <p className="whitespace-pre-wrap">{message.content}</p>
+                    </div>
                   </div>
+                  {message.options && message.options.length > 0 && index === messages.length - 1 && !isLoading && (
+                    <div className="flex flex-wrap gap-2 ml-4">
+                      {message.options.map((option, optIndex) => (
+                        <Button
+                          key={optIndex}
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleOptionClick(option)}
+                          className="text-sm"
+                        >
+                          {option}
+                        </Button>
+                      ))}
+                    </div>
+                  )}
                 </div>
               ))}
               {isLoading && (
