@@ -61,21 +61,21 @@ const Navigation = () => {
 
   return (
     <nav className="border-b bg-background/95 backdrop-blur-sm sticky top-0 z-50 shadow-sm">
-      <div className="max-w-7xl mx-auto px-6 py-2 flex items-center justify-between">
-        <Link to="/" className="flex items-center" aria-label="Lana Home">
-          <div className="h-28 sm:h-28 md:h-24 lg:h-24 xl:h-24 overflow-hidden flex items-center">
+      <div className="max-w-7xl mx-auto px-6 py-2 flex items-center justify-between gap-8">
+        <Link to="/" className="flex items-center flex-shrink-0" aria-label="Lana Home">
+          <div className="h-28 sm:h-28 md:h-24 lg:h-20 xl:h-20 overflow-hidden flex items-center">
             <img 
               src={lanaLogo} 
               alt="Lana - Your Trusted Tutoring Partner" 
-              className="h-[118%] sm:h-[112%] md:h-[105%] lg:h-full w-auto translate-y-[4%] sm:translate-y-[2%] md:translate-y-0" 
+              className="h-[118%] sm:h-[112%] md:h-[105%] lg:h-[95%] w-auto translate-y-[4%] sm:translate-y-[2%] md:translate-y-0" 
               style={{ transformOrigin: 'left center' }}
             />
           </div>
         </Link>
 
         {/* Desktop Navigation */}
-        <div className="hidden lg:flex items-center gap-6 flex-1 justify-between ml-6">
-          <div className="flex items-center gap-6 whitespace-nowrap">
+        <div className="hidden lg:flex items-center gap-8 flex-1 justify-between">
+          <div className="flex items-center gap-8 whitespace-nowrap">
             {navLinks.map((link) => (
               <Link
                 key={link.to}
