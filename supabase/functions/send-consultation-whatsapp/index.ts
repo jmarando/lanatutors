@@ -30,7 +30,7 @@ const handler = async (req: Request): Promise<Response> => {
     });
 
     const message = `
-🎓 *Yehtu Tutors - Consultation Confirmed!*
+🎓 *Lana Tutors - Consultation Confirmed!*
 
 Hi ${parentName},
 
@@ -46,11 +46,11 @@ ${meetingLink}
 🔔 *Reminders:*
 We'll send you reminders 1 day before and 1 hour before your consultation via email and WhatsApp.
 
-Need to reschedule? Contact us at info@yehtu.com
+Need to reschedule? Contact us at info@lanatutors.com
 
 Looking forward to meeting you!
 
-_Yehtu Tutors Team_
+_Lana Tutors Team_
     `.trim();
 
     // Format phone number for WhatsApp (remove + and spaces)

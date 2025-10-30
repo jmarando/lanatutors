@@ -228,7 +228,7 @@ const handler = async (req: Request): Promise<Response> => {
                     </p>
                     <p style="margin: 0; font-size: 14px; color: #6b7280;">
                       Best regards,<br>
-                      <strong>The ElimuConnect Team</strong>
+                      <strong>The Lana Tutors Team</strong>
                     </p>
                   </td>
                 </tr>
@@ -237,7 +237,7 @@ const handler = async (req: Request): Promise<Response> => {
                 <tr>
                   <td style="padding: 24px 40px; background-color: #f9fafb; border-radius: 0 0 12px 12px; text-align: center;">
                     <p style="margin: 0; font-size: 12px; color: #6b7280; line-height: 18px;">
-                      © 2025 ElimuConnect. All rights reserved.<br>
+                      © 2025 Lana Tutors. All rights reserved.<br>
                       Questions? Reply to this email and we'll help you out!
                     </p>
                   </td>
@@ -299,7 +299,7 @@ const handler = async (req: Request): Promise<Response> => {
           </ul>
           
           <p>Please prepare for the session accordingly.</p>
-          <p>Best regards,<br>The ElimuConnect Team</p>
+          <p>Best regards,<br>The Lana Tutors Team</p>
         `,
       }),
     });

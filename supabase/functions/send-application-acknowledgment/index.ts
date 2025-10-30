@@ -33,7 +33,7 @@ const handler = async (req: Request): Promise<Response> => {
         Authorization: `Bearer ${RESEND_API_KEY}`,
       },
       body: JSON.stringify({
-        from: "ElimuConnect <onboarding@resend.dev>",
+        from: "Lana Tutors <onboarding@resend.dev>",
         to: [recipient],
         subject: `Application Received - ${fullName}`,
         html: `
@@ -64,7 +64,7 @@ const handler = async (req: Request): Promise<Response> => {
                         <p style="margin: 0; color: #666666; font-size: 14px;"><strong>Testing Mode:</strong> This email was sent to justin@glab.africa. Applicant email: ${email}</p>
                       </div>
                       
-                      <p style="margin: 0 0 20px; color: #333333; font-size: 16px; line-height: 1.6;">We have successfully received your application to become a tutor at ElimuConnect. Thank you for your interest in joining Kenya's leading tutoring platform!</p>
+                      <p style="margin: 0 0 20px; color: #333333; font-size: 16px; line-height: 1.6;">We have successfully received your application to become a tutor at Lana Tutors. Thank you for your interest in joining Kenya's leading tutoring platform!</p>
                       
                       <p style="margin: 0 0 30px; color: #666666; font-size: 15px; line-height: 1.6;">We will communicate with you via this email: <strong style="color: #ed2644;">${email}</strong></p>
                       

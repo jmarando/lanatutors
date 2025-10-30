@@ -34,7 +34,7 @@ const handler = async (req: Request): Promise<Response> => {
         Authorization: `Bearer ${RESEND_API_KEY}`,
       },
       body: JSON.stringify({
-        from: "ElimuConnect <onboarding@resend.dev>",
+        from: "Lana Tutors <onboarding@resend.dev>",
         to: [recipient],
         subject: `Great News ${fullName} - Interview Invitation!`,
         html: `
@@ -72,7 +72,7 @@ const handler = async (req: Request): Promise<Response> => {
                         <tr>
                           <td style="padding: 24px; border-left: 4px solid #ed2644;">
                             <h2 style="color: #ed2644; margin: 0 0 12px; font-size: 20px;">📅 Next Step: Expert Conversation</h2>
-                            <p style="margin: 0; color: #666666; font-size: 15px; line-height: 1.6;">You're invited to a 30-minute video conversation with an ElimuConnect Expert to discuss your teaching philosophy and experience.</p>
+                            <p style="margin: 0; color: #666666; font-size: 15px; line-height: 1.6;">You're invited to a 30-minute video conversation with a Lana Tutors Expert to discuss your teaching philosophy and experience.</p>
                           </td>
                         </tr>
                       </table>
@@ -128,7 +128,7 @@ const handler = async (req: Request): Promise<Response> => {
                         <li style="margin-bottom: 8px;">Experience with different curricula (CBC, IGCSE, etc.)</li>
                         <li style="margin-bottom: 8px;">How you handle challenging students</li>
                         <li style="margin-bottom: 8px;">Your availability and preferred teaching mode</li>
-                        <li>Questions about the ElimuConnect platform</li>
+                        <li>Questions about the Lana Tutors platform</li>
                       </ul>
                       
                       <!-- Pro Tip -->
@@ -145,7 +145,7 @@ const handler = async (req: Request): Promise<Response> => {
                       
                       <p style="margin: 30px 0 10px; color: #666666; font-size: 15px; line-height: 1.6;">We're excited to meet you and learn more about your teaching journey!</p>
                       
-                      <p style="margin: 30px 0 5px; color: #666666; font-size: 15px; line-height: 1.6;">Best regards,<br><strong style="color: #333333;">The ElimuConnect Team</strong></p>
+                      <p style="margin: 30px 0 5px; color: #666666; font-size: 15px; line-height: 1.6;">Best regards,<br><strong style="color: #333333;">The Lana Tutors Team</strong></p>
                     </td>
                   </tr>
                   

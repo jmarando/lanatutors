@@ -54,7 +54,7 @@ const handler = async (req: Request): Promise<Response> => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: "ElimuConnect <onboarding@resend.dev>",
+        from: "Lana Tutors <onboarding@resend.dev>",
         to: [studentEmail],
         subject: `Reminder: Upcoming Session with ${tutorName}`,
         html: `
@@ -88,7 +88,7 @@ const handler = async (req: Request): Promise<Response> => {
               If you need to reschedule, please contact your tutor at least 24 hours in advance.
             </p>
             
-            <p style="margin-top: 30px;">Best regards,<br>The ElimuConnect Team</p>
+            <p style="margin-top: 30px;">Best regards,<br>The Lana Tutors Team</p>
           </div>
         `,
       }),

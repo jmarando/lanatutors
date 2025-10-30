@@ -93,7 +93,7 @@ END:VCALENDAR`;
           <div class="content">
             <div class="banner">
               <h2>Hi ${parentName},</h2>
-              <p>Great news! Your free consultation for <strong>${studentName}</strong> has been successfully scheduled with ElimuConnect.</p>
+              <p>Great news! Your free consultation for <strong>${studentName}</strong> has been successfully scheduled with Lana Tutors.</p>
             </div>
 
             <div class="detail-box">
@@ -119,10 +119,10 @@ END:VCALENDAR`;
             <div class="info-box">
               <h3>💡 What to Expect During Your Consultation</h3>
               <ul>
-                <li><strong>Meet Your Expert:</strong> You'll chat with an ElimuConnect curriculum specialist who understands your child's learning system</li>
+                <li><strong>Meet Your Expert:</strong> You'll chat with a Lana Tutors curriculum specialist who understands your child's learning system</li>
                 <li><strong>Discuss Learning Needs:</strong> Share ${studentName}'s academic goals, challenges, and subjects where they need support</li>
                 <li><strong>Personalized Recommendations:</strong> Get expert advice on the best tutoring approach, subject combinations, and tutor matches</li>
-                <li><strong>Ask Questions:</strong> Learn about our tutoring methods, pricing packages, and how ElimuConnect can help ${studentName} excel</li>
+                <li><strong>Ask Questions:</strong> Learn about our tutoring methods, pricing packages, and how Lana Tutors can help ${studentName} excel</li>
                 <li><strong>Next Steps:</strong> Receive a customized learning plan and immediate support to get started</li>
               </ul>
             </div>

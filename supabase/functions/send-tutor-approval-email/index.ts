@@ -35,7 +35,7 @@ const handler = async (req: Request): Promise<Response> => {
         Authorization: `Bearer ${RESEND_API_KEY}`,
       },
       body: JSON.stringify({
-        from: "ElimuConnect <onboarding@resend.dev>",
+        from: "Lana Tutors <onboarding@resend.dev>",
         to: [recipient],
         subject: `Congratulations ${fullName} - You're Approved!`,
         html: `
@@ -66,14 +66,14 @@ const handler = async (req: Request): Promise<Response> => {
                         <p style="margin: 0; color: #666666; font-size: 14px;"><strong>Testing Mode:</strong> This email was sent to justin@glab.africa. Applicant email: ${email}</p>
                       </div>
                       
-                      <p style="margin: 0 0 30px; color: #333333; font-size: 16px; line-height: 1.6;">We're thrilled to inform you that you've successfully passed our vetting process and expert conversation! Welcome to the ElimuConnect family of elite tutors.</p>
+                      <p style="margin: 0 0 30px; color: #333333; font-size: 16px; line-height: 1.6;">We're thrilled to inform you that you've successfully passed our vetting process and expert conversation! Welcome to the Lana Tutors family of elite tutors.</p>
                       
                       <!-- Success Box -->
                       <table role="presentation" style="width: 100%; margin: 30px 0; background: linear-gradient(135deg, #fef2f2 0%, #ffe5e8 100%); border-radius: 8px;">
                         <tr>
                           <td style="padding: 24px; border-left: 4px solid #ed2644;">
                             <h2 style="color: #ed2644; margin: 0 0 12px; font-size: 20px;">🎉 What This Means</h2>
-                            <p style="margin: 0; color: #666666; font-size: 15px; line-height: 1.6;">You are now officially an approved ElimuConnect tutor! You're joining Kenya's leading tutoring platform where quality education meets passionate educators.</p>
+                            <p style="margin: 0; color: #666666; font-size: 15px; line-height: 1.6;">You are now officially an approved Lana Tutors tutor! You're joining Kenya's leading tutoring platform where quality education meets passionate educators.</p>
                           </td>
                         </tr>
                       </table>

@@ -72,7 +72,7 @@ const handler = async (req: Request): Promise<Response> => {
       <body>
         <div class="container">
           <div class="header">
-            <h1>✨ Thank You for Choosing ElimuConnect!</h1>
+            <h1>✨ Thank You for Choosing Lana Tutors!</h1>
           </div>
           
           <div class="content">
@@ -116,7 +116,7 @@ const handler = async (req: Request): Promise<Response> => {
             </div>
 
             <div style="background: #F9FAFB; padding: 20px; border-radius: 8px; margin: 25px 0;">
-              <h3 style="color: #1A1A1A; margin-top: 0;">💡 Why Choose ElimuConnect?</h3>
+              <h3 style="color: #1A1A1A; margin-top: 0;">💡 Why Choose Lana Tutors?</h3>
               <ul style="color: #737373; line-height: 1.8;">
                 <li><strong>Vetted Expert Tutors:</strong> All our tutors are carefully screened and verified</li>
                 <li><strong>Personalized Learning:</strong> Customized lesson plans tailored to ${studentName}'s needs</li>
