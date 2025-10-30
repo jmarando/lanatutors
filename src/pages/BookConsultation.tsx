@@ -11,7 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { Link, useNavigate } from "react-router-dom";
-import { CalendarIcon, Clock, CheckCircle, Users, GraduationCap, Target, Award } from "lucide-react";
+import { CalendarIcon, Clock, CheckCircle, Users, GraduationCap, Target, Award, Sparkles, ArrowRight } from "lucide-react";
 import { validateAndNormalizePhone } from "@/utils/phoneValidation";
 import { SEO } from "@/components/SEO";
 import { getCurriculums, getLevelsForCurriculum, getSubjectsForCurriculumLevel } from "@/utils/curriculumData";
@@ -222,51 +222,114 @@ const BookConsultation = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            {/* Step 1: Why Book */}
+            {/* Step 1: Choose Path or Why Book */}
             {step === 1 && (
               <div className="space-y-6">
                 <div>
-                  <h3 className="font-semibold text-lg mb-4">What You'll Get</h3>
-                  <p className="text-sm text-muted-foreground mb-6">
-                    Our free consultation helps us understand your needs so we can connect you with the perfect tutor
+                  <h3 className="font-semibold text-xl mb-2 text-center">Choose Your Path</h3>
+                  <p className="text-sm text-muted-foreground text-center mb-8">
+                    Get started with personalized tutor matching
                   </p>
                 </div>
 
-                <div className="grid gap-4">
-                  {CONSULTATION_BENEFITS.map((benefit, index) => {
-                    const Icon = benefit.icon;
-                    return (
-                      <Card key={index} className="border-2">
-                        <CardContent className="p-4 flex gap-4">
-                          <div className="flex-shrink-0">
-                            <Icon className="w-8 h-8 text-primary" />
-                          </div>
-                          <div>
-                            <h4 className="font-semibold mb-1">{benefit.title}</h4>
-                            <p className="text-sm text-muted-foreground">{benefit.description}</p>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    );
-                  })}
+                {/* AI Assessment Option */}
+                <Card className="border-2 border-primary/30 bg-gradient-to-br from-primary/5 to-primary/10 hover:shadow-lg transition-shadow cursor-pointer"
+                      onClick={() => navigate(`/learning-assessment?studentName=${formData.studentName || 'Student'}&email=${formData.email || ''}`)}>
+                  <CardContent className="p-6">
+                    <div className="flex items-start gap-4">
+                      <div className="p-3 bg-primary rounded-lg">
+                        <Sparkles className="w-8 h-8 text-primary-foreground" />
+                      </div>
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          <h4 className="font-semibold text-lg">AI Learning Assessment</h4>
+                          <Badge variant="secondary" className="bg-primary/20">Recommended</Badge>
+                        </div>
+                        <p className="text-sm text-muted-foreground mb-4">
+                          Take a quick 5-minute AI-powered assessment to instantly discover your learning style, 
+                          identify gaps, and get matched with the perfect tutors for your needs.
+                        </p>
+                        <ul className="space-y-2 text-sm mb-4">
+                          <li className="flex items-start gap-2">
+                            <CheckCircle className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
+                            <span>Instant personalized tutor recommendations</span>
+                          </li>
+                          <li className="flex items-start gap-2">
+                            <CheckCircle className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
+                            <span>AI analysis of learning style & gaps</span>
+                          </li>
+                          <li className="flex items-start gap-2">
+                            <CheckCircle className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
+                            <span>Custom learning path created for you</span>
+                          </li>
+                          <li className="flex items-start gap-2">
+                            <CheckCircle className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
+                            <span>Saves time - no need to wait for consultation</span>
+                          </li>
+                        </ul>
+                        <Button className="w-full group">
+                          Start AI Assessment
+                          <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
+                        </Button>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* Divider */}
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center">
+                    <div className="w-full border-t border-muted"></div>
+                  </div>
+                  <div className="relative flex justify-center text-xs">
+                    <span className="bg-background px-4 text-muted-foreground">or book a consultation</span>
+                  </div>
                 </div>
 
-                <div className="bg-primary/5 border border-primary/20 rounded-lg p-4">
-                  <p className="text-sm font-medium">
-                    ✨ <strong>Absolutely Free</strong> - No commitment required. We'll help you understand how Lana can support your student's success.
-                  </p>
-                </div>
+                {/* Traditional Consultation */}
+                <Card className="border-2 hover:shadow-md transition-shadow">
+                  <CardContent className="p-6">
+                    <div className="flex items-start gap-4">
+                      <div className="p-3 bg-muted rounded-lg">
+                        <Users className="w-8 h-8 text-primary" />
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="font-semibold text-lg mb-2">Free 30-Min Consultation</h4>
+                        <p className="text-sm text-muted-foreground mb-4">
+                          Speak with our education consultants for personalized guidance
+                        </p>
+                      </div>
+                    </div>
 
-                <div className="flex justify-end gap-4 pt-4">
+                    <div className="grid gap-3 mt-4">
+                      {CONSULTATION_BENEFITS.map((benefit, index) => {
+                        const Icon = benefit.icon;
+                        return (
+                          <div key={index} className="flex gap-3">
+                            <Icon className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
+                            <div>
+                              <h5 className="font-medium text-sm">{benefit.title}</h5>
+                              <p className="text-xs text-muted-foreground">{benefit.description}</p>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    <Button variant="outline" className="w-full mt-4" onClick={() => setStep(2)}>
+                      Book Consultation
+                    </Button>
+                  </CardContent>
+                </Card>
+
+                <div className="flex justify-center pt-4">
                   <Link to="/">
-                    <Button variant="outline">Cancel</Button>
+                    <Button variant="ghost">Back to Home</Button>
                   </Link>
-                  <Button onClick={() => setStep(2)}>
-                    Get Started
-                  </Button>
                 </div>
               </div>
             )}
+
 
             {/* Step 2: Basic Information */}
             {step === 2 && (
