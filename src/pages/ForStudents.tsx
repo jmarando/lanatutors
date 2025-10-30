@@ -156,16 +156,16 @@ const ForStudents = () => {
         <div className="max-w-7xl mx-auto px-6 py-12">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8 text-center">
             <div className="space-y-2">
-              <div className="text-3xl font-bold text-primary">500+</div>
+              <div className="text-3xl font-bold text-primary">50+</div>
               <div className="text-sm text-muted-foreground">Verified Tutors</div>
             </div>
             <div className="space-y-2">
-              <div className="text-3xl font-bold text-primary">10,000+</div>
+              <div className="text-3xl font-bold text-primary">500+</div>
               <div className="text-sm text-muted-foreground">Happy Students</div>
             </div>
             <div className="space-y-2">
-              <div className="text-3xl font-bold text-primary">4.9★</div>
-              <div className="text-sm text-muted-foreground">Average Rating</div>
+              <div className="text-3xl font-bold text-primary">All Curricula</div>
+              <div className="text-sm text-muted-foreground">CBC, IGCSE & 8-4-4</div>
             </div>
           </div>
         </div>
