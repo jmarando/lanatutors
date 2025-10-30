@@ -2,7 +2,7 @@ import { useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { CheckCircle2, Calendar, Clock, Mail, Video, BookOpen, Lightbulb, ClipboardList, ArrowRight } from "lucide-react";
+import { CheckCircle2, Calendar, Clock, Mail, Video, BookOpen, Lightbulb, ClipboardList, ArrowRight, Sparkles } from "lucide-react";
 import Navigation from "@/components/Navigation";
 
 const ConsultationConfirmed = () => {
@@ -45,6 +45,31 @@ const ConsultationConfirmed = () => {
               Hi {parentName}, your free consultation for {studentName} has been successfully scheduled
             </p>
           </div>
+
+          {/* AI Assessment CTA */}
+          <Card className="mb-6 border-primary/30 bg-primary/5">
+            <CardContent className="pt-6">
+              <div className="flex items-start gap-4">
+                <div className="p-3 bg-primary/10 rounded-lg">
+                  <Sparkles className="w-6 h-6 text-primary" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-xl font-semibold mb-2">Take Our AI Learning Assessment</h3>
+                  <p className="text-muted-foreground mb-4">
+                    Get personalized tutor recommendations matched to {studentName}'s learning style and goals. 
+                    Our AI will analyze their needs and suggest the best tutors!
+                  </p>
+                  <Button 
+                    onClick={() => navigate(`/learning-assessment?studentName=${studentName}&email=${email}`)}
+                    className="w-full sm:w-auto"
+                  >
+                    <Sparkles className="w-4 h-4 mr-2" />
+                    Start Assessment Now
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
 
           {/* Consultation Details Card */}
           <Card className="mb-6">
