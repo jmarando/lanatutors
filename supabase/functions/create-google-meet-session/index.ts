@@ -32,70 +32,73 @@ serve(async (req) => {
 
     console.log('Creating Google Meet session for booking:', bookingId);
 
-    // Parse service account JSON
-    const serviceAccountJson = Deno.env.get('GOOGLE_SERVICE_ACCOUNT_JSON');
-    if (!serviceAccountJson) {
-      throw new Error('Google service account credentials not configured');
+    // Get the booking to find tutor_id
+    const { data: booking, error: bookingError } = await supabaseClient
+      .from('bookings')
+      .select('tutor_id')
+      .eq('id', bookingId)
+      .single();
+
+    if (bookingError || !booking) {
+      throw new Error('Booking not found');
     }
 
-    const serviceAccount = JSON.parse(serviceAccountJson);
+    // Get tutor's OAuth token
+    const { data: tutorProfile, error: profileError } = await supabaseClient
+      .from('tutor_profiles')
+      .select('google_oauth_token, google_refresh_token, google_token_expires_at')
+      .eq('id', booking.tutor_id)
+      .single();
 
-    // Create JWT for Google API authentication
-    const jwtHeader = btoa(JSON.stringify({ alg: 'RS256', typ: 'JWT' }));
-    const now = Math.floor(Date.now() / 1000);
-    const jwtClaimSet = {
-      iss: serviceAccount.client_email,
-      scope: 'https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/calendar.events',
-      aud: 'https://oauth2.googleapis.com/token',
-      exp: now + 3600,
-      iat: now,
-    };
-    const jwtClaimSetEncoded = btoa(JSON.stringify(jwtClaimSet));
-
-    // Sign JWT with private key
-    const encoder = new TextEncoder();
-    const data = encoder.encode(`${jwtHeader}.${jwtClaimSetEncoded}`);
-    
-    // Import private key
-    const pemHeader = "-----BEGIN PRIVATE KEY-----";
-    const pemFooter = "-----END PRIVATE KEY-----";
-    const pemContents = serviceAccount.private_key
-      .replace(pemHeader, '')
-      .replace(pemFooter, '')
-      .replace(/\s/g, '');
-    const binaryDer = Uint8Array.from(atob(pemContents), c => c.charCodeAt(0));
-    
-    const key = await crypto.subtle.importKey(
-      'pkcs8',
-      binaryDer,
-      { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' },
-      false,
-      ['sign']
-    );
-
-    const signature = await crypto.subtle.sign('RSASSA-PKCS1-v1_5', key, data);
-    const signatureBase64 = btoa(String.fromCharCode(...new Uint8Array(signature)))
-      .replace(/\+/g, '-')
-      .replace(/\//g, '_')
-      .replace(/=/g, '');
-
-    const jwt = `${jwtHeader}.${jwtClaimSetEncoded}.${signatureBase64}`;
-
-    // Exchange JWT for access token
-    const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: `grant_type=urn:ietf:params:oauth:grant-type:jwt-bearer&assertion=${jwt}`,
-    });
-
-    if (!tokenResponse.ok) {
-      const error = await tokenResponse.text();
-      console.error('Token exchange failed:', error);
-      throw new Error('Failed to get access token');
+    if (profileError || !tutorProfile) {
+      throw new Error('Tutor profile not found');
     }
 
-    const { access_token } = await tokenResponse.json();
-    console.log('Access token obtained');
+    if (!tutorProfile.google_oauth_token) {
+      throw new Error('Tutor has not connected Google Calendar');
+    }
+
+    let accessToken = tutorProfile.google_oauth_token;
+
+    // Check if token is expired and refresh if needed
+    if (tutorProfile.google_token_expires_at) {
+      const expiresAt = new Date(tutorProfile.google_token_expires_at);
+      if (expiresAt <= new Date()) {
+        console.log('Token expired, refreshing...');
+        
+        const refreshResponse = await fetch('https://oauth2.googleapis.com/token', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: new URLSearchParams({
+            client_id: Deno.env.get('GOOGLE_CLIENT_ID')!,
+            client_secret: Deno.env.get('GOOGLE_CLIENT_SECRET')!,
+            refresh_token: tutorProfile.google_refresh_token!,
+            grant_type: 'refresh_token',
+          }),
+        });
+
+        if (!refreshResponse.ok) {
+          const error = await refreshResponse.text();
+          console.error('Token refresh failed:', error);
+          throw new Error('Failed to refresh access token');
+        }
+
+        const tokens = await refreshResponse.json();
+        accessToken = tokens.access_token;
+
+        // Update stored token
+        const newExpiresAt = new Date(Date.now() + (tokens.expires_in * 1000));
+        await supabaseClient
+          .from('tutor_profiles')
+          .update({
+            google_oauth_token: accessToken,
+            google_token_expires_at: newExpiresAt.toISOString(),
+          })
+          .eq('id', booking.tutor_id);
+          
+        console.log('Token refreshed successfully');
+      }
+    }
 
     // Create calendar event with Google Meet
     const event = {
@@ -135,7 +138,7 @@ serve(async (req) => {
       {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${access_token}`,
+          'Authorization': `Bearer ${accessToken}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(event),
