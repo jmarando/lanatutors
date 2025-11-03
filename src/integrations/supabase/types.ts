@@ -712,11 +712,17 @@ export type Database = {
         Row: {
           availability: string | null
           bio: string | null
+          calendar_sync_enabled: boolean | null
           created_at: string | null
           current_institution: string | null
           curriculum: string[] | null
           display_institution: boolean | null
           experience_years: number | null
+          google_calendar_connected: boolean | null
+          google_calendar_email: string | null
+          google_oauth_token: string | null
+          google_refresh_token: string | null
+          google_token_expires_at: string | null
           graduation_year: number | null
           hourly_rate: number | null
           id: string
@@ -740,11 +746,17 @@ export type Database = {
         Insert: {
           availability?: string | null
           bio?: string | null
+          calendar_sync_enabled?: boolean | null
           created_at?: string | null
           current_institution?: string | null
           curriculum?: string[] | null
           display_institution?: boolean | null
           experience_years?: number | null
+          google_calendar_connected?: boolean | null
+          google_calendar_email?: string | null
+          google_oauth_token?: string | null
+          google_refresh_token?: string | null
+          google_token_expires_at?: string | null
           graduation_year?: number | null
           hourly_rate?: number | null
           id?: string
@@ -768,11 +780,17 @@ export type Database = {
         Update: {
           availability?: string | null
           bio?: string | null
+          calendar_sync_enabled?: boolean | null
           created_at?: string | null
           current_institution?: string | null
           curriculum?: string[] | null
           display_institution?: boolean | null
           experience_years?: number | null
+          google_calendar_connected?: boolean | null
+          google_calendar_email?: string | null
+          google_oauth_token?: string | null
+          google_refresh_token?: string | null
+          google_token_expires_at?: string | null
           graduation_year?: number | null
           hourly_rate?: number | null
           id?: string
