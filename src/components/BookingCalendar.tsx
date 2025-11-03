@@ -69,6 +69,7 @@ export const BookingCalendar = ({
   const [notes, setNotes] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [selectedClassType, setSelectedClassType] = useState<'online' | 'in-person'>(classType);
+  const [sessionDuration, setSessionDuration] = useState<1 | 2>(1); // 1 hour or 2 hours
   const [paymentMethod, setPaymentMethod] = useState<'mpesa' | 'card'>('mpesa');
   const [paymentOption, setPaymentOption] = useState<'deposit' | 'full' | 'package'>('deposit');
   const [packageOffers, setPackageOffers] = useState<PackageOffer[]>([]);
@@ -639,6 +640,45 @@ export const BookingCalendar = ({
                 </div>
               )}
 
+              {!isTrialSession && (
+                <div>
+                  <Label className="text-sm font-medium mb-2 block">Session Duration *</Label>
+                  <div className="grid grid-cols-2 gap-3">
+                    <button
+                      type="button"
+                      className={`p-4 rounded-lg border-2 transition-all text-left ${
+                        sessionDuration === 1 
+                          ? 'border-primary bg-primary/5' 
+                          : 'border-border hover:border-primary/50'
+                      } ${paymentInitiated ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                      onClick={() => !paymentInitiated && setSessionDuration(1)}
+                      disabled={paymentInitiated}
+                    >
+                      <div className="font-semibold mb-1">Single Session (1 hour)</div>
+                      <div className="text-sm text-muted-foreground">
+                        KES {selectedClassType === 'online' ? hourlyRate : (hourlyRate * 1.3).toFixed(0)}
+                      </div>
+                    </button>
+                    <button
+                      type="button"
+                      className={`p-4 rounded-lg border-2 transition-all text-left ${
+                        sessionDuration === 2 
+                          ? 'border-primary bg-primary/5' 
+                          : 'border-border hover:border-primary/50'
+                      } ${paymentInitiated ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                      onClick={() => !paymentInitiated && setSessionDuration(2)}
+                      disabled={paymentInitiated}
+                    >
+                      <div className="font-semibold mb-1">Double Session (2 hours)</div>
+                      <div className="text-sm text-muted-foreground">
+                        KES {selectedClassType === 'online' ? hourlyRate * 2 : (hourlyRate * 1.3 * 2).toFixed(0)}
+                      </div>
+                    </button>
+                  </div>
+                </div>
+              )}
+
+
               <div>
                 <Label className="text-sm font-medium mb-2 block">Subject *</Label>
                 {tutorSubjects && tutorSubjects.length > 0 ? (
@@ -678,38 +718,54 @@ export const BookingCalendar = ({
               {!isTrialSession && (
                 <>
                   {selectedSlot && (() => {
-                    const duration = (new Date(selectedSlot.end_time).getTime() - new Date(selectedSlot.start_time).getTime()) / (1000 * 60 * 60);
+                    const slotDuration = (new Date(selectedSlot.end_time).getTime() - new Date(selectedSlot.start_time).getTime()) / (1000 * 60 * 60);
+                    const duration = slotDuration * sessionDuration;
                     const rate = selectedClassType === 'in-person' ? hourlyRate * 1.3 : hourlyRate;
                     const total = duration * rate;
                     const deposit = total * 0.3;
                     const balance = total - deposit;
 
                     return (
-                      <PaymentOptionsCard
-                        paymentOption={paymentOption}
-                        onPaymentOptionChange={(option) => {
-                          setPaymentOption(option);
-                          if (option !== 'package') {
-                            setSelectedPackage(null);
-                            setSelectedExistingPackage(null);
-                          }
-                        }}
-                        totalAmount={total}
-                        depositAmount={deposit}
-                        balanceDue={balance}
-                        packageOffers={packageOffers}
-                        existingPackages={existingPackages}
-                        selectedPackage={selectedPackage}
-                        selectedExistingPackage={selectedExistingPackage}
-                        onPackageSelect={setSelectedPackage}
-                        onExistingPackageSelect={(pkg) => {
-                          setSelectedExistingPackage(pkg);
-                          if (pkg) {
-                            setPaymentOption('package');
-                          }
-                        }}
-                        disabled={paymentInitiated}
-                      />
+                      <>
+                        <div className="p-4 bg-muted/30 rounded-lg border">
+                          <div className="flex justify-between items-center mb-2">
+                            <span className="text-sm font-medium">Session Type:</span>
+                            <span className="font-semibold">
+                              {selectedClassType === 'online' ? 'Online' : 'In-Person'} - {sessionDuration === 1 ? '1 hour' : '2 hours'}
+                            </span>
+                          </div>
+                          <div className="flex justify-between items-center">
+                            <span className="text-sm font-medium">Total Amount:</span>
+                            <span className="text-lg font-bold text-primary">KES {total.toFixed(0)}</span>
+                          </div>
+                        </div>
+
+                        <PaymentOptionsCard
+                          paymentOption={paymentOption}
+                          onPaymentOptionChange={(option) => {
+                            setPaymentOption(option);
+                            if (option !== 'package') {
+                              setSelectedPackage(null);
+                              setSelectedExistingPackage(null);
+                            }
+                          }}
+                          totalAmount={total}
+                          depositAmount={deposit}
+                          balanceDue={balance}
+                          packageOffers={packageOffers}
+                          existingPackages={existingPackages}
+                          selectedPackage={selectedPackage}
+                          selectedExistingPackage={selectedExistingPackage}
+                          onPackageSelect={setSelectedPackage}
+                          onExistingPackageSelect={(pkg) => {
+                            setSelectedExistingPackage(pkg);
+                            if (pkg) {
+                              setPaymentOption('package');
+                            }
+                          }}
+                          disabled={paymentInitiated}
+                        />
+                      </>
                     );
                   })()}
 

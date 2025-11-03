@@ -50,7 +50,14 @@ export const PaymentOptionsCard = ({
 }: PaymentOptionsCardProps) => {
   return (
     <div className="space-y-4">
-      <Label className="text-sm font-medium">Payment Option *</Label>
+      <div className="flex items-center justify-between">
+        <Label className="text-sm font-medium">Payment Option *</Label>
+        {packageOffers.length > 0 && (
+          <Badge variant="outline" className="text-xs">
+            💰 {packageOffers.length} package{packageOffers.length > 1 ? 's' : ''} available
+          </Badge>
+        )}
+      </div>
       
       {/* Existing Package - Show First if Available */}
       {existingPackages.length > 0 && (
