@@ -594,6 +594,7 @@ const TutorProfile = () => {
                   studentEmail={currentUser.email}
                   studentName={currentUser.name}
                   hourlyRate={bookingType === 'trial' ? Math.floor(tutor.hourlyRate * 0.5) : bookingType === 'free' ? 0 : tutor.hourlyRate}
+                  tutorSubjects={tutor.subjects}
                   isTrialSession={bookingType === 'free' || bookingType === 'trial'}
                   onBookingComplete={() => setIsBookingOpen(false)}
                 />

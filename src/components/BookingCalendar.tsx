@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { format, isSameDay } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -27,6 +28,7 @@ interface BookingCalendarProps {
   studentEmail: string;
   studentName: string;
   hourlyRate: number;
+  tutorSubjects?: string[];
   onBookingComplete?: () => void;
   classType?: 'online' | 'in-person';
   isTrialSession?: boolean;
@@ -55,6 +57,7 @@ export const BookingCalendar = ({
   studentEmail,
   studentName,
   hourlyRate,
+  tutorSubjects = [],
   onBookingComplete,
   classType = 'online',
   isTrialSession = false,
@@ -638,12 +641,27 @@ export const BookingCalendar = ({
 
               <div>
                 <Label className="text-sm font-medium mb-2 block">Subject *</Label>
-                <Input
-                  placeholder="e.g., Mathematics - Algebra"
-                  value={subject}
-                  onChange={(e) => setSubject(e.target.value)}
-                  disabled={paymentInitiated}
-                />
+                {tutorSubjects && tutorSubjects.length > 0 ? (
+                  <Select value={subject} onValueChange={setSubject} disabled={paymentInitiated}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a subject" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-background z-50">
+                      {tutorSubjects.map((subj) => (
+                        <SelectItem key={subj} value={subj}>
+                          {subj}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <Input
+                    placeholder="e.g., Mathematics - Algebra"
+                    value={subject}
+                    onChange={(e) => setSubject(e.target.value)}
+                    disabled={paymentInitiated}
+                  />
+                )}
               </div>
 
               <div>
