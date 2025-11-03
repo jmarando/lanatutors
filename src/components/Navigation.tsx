@@ -5,7 +5,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { User } from "@supabase/supabase-js";
-import lanaLogo from "@/assets/lana-header-logo.png";
+import lanaLogo from "@/assets/lana-tutors-logo.png";
 
 const Navigation = () => {
   const [open, setOpen] = useState(false);
