@@ -48,14 +48,27 @@ serve(async (req) => {
       .from('tutor_profiles')
       .select('google_oauth_token, google_refresh_token, google_token_expires_at')
       .eq('id', booking.tutor_id)
-      .single();
+      .maybeSingle();
 
-    if (profileError || !tutorProfile) {
-      throw new Error('Tutor profile not found');
+    if (profileError) {
+      console.error('Error fetching tutor profile:', profileError);
+      throw new Error('Error fetching tutor profile');
+    }
+
+    if (!tutorProfile) {
+      console.log('Tutor profile not found, skipping Google Meet creation');
+      return new Response(
+        JSON.stringify({ message: 'Tutor has not set up profile yet, Google Meet link will be added later' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     if (!tutorProfile.google_oauth_token) {
-      throw new Error('Tutor has not connected Google Calendar');
+      console.log('Tutor has not connected Google Calendar, skipping Google Meet creation');
+      return new Response(
+        JSON.stringify({ message: 'Tutor has not connected Google Calendar, meeting link will be added later' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     let accessToken = tutorProfile.google_oauth_token;
