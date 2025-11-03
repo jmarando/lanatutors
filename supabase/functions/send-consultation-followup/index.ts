@@ -134,7 +134,7 @@ const handler = async (req: Request): Promise<Response> => {
                 Reply to this email or call us anytime. We're here to help!
               </p>
               <p style="margin: 15px 0;">
-                <a href="mailto:info@learnwithlana.com" style="color: #1D9DB8; font-weight: 600;">info@learnwithlana.com</a>
+                <a href="mailto:info@lanatutors.africa" style="color: #1D9DB8; font-weight: 600;">info@lanatutors.africa</a>
               </p>
             </div>
 
@@ -165,7 +165,7 @@ const handler = async (req: Request): Promise<Response> => {
         Authorization: `Bearer ${RESEND_API_KEY}`,
       },
       body: JSON.stringify({
-        from: "Lana <info@learnwithlana.com>",
+        from: "Lana <info@lanatutors.africa>",
         to: [email],
         subject: `Next Steps for ${studentName}'s Learning Journey 🎓`,
         html: emailHtml,

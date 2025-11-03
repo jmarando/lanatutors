@@ -112,7 +112,7 @@ serve(async (req) => {
       attendees: [
         { email: tutorEmail },
         { email: studentEmail },
-        { email: 'info@learnwithlana.com' },
+        { email: 'info@lanatutors.africa' },
       ],
       conferenceData: {
         createRequest: {

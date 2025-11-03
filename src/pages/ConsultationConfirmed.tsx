@@ -249,7 +249,7 @@ const ConsultationConfirmed = () => {
             </Button>
             <p className="text-sm text-muted-foreground pt-4">
               Need to reschedule?{" "}
-              <a href="mailto:info@learnwithlana.com" className="text-accent hover:underline">
+              <a href="mailto:info@lanatutors.africa" className="text-accent hover:underline">
                 Contact us
               </a>
             </p>

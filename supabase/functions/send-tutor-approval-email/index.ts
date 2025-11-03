@@ -35,7 +35,7 @@ const handler = async (req: Request): Promise<Response> => {
         Authorization: `Bearer ${RESEND_API_KEY}`,
       },
       body: JSON.stringify({
-        from: "Lana Tutors <onboarding@resend.dev>",
+        from: "Lana Tutors <info@lanatutors.africa>",
         to: [recipient],
         subject: `Congratulations ${fullName} - You're Approved!`,
         html: `
@@ -124,7 +124,7 @@ const handler = async (req: Request): Promise<Response> => {
                       </ul>
                       
                       <h2 style="color: #ed2644; margin: 30px 0 15px; font-size: 20px;">Need Help?</h2>
-                      <p style="margin: 0 0 30px; color: #666666; font-size: 15px; line-height: 1.6;">If you have any questions while setting up your profile, our team is here to help at <a href="mailto:info@learnwithlana.com" style="color: #ed2644; text-decoration: none;">info@learnwithlana.com</a>.</p>
+                      <p style="margin: 0 0 30px; color: #666666; font-size: 15px; line-height: 1.6;">If you have any questions while setting up your profile, our team is here to help at <a href="mailto:info@lanatutors.africa" style="color: #ed2644; text-decoration: none;">info@lanatutors.africa</a>.</p>
                       
                       <p style="margin: 30px 0 10px; color: #666666; font-size: 15px; line-height: 1.6;">We're excited to have you on board and can't wait to see you make an impact on students' lives!</p>
                       

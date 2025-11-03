@@ -148,12 +148,12 @@ END:VCALENDAR`;
             </div>
 
             <div style="text-align: center; margin: 30px 0;">
-              <a href="mailto:info@learnwithlana.com?subject=Reschedule Consultation - ${studentName}" class="button button-secondary">📅 Need to Reschedule?</a>
+              <a href="mailto:info@lanatutors.africa?subject=Reschedule Consultation - ${studentName}" class="button button-secondary">📅 Need to Reschedule?</a>
             </div>
 
             <p style="color: #737373; text-align: center; font-size: 14px; margin: 30px 0;">
               If you need to reschedule or have any questions, simply reply to this email or contact us at 
-              <a href="mailto:info@learnwithlana.com" style="color: #1D9DB8;">info@learnwithlana.com</a>
+              <a href="mailto:info@lanatutors.africa" style="color: #1D9DB8;">info@lanatutors.africa</a>
             </p>
 
             <div style="text-align: center; margin-top: 40px; padding-top: 30px; border-top: 2px solid #F1EDEA;">
@@ -183,7 +183,7 @@ END:VCALENDAR`;
         Authorization: `Bearer ${RESEND_API_KEY}`,
       },
       body: JSON.stringify({
-        from: "Lana <info@learnwithlana.com>",
+        from: "Lana <info@lanatutors.africa>",
         to: [email],
         subject: "Your Free Consultation is Confirmed! 📚",
         html: emailHtml,

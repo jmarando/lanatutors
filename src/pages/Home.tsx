@@ -39,7 +39,7 @@ const Home = () => {
       "@type": "ContactPoint",
       "telephone": "+254-725252542",
       "contactType": "customer service",
-      "email": "info@learnwithlana.com"
+      "email": "info@lanatutors.africa"
     },
     "sameAs": [],
     "aggregateRating": {
@@ -471,7 +471,7 @@ const Home = () => {
                 <p>First Floor, Arbor House,</p>
                 <p>Arboretum Drive, Nairobi</p>
                 <p>(+254) 725252542</p>
-                <p>info@learnwithlana.com</p>
+                <p>info@lanatutors.africa</p>
               </div>
             </div>
             <div>

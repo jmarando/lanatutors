@@ -34,7 +34,7 @@ const handler = async (req: Request): Promise<Response> => {
         Authorization: `Bearer ${RESEND_API_KEY}`,
       },
       body: JSON.stringify({
-        from: "Lana Tutors <onboarding@resend.dev>",
+        from: "Lana Tutors <info@lanatutors.africa>",
         to: [recipient],
         subject: `Great News ${fullName} - Interview Invitation!`,
         html: `
@@ -156,7 +156,7 @@ const handler = async (req: Request): Promise<Response> => {
                         Interview Link: <a href="${meetLink}" style="color: #ed2644; text-decoration: none;">${meetLink}</a>
                       </p>
                       <p style="margin: 0; font-size: 12px; color: #999999; line-height: 1.6;">
-                        This is an automated message. For questions, contact info@learnwithlana.com
+                        This is an automated message. For questions, contact info@lanatutors.africa
                       </p>
                     </td>
                   </tr>
