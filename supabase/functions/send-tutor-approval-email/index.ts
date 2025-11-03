@@ -22,10 +22,6 @@ const handler = async (req: Request): Promise<Response> => {
     
     console.log("Sending tutor approval email to:", email);
 
-    // TEMPORARY: Send to verified test email for testing
-    // TODO: Change back to applicant's email when domain is verified
-    const recipient = "justin@glab.africa";
-
     const signupUrl = `${Deno.env.get('SUPABASE_URL')}/auth/v1/verify?type=signup&redirect_to=https://elimuconnect.lovable.app/tutor-profile-setup`;
 
     const response = await fetch("https://api.resend.com/emails", {
@@ -36,7 +32,7 @@ const handler = async (req: Request): Promise<Response> => {
       },
       body: JSON.stringify({
         from: "Lana Tutors <info@lanatutors.africa>",
-        to: [recipient],
+        to: [email],
         subject: `Congratulations ${fullName} - You're Approved!`,
         html: `
         <!DOCTYPE html>
@@ -61,10 +57,6 @@ const handler = async (req: Request): Promise<Response> => {
                   <tr>
                     <td style="padding: 40px;">
                       <p style="margin: 0 0 20px; color: #333333; font-size: 16px; line-height: 1.6;">Dear ${fullName},</p>
-                      
-                      <div style="background-color: #fef2f2; border-left: 4px solid #ed2644; padding: 16px; margin: 20px 0;">
-                        <p style="margin: 0; color: #666666; font-size: 14px;"><strong>Testing Mode:</strong> This email was sent to justin@glab.africa. Applicant email: ${email}</p>
-                      </div>
                       
                       <p style="margin: 0 0 30px; color: #333333; font-size: 16px; line-height: 1.6;">We're thrilled to inform you that you've successfully passed our vetting process and expert conversation! Welcome to the Lana Tutors family of elite tutors.</p>
                       

@@ -22,10 +22,6 @@ const handler = async (req: Request): Promise<Response> => {
     
     console.log("Sending application acknowledgment to:", email);
 
-    // TEMPORARY: Send to verified test email for testing
-    // TODO: Change back to applicant's email when domain is verified
-    const recipient = "justin@glab.africa";
-
     const response = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {
@@ -34,7 +30,7 @@ const handler = async (req: Request): Promise<Response> => {
       },
       body: JSON.stringify({
         from: "Lana Tutors <info@lanatutors.africa>",
-        to: [recipient],
+        to: [email],
         subject: `Application Received - ${fullName}`,
         html: `
         <!DOCTYPE html>
@@ -58,11 +54,7 @@ const handler = async (req: Request): Promise<Response> => {
                   <!-- Content -->
                   <tr>
                     <td style="padding: 40px;">
-                      <p style="margin: 0 0 20px; color: #333333; font-size: 16px; line-height: 1.6;">Dear ${fullName},</p>
-                      
-                      <div style="background-color: #fef2f2; border-left: 4px solid #ed2644; padding: 16px; margin: 20px 0;">
-                        <p style="margin: 0; color: #666666; font-size: 14px;"><strong>Testing Mode:</strong> This email was sent to justin@glab.africa. Applicant email: ${email}</p>
-                      </div>
+                     <p style="margin: 0 0 20px; color: #333333; font-size: 16px; line-height: 1.6;">Dear ${fullName},</p>
                       
                       <p style="margin: 0 0 20px; color: #333333; font-size: 16px; line-height: 1.6;">We have successfully received your application to become a tutor at Lana Tutors. Thank you for your interest in joining Kenya's leading tutoring platform!</p>
                       

@@ -24,9 +24,6 @@ const handler = async (req: Request): Promise<Response> => {
     
     console.log("Sending interview invitation to:", email);
 
-    // TEMPORARY: Send to verified test email for testing
-    const recipient = "justin@glab.africa";
-
     const response = await fetch("https://api.resend.com/emails", {
       method: "POST",
       headers: {
@@ -35,7 +32,7 @@ const handler = async (req: Request): Promise<Response> => {
       },
       body: JSON.stringify({
         from: "Lana Tutors <info@lanatutors.africa>",
-        to: [recipient],
+        to: [email],
         subject: `Great News ${fullName} - Interview Invitation!`,
         html: `
         <!DOCTYPE html>
@@ -59,11 +56,7 @@ const handler = async (req: Request): Promise<Response> => {
                   <!-- Content -->
                   <tr>
                     <td style="padding: 40px;">
-                      <p style="margin: 0 0 20px; color: #333333; font-size: 16px; line-height: 1.6;">Dear ${fullName},</p>
-                      
-                      <div style="background-color: #fef2f2; border-left: 4px solid #ed2644; padding: 16px; margin: 20px 0;">
-                        <p style="margin: 0; color: #666666; font-size: 14px;"><strong>Testing Mode:</strong> This email was sent to justin@glab.africa. Applicant email: ${email}</p>
-                      </div>
+                     <p style="margin: 0 0 20px; color: #333333; font-size: 16px; line-height: 1.6;">Dear ${fullName},</p>
                       
                       <p style="margin: 0 0 30px; color: #333333; font-size: 16px; line-height: 1.6;">We're pleased to inform you that you've successfully passed the initial vetting stage of our application process!</p>
                       
