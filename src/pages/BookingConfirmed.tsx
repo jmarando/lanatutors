@@ -335,7 +335,7 @@ const BookingConfirmed = () => {
               </ol>
 
               <div className="flex gap-4 mt-6">
-                <Button onClick={() => navigate("/student-dashboard")} className="flex-1">
+                <Button onClick={() => navigate("/student/dashboard")} className="flex-1">
                   Go to Dashboard
                   <ArrowRight className="ml-2 w-4 h-4" />
                 </Button>
