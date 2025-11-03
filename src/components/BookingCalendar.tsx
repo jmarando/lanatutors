@@ -677,43 +677,6 @@ export const BookingCalendar = ({
 
               {!isTrialSession && (
                 <>
-                  <div>
-                    <Label className="text-sm font-medium mb-2 block">Payment Method *</Label>
-                    <Tabs value={paymentMethod} onValueChange={(v) => setPaymentMethod(v as 'mpesa' | 'card')} className="w-full">
-                      <TabsList className="grid w-full grid-cols-2">
-                        <TabsTrigger value="mpesa" className="flex items-center gap-2">
-                          <Smartphone className="w-4 h-4" />
-                          M-Pesa
-                        </TabsTrigger>
-                        <TabsTrigger value="card" className="flex items-center gap-2">
-                          <CreditCard className="w-4 h-4" />
-                          Card
-                        </TabsTrigger>
-                      </TabsList>
-                    </Tabs>
-                  </div>
-
-                  {paymentMethod === 'mpesa' && (
-                    <div>
-                      <Label className="text-sm font-medium mb-2 block">M-Pesa Phone Number *</Label>
-                      <Input
-                        type="tel"
-                        placeholder="0712345678"
-                        value={phoneNumber}
-                        onChange={(e) => setPhoneNumber(e.target.value)}
-                        maxLength={10}
-                        disabled={paymentInitiated}
-                      />
-                      <p className="text-xs text-muted-foreground mt-1">
-                        Enter your Safaricom number (format: 07XXXXXXXX)
-                      </p>
-                    </div>
-                  )}
-                </>
-              )}
-
-              {!isTrialSession && (
-                <>
                   {selectedSlot && (() => {
                     const duration = (new Date(selectedSlot.end_time).getTime() - new Date(selectedSlot.start_time).getTime()) / (1000 * 60 * 60);
                     const rate = selectedClassType === 'in-person' ? hourlyRate * 1.3 : hourlyRate;
