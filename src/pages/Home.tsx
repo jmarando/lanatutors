@@ -234,7 +234,7 @@ const Home = () => {
               Comprehensive tutoring solutions tailored to your learning needs
             </p>
           </div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-6">
             {[
               {
                 title: "After School Tuition",
@@ -251,6 +251,10 @@ const Home = () => {
               {
                 title: "Holiday Tuition",
                 description: "Catch-up programs and advanced learning during school breaks",
+              },
+              {
+                title: "Homeschooling Support",
+                description: "Help parents who homeschool tutor subjects they are not familiar with",
               },
             ].map((service, index) => (
               <Card key={index} className="text-center p-6 hover:shadow-lg transition-shadow">
