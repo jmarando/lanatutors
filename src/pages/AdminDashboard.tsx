@@ -24,6 +24,7 @@ const AdminDashboard = () => {
   const [pendingTutors, setPendingTutors] = useState<any[]>([]);
   const [pendingReviews, setPendingReviews] = useState<any[]>([]);
   const [consultationBookings, setConsultationBookings] = useState<any[]>([]);
+  const [tutoringBookings, setTutoringBookings] = useState<any[]>([]);
   const [dashboardMetrics, setDashboardMetrics] = useState<any>(null);
   const [timeRange, setTimeRange] = useState<'7days' | '30days' | '90days'>('30days');
   const [editingNote, setEditingNote] = useState<string | null>(null);
@@ -304,6 +305,7 @@ Yehtu Tutors`
     fetchPendingTutors();
     fetchPendingReviews();
     fetchConsultationBookings();
+    fetchTutoringBookings();
     setLoading(false);
   };
 
@@ -683,6 +685,29 @@ Yehtu Tutors`
     }
   };
 
+  const fetchTutoringBookings = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("bookings")
+        .select(`
+          *,
+          tutor_availability(start_time, end_time),
+          profiles!bookings_student_id_fkey(full_name, phone_number),
+          tutor_profiles!bookings_tutor_id_fkey(
+            id,
+            profiles!tutor_profiles_user_id_fkey(full_name)
+          )
+        `)
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      setTutoringBookings(data || []);
+    } catch (error: any) {
+      console.error("Error fetching tutoring bookings:", error);
+      toast.error("Failed to load tutoring bookings");
+    }
+  };
+
   const handleEditNote = (bookingId: string, currentNote: string) => {
     setEditingNote(bookingId);
     setNoteContent(currentNote || "");
@@ -940,6 +965,13 @@ The Lana Team`;
               Consultations
               {consultationBookings.length > 0 && (
                 <Badge className="ml-2 bg-teal-600">{consultationBookings.length}</Badge>
+              )}
+            </TabsTrigger>
+            <TabsTrigger value="bookings" className="relative">
+              <BookMarked className="h-4 w-4 mr-2" />
+              Tutoring Bookings
+              {tutoringBookings.length > 0 && (
+                <Badge className="ml-2 bg-indigo-600">{tutoringBookings.length}</Badge>
               )}
             </TabsTrigger>
           </TabsList>
@@ -1685,6 +1717,121 @@ The Lana Team`;
               );
             })
             )}
+      </TabsContent>
+
+      {/* Tutoring Bookings Tab */}
+      <TabsContent value="bookings" className="space-y-4">
+        <div className="flex justify-between items-center mb-4">
+          <div>
+            <h2 className="text-2xl font-bold">Tutoring Session Bookings</h2>
+            <p className="text-muted-foreground">All tutoring sessions booked through the platform</p>
+          </div>
+        </div>
+
+        {tutoringBookings.length === 0 ? (
+          <Card>
+            <CardContent className="p-12 text-center">
+              <BookMarked className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
+              <p className="text-muted-foreground">No tutoring bookings yet</p>
+            </CardContent>
+          </Card>
+        ) : (
+          tutoringBookings.map((booking) => (
+            <Card key={booking.id}>
+              <CardContent className="p-6">
+                <div className="space-y-4">
+                  {/* Header */}
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <h3 className="font-bold text-lg">{booking.subject}</h3>
+                      <div className="flex gap-2 mt-2">
+                        <Badge variant={
+                          booking.status === 'confirmed' ? 'default' :
+                          booking.status === 'pending' ? 'secondary' :
+                          booking.status === 'cancelled' ? 'destructive' :
+                          'outline'
+                        }>
+                          {booking.status}
+                        </Badge>
+                        <Badge variant="outline">{booking.class_type}</Badge>
+                        <Badge className="bg-green-600">
+                          KES {Number(booking.amount).toFixed(0)}
+                        </Badge>
+                      </div>
+                    </div>
+                    <div className="text-right text-sm text-muted-foreground">
+                      <p>Booked: {formatFullDateTime(booking.created_at)}</p>
+                    </div>
+                  </div>
+
+                  {/* Details Grid */}
+                  <div className="grid md:grid-cols-2 gap-4 p-4 bg-muted/30 rounded-lg">
+                    <div>
+                      <p className="text-sm text-muted-foreground mb-1">Student</p>
+                      <p className="font-medium">{booking.profiles?.full_name || 'Unknown'}</p>
+                      {booking.profiles?.phone_number && (
+                        <p className="text-sm text-muted-foreground">{booking.profiles.phone_number}</p>
+                      )}
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground mb-1">Tutor</p>
+                      <p className="font-medium">
+                        {booking.tutor_profiles?.profiles?.full_name || 'Unknown'}
+                      </p>
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground mb-1">Session Time</p>
+                      <p className="font-medium">
+                        {booking.tutor_availability ? 
+                          formatFullDateTime(booking.tutor_availability.start_time) : 
+                          'Time not set'}
+                      </p>
+                      {booking.tutor_availability && (
+                        <p className="text-sm text-muted-foreground">
+                          Duration: {Math.round((new Date(booking.tutor_availability.end_time).getTime() - new Date(booking.tutor_availability.start_time).getTime()) / 60000)} mins
+                        </p>
+                      )}
+                    </div>
+                    <div>
+                      <p className="text-sm text-muted-foreground mb-1">Payment Details</p>
+                      <p className="text-sm">
+                        <span className="text-green-600">✓ Deposit: KES {Number(booking.deposit_paid).toFixed(0)}</span>
+                      </p>
+                      {booking.balance_due > 0 && (
+                        <p className="text-sm text-orange-600">
+                          Balance Due: KES {Number(booking.balance_due).toFixed(0)}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Meeting Link */}
+                  {booking.meeting_link && (
+                    <div className="p-3 bg-primary/5 border border-primary/20 rounded-lg">
+                      <p className="text-sm font-medium mb-1">Meeting Link</p>
+                      <a 
+                        href={booking.meeting_link} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-sm text-primary hover:underline break-all"
+                      >
+                        {booking.meeting_link}
+                      </a>
+                    </div>
+                  )}
+
+                  {/* Notes */}
+                  {booking.notes && (
+                    <div className="p-3 bg-muted/50 rounded-lg">
+                      <p className="text-sm font-medium mb-1">Session Notes</p>
+                      <p className="text-sm text-muted-foreground">{booking.notes}</p>
+                    </div>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          ))
+        )}
       </TabsContent>
     </Tabs>
 

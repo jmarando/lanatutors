@@ -20,6 +20,7 @@ interface BookingEmailRequest {
   balanceDue: number;
   totalAmount: number;
   classType: string;
+  testEmail?: string; // Optional: override student email for testing
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -40,10 +41,17 @@ const handler = async (req: Request): Promise<Response> => {
       depositPaid,
       balanceDue,
       totalAmount,
-      classType
+      classType,
+      testEmail
     }: BookingEmailRequest = await req.json();
 
-    console.log("Sending booking confirmation emails to:", studentEmail, "and", tutorEmail);
+    // Use testEmail if provided for testing purposes
+    const recipientEmail = testEmail || studentEmail;
+
+    console.log("Sending booking confirmation emails to:", recipientEmail, "and", tutorEmail);
+    if (testEmail) {
+      console.log("TEST MODE: Original email was", studentEmail, "but sending to", testEmail);
+    }
 
     const formattedStart = new Date(startTime).toLocaleString('en-US', {
       weekday: 'long',
@@ -259,8 +267,8 @@ const handler = async (req: Request): Promise<Response> => {
       },
       body: JSON.stringify({
         from: "Lana <info@lanatutors.africa>",
-        to: [studentEmail],
-        subject: `✓ Booking Confirmed: ${subject} with ${tutorName}`,
+        to: [recipientEmail],
+        subject: `${testEmail ? '[TEST] ' : ''}✓ Booking Confirmed: ${subject} with ${tutorName}`,
         html: studentEmailHtml,
       }),
     });
