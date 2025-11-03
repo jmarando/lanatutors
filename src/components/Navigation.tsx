@@ -63,11 +63,14 @@ const Navigation = () => {
     <nav className="border-b bg-background/95 backdrop-blur-sm sticky top-0 z-50 shadow-sm">
       <div className="max-w-7xl mx-auto px-6 py-2 flex items-center justify-between gap-8">
         <Link to="/" className="flex items-center flex-shrink-0" aria-label="Lana Tutors Home">
-          <img 
-            src={lanaLogo} 
-            alt="Lana Tutors - Your Trusted Tutoring Partner"
-            className="h-20 sm:h-24 md:h-28 lg:h-32 w-auto" 
-          />
+          <div className="h-24 sm:h-28 md:h-28 lg:h-32 overflow-hidden flex items-center">
+            <img 
+              src={lanaLogo} 
+              alt="Lana Tutors - Your Trusted Tutoring Partner"
+              className="h-[140%] sm:h-[130%] md:h-[122%] lg:h-[115%] w-auto -translate-y-[10%] sm:-translate-y-[8%] md:-translate-y-[6%]"
+              style={{ transformOrigin: 'left center' }}
+            />
+          </div>
         </Link>
 
         {/* Desktop Navigation */}
