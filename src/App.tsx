@@ -23,6 +23,7 @@ const TutorDashboard = lazy(() => import("./pages/TutorDashboard"));
 const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
 const SeedTutors = lazy(() => import("./pages/SeedTutors"));
 const BookConsultation = lazy(() => import("./pages/BookConsultation"));
+const ExpertConsultation = lazy(() => import("./pages/ExpertConsultation"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const TestEmail = lazy(() => import("./pages/TestEmail"));
 const BookingConfirmed = lazy(() => import("./pages/BookingConfirmed"));
@@ -65,6 +66,7 @@ const App = () => {
               <Route path="/admin" element={<AdminDashboard />} />
               <Route path="/seed-tutors" element={<SeedTutors />} />
               <Route path="/book-consultation" element={<BookConsultation />} />
+              <Route path="/expert-consultation" element={<ExpertConsultation />} />
               <Route path="/test-email" element={<TestEmail />} />
               <Route path="/booking-confirmed" element={<BookingConfirmed />} />
               <Route path="/create-calvin-profile" element={<CreateCalvinProfile />} />

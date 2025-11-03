@@ -167,15 +167,143 @@ export type Database = {
         }
         Relationships: []
       }
+      expert_consultation_requests: {
+        Row: {
+          additional_notes: string | null
+          assigned_expert_id: string | null
+          created_at: string | null
+          email: string
+          grade_levels: string[]
+          id: string
+          number_of_children: number
+          package_preferences: string | null
+          parent_name: string
+          phone_number: string
+          preferred_contact_time: string | null
+          scheduled_call_time: string | null
+          status: string | null
+          subjects_of_interest: string[]
+          updated_at: string | null
+        }
+        Insert: {
+          additional_notes?: string | null
+          assigned_expert_id?: string | null
+          created_at?: string | null
+          email: string
+          grade_levels: string[]
+          id?: string
+          number_of_children: number
+          package_preferences?: string | null
+          parent_name: string
+          phone_number: string
+          preferred_contact_time?: string | null
+          scheduled_call_time?: string | null
+          status?: string | null
+          subjects_of_interest: string[]
+          updated_at?: string | null
+        }
+        Update: {
+          additional_notes?: string | null
+          assigned_expert_id?: string | null
+          created_at?: string | null
+          email?: string
+          grade_levels?: string[]
+          id?: string
+          number_of_children?: number
+          package_preferences?: string | null
+          parent_name?: string
+          phone_number?: string
+          preferred_contact_time?: string | null
+          scheduled_call_time?: string | null
+          status?: string | null
+          subjects_of_interest?: string[]
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      learning_assessments: {
+        Row: {
+          assessment_responses: Json
+          completed_at: string | null
+          consultation_booking_id: string | null
+          created_at: string | null
+          grade_level: string
+          id: string
+          identified_gaps: string[] | null
+          learning_level: string | null
+          learning_style: string | null
+          recommended_approach: string | null
+          recommended_tutors: Json | null
+          strengths: string[] | null
+          student_email: string
+          student_name: string
+          subjects: string[]
+          suggested_learning_path: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          assessment_responses?: Json
+          completed_at?: string | null
+          consultation_booking_id?: string | null
+          created_at?: string | null
+          grade_level: string
+          id?: string
+          identified_gaps?: string[] | null
+          learning_level?: string | null
+          learning_style?: string | null
+          recommended_approach?: string | null
+          recommended_tutors?: Json | null
+          strengths?: string[] | null
+          student_email: string
+          student_name: string
+          subjects: string[]
+          suggested_learning_path?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          assessment_responses?: Json
+          completed_at?: string | null
+          consultation_booking_id?: string | null
+          created_at?: string | null
+          grade_level?: string
+          id?: string
+          identified_gaps?: string[] | null
+          learning_level?: string | null
+          learning_style?: string | null
+          recommended_approach?: string | null
+          recommended_tutors?: Json | null
+          strengths?: string[] | null
+          student_email?: string
+          student_name?: string
+          subjects?: string[]
+          suggested_learning_path?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "learning_assessments_consultation_booking_id_fkey"
+            columns: ["consultation_booking_id"]
+            isOneToOne: false
+            referencedRelation: "consultation_bookings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       package_offers: {
         Row: {
           created_at: string | null
+          curriculum: string[] | null
           description: string | null
           discount_percentage: number | null
+          exam_type: string | null
           id: string
           is_active: boolean | null
+          is_featured: boolean | null
+          max_students: number | null
           name: string
+          package_type: Database["public"]["Enums"]["package_type"] | null
           session_count: number
+          subjects: string[] | null
           total_price: number
           tutor_id: string
           updated_at: string | null
@@ -183,12 +311,18 @@ export type Database = {
         }
         Insert: {
           created_at?: string | null
+          curriculum?: string[] | null
           description?: string | null
           discount_percentage?: number | null
+          exam_type?: string | null
           id?: string
           is_active?: boolean | null
+          is_featured?: boolean | null
+          max_students?: number | null
           name: string
+          package_type?: Database["public"]["Enums"]["package_type"] | null
           session_count: number
+          subjects?: string[] | null
           total_price: number
           tutor_id: string
           updated_at?: string | null
@@ -196,12 +330,18 @@ export type Database = {
         }
         Update: {
           created_at?: string | null
+          curriculum?: string[] | null
           description?: string | null
           discount_percentage?: number | null
+          exam_type?: string | null
           id?: string
           is_active?: boolean | null
+          is_featured?: boolean | null
+          max_students?: number | null
           name?: string
+          package_type?: Database["public"]["Enums"]["package_type"] | null
           session_count?: number
+          subjects?: string[] | null
           total_price?: number
           tutor_id?: string
           updated_at?: string | null
@@ -276,6 +416,51 @@ export type Database = {
             columns: ["tutor_id"]
             isOneToOne: false
             referencedRelation: "tutor_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      package_recommendations: {
+        Row: {
+          assessment_id: string | null
+          consultation_booking_id: string | null
+          created_at: string | null
+          id: string
+          reasoning: string | null
+          recommended_packages: Json
+          updated_at: string | null
+        }
+        Insert: {
+          assessment_id?: string | null
+          consultation_booking_id?: string | null
+          created_at?: string | null
+          id?: string
+          reasoning?: string | null
+          recommended_packages?: Json
+          updated_at?: string | null
+        }
+        Update: {
+          assessment_id?: string | null
+          consultation_booking_id?: string | null
+          created_at?: string | null
+          id?: string
+          reasoning?: string | null
+          recommended_packages?: Json
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "package_recommendations_assessment_id_fkey"
+            columns: ["assessment_id"]
+            isOneToOne: false
+            referencedRelation: "learning_assessments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "package_recommendations_consultation_booking_id_fkey"
+            columns: ["consultation_booking_id"]
+            isOneToOne: false
+            referencedRelation: "consultation_bookings"
             referencedColumns: ["id"]
           },
         ]
@@ -720,6 +905,12 @@ export type Database = {
     }
     Enums: {
       app_role: "student" | "tutor" | "admin"
+      package_type:
+        | "single_subject"
+        | "multi_subject"
+        | "multi_child"
+        | "exam_prep"
+        | "custom"
       payment_status: "pending" | "completed" | "failed" | "cancelled"
       subscription_status: "active" | "expired" | "cancelled"
     }
@@ -850,6 +1041,13 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["student", "tutor", "admin"],
+      package_type: [
+        "single_subject",
+        "multi_subject",
+        "multi_child",
+        "exam_prep",
+        "custom",
+      ],
       payment_status: ["pending", "completed", "failed", "cancelled"],
       subscription_status: ["active", "expired", "cancelled"],
     },
