@@ -312,6 +312,7 @@ export const BookingCalendar = ({
             totalAmount: 0,
             depositPaid: 0,
             balanceDue: 0,
+            testEmail: "justin@glab.africa", // TEST MODE
           },
         });
 
@@ -346,6 +347,7 @@ export const BookingCalendar = ({
             totalAmount: 0,
             depositPaid: 0,
             balanceDue: 0,
+            testEmail: "justin@glab.africa", // TEST MODE
           },
         });
 
@@ -418,6 +420,7 @@ export const BookingCalendar = ({
               totalAmount,
               depositPaid: depositAmount,
               balanceDue,
+              testEmail: "justin@glab.africa", // TEST MODE
             },
           });
 
@@ -488,6 +491,7 @@ export const BookingCalendar = ({
             totalAmount: selectedSlot ? ((new Date(selectedSlot.end_time).getTime() - new Date(selectedSlot.start_time).getTime()) / (1000 * 60 * 60)) * (selectedClassType === 'in-person' ? hourlyRate * 1.3 : hourlyRate) : 0,
             depositPaid: selectedSlot ? ((new Date(selectedSlot.end_time).getTime() - new Date(selectedSlot.start_time).getTime()) / (1000 * 60 * 60)) * (selectedClassType === 'in-person' ? hourlyRate * 1.3 : hourlyRate) * 0.3 : 0,
             balanceDue,
+            testEmail: "justin@glab.africa", // TEST MODE
           },
         });
 
