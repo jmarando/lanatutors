@@ -12,11 +12,13 @@ import {
   Star,
   BookOpen,
   ChevronRight,
-  Sparkles
+  Sparkles,
+  Package
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import Navigation from "@/components/Navigation";
+import { PackageSelector } from "@/components/PackageSelector";
 
 interface AssessmentData {
   id: string;
@@ -54,6 +56,7 @@ const AssessmentResults = () => {
   
   const [assessment, setAssessment] = useState<AssessmentData | null>(null);
   const [recommendations, setRecommendations] = useState<TutorRecommendation[]>([]);
+  const [recommendedPackages, setRecommendedPackages] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
 
   const assessmentId = searchParams.get("assessmentId");
@@ -104,6 +107,9 @@ const AssessmentResults = () => {
       // Parse recommended tutors from the JSONB field
       const recommendedTutors = data.recommended_tutors || [];
       setRecommendations(recommendedTutors);
+
+      // Fetch package recommendations
+      await fetchPackageRecommendations();
     } catch (error) {
       console.error("Error fetching results:", error);
       toast({
@@ -113,6 +119,23 @@ const AssessmentResults = () => {
       });
     } finally {
       setIsLoading(false);
+    }
+  };
+
+  const fetchPackageRecommendations = async () => {
+    try {
+      const { data, error } = await supabase.functions.invoke('recommend-packages', {
+        body: { assessmentId }
+      });
+
+      if (error) throw error;
+      
+      if (data?.recommended_packages) {
+        setRecommendedPackages(data.recommended_packages);
+      }
+    } catch (error) {
+      console.error("Error fetching package recommendations:", error);
+      // Don't show error toast as packages are optional
     }
   };
 
@@ -237,6 +260,53 @@ const AssessmentResults = () => {
               <h2 className="text-xl font-semibold">Learning Goals</h2>
             </div>
             <p className="text-lg">{assessment.goals}</p>
+          </Card>
+        )}
+
+        {/* Recommended Packages */}
+        {recommendedPackages.length > 0 && (
+          <Card className="p-6 mb-8 bg-gradient-to-br from-primary/5 to-primary/10 border-primary/20">
+            <div className="flex items-center gap-3 mb-4">
+              <Package className="w-6 h-6 text-primary" />
+              <h2 className="text-2xl font-semibold">Recommended Learning Packages</h2>
+            </div>
+            <p className="text-muted-foreground mb-6">
+              Based on your assessment, we recommend these packages to help you achieve your learning goals efficiently and save money.
+            </p>
+            <div className="grid md:grid-cols-2 gap-4">
+              {recommendedPackages.map((pkg, idx) => (
+                <Card key={idx} className="p-4 bg-background">
+                  <div className="flex items-start justify-between mb-3">
+                    <div>
+                      <h3 className="font-semibold text-lg">{pkg.name}</h3>
+                      <Badge variant="secondary" className="mt-1">
+                        {pkg.sessions} sessions • Save {pkg.discount}%
+                      </Badge>
+                    </div>
+                    <Badge className="bg-green-600">
+                      KES {pkg.price.toLocaleString()}
+                    </Badge>
+                  </div>
+                  <p className="text-sm text-muted-foreground mb-3">{pkg.reason}</p>
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="w-full"
+                    onClick={() => navigate(`/tutors?package=${pkg.package_type}`)}
+                  >
+                    Find Tutors with This Package
+                  </Button>
+                </Card>
+              ))}
+            </div>
+            <div className="mt-4 text-center">
+              <Button 
+                variant="link" 
+                onClick={() => navigate('/expert-consultation')}
+              >
+                Need a custom package? Talk to an expert →
+              </Button>
+            </div>
           </Card>
         )}
 
