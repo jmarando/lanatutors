@@ -4,8 +4,8 @@ const Index = () => {
   return (
     <div className="flex min-h-screen items-center justify-center bg-[image:var(--gradient-page)]">
       <div className="text-center">
-        <h1 className="mb-4 text-4xl font-bold">Welcome to Lana</h1>
-        <p className="text-xl text-muted-foreground">Expert Online Tutoring. Safe. Verified. Kenyan.</p>
+        <h1 className="mb-4 text-4xl font-bold">Welcome to Lana Tutors</h1>
+        <p className="text-xl text-muted-foreground">Your Trusted Tutoring Partner</p>
       </div>
     </div>
   );

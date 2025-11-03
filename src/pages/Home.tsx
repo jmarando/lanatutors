@@ -25,8 +25,8 @@ const Home = () => {
   const organizationSchema = {
     "@context": "https://schema.org",
     "@type": "EducationalOrganization",
-    "name": "Lana",
-    "description": "Quality online tutoring for Kenyan students with verified teachers from top schools",
+    "name": "Lana Tutors",
+    "description": "Your Trusted Tutoring Partner - Quality online tutoring for Kenyan students with verified teachers from top schools",
     "url": window.location.origin,
     "logo": `${window.location.origin}/favicon.ico`,
     "address": {
@@ -147,8 +147,8 @@ const Home = () => {
   return (
     <div className="min-h-screen bg-[image:var(--gradient-page)]">
       <SEO 
-        title="Quality Online Tutoring for Kenyan Students"
-        description="Connect with verified teachers from top Kenyan schools for safe, convenient one-on-one tutoring. Master KCSE, KCPE, and CBC curriculum from home with Lana."
+        title="Your Trusted Tutoring Partner"
+        description="Connect with verified teachers from top Kenyan schools for safe, convenient one-on-one tutoring. Master KCSE, KCPE, and CBC curriculum from home with Lana Tutors."
         structuredData={organizationSchema}
       />
       

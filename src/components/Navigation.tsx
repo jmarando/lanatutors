@@ -62,11 +62,11 @@ const Navigation = () => {
   return (
     <nav className="border-b bg-background/95 backdrop-blur-sm sticky top-0 z-50 shadow-sm">
       <div className="max-w-7xl mx-auto px-6 py-2 flex items-center justify-between gap-8">
-        <Link to="/" className="flex items-center flex-shrink-0" aria-label="Lana Home">
+        <Link to="/" className="flex items-center flex-shrink-0" aria-label="Lana Tutors Home">
           <div className="h-28 sm:h-28 md:h-24 lg:h-20 xl:h-20 overflow-hidden flex items-center">
             <img 
               src={lanaLogo} 
-              alt="Lana - Your Trusted Tutoring Partner" 
+              alt="Lana Tutors - Your Trusted Tutoring Partner"
               className="h-[118%] sm:h-[112%] md:h-[105%] lg:h-[95%] w-auto translate-y-[4%] sm:translate-y-[2%] md:translate-y-0" 
               style={{ transformOrigin: 'left center' }}
             />
@@ -98,7 +98,7 @@ const Navigation = () => {
             )}
           </div>
           <div className="flex items-center gap-4 whitespace-nowrap">
-            <a href="https://wa.me/254725252542?text=Hello%20Lana!%20I%20would%20like%20to%20inquire%20about%20your%20tutoring%20services." target="_blank" rel="noopener noreferrer" className="group flex items-center gap-2 text-sm font-medium hover:text-primary transition-colors px-3 py-2 rounded-md hover:bg-primary/5 whitespace-nowrap">
+            <a href="https://wa.me/254725252542?text=Hello%20Lana%20Tutors!%20I%20would%20like%20to%20inquire%20about%20your%20tutoring%20services." target="_blank" rel="noopener noreferrer" className="group flex items-center gap-2 text-sm font-medium hover:text-primary transition-colors px-3 py-2 rounded-md hover:bg-primary/5 whitespace-nowrap">
               <MessageCircle className="w-4 h-4 transition-transform group-hover:scale-110" />
               <span>Chat on WhatsApp</span>
             </a>
@@ -147,7 +147,7 @@ const Navigation = () => {
                   Admin Dashboard
                 </Link>
               )}
-              <a href="https://wa.me/254725252542?text=Hello%20Lana!%20I%20would%20like%20to%20inquire%20about%20your%20tutoring%20services." target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-lg font-medium hover:text-primary transition-colors px-2 py-2 hover:bg-primary/5 rounded-md">
+              <a href="https://wa.me/254725252542?text=Hello%20Lana%20Tutors!%20I%20would%20like%20to%20inquire%20about%20your%20tutoring%20services." target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-lg font-medium hover:text-primary transition-colors px-2 py-2 hover:bg-primary/5 rounded-md">
                 <MessageCircle className="w-5 h-5" />
                 <span>Chat on WhatsApp</span>
               </a>
