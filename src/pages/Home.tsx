@@ -246,7 +246,7 @@ const Home = () => {
               },
               {
                 title: "Exam Revision & Prep",
-                description: "Intensive preparation for KCSE, IGCSE, and other major examinations",
+                description: "Intensive preparation for KPSEA, KJSEA, KCSE, IGCSE, and other major examinations",
               },
               {
                 title: "Holiday Tuition",
