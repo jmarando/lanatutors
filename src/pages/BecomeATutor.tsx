@@ -27,7 +27,7 @@ const TUTOR_REQUIREMENTS = [
   {
     icon: CheckCircle,
     title: "Subject Expertise",
-    description: "Proven mastery and teaching track record in CBC, IGCSE or other major curriculum subjects with proven student success"
+    description: "Demonstrated mastery in CBC, 8-4-4, IGCSE or other recognized international curricula, with a proven track record of student success and measurable learning outcomes"
   }
 ];
 
