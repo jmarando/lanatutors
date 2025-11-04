@@ -15,10 +15,9 @@ import { useToast } from "@/hooks/use-toast";
 import { Progress } from "@/components/ui/progress";
 import { SEO } from "@/components/SEO";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { getCurriculums, getLevelsForCurriculum, getSubjectsForCurriculumLevel } from "@/utils/curriculumData";
 
-const CURRICULUM_OPTIONS = ["CBC", "8-4-4", "IGCSE", "IB", "American Curriculum"];
 const TEACHING_MODES = ["Online", "In-Person", "Hybrid"];
-const TEACHING_LEVELS = ["Early Years", "Primary", "Middle School/Junior Secondary", "Secondary/A-Level"];
 const SERVICES = ["One-on-One Tutoring", "Group Sessions", "Exam Preparation", "Homework Help"];
 
 const TutorProfileSetup = () => {
@@ -35,7 +34,6 @@ const TutorProfileSetup = () => {
     subjects: [] as string[],
     curriculum: [] as string[],
     teachingMode: [] as string[],
-    teachingLevels: [] as string[],
     servicesOffered: [] as string[],
     hourlyRate: "",
     experienceYears: "",
@@ -46,8 +44,20 @@ const TutorProfileSetup = () => {
     teachingLocation: "",
   });
 
+  // New state for hierarchical curriculum/level/subject selection
+  const [curriculumLevels, setCurriculumLevels] = useState<{[key: string]: string[]}>({});
+  const [selectedCurriculumForSubjects, setSelectedCurriculumForSubjects] = useState("");
+  const [selectedLevelForSubjects, setSelectedLevelForSubjects] = useState("");
+
   const [photoFile, setPhotoFile] = useState<File | null>(null);
-  const [subjectInput, setSubjectInput] = useState("");
+  
+  const curriculums = getCurriculums();
+  const availableLevelsForSubjects = selectedCurriculumForSubjects 
+    ? getLevelsForCurriculum(selectedCurriculumForSubjects) 
+    : [];
+  const availableSubjects = selectedCurriculumForSubjects && selectedLevelForSubjects
+    ? getSubjectsForCurriculumLevel(selectedCurriculumForSubjects, selectedLevelForSubjects)
+    : [];
 
   useEffect(() => {
     checkAuth();
@@ -88,6 +98,43 @@ const TutorProfileSetup = () => {
     }
   };
 
+  const handleCurriculumToggle = (curriculum: string, checked: boolean) => {
+    if (checked) {
+      setFormData({ ...formData, curriculum: [...formData.curriculum, curriculum] });
+    } else {
+      setFormData({ ...formData, curriculum: formData.curriculum.filter(c => c !== curriculum) });
+      // Remove associated levels
+      const newLevels = { ...curriculumLevels };
+      delete newLevels[curriculum];
+      setCurriculumLevels(newLevels);
+    }
+  };
+
+  const handleLevelToggle = (curriculum: string, level: string, checked: boolean) => {
+    const currentLevels = curriculumLevels[curriculum] || [];
+    if (checked) {
+      setCurriculumLevels({
+        ...curriculumLevels,
+        [curriculum]: [...currentLevels, level]
+      });
+    } else {
+      setCurriculumLevels({
+        ...curriculumLevels,
+        [curriculum]: currentLevels.filter(l => l !== level)
+      });
+    }
+  };
+
+  const addSubject = (subject: string) => {
+    if (subject && !formData.subjects.includes(subject)) {
+      setFormData({ ...formData, subjects: [...formData.subjects, subject] });
+    }
+  };
+
+  const removeSubject = (subject: string) => {
+    setFormData({ ...formData, subjects: formData.subjects.filter(s => s !== subject) });
+  };
+
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -101,17 +148,6 @@ const TutorProfileSetup = () => {
       }
       setPhotoFile(file);
     }
-  };
-
-  const addSubject = () => {
-    if (subjectInput.trim() && !formData.subjects.includes(subjectInput.trim())) {
-      setFormData({ ...formData, subjects: [...formData.subjects, subjectInput.trim()] });
-      setSubjectInput("");
-    }
-  };
-
-  const removeSubject = (subject: string) => {
-    setFormData({ ...formData, subjects: formData.subjects.filter(s => s !== subject) });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -161,6 +197,11 @@ const TutorProfileSetup = () => {
 
       if (profileError) throw profileError;
 
+      // Build teaching levels from curriculum levels
+      const teachingLevels = Object.entries(curriculumLevels).flatMap(([curriculum, levels]) => 
+        levels.map(level => `${curriculum} - ${level}`)
+      );
+
       // Create tutor profile
       const { error: tutorError } = await supabase
         .from("tutor_profiles")
@@ -170,7 +211,7 @@ const TutorProfileSetup = () => {
           subjects: formData.subjects,
           curriculum: formData.curriculum,
           teaching_mode: formData.teachingMode,
-          teaching_levels: formData.teachingLevels,
+          teaching_levels: teachingLevels,
           services_offered: formData.servicesOffered,
           hourly_rate: parseFloat(formData.hourlyRate),
           experience_years: parseInt(formData.experienceYears),
@@ -319,51 +360,147 @@ const TutorProfileSetup = () => {
               )}
 
               {step === 2 && (
-                <div className="space-y-4">
+                <div className="space-y-6">
                   <h3 className="font-semibold text-lg">Teaching Details</h3>
                   
-                  <div className="space-y-2">
-                    <Label>Subjects You Teach *</Label>
-                    <div className="flex gap-2">
-                      <Input
-                        placeholder="Enter subject (e.g., Mathematics)"
-                        value={subjectInput}
-                        onChange={(e) => setSubjectInput(e.target.value)}
-                        onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addSubject())}
-                      />
-                      <Button type="button" onClick={addSubject}>Add</Button>
-                    </div>
-                    <div className="flex flex-wrap gap-2 mt-2">
-                      {formData.subjects.map(subject => (
-                        <span key={subject} className="bg-primary/10 text-primary px-3 py-1 rounded-full text-sm flex items-center gap-2">
-                          {subject}
-                          <button type="button" onClick={() => removeSubject(subject)} className="hover:text-destructive">×</button>
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label>Curriculum *</Label>
+                  <div className="space-y-4">
+                    <h4 className="font-medium">Step 1: Select Curricula *</h4>
                     <div className="space-y-2">
-                      {CURRICULUM_OPTIONS.map(curr => (
+                      {curriculums.map(curr => (
                         <div key={curr} className="flex items-center space-x-2">
                           <Checkbox
-                            id={curr}
+                            id={`curriculum-${curr}`}
                             checked={formData.curriculum.includes(curr)}
-                            onCheckedChange={(checked) => {
-                              if (checked) {
-                                setFormData({ ...formData, curriculum: [...formData.curriculum, curr] });
-                              } else {
-                                setFormData({ ...formData, curriculum: formData.curriculum.filter(c => c !== curr) });
-                              }
-                            }}
+                            onCheckedChange={(checked) => handleCurriculumToggle(curr, checked as boolean)}
                           />
-                          <Label htmlFor={curr} className="cursor-pointer">{curr}</Label>
+                          <Label htmlFor={`curriculum-${curr}`} className="cursor-pointer">{curr}</Label>
                         </div>
                       ))}
                     </div>
                   </div>
+
+                  {formData.curriculum.length > 0 && (
+                    <div className="space-y-4">
+                      <h4 className="font-medium">Step 2: Select Levels/Years for Each Curriculum *</h4>
+                      {formData.curriculum.map(curriculum => {
+                        const levels = getLevelsForCurriculum(curriculum);
+                        return (
+                          <div key={curriculum} className="border rounded-lg p-4 space-y-2">
+                            <p className="font-semibold text-sm">{curriculum}</p>
+                            <div className="grid grid-cols-2 gap-2">
+                              {levels.map(level => (
+                                <div key={level.value} className="flex items-center space-x-2">
+                                  <Checkbox
+                                    id={`level-${curriculum}-${level.value}`}
+                                    checked={curriculumLevels[curriculum]?.includes(level.value) || false}
+                                    onCheckedChange={(checked) => handleLevelToggle(curriculum, level.value, checked as boolean)}
+                                  />
+                                  <Label htmlFor={`level-${curriculum}-${level.value}`} className="cursor-pointer text-sm">
+                                    {level.label}
+                                  </Label>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {Object.keys(curriculumLevels).length > 0 && (
+                    <div className="space-y-4">
+                      <h4 className="font-medium">Step 3: Add Subjects You Teach *</h4>
+                      <div className="space-y-3">
+                        <div className="grid grid-cols-2 gap-4">
+                          <Select 
+                            value={selectedCurriculumForSubjects} 
+                            onValueChange={(value) => {
+                              setSelectedCurriculumForSubjects(value);
+                              setSelectedLevelForSubjects("");
+                            }}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select curriculum" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {formData.curriculum.map(curr => (
+                                <SelectItem key={curr} value={curr}>{curr}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+
+                          <Select 
+                            value={selectedLevelForSubjects} 
+                            onValueChange={setSelectedLevelForSubjects}
+                            disabled={!selectedCurriculumForSubjects}
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder={selectedCurriculumForSubjects ? "Select level" : "Select curriculum first"} />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {availableLevelsForSubjects.map(level => (
+                                <SelectItem key={level.value} value={level.value}>
+                                  {level.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        </div>
+
+                        {selectedCurriculumForSubjects && selectedLevelForSubjects && (
+                          <div className="border rounded-lg p-4">
+                            <p className="text-sm text-muted-foreground mb-3">
+                              Click subjects to add to your teaching list:
+                            </p>
+                            <div className="grid grid-cols-2 gap-2">
+                              {availableSubjects.map(subject => (
+                                <Button
+                                  key={subject}
+                                  type="button"
+                                  variant={formData.subjects.includes(subject) ? "default" : "outline"}
+                                  size="sm"
+                                  onClick={() => {
+                                    if (formData.subjects.includes(subject)) {
+                                      removeSubject(subject);
+                                    } else {
+                                      addSubject(subject);
+                                    }
+                                  }}
+                                  className="justify-start"
+                                >
+                                  {subject}
+                                </Button>
+                              ))}
+                            </div>
+                          </div>
+                        )}
+
+                        <div className="space-y-2">
+                          <Label>Your Teaching Subjects ({formData.subjects.length})</Label>
+                          <div className="flex flex-wrap gap-2 min-h-[60px] border rounded-lg p-3">
+                            {formData.subjects.length === 0 ? (
+                              <p className="text-sm text-muted-foreground">No subjects selected yet. Choose subjects above.</p>
+                            ) : (
+                              formData.subjects.map(subject => (
+                                <Badge key={subject} variant="secondary" className="gap-2">
+                                  {subject}
+                                  <button 
+                                    type="button" 
+                                    onClick={() => removeSubject(subject)} 
+                                    className="hover:text-destructive"
+                                  >
+                                    ×
+                                  </button>
+                                </Badge>
+                              ))
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  <Separator />
 
                   <div className="space-y-2">
                     <Label>Teaching Mode *</Label>
@@ -387,27 +524,6 @@ const TutorProfileSetup = () => {
                     </div>
                   </div>
 
-                  <div className="space-y-2">
-                    <Label>Teaching Levels *</Label>
-                    <div className="space-y-2">
-                      {TEACHING_LEVELS.map(level => (
-                        <div key={level} className="flex items-center space-x-2">
-                          <Checkbox
-                            id={level}
-                            checked={formData.teachingLevels.includes(level)}
-                            onCheckedChange={(checked) => {
-                              if (checked) {
-                                setFormData({ ...formData, teachingLevels: [...formData.teachingLevels, level] });
-                              } else {
-                                setFormData({ ...formData, teachingLevels: formData.teachingLevels.filter(l => l !== level) });
-                              }
-                            }}
-                          />
-                          <Label htmlFor={level} className="cursor-pointer">{level}</Label>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
 
                   <div className="space-y-2">
                     <Label htmlFor="teachingLocation">Teaching Location (if in-person)</Label>

@@ -12,34 +12,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Separator } from "@/components/ui/separator";
 import { validateAndNormalizePhone } from "@/utils/phoneValidation";
-
-const CBC_SUBJECTS = [
-  "Mathematics", "English", "Kiswahili", "Science", "Social Studies",
-  "Religious Education", "Creative Arts", "Physical Education"
-];
-
-const CBC_SECONDARY_SUBJECTS = [
-  "Mathematics", "English", "Kiswahili", "Physics", "Chemistry",
-  "Biology", "History", "Geography", "Computer Science", "Business Studies",
-  "Agriculture", "Home Science"
-];
-
-const IGCSE_SUBJECTS = [
-  "Mathematics", "English Language", "English Literature", "Physics", "Chemistry",
-  "Biology", "Combined Science", "History", "Geography", "Computer Science",
-  "Business Studies", "Economics", "French", "Spanish", "Art & Design"
-];
-
-const CBC_GRADES = [
-  "Grade 1", "Grade 2", "Grade 3", "Grade 4", "Grade 5", "Grade 6",
-  "Grade 7", "Grade 8", "Grade 9", "Form 1", "Form 2", "Form 3", "Form 4"
-];
-
-const IGCSE_GRADES = [
-  "Year 1", "Year 2", "Year 3", "Year 4", "Year 5", "Year 6",
-  "Year 7", "Year 8", "Year 9", "IGCSE Year 10", "IGCSE Year 11",
-  "A-Level Year 12", "A-Level Year 13"
-];
+import { getCurriculums, getLevelsForCurriculum, getSubjectsForCurriculumLevel } from "@/utils/curriculumData";
 
 const LEARNING_STYLES = [
   "Visual (diagrams, videos)",
@@ -66,22 +39,11 @@ const StudentSignup = () => {
     learningStyle: ""
   });
 
-  const getSubjects = () => {
-    if (!formData.curriculum) return [];
-    if (formData.curriculum === "IGCSE") return IGCSE_SUBJECTS;
-    
-    // For CBC, show different subjects based on grade level
-    const grade = formData.gradeLevel;
-    if (grade && (grade.includes("Form") || grade === "Grade 7" || grade === "Grade 8" || grade === "Grade 9")) {
-      return CBC_SECONDARY_SUBJECTS;
-    }
-    return CBC_SUBJECTS;
-  };
-
-  const getGrades = () => {
-    if (formData.curriculum === "IGCSE") return IGCSE_GRADES;
-    return CBC_GRADES;
-  };
+  const curriculums = getCurriculums();
+  const availableLevels = formData.curriculum ? getLevelsForCurriculum(formData.curriculum) : [];
+  const availableSubjects = formData.curriculum && formData.gradeLevel
+    ? getSubjectsForCurriculumLevel(formData.curriculum, formData.gradeLevel)
+    : [];
 
   const handleSubjectToggle = (subject: string) => {
     setSelectedSubjects(prev =>
@@ -328,26 +290,34 @@ const StudentSignup = () => {
                       <SelectValue placeholder="Select curriculum" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="CBC">CBC (Kenyan Curriculum)</SelectItem>
-                      <SelectItem value="IGCSE">IGCSE (International)</SelectItem>
+                      {curriculums.map(curriculum => (
+                        <SelectItem key={curriculum} value={curriculum}>
+                          {curriculum}
+                        </SelectItem>
+                      ))}
                     </SelectContent>
                   </Select>
                 </div>
 
                 {formData.curriculum && (
                   <div className="space-y-2">
-                    <Label htmlFor="gradeLevel">Grade/Year *</Label>
+                    <Label htmlFor="gradeLevel">Level/Year *</Label>
                     <Select
                       value={formData.gradeLevel}
-                      onValueChange={(value) => setFormData({ ...formData, gradeLevel: value })}
+                      onValueChange={(value) => {
+                        setFormData({ ...formData, gradeLevel: value });
+                        setSelectedSubjects([]);
+                      }}
                       required
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder="Select grade/year" />
+                        <SelectValue placeholder="Select level/year" />
                       </SelectTrigger>
-                      <SelectContent>
-                        {getGrades().map(grade => (
-                          <SelectItem key={grade} value={grade}>{grade}</SelectItem>
+                      <SelectContent className="max-h-[300px]">
+                        {availableLevels.map(level => (
+                          <SelectItem key={level.value} value={level.value}>
+                            {level.label}
+                          </SelectItem>
                         ))}
                       </SelectContent>
                     </Select>
@@ -356,11 +326,14 @@ const StudentSignup = () => {
               </div>
 
               {/* Subjects */}
-              {formData.curriculum && formData.gradeLevel && (
+              {formData.curriculum && formData.gradeLevel && availableSubjects.length > 0 && (
                 <div className="space-y-4">
                   <h3 className="font-semibold text-lg">What subjects do you need help with? *</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Subjects available for {formData.curriculum} - {availableLevels.find(l => l.value === formData.gradeLevel)?.label}
+                  </p>
                   <div className="grid grid-cols-2 gap-3">
-                    {getSubjects().map((subject) => (
+                    {availableSubjects.map((subject) => (
                       <div key={subject} className="flex items-center space-x-2">
                         <Checkbox
                           id={subject}
