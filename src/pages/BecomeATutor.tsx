@@ -87,8 +87,7 @@ const BecomeATutor = () => {
     phoneNumber: "",
     currentSchool: "",
     yearsOfExperience: "",
-    tscNumber: "",
-    cambridgeQualification: "",
+    qualificationNumber: "",
     teachingLevels: [] as string[],
     subjects: "",
   });
@@ -129,11 +128,11 @@ const BecomeATutor = () => {
       return;
     }
 
-    // Validate that at least one qualification number is provided
-    if (!formData.tscNumber && !formData.cambridgeQualification) {
+    // Validate qualification number
+    if (!formData.qualificationNumber.trim()) {
       toast({
         title: "Qualification required",
-        description: "Please provide either TSC number or equivalent qualification number",
+        description: "Please provide your TSC number or equivalent professional teaching registration",
         variant: "destructive"
       });
       return;
@@ -190,8 +189,8 @@ const BecomeATutor = () => {
           phone_number: phoneValidation.normalized,
           current_school: formData.currentSchool,
           years_of_experience: parseInt(formData.yearsOfExperience),
-          tsc_number: formData.tscNumber || null,
-          cambridge_qualification: formData.cambridgeQualification || null,
+          tsc_number: formData.qualificationNumber,
+          cambridge_qualification: null,
           teaching_level: formData.teachingLevels.length > 0 ? formData.teachingLevels.join(', ') : null,
           subjects: formData.subjects ? formData.subjects.split(',').map(s => s.trim()) : [],
           cv_url: cvUrl,
@@ -460,29 +459,19 @@ const BecomeATutor = () => {
                     <p className="text-xs text-muted-foreground">Separate multiple subjects with commas</p>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="tscNumber">TSC Number</Label>
-                      <Input
-                        id="tscNumber"
-                        placeholder="Teachers Service Commission number"
-                        value={formData.tscNumber}
-                        onChange={(e) => setFormData({ ...formData, tscNumber: e.target.value })}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="cambridgeQualification">Equivalent professional teaching registration</Label>
-                      <Input
-                        id="cambridgeQualification"
-                        placeholder="e.g., Cambridge, other teaching qualification"
-                        value={formData.cambridgeQualification}
-                        onChange={(e) => setFormData({ ...formData, cambridgeQualification: e.target.value })}
-                      />
-                    </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="qualificationNumber">Professional Teaching Registration *</Label>
+                    <Input
+                      id="qualificationNumber"
+                      placeholder="TSC number or equivalent professional teaching registration"
+                      value={formData.qualificationNumber}
+                      onChange={(e) => setFormData({ ...formData, qualificationNumber: e.target.value })}
+                      required
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Provide your TSC (Teachers Service Commission) number or equivalent professional teaching registration
+                    </p>
                   </div>
-                  <p className="text-xs text-muted-foreground -mt-2">
-                    * At least one qualification number (TSC or equivalent) is required
-                  </p>
 
                   <div className="space-y-2">
                     <Label>Upload CV/Resume *</Label>
