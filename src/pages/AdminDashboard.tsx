@@ -2144,14 +2144,14 @@ const ApplicationReviewCard = ({ application, onReview }: any) => {
                     {selectedDate ? format(selectedDate, "PPP") : "Pick a date"}
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-0 z-50" align="start" sideOffset={5}>
+                <PopoverContent className="w-auto p-0 z-[9999]" align="start" sideOffset={5}>
                   <Calendar
                     mode="single"
                     selected={selectedDate}
                     onSelect={setSelectedDate}
                     disabled={(date) => date < new Date()}
                     initialFocus
-                    className="pointer-events-auto"
+                    className="p-3 pointer-events-auto"
                   />
                 </PopoverContent>
               </Popover>
