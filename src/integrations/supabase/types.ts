@@ -761,6 +761,7 @@ export type Database = {
           specializations: string | null
           subjects: string[]
           teaching_experience: Json | null
+          teaching_levels: string[] | null
           teaching_location: string | null
           teaching_mode: string[] | null
           total_reviews: number | null
@@ -795,6 +796,7 @@ export type Database = {
           specializations?: string | null
           subjects: string[]
           teaching_experience?: Json | null
+          teaching_levels?: string[] | null
           teaching_location?: string | null
           teaching_mode?: string[] | null
           total_reviews?: number | null
@@ -829,6 +831,7 @@ export type Database = {
           specializations?: string | null
           subjects?: string[]
           teaching_experience?: Json | null
+          teaching_levels?: string[] | null
           teaching_location?: string | null
           teaching_mode?: string[] | null
           total_reviews?: number | null
