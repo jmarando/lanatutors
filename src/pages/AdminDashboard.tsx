@@ -25,12 +25,14 @@ const AdminDashboard = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
   const [pendingApplications, setPendingApplications] = useState<any[]>([]);
+  const [interviewRecords, setInterviewRecords] = useState<any[]>([]);
   const [pendingTutors, setPendingTutors] = useState<any[]>([]);
   const [pendingReviews, setPendingReviews] = useState<any[]>([]);
   const [consultationBookings, setConsultationBookings] = useState<any[]>([]);
   const [tutoringBookings, setTutoringBookings] = useState<any[]>([]);
   const [dashboardMetrics, setDashboardMetrics] = useState<any>(null);
   const [timeRange, setTimeRange] = useState<'7days' | '30days' | '90days'>('30days');
+  const [interviewFilter, setInterviewFilter] = useState<'all' | 'scheduled' | 'passed' | 'failed'>('all');
   const [editingNote, setEditingNote] = useState<string | null>(null);
   const [noteContent, setNoteContent] = useState("");
   const [selectedBooking, setSelectedBooking] = useState<any>(null);
@@ -306,6 +308,7 @@ Yehtu Tutors`
     setIsAdmin(true);
     fetchDashboardMetrics();
     fetchPendingApplications();
+    fetchInterviewRecords();
     fetchPendingTutors();
     fetchPendingReviews();
     fetchConsultationBookings();
@@ -428,7 +431,7 @@ Yehtu Tutors`
     const { data, error } = await supabase
       .from("tutor_applications")
       .select("*")
-      .in("status", ["pending", "interview_scheduled"])
+      .eq("status", "pending")
       .order("created_at", { ascending: false });
 
     console.log("Applications data:", data);
@@ -438,6 +441,20 @@ Yehtu Tutors`
       console.error("Error fetching applications:", error);
     } else {
       setPendingApplications(data || []);
+    }
+  };
+
+  const fetchInterviewRecords = async () => {
+    const { data, error } = await supabase
+      .from("tutor_applications")
+      .select("*")
+      .in("status", ["interview_scheduled", "passed", "failed"])
+      .order("interview_scheduled_at", { ascending: false });
+
+    if (error) {
+      console.error("Error fetching interview records:", error);
+    } else {
+      setInterviewRecords(data || []);
     }
   };
 
@@ -583,6 +600,7 @@ Yehtu Tutors`
 
       toast.success("Application rejected");
       fetchPendingApplications();
+      fetchInterviewRecords();
     }
   };
 
@@ -633,7 +651,7 @@ Yehtu Tutors`
         toast.success("Interview marked as failed");
       }
 
-      fetchPendingApplications();
+      fetchInterviewRecords();
     } catch (error: any) {
       console.error("Error updating interview result:", error);
       toast.error("Failed to update interview result");
@@ -939,17 +957,17 @@ The Lana Team`;
             </TabsTrigger>
             <TabsTrigger value="applications" className="relative">
               Applications
-              {pendingApplications.filter(a => a.status === 'pending').length > 0 && (
+              {pendingApplications.length > 0 && (
                 <Badge className="ml-2 bg-orange-600">
-                  {pendingApplications.filter(a => a.status === 'pending').length}
+                  {pendingApplications.length}
                 </Badge>
               )}
             </TabsTrigger>
             <TabsTrigger value="interviews" className="relative">
               Interviews
-              {pendingApplications.filter(a => a.status === 'interview_scheduled').length > 0 && (
+              {interviewRecords.filter(a => a.status === 'interview_scheduled').length > 0 && (
                 <Badge className="ml-2 bg-blue-600">
-                  {pendingApplications.filter(a => a.status === 'interview_scheduled').length}
+                  {interviewRecords.filter(a => a.status === 'interview_scheduled').length}
                 </Badge>
               )}
             </TabsTrigger>
@@ -1201,22 +1219,20 @@ The Lana Team`;
                 Review credentials and decide whether to invite for an expert conversation or reject.
               </p>
             </div>
-            {pendingApplications.filter(a => a.status === 'pending').length === 0 ? (
+            {pendingApplications.length === 0 ? (
               <Card>
                 <CardContent className="p-8 text-center text-muted-foreground">
                   No pending initial applications
                 </CardContent>
               </Card>
             ) : (
-              pendingApplications
-                .filter(a => a.status === 'pending')
-                .map((application) => (
-                  <ApplicationReviewCard
-                    key={application.id}
-                    application={application}
-                    onReview={handleApplicationReview}
-                  />
-                ))
+              pendingApplications.map((application) => (
+                <ApplicationReviewCard
+                  key={application.id}
+                  application={application}
+                  onReview={handleApplicationReview}
+                />
+              ))
             )}
           </TabsContent>
 
@@ -1224,18 +1240,55 @@ The Lana Team`;
             <div className="bg-muted/50 border rounded-lg p-4 mb-4">
               <h3 className="font-semibold mb-2">Step 2: Expert Conversations</h3>
               <p className="text-sm text-muted-foreground">
-                Scheduled interviews. After the interview, mark as passed or failed.
+                View all interviews - scheduled, passed, and failed.
               </p>
             </div>
-            {pendingApplications.filter(a => a.status === 'interview_scheduled').length === 0 ? (
+            
+            {/* Filter buttons */}
+            <div className="flex gap-2 mb-4">
+              <Button
+                variant={interviewFilter === 'all' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setInterviewFilter('all')}
+              >
+                All ({interviewRecords.length})
+              </Button>
+              <Button
+                variant={interviewFilter === 'scheduled' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setInterviewFilter('scheduled')}
+              >
+                Scheduled ({interviewRecords.filter(a => a.status === 'interview_scheduled').length})
+              </Button>
+              <Button
+                variant={interviewFilter === 'passed' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setInterviewFilter('passed')}
+                className="bg-green-600 hover:bg-green-700 text-white"
+              >
+                Passed ({interviewRecords.filter(a => a.status === 'passed').length})
+              </Button>
+              <Button
+                variant={interviewFilter === 'failed' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => setInterviewFilter('failed')}
+                className="bg-red-600 hover:bg-red-700 text-white"
+              >
+                Failed ({interviewRecords.filter(a => a.status === 'failed').length})
+              </Button>
+            </div>
+
+            {interviewRecords.filter(a => 
+              interviewFilter === 'all' || a.status === (interviewFilter === 'scheduled' ? 'interview_scheduled' : interviewFilter)
+            ).length === 0 ? (
               <Card>
                 <CardContent className="p-8 text-center text-muted-foreground">
-                  No scheduled interviews
+                  No {interviewFilter === 'all' ? '' : interviewFilter} interviews
                 </CardContent>
               </Card>
             ) : (
-              pendingApplications
-                .filter(a => a.status === 'interview_scheduled')
+              interviewRecords
+                .filter(a => interviewFilter === 'all' || a.status === (interviewFilter === 'scheduled' ? 'interview_scheduled' : interviewFilter))
                 .map((application) => (
                   <InterviewCard
                     key={application.id}
@@ -2247,13 +2300,27 @@ const ApplicationReviewCard = ({ application, onReview }: any) => {
 
 const InterviewCard = ({ application, onResult }: any) => {
   const [notes, setNotes] = useState(application.interview_notes || "");
+  const isPending = application.status === 'interview_scheduled';
+  const isPassed = application.status === 'passed';
+  const isFailed = application.status === 'failed' || application.status === 'interview_failed';
 
   return (
     <Card>
       <CardHeader>
         <div className="flex items-start justify-between">
           <div>
-            <CardTitle className="text-xl">{application.full_name}</CardTitle>
+            <div className="flex items-center gap-2">
+              <CardTitle className="text-xl">{application.full_name}</CardTitle>
+              {isPassed && (
+                <Badge className="bg-green-600">Passed</Badge>
+              )}
+              {isFailed && (
+                <Badge className="bg-red-600">Failed</Badge>
+              )}
+              {isPending && (
+                <Badge className="bg-blue-600">Scheduled</Badge>
+              )}
+            </div>
             <p className="text-sm text-muted-foreground">{application.email}</p>
             <p className="text-sm text-muted-foreground">{application.phone_number}</p>
             <div className="flex gap-2 mt-2">
@@ -2294,29 +2361,40 @@ const InterviewCard = ({ application, onResult }: any) => {
           </div>
         )}
 
-        <Textarea
-          placeholder="Interview notes - record your observations and decision rationale..."
-          value={notes}
-          onChange={(e) => setNotes(e.target.value)}
-          rows={3}
-        />
+        {(isPassed || isFailed) && application.interview_notes && (
+          <div className={`p-3 rounded ${isPassed ? 'bg-green-50' : 'bg-red-50'}`}>
+            <p className="font-semibold text-sm mb-1">Interview Outcome Notes</p>
+            <p className="text-sm text-muted-foreground">{application.interview_notes}</p>
+          </div>
+        )}
 
-        <div className="flex gap-2 mt-4">
-          <Button
-            onClick={() => onResult(application.id, true, notes)}
-            className="bg-green-600 hover:bg-green-700"
-          >
-            <CheckCircle className="w-4 h-4 mr-2" />
-            Passed - Send Profile Setup Invite
-          </Button>
-          <Button
-            onClick={() => onResult(application.id, false, notes)}
-            variant="destructive"
-          >
-            <XCircle className="w-4 h-4 mr-2" />
-            Failed
-          </Button>
-        </div>
+        {isPending && (
+          <>
+            <Textarea
+              placeholder="Interview notes - record your observations and decision rationale..."
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              rows={3}
+            />
+
+            <div className="flex gap-2 mt-4">
+              <Button
+                onClick={() => onResult(application.id, true, notes)}
+                className="bg-green-600 hover:bg-green-700"
+              >
+                <CheckCircle className="w-4 h-4 mr-2" />
+                Passed - Send Profile Setup Invite
+              </Button>
+              <Button
+                onClick={() => onResult(application.id, false, notes)}
+                variant="destructive"
+              >
+                <XCircle className="w-4 h-4 mr-2" />
+                Failed
+              </Button>
+            </div>
+          </>
+        )}
       </CardContent>
     </Card>
   );
