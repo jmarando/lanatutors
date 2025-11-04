@@ -281,17 +281,6 @@ const TutorSearch = () => {
             </SelectContent>
           </Select>
 
-          <Select value={selectedSubject} onValueChange={setSelectedSubject}>
-            <SelectTrigger className="w-48 h-12 bg-background z-50">
-              <SelectValue placeholder="All Subjects" />
-            </SelectTrigger>
-            <SelectContent className="bg-background z-50 max-h-[300px]">
-              {allSubjects.map(subject => <SelectItem key={subject} value={subject}>
-                  {subject === "all" ? "All Subjects" : subject}
-                </SelectItem>)}
-            </SelectContent>
-          </Select>
-
           <Select value={selectedTeachingLevel} onValueChange={setSelectedTeachingLevel}>
             <SelectTrigger className="w-48 h-12 bg-background z-50">
               <SelectValue placeholder="All Levels" />
@@ -299,6 +288,17 @@ const TutorSearch = () => {
             <SelectContent className="bg-background z-50">
               {teachingLevels.map(level => <SelectItem key={level} value={level}>
                   {level === "all" ? "All Levels" : level}
+                </SelectItem>)}
+            </SelectContent>
+          </Select>
+
+          <Select value={selectedSubject} onValueChange={setSelectedSubject}>
+            <SelectTrigger className="w-48 h-12 bg-background z-50">
+              <SelectValue placeholder="All Subjects" />
+            </SelectTrigger>
+            <SelectContent className="bg-background z-50 max-h-[300px]">
+              {allSubjects.map(subject => <SelectItem key={subject} value={subject}>
+                  {subject === "all" ? "All Subjects" : subject}
                 </SelectItem>)}
             </SelectContent>
           </Select>
