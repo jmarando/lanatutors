@@ -254,7 +254,7 @@ const Home = () => {
               },
               {
                 title: "Homeschooling Support",
-                description: "Help parents who homeschool tutor subjects they are not familiar with",
+                description: "Flexible home-based learning with expert tutors and tailored academic guidance",
               },
               {
                 title: "Diaspora Learning",
