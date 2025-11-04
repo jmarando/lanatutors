@@ -91,14 +91,6 @@ serve(async (req) => {
     }
 
     // Handle OAuth initiation
-    const { data: { user } } = await supabaseClient.auth.getUser(
-      req.headers.get('Authorization')?.replace('Bearer ', '') ?? ''
-    );
-
-    if (!user) {
-      throw new Error('Unauthorized');
-    }
-
     const redirectUri = `${Deno.env.get('SUPABASE_URL')}/functions/v1/setup-central-calendar-oauth/callback`;
     
     const authUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth');
