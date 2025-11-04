@@ -42,7 +42,7 @@ const TutorProfileSetup = () => {
     qualifications: "",
     specializations: "",
     whyStudentsLove: "",
-    teachingLocation: "",
+    teachingLocations: [] as string[],
   });
 
   // New state for hierarchical curriculum/level/subject selection
@@ -220,7 +220,7 @@ const TutorProfileSetup = () => {
           qualifications: formData.qualifications.split('\n').filter(q => q.trim()),
           specializations: formData.specializations,
           why_students_love: formData.whyStudentsLove.split('\n').filter(w => w.trim()),
-          teaching_location: formData.teachingLocation,
+          teaching_location: formData.teachingLocations.join(', '),
           verified: false // Requires admin approval
         });
 
@@ -527,22 +527,39 @@ const TutorProfileSetup = () => {
 
 
                   <div className="space-y-2">
-                    <Label htmlFor="teachingLocation">Teaching Location (if in-person)</Label>
-                    <Select
-                      value={formData.teachingLocation}
-                      onValueChange={(value) => setFormData({ ...formData, teachingLocation: value })}
-                    >
-                      <SelectTrigger id="teachingLocation">
-                        <SelectValue placeholder="Select location" />
-                      </SelectTrigger>
-                      <SelectContent className="bg-background z-50 max-h-[300px]">
-                        {NAIROBI_LOCATIONS.map((location) => (
-                          <SelectItem key={location} value={location}>
+                    <Label>Teaching Locations (if in-person)</Label>
+                    <p className="text-sm text-muted-foreground mb-2">Select all areas where you can teach</p>
+                    <div className="border rounded-lg p-4 bg-background max-h-[300px] overflow-y-auto space-y-2">
+                      {NAIROBI_LOCATIONS.map((location) => (
+                        <div key={location} className="flex items-center space-x-2">
+                          <Checkbox
+                            id={`location-${location}`}
+                            checked={formData.teachingLocations.includes(location)}
+                            onCheckedChange={(checked) => {
+                              if (checked) {
+                                setFormData({
+                                  ...formData,
+                                  teachingLocations: [...formData.teachingLocations, location]
+                                });
+                              } else {
+                                setFormData({
+                                  ...formData,
+                                  teachingLocations: formData.teachingLocations.filter(l => l !== location)
+                                });
+                              }
+                            }}
+                          />
+                          <Label htmlFor={`location-${location}`} className="cursor-pointer text-sm">
                             {location}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
+                          </Label>
+                        </div>
+                      ))}
+                    </div>
+                    {formData.teachingLocations.length > 0 && (
+                      <p className="text-sm text-muted-foreground mt-2">
+                        Selected: {formData.teachingLocations.length} location{formData.teachingLocations.length > 1 ? 's' : ''}
+                      </p>
+                    )}
                   </div>
                 </div>
               )}

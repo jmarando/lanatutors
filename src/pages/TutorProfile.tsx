@@ -595,6 +595,7 @@ const TutorProfile = () => {
                   studentName={currentUser.name}
                   hourlyRate={bookingType === 'trial' ? Math.floor(tutor.hourlyRate * 0.5) : bookingType === 'free' ? 0 : tutor.hourlyRate}
                   tutorSubjects={tutor.subjects}
+                  tutorLocations={tutor.teachingLocation ? tutor.teachingLocation.split(',').map((l: string) => l.trim()).filter(Boolean) : []}
                   isTrialSession={bookingType === 'free' || bookingType === 'trial'}
                   onBookingComplete={() => setIsBookingOpen(false)}
                 />

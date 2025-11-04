@@ -30,6 +30,7 @@ interface BookingCalendarProps {
   studentName: string;
   hourlyRate: number;
   tutorSubjects?: string[];
+  tutorLocations?: string[];
   onBookingComplete?: () => void;
   classType?: 'online' | 'in-person';
   isTrialSession?: boolean;
@@ -59,6 +60,7 @@ export const BookingCalendar = ({
   studentName,
   hourlyRate,
   tutorSubjects = [],
+  tutorLocations = [],
   onBookingComplete,
   classType = 'online',
   isTrialSession = false,
@@ -255,6 +257,14 @@ export const BookingCalendar = ({
       }
 
       // Create booking with appropriate status
+      const noteText = isTrialSession 
+        ? `FREE CONSULTATION (30 min chemistry check): ${notes.trim()}` 
+        : (notes.trim() || null);
+      
+      const notesWithLocation = selectedClassType === 'in-person' && selectedLocation
+        ? `${noteText ? noteText + ' | ' : ''}Location: ${selectedLocation}`
+        : noteText;
+
       const { data: booking, error: bookingError } = await supabase
         .from("bookings")
         .insert({
@@ -262,9 +272,7 @@ export const BookingCalendar = ({
           tutor_id: tutorId,
           availability_slot_id: selectedSlot.id,
           subject: subject.trim(),
-          notes: isTrialSession 
-            ? `FREE CONSULTATION (30 min chemistry check): ${notes.trim()}` 
-            : (notes.trim() || null),
+          notes: notesWithLocation,
           amount: totalAmount,
           deposit_paid: depositAmount,
           balance_due: balanceDue,
@@ -665,13 +673,26 @@ export const BookingCalendar = ({
                       <SelectValue placeholder="Select location" />
                     </SelectTrigger>
                     <SelectContent className="bg-background z-50 max-h-[300px]">
-                      {NAIROBI_LOCATIONS.map((location) => (
-                        <SelectItem key={location} value={location}>
-                          {location}
-                        </SelectItem>
-                      ))}
+                      {tutorLocations.length > 0 ? (
+                        tutorLocations.map((location) => (
+                          <SelectItem key={location} value={location}>
+                            {location}
+                          </SelectItem>
+                        ))
+                      ) : (
+                        NAIROBI_LOCATIONS.map((location) => (
+                          <SelectItem key={location} value={location}>
+                            {location}
+                          </SelectItem>
+                        ))
+                      )}
                     </SelectContent>
                   </Select>
+                  {tutorLocations.length === 0 && (
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Tutor hasn't specified locations yet. All locations available.
+                    </p>
+                  )}
                 </div>
               )}
 
