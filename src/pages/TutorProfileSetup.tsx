@@ -41,6 +41,7 @@ const TutorProfileSetup = () => {
     showPhoto: true,
     // Bio & basic info
     bio: "",
+    curriculum: [] as string[],
     subjectsWithContext: [] as Array<{
       curriculum: string;
       level: string;
@@ -71,6 +72,7 @@ const TutorProfileSetup = () => {
   });
 
   // State for hierarchical curriculum/level/subject selection
+  const [curriculumLevels, setCurriculumLevels] = useState<{[key: string]: string[]}>({});
   const [selectedCurriculumForSubjects, setSelectedCurriculumForSubjects] = useState("");
   const [selectedLevelForSubjects, setSelectedLevelForSubjects] = useState("");
 
@@ -84,13 +86,18 @@ const TutorProfileSetup = () => {
     ? getSubjectsForCurriculumLevel(selectedCurriculumForSubjects, selectedLevelForSubjects)
     : [];
 
-  // Derive curriculum and levels from subjects
-  const derivedCurricula = Array.from(new Set(formData.subjectsWithContext.map(s => s.curriculum)));
-  const derivedCurriculumLevels = formData.subjectsWithContext.reduce((acc, s) => {
-    if (!acc[s.curriculum]) acc[s.curriculum] = [];
-    if (!acc[s.curriculum].includes(s.level)) acc[s.curriculum].push(s.level);
-    return acc;
-  }, {} as {[key: string]: string[]});
+  // Get all available subjects from selected curriculum-level combinations
+  const allAvailableSubjects = Object.entries(curriculumLevels).flatMap(([curriculum, levels]) =>
+    levels.flatMap(level => 
+      getSubjectsForCurriculumLevel(curriculum, level).map(subject => ({
+        curriculum,
+        level,
+        subject
+      }))
+    )
+  );
+
+  // Derive subjects array from subjectsWithContext for display
   const derivedSubjects = Array.from(new Set(formData.subjectsWithContext.map(s => s.subject)));
 
   useEffect(() => {
@@ -135,14 +142,49 @@ const TutorProfileSetup = () => {
     setUserName(fullName || profile?.full_name || "");
   };
 
-  const addSubjectWithContext = (subject: string) => {
-    if (!selectedCurriculumForSubjects || !selectedLevelForSubjects || !subject) return;
-    
+  const handleCurriculumToggle = (curriculum: string, checked: boolean) => {
+    if (checked) {
+      setFormData({ ...formData, curriculum: [...formData.curriculum, curriculum] });
+    } else {
+      setFormData({ ...formData, curriculum: formData.curriculum.filter(c => c !== curriculum) });
+      // Remove associated levels and subjects
+      const newLevels = { ...curriculumLevels };
+      delete newLevels[curriculum];
+      setCurriculumLevels(newLevels);
+      // Remove subjects from this curriculum
+      setFormData(prev => ({
+        ...prev,
+        subjectsWithContext: prev.subjectsWithContext.filter(s => s.curriculum !== curriculum)
+      }));
+    }
+  };
+
+  const handleLevelToggle = (curriculum: string, level: string, checked: boolean) => {
+    const currentLevels = curriculumLevels[curriculum] || [];
+    if (checked) {
+      setCurriculumLevels({
+        ...curriculumLevels,
+        [curriculum]: [...currentLevels, level]
+      });
+    } else {
+      setCurriculumLevels({
+        ...curriculumLevels,
+        [curriculum]: currentLevels.filter(l => l !== level)
+      });
+      // Remove subjects from this curriculum-level combination
+      setFormData(prev => ({
+        ...prev,
+        subjectsWithContext: prev.subjectsWithContext.filter(
+          s => !(s.curriculum === curriculum && s.level === level)
+        )
+      }));
+    }
+  };
+
+  const addSubjectWithContext = (curriculum: string, level: string, subject: string) => {
     // Check if this exact combination already exists
     const exists = formData.subjectsWithContext.some(
-      s => s.curriculum === selectedCurriculumForSubjects && 
-           s.level === selectedLevelForSubjects && 
-           s.subject === subject
+      s => s.curriculum === curriculum && s.level === level && s.subject === subject
     );
     
     if (!exists) {
@@ -150,11 +192,7 @@ const TutorProfileSetup = () => {
         ...formData,
         subjectsWithContext: [
           ...formData.subjectsWithContext,
-          {
-            curriculum: selectedCurriculumForSubjects,
-            level: selectedLevelForSubjects,
-            subject: subject
-          }
+          { curriculum, level, subject }
         ]
       });
     }
@@ -232,10 +270,10 @@ const TutorProfileSetup = () => {
 
       if (profileError) throw profileError;
 
-      // Build teaching levels from subjects context
-      const teachingLevels = Array.from(new Set(
-        formData.subjectsWithContext.map(s => `${s.curriculum} - ${s.level}`)
-      ));
+      // Build teaching levels from curriculum levels
+      const teachingLevels = Object.entries(curriculumLevels).flatMap(([curriculum, levels]) => 
+        levels.map(level => `${curriculum} - ${level}`)
+      );
 
       // Create tutor profile
       const { error: tutorError } = await supabase
@@ -244,7 +282,7 @@ const TutorProfileSetup = () => {
           user_id: userId,
           bio: formData.bio,
           subjects: derivedSubjects,
-          curriculum: derivedCurricula,
+          curriculum: formData.curriculum,
           teaching_mode: formData.teachingMode,
           teaching_levels: teachingLevels,
           services_offered: formData.servicesOffered,
@@ -724,126 +762,153 @@ const TutorProfileSetup = () => {
                 <div className="space-y-6">
                   <h3 className="font-semibold text-lg">Subjects & Curriculum</h3>
                   <p className="text-sm text-muted-foreground">
-                    Select subjects you teach by choosing Curriculum → Level → Subject
+                    First select curricula and levels you teach, then choose your subjects
                   </p>
                   
-                  <div className="space-y-4">
+                  <div className="space-y-6">
+                    {/* Step 1: Select Curricula */}
                     <div className="space-y-3">
-                      <Label className="text-base font-medium">Add Subjects *</Label>
-                      <div className="grid grid-cols-2 gap-4">
-                        <Select 
-                          value={selectedCurriculumForSubjects} 
-                          onValueChange={(value) => {
-                            setSelectedCurriculumForSubjects(value);
-                            setSelectedLevelForSubjects("");
-                          }}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="1. Select curriculum" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {curriculums.map(curr => (
-                              <SelectItem key={curr} value={curr}>{curr}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-
-                        <Select 
-                          value={selectedLevelForSubjects} 
-                          onValueChange={setSelectedLevelForSubjects}
-                          disabled={!selectedCurriculumForSubjects}
-                        >
-                          <SelectTrigger>
-                            <SelectValue placeholder="2. Select level/year" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {availableLevelsForSubjects.map(level => (
-                              <SelectItem key={level.value} value={level.value}>
-                                {level.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-
-                      {selectedCurriculumForSubjects && selectedLevelForSubjects && (
-                        <div className="border rounded-lg p-4 bg-muted/30">
-                          <p className="text-sm font-medium mb-3">
-                            3. Click subjects to add ({selectedCurriculumForSubjects} - {selectedLevelForSubjects}):
-                          </p>
-                          <div className="grid grid-cols-2 gap-2">
-                            {availableSubjects.map(subject => {
-                              const isSelected = formData.subjectsWithContext.some(
-                                s => s.curriculum === selectedCurriculumForSubjects && 
-                                     s.level === selectedLevelForSubjects && 
-                                     s.subject === subject
-                              );
-                              return (
-                                <Button
-                                  key={subject}
-                                  type="button"
-                                  variant={isSelected ? "default" : "outline"}
-                                  size="sm"
-                                  onClick={() => {
-                                    if (isSelected) {
-                                      removeSubjectWithContext(selectedCurriculumForSubjects, selectedLevelForSubjects, subject);
-                                    } else {
-                                      addSubjectWithContext(subject);
-                                    }
-                                  }}
-                                  className="justify-start"
-                                >
-                                  {subject}
-                                </Button>
-                              );
-                            })}
+                      <Label className="text-base font-medium">1. Select Curricula *</Label>
+                      <div className="grid grid-cols-2 gap-3">
+                        {curriculums.map(curr => (
+                          <div key={curr} className="flex items-center space-x-2">
+                            <Checkbox
+                              id={`curriculum-${curr}`}
+                              checked={formData.curriculum.includes(curr)}
+                              onCheckedChange={(checked) => handleCurriculumToggle(curr, checked as boolean)}
+                            />
+                            <Label htmlFor={`curriculum-${curr}`} className="cursor-pointer">{curr}</Label>
                           </div>
-                        </div>
-                      )}
-
-                      <div className="space-y-2">
-                        <Label>Your Teaching Subjects ({formData.subjectsWithContext.length})</Label>
-                        {formData.subjectsWithContext.length === 0 ? (
-                          <div className="border rounded-lg p-4 bg-muted/20">
-                            <p className="text-sm text-muted-foreground text-center">
-                              No subjects selected yet. Use the dropdowns above to add subjects.
-                            </p>
-                          </div>
-                        ) : (
-                          <div className="border rounded-lg p-4 space-y-3">
-                            {Object.entries(
-                              formData.subjectsWithContext.reduce((acc, s) => {
-                                const key = `${s.curriculum} - ${s.level}`;
-                                if (!acc[key]) acc[key] = [];
-                                acc[key].push(s.subject);
-                                return acc;
-                              }, {} as {[key: string]: string[]})
-                            ).map(([key, subjects]) => (
-                              <div key={key} className="space-y-2">
-                                <p className="text-xs font-semibold text-muted-foreground">{key}</p>
-                                <div className="flex flex-wrap gap-2">
-                                  {subjects.map(subject => {
-                                    const [curriculum, level] = key.split(' - ');
-                                    return (
-                                      <Badge key={`${key}-${subject}`} variant="secondary" className="gap-2">
-                                        {subject}
-                                        <button 
-                                          type="button" 
-                                          onClick={() => removeSubjectWithContext(curriculum, level, subject)} 
-                                          className="hover:text-destructive"
-                                        >
-                                          ×
-                                        </button>
-                                      </Badge>
-                                    );
-                                  })}
-                                </div>
-                              </div>
-                            ))}
-                          </div>
-                        )}
+                        ))}
                       </div>
                     </div>
+
+                    {/* Step 2: Select Levels for each Curriculum */}
+                    {formData.curriculum.length > 0 && (
+                      <div className="space-y-3">
+                        <Label className="text-base font-medium">2. Select Levels/Years for Each Curriculum *</Label>
+                        <div className="space-y-3">
+                          {formData.curriculum.map(curriculum => {
+                            const levels = getLevelsForCurriculum(curriculum);
+                            return (
+                              <div key={curriculum} className="border rounded-lg p-4 space-y-3 bg-muted/20">
+                                <p className="font-semibold text-sm">{curriculum}</p>
+                                <div className="grid grid-cols-2 gap-2">
+                                  {levels.map(level => (
+                                    <div key={level.value} className="flex items-center space-x-2">
+                                      <Checkbox
+                                        id={`level-${curriculum}-${level.value}`}
+                                        checked={curriculumLevels[curriculum]?.includes(level.value) || false}
+                                        onCheckedChange={(checked) => handleLevelToggle(curriculum, level.value, checked as boolean)}
+                                      />
+                                      <Label htmlFor={`level-${curriculum}-${level.value}`} className="cursor-pointer text-sm">
+                                        {level.label}
+                                      </Label>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Step 3: Select Subjects */}
+                    {Object.keys(curriculumLevels).length > 0 && allAvailableSubjects.length > 0 && (
+                      <div className="space-y-3">
+                        <Label className="text-base font-medium">3. Select Subjects You Teach *</Label>
+                        <p className="text-sm text-muted-foreground">
+                          Choose subjects from your selected curriculum-level combinations
+                        </p>
+                        
+                        <div className="border rounded-lg p-4 space-y-4 bg-muted/20 max-h-[400px] overflow-y-auto">
+                          {Object.entries(curriculumLevels).map(([curriculum, levels]) =>
+                            levels.map(level => {
+                              const subjects = getSubjectsForCurriculumLevel(curriculum, level);
+                              return (
+                                <div key={`${curriculum}-${level}`} className="space-y-2">
+                                  <p className="text-xs font-semibold text-muted-foreground sticky top-0 bg-muted/20 py-1">
+                                    {curriculum} - {level}
+                                  </p>
+                                  <div className="grid grid-cols-2 gap-2">
+                                    {subjects.map(subject => {
+                                      const isSelected = formData.subjectsWithContext.some(
+                                        s => s.curriculum === curriculum && 
+                                             s.level === level && 
+                                             s.subject === subject
+                                      );
+                                      return (
+                                        <Button
+                                          key={subject}
+                                          type="button"
+                                          variant={isSelected ? "default" : "outline"}
+                                          size="sm"
+                                          onClick={() => {
+                                            if (isSelected) {
+                                              removeSubjectWithContext(curriculum, level, subject);
+                                            } else {
+                                              addSubjectWithContext(curriculum, level, subject);
+                                            }
+                                          }}
+                                          className="justify-start text-xs h-8"
+                                        >
+                                          {subject}
+                                        </Button>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                              );
+                            })
+                          )}
+                        </div>
+
+                        {/* Selected Subjects Summary */}
+                        <div className="space-y-2">
+                          <Label>Selected Subjects ({formData.subjectsWithContext.length})</Label>
+                          {formData.subjectsWithContext.length === 0 ? (
+                            <div className="border rounded-lg p-4 bg-background">
+                              <p className="text-sm text-muted-foreground text-center">
+                                No subjects selected yet. Choose subjects above.
+                              </p>
+                            </div>
+                          ) : (
+                            <div className="border rounded-lg p-4 space-y-3 bg-background">
+                              {Object.entries(
+                                formData.subjectsWithContext.reduce((acc, s) => {
+                                  const key = `${s.curriculum} - ${s.level}`;
+                                  if (!acc[key]) acc[key] = [];
+                                  acc[key].push(s.subject);
+                                  return acc;
+                                }, {} as {[key: string]: string[]})
+                              ).map(([key, subjects]) => (
+                                <div key={key} className="space-y-2">
+                                  <p className="text-xs font-semibold text-muted-foreground">{key}</p>
+                                  <div className="flex flex-wrap gap-2">
+                                    {subjects.map(subject => {
+                                      const [curriculum, level] = key.split(' - ');
+                                      return (
+                                        <Badge key={`${key}-${subject}`} variant="secondary" className="gap-2">
+                                          {subject}
+                                          <button 
+                                            type="button" 
+                                            onClick={() => removeSubjectWithContext(curriculum, level, subject)} 
+                                            className="hover:text-destructive"
+                                          >
+                                            ×
+                                          </button>
+                                        </Badge>
+                                      );
+                                    })}
+                                  </div>
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   <Separator />
@@ -1054,16 +1119,16 @@ const TutorProfileSetup = () => {
                   </p>
                 )}
 
-                {derivedCurricula.length > 0 && (
+                {formData.curriculum.length > 0 && (
                   <div className="flex flex-wrap gap-1 mb-4">
-                    {derivedCurricula.slice(0, 3).map(curr => (
+                    {formData.curriculum.slice(0, 3).map(curr => (
                       <Badge key={curr} variant="secondary" className="text-xs">
                         {curr}
                       </Badge>
                     ))}
-                    {derivedCurricula.length > 3 && (
+                    {formData.curriculum.length > 3 && (
                       <Badge variant="secondary" className="text-xs">
-                        +{derivedCurricula.length - 3}
+                        +{formData.curriculum.length - 3}
                       </Badge>
                     )}
                   </div>
