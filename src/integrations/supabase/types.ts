@@ -86,6 +86,33 @@ export type Database = {
           },
         ]
       }
+      central_calendar_config: {
+        Row: {
+          google_email: string | null
+          google_oauth_token: string | null
+          google_refresh_token: string | null
+          google_token_expires_at: string | null
+          id: string
+          updated_at: string | null
+        }
+        Insert: {
+          google_email?: string | null
+          google_oauth_token?: string | null
+          google_refresh_token?: string | null
+          google_token_expires_at?: string | null
+          id?: string
+          updated_at?: string | null
+        }
+        Update: {
+          google_email?: string | null
+          google_oauth_token?: string | null
+          google_refresh_token?: string | null
+          google_token_expires_at?: string | null
+          id?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       consultation_bookings: {
         Row: {
           additional_notes: string | null

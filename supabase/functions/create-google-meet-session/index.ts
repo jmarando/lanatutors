@@ -32,52 +32,33 @@ serve(async (req) => {
 
     console.log('Creating Google Meet session for booking:', bookingId);
 
-    // Get the booking to find tutor_id
-    const { data: booking, error: bookingError } = await supabaseClient
-      .from('bookings')
-      .select('tutor_id')
-      .eq('id', bookingId)
-      .single();
-
-    if (bookingError || !booking) {
-      throw new Error('Booking not found');
-    }
-
-    // Get tutor's OAuth token
-    const { data: tutorProfile, error: profileError } = await supabaseClient
-      .from('tutor_profiles')
+    // Get central calendar OAuth tokens from config table
+    const { data: centralConfig, error: configError } = await supabaseClient
+      .from('central_calendar_config')
       .select('google_oauth_token, google_refresh_token, google_token_expires_at')
-      .eq('id', booking.tutor_id)
+      .eq('id', 'central-calendar')
       .maybeSingle();
 
-    if (profileError) {
-      console.error('Error fetching tutor profile:', profileError);
-      throw new Error('Error fetching tutor profile');
+    if (configError) {
+      console.error('Error fetching central calendar config:', configError);
+      throw new Error('Error fetching central calendar configuration');
     }
 
-    if (!tutorProfile) {
-      console.log('Tutor profile not found, skipping Google Meet creation');
+    if (!centralConfig || !centralConfig.google_oauth_token) {
+      console.log('Central calendar not configured, skipping Google Meet creation');
       return new Response(
-        JSON.stringify({ message: 'Tutor has not set up profile yet, Google Meet link will be added later' }),
+        JSON.stringify({ message: 'Central calendar not set up yet, please configure it first' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    if (!tutorProfile.google_oauth_token) {
-      console.log('Tutor has not connected Google Calendar, skipping Google Meet creation');
-      return new Response(
-        JSON.stringify({ message: 'Tutor has not connected Google Calendar, meeting link will be added later' }),
-        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    let accessToken = tutorProfile.google_oauth_token;
+    let accessToken = centralConfig.google_oauth_token;
 
     // Check if token is expired and refresh if needed
-    if (tutorProfile.google_token_expires_at) {
-      const expiresAt = new Date(tutorProfile.google_token_expires_at);
+    if (centralConfig.google_token_expires_at) {
+      const expiresAt = new Date(centralConfig.google_token_expires_at);
       if (expiresAt <= new Date()) {
-        console.log('Token expired, refreshing...');
+        console.log('Central calendar token expired, refreshing...');
         
         const refreshResponse = await fetch('https://oauth2.googleapis.com/token', {
           method: 'POST',
@@ -85,7 +66,7 @@ serve(async (req) => {
           body: new URLSearchParams({
             client_id: Deno.env.get('GOOGLE_CLIENT_ID')!,
             client_secret: Deno.env.get('GOOGLE_CLIENT_SECRET')!,
-            refresh_token: tutorProfile.google_refresh_token!,
+            refresh_token: centralConfig.google_refresh_token!,
             grant_type: 'refresh_token',
           }),
         });
@@ -93,7 +74,7 @@ serve(async (req) => {
         if (!refreshResponse.ok) {
           const error = await refreshResponse.text();
           console.error('Token refresh failed:', error);
-          throw new Error('Failed to refresh access token');
+          throw new Error('Failed to refresh central calendar access token');
         }
 
         const tokens = await refreshResponse.json();
@@ -102,14 +83,14 @@ serve(async (req) => {
         // Update stored token
         const newExpiresAt = new Date(Date.now() + (tokens.expires_in * 1000));
         await supabaseClient
-          .from('tutor_profiles')
+          .from('central_calendar_config')
           .update({
             google_oauth_token: accessToken,
             google_token_expires_at: newExpiresAt.toISOString(),
           })
-          .eq('id', booking.tutor_id);
+          .eq('id', 'central-calendar');
           
-        console.log('Token refreshed successfully');
+        console.log('Central calendar token refreshed successfully');
       }
     }
 

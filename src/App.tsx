@@ -32,6 +32,7 @@ const TutorProfileSetup = lazy(() => import("./pages/TutorProfileSetup"));
 const ConsultationConfirmed = lazy(() => import("./pages/ConsultationConfirmed"));
 const LearningAssessment = lazy(() => import("./pages/LearningAssessment"));
 const AssessmentResults = lazy(() => import("./pages/AssessmentResults"));
+const SetupCentralCalendar = lazy(() => import("./pages/SetupCentralCalendar"));
 
 const queryClient = new QueryClient();
 
@@ -73,6 +74,7 @@ const App = () => {
               <Route path="/consultation-confirmed" element={<ConsultationConfirmed />} />
               <Route path="/learning-assessment" element={<LearningAssessment />} />
               <Route path="/assessment-results" element={<AssessmentResults />} />
+              <Route path="/setup-central-calendar" element={<SetupCentralCalendar />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
