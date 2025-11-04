@@ -2053,15 +2053,27 @@ const ApplicationReviewCard = ({ application, onReview }: any) => {
     try {
       const { data, error } = await supabase.storage
         .from('tutor-cvs')
-        .createSignedUrl(application.cv_url, 3600);
+        .download(application.cv_url);
 
       if (error) throw error;
       
-      if (data?.signedUrl) {
-        window.open(data.signedUrl, '_blank');
+      if (data) {
+        const blobUrl = URL.createObjectURL(data);
+        const newWin = window.open(blobUrl, '_blank');
+        // If popup blocked, fallback to forced download
+        if (!newWin) {
+          const a = document.createElement('a');
+          a.href = blobUrl;
+          a.download = application.cv_url.split('/').pop() || 'cv.pdf';
+          document.body.appendChild(a);
+          a.click();
+          a.remove();
+        }
+        // Revoke after some time to free memory
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 60000);
       }
     } catch (error: any) {
-      console.error("Error generating CV URL:", error);
+      console.error("Error downloading CV:", error);
       toast.error("Failed to load CV");
     } finally {
       setLoadingCv(false);
