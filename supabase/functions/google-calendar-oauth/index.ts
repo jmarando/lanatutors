@@ -28,9 +28,9 @@ serve(async (req) => {
       }
 
       // Parse state to check if it's central calendar
-      const isCentral = state.startsWith('central-calendar:');
+      const isCentral = state === 'central-calendar' || state.startsWith('central-calendar:');
       const tutorId = isCentral ? null : state;
-      const appOrigin = isCentral ? state.split(':')[1] : null;
+      const appOriginFromState = isCentral && state.includes(':') ? state.split(':')[1] : null;
 
       // Exchange code for tokens
       const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
@@ -63,11 +63,14 @@ serve(async (req) => {
       // Calculate token expiry
       const expiresAt = new Date(Date.now() + (tokens.expires_in * 1000));
 
+      // Determine redirect origins
+      const referer = req.headers.get('referer') || '';
+      const fallbackOrigin = referer ? new URL(referer).origin : url.origin;
+      const configuredOrigin = Deno.env.get('APP_ORIGIN') || null;
+      const redirectOrigin = appOriginFromState || configuredOrigin || fallbackOrigin;
+
       // Store tokens
       if (isCentral) {
-        if (!appOrigin) {
-          throw new Error('Missing app origin in state parameter');
-        }
         const { error: upsertError } = await supabase
           .from('central_calendar_config')
           .upsert({
@@ -84,14 +87,24 @@ serve(async (req) => {
           throw upsertError;
         }
 
-        console.log('Successfully stored central calendar tokens, redirecting to:', `${appOrigin}/setup-central-calendar`);
+        console.log('Successfully stored central calendar tokens, redirecting to:', `${redirectOrigin}/setup-central-calendar`);
+
+        // If redirect origin is Google's domain (no app origin), show a success page instead of bad redirect
+        if (redirectOrigin.includes('accounts.google.com')) {
+          const html = `<!doctype html><html><head><meta charset="utf-8"><title>Calendar Connected</title></head><body style="font-family:system-ui;padding:24px;">
+            <h1>Central calendar connected</h1>
+            <p>You can close this tab and return to the app. The connection was successful.</p>
+            <script>try{window.close()}catch(e){}</script>
+          </body></html>`;
+          return new Response(html, { status: 200, headers: { ...corsHeaders, 'Content-Type': 'text/html' } });
+        }
 
         // Redirect back to setup page with success
         return new Response(null, {
           status: 302,
           headers: {
             ...corsHeaders,
-            'Location': `${appOrigin}/setup-central-calendar?success=true&email=${encodeURIComponent(userInfo.email)}`,
+            'Location': `${redirectOrigin}/setup-central-calendar?success=true&email=${encodeURIComponent(userInfo.email)}`,
           },
         });
       } else {
@@ -118,7 +131,7 @@ serve(async (req) => {
           status: 302,
           headers: {
             ...corsHeaders,
-            'Location': `${appOrigin}/tutor-dashboard?calendar_connected=true`,
+            'Location': `${fallbackOrigin}/tutor-dashboard?calendar_connected=true`,
           },
         });
       }
