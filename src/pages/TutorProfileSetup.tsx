@@ -19,7 +19,6 @@ import { getCurriculums, getLevelsForCurriculum, getSubjectsForCurriculumLevel }
 import { NAIROBI_LOCATIONS } from "@/utils/locationData";
 
 const TEACHING_MODES = ["Online", "In-Person", "Hybrid"];
-const SERVICES = ["One-on-One Tutoring", "Group Sessions", "Exam Preparation", "Homework Help"];
 
 const TutorProfileSetup = () => {
   const navigate = useNavigate();
@@ -48,7 +47,6 @@ const TutorProfileSetup = () => {
       subject: string;
     }>,
     teachingMode: [] as string[],
-    servicesOffered: [] as string[],
     hourlyRate: "",
     experienceYears: "",
     currentInstitution: "",
@@ -285,7 +283,6 @@ const TutorProfileSetup = () => {
           curriculum: formData.curriculum,
           teaching_mode: formData.teachingMode,
           teaching_levels: teachingLevels,
-          services_offered: formData.servicesOffered,
           hourly_rate: parseFloat(formData.hourlyRate),
           experience_years: parseInt(formData.experienceYears),
           current_institution: formData.currentInstitution,
@@ -976,30 +973,8 @@ const TutorProfileSetup = () => {
 
               {step === 4 && (
                 <div className="space-y-4">
-                  <h3 className="font-semibold text-lg">Services, Rates & Additional Info</h3>
+                  <h3 className="font-semibold text-lg">Rates & Additional Info</h3>
                   
-                  <div className="space-y-2">
-                    <Label>Services Offered *</Label>
-                    <div className="space-y-2">
-                      {SERVICES.map(service => (
-                        <div key={service} className="flex items-center space-x-2">
-                          <Checkbox
-                            id={service}
-                            checked={formData.servicesOffered.includes(service)}
-                            onCheckedChange={(checked) => {
-                              if (checked) {
-                                setFormData({ ...formData, servicesOffered: [...formData.servicesOffered, service] });
-                              } else {
-                                setFormData({ ...formData, servicesOffered: formData.servicesOffered.filter(s => s !== service) });
-                              }
-                            }}
-                          />
-                          <Label htmlFor={service} className="cursor-pointer">{service}</Label>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
                   <div className="space-y-2">
                     <Label htmlFor="hourlyRate">Hourly Rate (KES) *</Label>
                     <Input
