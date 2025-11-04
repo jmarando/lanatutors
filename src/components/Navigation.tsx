@@ -60,7 +60,7 @@ const Navigation = () => {
   ];
 
   return (
-    <nav className="bg-background/95 backdrop-blur-sm sticky top-0 z-50">
+    <nav className="bg-background sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-6 py-1 flex items-center justify-between gap-8">
         <Link to="/" className="flex items-center flex-shrink-0" aria-label="Lana Tutors Home">
           <img 
