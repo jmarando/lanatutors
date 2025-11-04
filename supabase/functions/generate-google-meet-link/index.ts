@@ -33,23 +33,48 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Create JWT for Google API
     const now = Math.floor(Date.now() / 1000);
+
+    // Prepare signing key from PEM
+    const pemToArrayBuffer = (pem: string): ArrayBuffer => {
+      const b64 = pem
+        .replace(/-----BEGIN PRIVATE KEY-----/g, "")
+        .replace(/-----END PRIVATE KEY-----/g, "")
+        .replace(/\r?\n|\r|\s/g, "");
+      const binary = atob(b64);
+      const bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) {
+        bytes[i] = binary.charCodeAt(i);
+      }
+      return bytes.buffer;
+    };
+
+    const keyData = pemToArrayBuffer(serviceAccount.private_key);
+    const cryptoKey = await crypto.subtle.importKey(
+      "pkcs8",
+      keyData,
+      { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" },
+      false,
+      ["sign"]
+    );
+
+    const payload: Record<string, unknown> = {
+      iss: serviceAccount.client_email,
+      scope: "https://www.googleapis.com/auth/calendar",
+      aud: "https://oauth2.googleapis.com/token",
+      exp: now + 3600,
+      iat: now,
+    };
+    const impersonate = Deno.env.get("GOOGLE_IMPERSONATE_EMAIL");
+    if (impersonate) {
+      (payload as any).sub = impersonate;
+    }
+
     const jwt = await create(
       { alg: "RS256", typ: "JWT" },
-      {
-        iss: serviceAccount.client_email,
-        scope: "https://www.googleapis.com/auth/calendar",
-        aud: "https://oauth2.googleapis.com/token",
-        exp: now + 3600,
-        iat: now,
-      },
-      await crypto.subtle.importKey(
-        "pkcs8",
-        new TextEncoder().encode(serviceAccount.private_key),
-        { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" },
-        false,
-        ["sign"]
-      )
+      payload,
+      cryptoKey
     );
+
 
     // Exchange JWT for access token
     const tokenResponse = await fetch("https://oauth2.googleapis.com/token", {
