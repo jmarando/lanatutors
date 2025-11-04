@@ -52,7 +52,9 @@ const SetupCentralCalendar = () => {
 
     try {
       const { data, error } = await supabase.functions.invoke('setup-central-calendar-oauth', {
-        body: {},
+        body: { 
+          appOrigin: window.location.origin 
+        },
       });
 
       if (error) throw error;

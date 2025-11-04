@@ -93,9 +93,11 @@ serve(async (req) => {
     // Handle OAuth initiation
     const redirectUri = `${Deno.env.get('SUPABASE_URL')}/functions/v1/google-calendar-oauth/callback`;
     
-    // Get the app origin from the request
-    const referer = req.headers.get('referer') || '';
-    const appOrigin = referer ? new URL(referer).origin : '';
+    // Get the app origin from the request body
+    const { appOrigin: requestedOrigin } = await req.json();
+    const appOrigin = requestedOrigin || Deno.env.get('APP_ORIGIN') || '';
+    
+    console.log('Initiating OAuth for central calendar, app origin:', appOrigin);
     
     const authUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth');
     authUrl.searchParams.set('client_id', Deno.env.get('GOOGLE_CLIENT_ID')!);
