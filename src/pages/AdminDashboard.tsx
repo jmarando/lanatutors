@@ -276,6 +276,7 @@ Yehtu Tutors`
         (payload) => {
           console.log('Application change detected:', payload);
           fetchPendingApplications();
+          fetchInterviewRecords();
         }
       )
       .subscribe();
@@ -448,7 +449,7 @@ Yehtu Tutors`
     const { data, error } = await supabase
       .from("tutor_applications")
       .select("*")
-      .in("status", ["interview_scheduled", "passed", "failed"])
+      .in("status", ["interview_scheduled", "interview_passed", "interview_failed"])
       .order("interview_scheduled_at", { ascending: false });
 
     if (error) {
