@@ -21,14 +21,16 @@ serve(async (req) => {
     // Handle OAuth callback
     if (url.pathname.includes('/callback')) {
       const code = url.searchParams.get('code');
-      const state = url.searchParams.get('state'); // Contains tutorId or 'central-calendar'
+      const state = url.searchParams.get('state'); // Contains tutorId or 'central-calendar:appOrigin'
       
       if (!code || !state) {
         throw new Error('Missing code or state parameter');
       }
 
-      const isCentral = state === 'central-calendar';
+      // Parse state to check if it's central calendar
+      const isCentral = state.startsWith('central-calendar:');
       const tutorId = isCentral ? null : state;
+      const appOrigin = isCentral ? state.split(':')[1] : null;
 
       // Exchange code for tokens
       const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
@@ -61,12 +63,11 @@ serve(async (req) => {
       // Calculate token expiry
       const expiresAt = new Date(Date.now() + (tokens.expires_in * 1000));
 
-      // Get the frontend app URL from the referer or construct it
-      const referer = req.headers.get('referer') || '';
-      const appOrigin = referer ? new URL(referer).origin : url.origin;
-
       // Store tokens
       if (isCentral) {
+        if (!appOrigin) {
+          throw new Error('Missing app origin in state parameter');
+        }
         const { error: upsertError } = await supabase
           .from('central_calendar_config')
           .upsert({
