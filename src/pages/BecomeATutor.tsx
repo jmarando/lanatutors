@@ -438,7 +438,7 @@ const BecomeATutor = () => {
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label htmlFor="cambridgeQualification">Equivalent Qualification Number</Label>
+                      <Label htmlFor="cambridgeQualification">Equivalent professional teaching registration</Label>
                       <Input
                         id="cambridgeQualification"
                         placeholder="e.g., Cambridge, other teaching qualification"
