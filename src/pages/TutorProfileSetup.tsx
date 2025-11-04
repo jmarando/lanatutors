@@ -9,7 +9,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
-import { Award, Upload, ArrowLeft, ArrowRight, CheckCircle } from "lucide-react";
+import { Award, Upload, ArrowLeft, ArrowRight, CheckCircle, MapPin, Star } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Progress } from "@/components/ui/progress";
@@ -31,6 +31,15 @@ const TutorProfileSetup = () => {
   const photoInputRef = useRef<HTMLInputElement>(null);
   
   const [formData, setFormData] = useState({
+    // Personal info
+    fullName: "",
+    email: "",
+    phoneNumber: "",
+    // Privacy settings
+    showFullName: true,
+    showCurrentInstitution: true,
+    showPhoto: true,
+    // Bio & basic info
     bio: "",
     subjects: [] as string[],
     curriculum: [] as string[],
@@ -43,6 +52,19 @@ const TutorProfileSetup = () => {
     specializations: "",
     whyStudentsLove: "",
     teachingLocations: [] as string[],
+    // Education history
+    educationHistory: [] as Array<{
+      institution: string;
+      degree: string;
+      field: string;
+      graduationYear: string;
+    }>,
+    // Teaching experience history
+    teachingHistory: [] as Array<{
+      institution: string;
+      role: string;
+      years: string;
+    }>,
   });
 
   // New state for hierarchical curriculum/level/subject selection
@@ -78,25 +100,28 @@ const TutorProfileSetup = () => {
     
     setUserId(session.user.id);
     
-    // Get user's name from auth metadata or profile
+    // Get user's info from auth metadata or profile
     const fullName = session.user.user_metadata?.full_name || 
                      session.user.user_metadata?.name || 
                      "";
+    const email = session.user.email || "";
     
-    if (fullName) {
-      setUserName(fullName);
-    } else {
-      // Try to get from profiles table
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("full_name")
-        .eq("id", session.user.id)
-        .single();
-      
-      if (profile?.full_name) {
-        setUserName(profile.full_name);
-      }
-    }
+    // Try to get from profiles table if not in metadata
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("full_name, phone_number")
+      .eq("id", session.user.id)
+      .single();
+    
+    // Pre-fill form data with existing info
+    setFormData(prev => ({
+      ...prev,
+      fullName: fullName || profile?.full_name || "",
+      email: email,
+      phoneNumber: profile?.phone_number || "",
+    }));
+    
+    setUserName(fullName || profile?.full_name || "");
   };
 
   const handleCurriculumToggle = (curriculum: string, checked: boolean) => {
@@ -169,7 +194,7 @@ const TutorProfileSetup = () => {
       // Upload photo if provided
       let photoUrl = null;
 
-      if (photoFile) {
+      if (photoFile && formData.showPhoto) {
         const photoExt = photoFile.name.split('.').pop();
         const photoPath = `${userId}/profile-photo.${photoExt}`;
         
@@ -191,8 +216,9 @@ const TutorProfileSetup = () => {
         .from("profiles")
         .upsert({
           id: userId,
-          full_name: userName,
-          avatar_url: photoUrl,
+          full_name: formData.fullName,
+          phone_number: formData.phoneNumber,
+          avatar_url: formData.showPhoto ? photoUrl : null,
           updated_at: new Date().toISOString()
         });
 
@@ -217,10 +243,13 @@ const TutorProfileSetup = () => {
           hourly_rate: parseFloat(formData.hourlyRate),
           experience_years: parseInt(formData.experienceYears),
           current_institution: formData.currentInstitution,
+          display_institution: formData.showCurrentInstitution,
           qualifications: formData.qualifications.split('\n').filter(q => q.trim()),
           specializations: formData.specializations,
           why_students_love: formData.whyStudentsLove.split('\n').filter(w => w.trim()),
           teaching_location: formData.teachingLocations.join(', '),
+          teaching_experience: formData.teachingHistory,
+          graduation_year: formData.educationHistory[0]?.graduationYear ? parseInt(formData.educationHistory[0].graduationYear) : null,
           verified: false // Requires admin approval
         });
 
@@ -252,7 +281,7 @@ const TutorProfileSetup = () => {
     }
   };
 
-  const progress = (step / 3) * 100;
+  const progress = (step / 4) * 100;
 
   return (
     <div className="min-h-screen bg-[image:var(--gradient-page)] flex items-center justify-center p-6">
@@ -274,7 +303,7 @@ const TutorProfileSetup = () => {
             <CardHeader>
               <div className="mb-4">
                 <Progress value={progress} className="h-2" />
-                <p className="text-sm text-muted-foreground mt-2">Step {step} of 3</p>
+                <p className="text-sm text-muted-foreground mt-2">Step {step} of 4</p>
               </div>
               <CardTitle className="text-2xl">Complete Your Tutor Profile</CardTitle>
               <CardDescription>
@@ -284,46 +313,392 @@ const TutorProfileSetup = () => {
             <CardContent>
               <form onSubmit={handleSubmit} className="space-y-6">
               {step === 1 && (
-                <div className="space-y-4">
-                  <h3 className="font-semibold text-lg">Personal & Professional Information</h3>
+                <div className="space-y-6">
+                  <h3 className="font-semibold text-lg">Personal Information</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Let's start with your basic information. We may have some details already, but please verify or update them.
+                  </p>
                   
-                  <div className="space-y-2">
-                    <Label htmlFor="bio">Professional Bio *</Label>
-                    <Textarea
-                      id="bio"
-                      placeholder="Tell students about your teaching philosophy and approach..."
-                      value={formData.bio}
-                      onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
-                      rows={4}
-                      required
-                    />
-                    <p className="text-xs text-muted-foreground">This will be displayed on your profile</p>
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="experienceYears">Years of Teaching Experience *</Label>
+                      <Label htmlFor="fullName">Full Name *</Label>
                       <Input
-                        id="experienceYears"
-                        type="number"
-                        min="0"
-                        value={formData.experienceYears}
-                        onChange={(e) => setFormData({ ...formData, experienceYears: e.target.value })}
+                        id="fullName"
+                        value={formData.fullName}
+                        onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+                        placeholder="John Doe"
                         required
                       />
                     </div>
+
                     <div className="space-y-2">
-                      <Label htmlFor="currentInstitution">Current Institution</Label>
+                      <Label htmlFor="email">Email Address *</Label>
                       <Input
-                        id="currentInstitution"
-                        value={formData.currentInstitution}
-                        onChange={(e) => setFormData({ ...formData, currentInstitution: e.target.value })}
+                        id="email"
+                        type="email"
+                        value={formData.email}
+                        onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                        placeholder="john@example.com"
+                        required
+                        disabled
+                      />
+                      <p className="text-xs text-muted-foreground">Email cannot be changed</p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="phoneNumber">Phone Number *</Label>
+                      <Input
+                        id="phoneNumber"
+                        type="tel"
+                        value={formData.phoneNumber}
+                        onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
+                        placeholder="+254 700 000 000"
+                        required
                       />
                     </div>
                   </div>
 
+                  <Separator />
+
+                  <div className="space-y-4">
+                    <h4 className="font-semibold">Privacy Settings</h4>
+                    <p className="text-sm text-muted-foreground">
+                      Control what information is visible on your public profile
+                    </p>
+
+                    <div className="space-y-3 border rounded-lg p-4 bg-muted/30">
+                      <div className="flex items-start space-x-3">
+                        <Checkbox
+                          id="showFullName"
+                          checked={formData.showFullName}
+                          onCheckedChange={(checked) => 
+                            setFormData({ ...formData, showFullName: checked as boolean })
+                          }
+                        />
+                        <div className="space-y-1">
+                          <Label htmlFor="showFullName" className="cursor-pointer font-medium">
+                            Show full name
+                          </Label>
+                          <p className="text-xs text-muted-foreground">
+                            {formData.showFullName 
+                              ? "Students will see your full name" 
+                              : "Students will only see your first name"}
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-start space-x-3">
+                        <Checkbox
+                          id="showCurrentInstitution"
+                          checked={formData.showCurrentInstitution}
+                          onCheckedChange={(checked) => 
+                            setFormData({ ...formData, showCurrentInstitution: checked as boolean })
+                          }
+                        />
+                        <div className="space-y-1">
+                          <Label htmlFor="showCurrentInstitution" className="cursor-pointer font-medium">
+                            Show current institution/school
+                          </Label>
+                          <p className="text-xs text-muted-foreground">
+                            Display where you currently teach
+                          </p>
+                        </div>
+                      </div>
+
+                      <div className="flex items-start space-x-3">
+                        <Checkbox
+                          id="showPhoto"
+                          checked={formData.showPhoto}
+                          onCheckedChange={(checked) => 
+                            setFormData({ ...formData, showPhoto: checked as boolean })
+                          }
+                        />
+                        <div className="space-y-1">
+                          <Label htmlFor="showPhoto" className="cursor-pointer font-medium">
+                            Display profile photo
+                          </Label>
+                          <p className="text-xs text-muted-foreground">
+                            {formData.showPhoto 
+                              ? "Recommended: Students can see your photo" 
+                              : "Only initials will be shown"}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <Separator />
+
+                  <div className="space-y-4">
+                    <h4 className="font-semibold">Profile Photo</h4>
+                    <div className="flex items-start gap-4">
+                      <Avatar className="w-20 h-20">
+                        {photoFile ? (
+                          <AvatarImage src={URL.createObjectURL(photoFile)} />
+                        ) : (
+                          <AvatarFallback className="text-xl">
+                            {formData.fullName.split(' ').map(n => n[0]).join('').slice(0, 2) || "T"}
+                          </AvatarFallback>
+                        )}
+                      </Avatar>
+                      <div className="flex-1 space-y-2">
+                        <Label>Upload Photo {formData.showPhoto && "*"}</Label>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => photoInputRef.current?.click()}
+                          disabled={!formData.showPhoto}
+                        >
+                          <Upload className="mr-2 h-4 w-4" />
+                          {photoFile ? "Change Photo" : "Upload Photo"}
+                        </Button>
+                        <input
+                          ref={photoInputRef}
+                          type="file"
+                          accept="image/*"
+                          onChange={handlePhotoChange}
+                          className="hidden"
+                        />
+                        <p className="text-xs text-muted-foreground">
+                          {formData.showPhoto 
+                            ? "Recommended: Upload a professional photo (max 5MB)" 
+                            : "Photo display is disabled in privacy settings"}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {step === 2 && (
+                <div className="space-y-6">
+                  <h3 className="font-semibold text-lg">Professional Background</h3>
+
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="bio">Professional Bio *</Label>
+                      <Textarea
+                        id="bio"
+                        placeholder="Tell students about your teaching philosophy and approach..."
+                        value={formData.bio}
+                        onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
+                        rows={4}
+                        required
+                      />
+                      <p className="text-xs text-muted-foreground">This will be displayed on your profile</p>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="experienceYears">Total Years of Teaching Experience *</Label>
+                        <Input
+                          id="experienceYears"
+                          type="number"
+                          min="0"
+                          value={formData.experienceYears}
+                          onChange={(e) => setFormData({ ...formData, experienceYears: e.target.value })}
+                          required
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="currentInstitution">Current Institution (Optional)</Label>
+                        <Input
+                          id="currentInstitution"
+                          value={formData.currentInstitution}
+                          onChange={(e) => setFormData({ ...formData, currentInstitution: e.target.value })}
+                          placeholder="e.g., Alliance High School"
+                        />
+                      </div>
+                    </div>
+                  </div>
+
+                  <Separator />
+
+                  <div className="space-y-4">
+                    <h4 className="font-semibold">Education History</h4>
+                    <p className="text-sm text-muted-foreground">Add your educational qualifications</p>
+                    
+                    {formData.educationHistory.map((edu, index) => (
+                      <Card key={index} className="p-4">
+                        <div className="grid gap-3">
+                          <div className="grid grid-cols-2 gap-3">
+                            <div className="space-y-2">
+                              <Label>Institution *</Label>
+                              <Input
+                                value={edu.institution}
+                                onChange={(e) => {
+                                  const newHistory = [...formData.educationHistory];
+                                  newHistory[index].institution = e.target.value;
+                                  setFormData({ ...formData, educationHistory: newHistory });
+                                }}
+                                placeholder="e.g., University of Nairobi"
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label>Degree *</Label>
+                              <Input
+                                value={edu.degree}
+                                onChange={(e) => {
+                                  const newHistory = [...formData.educationHistory];
+                                  newHistory[index].degree = e.target.value;
+                                  setFormData({ ...formData, educationHistory: newHistory });
+                                }}
+                                placeholder="e.g., Bachelor's, Master's"
+                              />
+                            </div>
+                          </div>
+                          <div className="grid grid-cols-2 gap-3">
+                            <div className="space-y-2">
+                              <Label>Field of Study *</Label>
+                              <Input
+                                value={edu.field}
+                                onChange={(e) => {
+                                  const newHistory = [...formData.educationHistory];
+                                  newHistory[index].field = e.target.value;
+                                  setFormData({ ...formData, educationHistory: newHistory });
+                                }}
+                                placeholder="e.g., Mathematics Education"
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label>Graduation Year *</Label>
+                              <Input
+                                type="number"
+                                value={edu.graduationYear}
+                                onChange={(e) => {
+                                  const newHistory = [...formData.educationHistory];
+                                  newHistory[index].graduationYear = e.target.value;
+                                  setFormData({ ...formData, educationHistory: newHistory });
+                                }}
+                                placeholder="e.g., 2020"
+                                min="1950"
+                                max={new Date().getFullYear() + 10}
+                              />
+                            </div>
+                          </div>
+                          {formData.educationHistory.length > 1 && (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                const newHistory = formData.educationHistory.filter((_, i) => i !== index);
+                                setFormData({ ...formData, educationHistory: newHistory });
+                              }}
+                              className="text-destructive hover:text-destructive"
+                            >
+                              Remove
+                            </Button>
+                          )}
+                        </div>
+                      </Card>
+                    ))}
+                    
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => {
+                        setFormData({
+                          ...formData,
+                          educationHistory: [
+                            ...formData.educationHistory,
+                            { institution: "", degree: "", field: "", graduationYear: "" }
+                          ]
+                        });
+                      }}
+                    >
+                      + Add {formData.educationHistory.length > 0 ? "Another Degree" : "Education"}
+                    </Button>
+                  </div>
+
+                  <Separator />
+
+                  <div className="space-y-4">
+                    <h4 className="font-semibold">Teaching Experience History</h4>
+                    <p className="text-sm text-muted-foreground">Add your teaching positions</p>
+                    
+                    {formData.teachingHistory.map((exp, index) => (
+                      <Card key={index} className="p-4">
+                        <div className="grid gap-3">
+                          <div className="space-y-2">
+                            <Label>Institution *</Label>
+                            <Input
+                              value={exp.institution}
+                              onChange={(e) => {
+                                const newHistory = [...formData.teachingHistory];
+                                newHistory[index].institution = e.target.value;
+                                setFormData({ ...formData, teachingHistory: newHistory });
+                              }}
+                              placeholder="e.g., Starehe Boys' Centre"
+                            />
+                          </div>
+                          <div className="grid grid-cols-2 gap-3">
+                            <div className="space-y-2">
+                              <Label>Role/Position *</Label>
+                              <Input
+                                value={exp.role}
+                                onChange={(e) => {
+                                  const newHistory = [...formData.teachingHistory];
+                                  newHistory[index].role = e.target.value;
+                                  setFormData({ ...formData, teachingHistory: newHistory });
+                                }}
+                                placeholder="e.g., Mathematics Teacher"
+                              />
+                            </div>
+                            <div className="space-y-2">
+                              <Label>Years *</Label>
+                              <Input
+                                type="number"
+                                value={exp.years}
+                                onChange={(e) => {
+                                  const newHistory = [...formData.teachingHistory];
+                                  newHistory[index].years = e.target.value;
+                                  setFormData({ ...formData, teachingHistory: newHistory });
+                                }}
+                                placeholder="e.g., 3"
+                                min="0"
+                              />
+                            </div>
+                          </div>
+                          {formData.teachingHistory.length > 1 && (
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
+                                const newHistory = formData.teachingHistory.filter((_, i) => i !== index);
+                                setFormData({ ...formData, teachingHistory: newHistory });
+                              }}
+                              className="text-destructive hover:text-destructive"
+                            >
+                              Remove
+                            </Button>
+                          )}
+                        </div>
+                      </Card>
+                    ))}
+                    
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => {
+                        setFormData({
+                          ...formData,
+                          teachingHistory: [
+                            ...formData.teachingHistory,
+                            { institution: "", role: "", years: "" }
+                          ]
+                        });
+                      }}
+                    >
+                      + Add {formData.teachingHistory.length > 0 ? "Another Position" : "Teaching Experience"}
+                    </Button>
+                  </div>
+
+                  <Separator />
+
                   <div className="space-y-2">
-                    <Label htmlFor="qualifications">Qualifications (one per line) *</Label>
+                    <Label htmlFor="qualifications">Professional Certifications (one per line) *</Label>
                     <Textarea
                       id="qualifications"
                       placeholder="Bachelor of Education&#10;PGDE in Mathematics&#10;TSC Certification"
@@ -332,35 +707,12 @@ const TutorProfileSetup = () => {
                       rows={4}
                       required
                     />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="photoUpload">Profile Photo *</Label>
-                    <div className="flex items-center gap-4">
-                      {photoFile && (
-                        <span className="text-sm text-muted-foreground">{photoFile.name}</span>
-                      )}
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => photoInputRef.current?.click()}
-                      >
-                        <Upload className="mr-2 h-4 w-4" />
-                        {photoFile ? "Change Photo" : "Upload Photo"}
-                      </Button>
-                      <input
-                        ref={photoInputRef}
-                        type="file"
-                        accept="image/*"
-                        onChange={handlePhotoChange}
-                        className="hidden"
-                      />
-                    </div>
+                    <p className="text-xs text-muted-foreground">List your certifications, diplomas, and professional qualifications</p>
                   </div>
                 </div>
               )}
 
-              {step === 2 && (
+              {step === 3 && (
                 <div className="space-y-6">
                   <h3 className="font-semibold text-lg">Teaching Details</h3>
                   
@@ -564,7 +916,7 @@ const TutorProfileSetup = () => {
                 </div>
               )}
 
-              {step === 3 && (
+              {step === 4 && (
                 <div className="space-y-4">
                   <h3 className="font-semibold text-lg">Services, Rates & Additional Info</h3>
                   
@@ -640,7 +992,7 @@ const TutorProfileSetup = () => {
                     Back
                   </Button>
                 )}
-                {step < 3 ? (
+                {step < 4 ? (
                   <Button 
                     type="button" 
                     onClick={() => setStep(step + 1)}
@@ -659,87 +1011,107 @@ const TutorProfileSetup = () => {
               </CardContent>
             </Card>
 
-            {/* Preview Section */}
+            {/* Preview Section - Tutor Card */}
             <Card className="sticky top-6">
           <CardHeader>
-            <CardTitle className="text-lg">Profile Preview</CardTitle>
-            <CardDescription>See how your profile will appear to students</CardDescription>
+            <CardTitle className="text-lg">Tutor Card Preview</CardTitle>
+            <CardDescription>How you'll appear in "Find a Tutor" search results</CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="space-y-4">
-              {/* Avatar & Name */}
-              <div className="flex items-center gap-4">
-                <Avatar className="w-16 h-16">
-                  {photoFile ? (
-                    <AvatarImage src={URL.createObjectURL(photoFile)} />
-                  ) : (
-                    <AvatarFallback className="text-xl bg-primary text-primary-foreground">
-                      {userName.split(' ').map(n => n[0]).join('').slice(0, 2) || "T"}
-                    </AvatarFallback>
-                  )}
-                </Avatar>
-                <div>
-                  <p className="font-semibold">{userName || "Your Name"}</p>
-                  <p className="text-sm text-muted-foreground">
-                    {formData.subjects.join(", ") || "Your Subjects"}
+            {/* Tutor Search Card Preview */}
+            <Card className="border-2 hover:border-primary/50 transition-all cursor-pointer">
+              <CardContent className="p-6">
+                <div className="flex gap-4 mb-4">
+                  <Avatar className="w-16 h-16 shrink-0">
+                    {formData.showPhoto && photoFile ? (
+                      <AvatarImage src={URL.createObjectURL(photoFile)} />
+                    ) : (
+                      <AvatarFallback className="text-xl bg-primary text-primary-foreground">
+                        {formData.fullName.split(' ').map(n => n[0]).join('').slice(0, 2) || "T"}
+                      </AvatarFallback>
+                    )}
+                  </Avatar>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-bold text-lg mb-1 truncate">
+                      {formData.showFullName 
+                        ? (formData.fullName || "Your Name")
+                        : (formData.fullName.split(' ')[0] || "Your Name")}
+                    </h3>
+                    <p className="text-sm text-muted-foreground mb-2 line-clamp-1">
+                      {formData.subjects.length > 0 ? formData.subjects.join(", ") : "Your Subjects"}
+                    </p>
+                    {formData.showCurrentInstitution && formData.currentInstitution && (
+                      <div className="flex items-center gap-1 text-xs text-muted-foreground mb-2">
+                        <MapPin className="w-3 h-3" />
+                        <span className="truncate">{formData.currentInstitution}</span>
+                      </div>
+                    )}
+                    {!formData.showCurrentInstitution && formData.experienceYears && (
+                      <div className="flex items-center gap-1 text-xs text-muted-foreground mb-2">
+                        <Award className="w-3 h-3" />
+                        <span>{formData.experienceYears}+ years experience</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {formData.bio && (
+                  <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
+                    {formData.bio}
                   </p>
-                </div>
-              </div>
+                )}
 
-              <Separator />
-
-              {/* Bio */}
-              {formData.bio && (
-                <div>
-                  <h4 className="font-semibold text-sm mb-2">About Me</h4>
-                  <p className="text-sm text-muted-foreground">{formData.bio}</p>
-                </div>
-              )}
-
-              {/* Rate */}
-              {formData.hourlyRate && (
-                <div className="bg-muted/50 p-3 rounded-lg">
-                  <div className="flex items-baseline gap-2">
-                    <span className="text-2xl font-bold">KES {Number(formData.hourlyRate).toLocaleString()}</span>
-                    <span className="text-sm text-muted-foreground">/hr</span>
-                  </div>
-                </div>
-              )}
-
-              {/* Experience */}
-              {formData.experienceYears && (
-                <div className="flex items-center gap-2 text-sm">
-                  <Award className="w-4 h-4 text-primary" />
-                  <span>{formData.experienceYears}+ years experience</span>
-                </div>
-              )}
-
-              {/* Curriculum */}
-              {formData.curriculum.length > 0 && (
-                <div>
-                  <h4 className="font-semibold text-sm mb-2">Curriculum</h4>
-                  <div className="flex flex-wrap gap-2">
-                    {formData.curriculum.map(curr => (
-                      <Badge key={curr} variant="secondary" className="text-xs">{curr}</Badge>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Services */}
-              {formData.servicesOffered.length > 0 && (
-                <div>
-                  <h4 className="font-semibold text-sm mb-2">Services</h4>
-                  <div className="flex flex-wrap gap-2">
-                    {formData.servicesOffered.map(service => (
-                      <Badge key={service} variant="outline" className="text-xs">
-                        <CheckCircle className="w-3 h-3 mr-1" />
-                        {service}
+                {formData.curriculum.length > 0 && (
+                  <div className="flex flex-wrap gap-1 mb-4">
+                    {formData.curriculum.slice(0, 3).map(curr => (
+                      <Badge key={curr} variant="secondary" className="text-xs">
+                        {curr}
                       </Badge>
                     ))}
+                    {formData.curriculum.length > 3 && (
+                      <Badge variant="secondary" className="text-xs">
+                        +{formData.curriculum.length - 3}
+                      </Badge>
+                    )}
+                  </div>
+                )}
+
+                <div className="flex items-center justify-between pt-4 border-t">
+                  <div className="flex items-center gap-3">
+                    <div className="flex items-center gap-1">
+                      <Star className="w-4 h-4 fill-yellow-500 text-yellow-500" />
+                      <span className="font-semibold text-sm">5.0</span>
+                      <span className="text-xs text-muted-foreground">(New)</span>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    {formData.hourlyRate && (
+                      <>
+                        <div className="font-bold text-lg">
+                          KES {Number(formData.hourlyRate).toLocaleString()}
+                          <span className="text-sm font-normal text-muted-foreground">/hr</span>
+                        </div>
+                        <span className="text-xs text-muted-foreground">online</span>
+                      </>
+                    )}
+                    {!formData.hourlyRate && (
+                      <span className="text-sm text-muted-foreground">Set rate in Step 4</span>
+                    )}
                   </div>
                 </div>
-              )}
+              </CardContent>
+            </Card>
+
+            <Separator className="my-4" />
+
+            {/* Privacy Notice */}
+            <div className="space-y-2 text-xs text-muted-foreground bg-muted/30 p-3 rounded-lg">
+              <p className="font-semibold">Privacy Settings Applied:</p>
+              <ul className="space-y-1 ml-4">
+                <li>• Name: {formData.showFullName ? "Full name" : "First name only"}</li>
+                <li>• School: {formData.showCurrentInstitution ? "Visible" : "Hidden"}</li>
+                <li>• Photo: {formData.showPhoto ? "Visible" : "Initials only"}</li>
+              </ul>
             </div>
           </CardContent>
             </Card>
