@@ -5,7 +5,7 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { User } from "@supabase/supabase-js";
-import lanaLogo from "@/assets/lana-header-logo-new.png";
+import lanaLogo from "@/assets/lana-header-logo-2025.png";
 
 const Navigation = () => {
   const [open, setOpen] = useState(false);
@@ -63,13 +63,11 @@ const Navigation = () => {
     <nav className="bg-background/95 backdrop-blur-sm sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-6 py-1 flex items-center justify-between gap-8">
         <Link to="/" className="flex items-center flex-shrink-0" aria-label="Lana Tutors Home">
-          <div className="h-12 sm:h-14 md:h-16 flex items-center overflow-hidden">
-            <img 
-              src={lanaLogo} 
-              alt="Lana Tutors - Your Trusted Tutoring Partner"
-              className="block h-full w-auto object-contain transform-gpu scale-[1.01]"
-            />
-          </div>
+          <img 
+            src={lanaLogo} 
+            alt="Lana Tutors - Your Trusted Tutoring Partner"
+            className="block h-12 sm:h-14 md:h-16 w-auto object-contain border-0 outline-none"
+          />
         </Link>
 
         {/* Desktop Navigation */}
