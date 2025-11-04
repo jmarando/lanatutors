@@ -61,6 +61,10 @@ serve(async (req) => {
       // Calculate token expiry
       const expiresAt = new Date(Date.now() + (tokens.expires_in * 1000));
 
+      // Get the frontend app URL from the referer or construct it
+      const referer = req.headers.get('referer') || '';
+      const appOrigin = referer ? new URL(referer).origin : url.origin;
+
       // Store tokens
       if (isCentral) {
         const { error: upsertError } = await supabase
@@ -79,12 +83,14 @@ serve(async (req) => {
           throw upsertError;
         }
 
+        console.log('Successfully stored central calendar tokens, redirecting to:', `${appOrigin}/setup-central-calendar`);
+
         // Redirect back to setup page with success
         return new Response(null, {
           status: 302,
           headers: {
             ...corsHeaders,
-            'Location': `${url.origin}/setup-central-calendar?success=true&email=${encodeURIComponent(userInfo.email)}`,
+            'Location': `${appOrigin}/setup-central-calendar?success=true&email=${encodeURIComponent(userInfo.email)}`,
           },
         });
       } else {
@@ -111,7 +117,7 @@ serve(async (req) => {
           status: 302,
           headers: {
             ...corsHeaders,
-            'Location': `${url.origin}/tutor-dashboard?calendar_connected=true`,
+            'Location': `${appOrigin}/tutor-dashboard?calendar_connected=true`,
           },
         });
       }
