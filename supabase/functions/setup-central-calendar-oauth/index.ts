@@ -91,7 +91,7 @@ serve(async (req) => {
     }
 
     // Handle OAuth initiation
-    const redirectUri = `${Deno.env.get('SUPABASE_URL')}/functions/v1/setup-central-calendar-oauth/callback`;
+    const redirectUri = `${Deno.env.get('SUPABASE_URL')}/functions/v1/google-calendar-oauth/callback`;
     
     const authUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth');
     authUrl.searchParams.set('client_id', Deno.env.get('GOOGLE_CLIENT_ID')!);

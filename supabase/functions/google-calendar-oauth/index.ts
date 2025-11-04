@@ -21,13 +21,14 @@ serve(async (req) => {
     // Handle OAuth callback
     if (url.pathname.includes('/callback')) {
       const code = url.searchParams.get('code');
-      const state = url.searchParams.get('state'); // Contains tutorId
+      const state = url.searchParams.get('state'); // Contains tutorId or 'central-calendar'
       
       if (!code || !state) {
         throw new Error('Missing code or state parameter');
       }
 
-      const tutorId = state;
+      const isCentral = state === 'central-calendar';
+      const tutorId = isCentral ? null : state;
 
       // Exchange code for tokens
       const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
@@ -60,32 +61,60 @@ serve(async (req) => {
       // Calculate token expiry
       const expiresAt = new Date(Date.now() + (tokens.expires_in * 1000));
 
-      // Update tutor profile with OAuth tokens
-      const { error: updateError } = await supabase
-        .from('tutor_profiles')
-        .update({
-          google_calendar_connected: true,
-          google_oauth_token: tokens.access_token,
-          google_refresh_token: tokens.refresh_token,
-          google_token_expires_at: expiresAt.toISOString(),
-          google_calendar_email: userInfo.email,
-          calendar_sync_enabled: true,
-        })
-        .eq('id', tutorId);
+      // Store tokens
+      if (isCentral) {
+        const { error: upsertError } = await supabase
+          .from('central_calendar_config')
+          .upsert({
+            id: 'central-calendar',
+            google_oauth_token: tokens.access_token,
+            google_refresh_token: tokens.refresh_token,
+            google_token_expires_at: expiresAt.toISOString(),
+            google_email: userInfo.email,
+            updated_at: new Date().toISOString(),
+          });
 
-      if (updateError) {
-        console.error('Failed to update tutor profile:', updateError);
-        throw updateError;
+        if (upsertError) {
+          console.error('Failed to store central calendar tokens:', upsertError);
+          throw upsertError;
+        }
+
+        // Redirect back to setup page with success
+        return new Response(null, {
+          status: 302,
+          headers: {
+            ...corsHeaders,
+            'Location': `${url.origin}/setup-central-calendar?success=true&email=${encodeURIComponent(userInfo.email)}`,
+          },
+        });
+      } else {
+        // Update tutor profile with OAuth tokens
+        const { error: updateError } = await supabase
+          .from('tutor_profiles')
+          .update({
+            google_calendar_connected: true,
+            google_oauth_token: tokens.access_token,
+            google_refresh_token: tokens.refresh_token,
+            google_token_expires_at: expiresAt.toISOString(),
+            google_calendar_email: userInfo.email,
+            calendar_sync_enabled: true,
+          })
+          .eq('id', tutorId!);
+
+        if (updateError) {
+          console.error('Failed to update tutor profile:', updateError);
+          throw updateError;
+        }
+
+        // Redirect back to tutor dashboard with success
+        return new Response(null, {
+          status: 302,
+          headers: {
+            ...corsHeaders,
+            'Location': `${url.origin}/tutor-dashboard?calendar_connected=true`,
+          },
+        });
       }
-
-      // Redirect back to tutor dashboard with success
-      return new Response(null, {
-        status: 302,
-        headers: {
-          ...corsHeaders,
-          'Location': `${url.origin}/tutor-dashboard?calendar_connected=true`,
-        },
-      });
     }
 
     // Handle OAuth initiation
