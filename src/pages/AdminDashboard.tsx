@@ -10,11 +10,15 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
-import { CheckCircle, XCircle, AlertCircle, Star, Calendar, Clock, Mail, Phone, User, BookOpen, FileText, Video, Edit, Save, X, MessageCircle, Send, TrendingUp, Users, DollarSign, Target, ExternalLink, LayoutDashboard, GraduationCap, UserCheck, BookMarked, Activity, ArrowUpRight, ArrowDownRight } from "lucide-react";
+import { CheckCircle, XCircle, AlertCircle, Star, Calendar as CalendarIcon, Clock, Mail, Phone, User, BookOpen, FileText, Video, Edit, Save, X, MessageCircle, Send, TrendingUp, Users, DollarSign, Target, ExternalLink, LayoutDashboard, GraduationCap, UserCheck, BookMarked, Activity, ArrowUpRight, ArrowDownRight } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
 import { LineChart, Line, BarChart, Bar, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
 import { formatConsultationDate, formatToEAT, formatFullDateTime } from "@/utils/dateUtils";
+import { format } from "date-fns";
+import { cn } from "@/lib/utils";
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -1986,9 +1990,61 @@ The Lana Team`;
 
 const ApplicationReviewCard = ({ application, onReview }: any) => {
   const [notes, setNotes] = useState("");
-  const [interviewDate, setInterviewDate] = useState("");
+  const [selectedDate, setSelectedDate] = useState<Date | undefined>();
+  const [selectedTime, setSelectedTime] = useState("");
   const [meetLink, setMeetLink] = useState("");
   const [loadingCv, setLoadingCv] = useState(false);
+  const [generatingMeet, setGeneratingMeet] = useState(false);
+
+  const availableTimeSlots = [
+    "08:00 AM", "09:00 AM", "10:00 AM", "11:00 AM", "12:00 PM",
+    "01:00 PM", "02:00 PM", "03:00 PM", "04:00 PM", "05:00 PM", "06:00 PM"
+  ];
+
+  const handleGenerateMeetLink = async () => {
+    if (!selectedDate || !selectedTime) {
+      toast.error("Please select a date and time first");
+      return;
+    }
+
+    setGeneratingMeet(true);
+    try {
+      // Convert selected date and time to ISO format
+      const [time, period] = selectedTime.split(' ');
+      let [hours, minutes] = time.split(':').map(Number);
+      
+      if (period === 'PM' && hours !== 12) hours += 12;
+      if (period === 'AM' && hours === 12) hours = 0;
+
+      const startDateTime = new Date(selectedDate);
+      startDateTime.setHours(hours, minutes, 0, 0);
+      
+      const endDateTime = new Date(startDateTime);
+      endDateTime.setMinutes(endDateTime.getMinutes() + 30);
+
+      const { data, error } = await supabase.functions.invoke('generate-google-meet-link', {
+        body: {
+          summary: `Lana Tutor Interview - ${application.full_name}`,
+          description: `Interview with ${application.full_name} for tutor position at Lana Tutors`,
+          startDateTime: startDateTime.toISOString(),
+          endDateTime: endDateTime.toISOString(),
+          attendeeEmail: application.email,
+        }
+      });
+
+      if (error) throw error;
+      
+      if (data?.meetingLink) {
+        setMeetLink(data.meetingLink);
+        toast.success("Google Meet link generated!");
+      }
+    } catch (error: any) {
+      console.error("Error generating Meet link:", error);
+      toast.error("Failed to generate Meet link");
+    } finally {
+      setGeneratingMeet(false);
+    }
+  };
 
   const handleViewCv = async () => {
     if (!application.cv_url) return;
@@ -2060,30 +2116,75 @@ const ApplicationReviewCard = ({ application, onReview }: any) => {
         <div className="space-y-4 border-t pt-4">
           <h4 className="font-semibold text-sm">Schedule Interview</h4>
           
-          <div className="space-y-2">
-            <Label htmlFor={`interview-date-${application.id}`}>Interview Date & Time *</Label>
-            <Input
-              id={`interview-date-${application.id}`}
-              type="datetime-local"
-              value={interviewDate}
-              onChange={(e) => setInterviewDate(e.target.value)}
-              className="max-w-md"
-            />
-          </div>
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Select Interview Date *</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      "w-full justify-start text-left font-normal",
+                      !selectedDate && "text-muted-foreground"
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {selectedDate ? format(selectedDate, "PPP") : "Pick a date"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={selectedDate}
+                    onSelect={setSelectedDate}
+                    disabled={(date) => date < new Date()}
+                    initialFocus
+                    className="pointer-events-auto"
+                  />
+                </PopoverContent>
+              </Popover>
+            </div>
 
-          <div className="space-y-2">
-            <Label htmlFor={`meet-link-${application.id}`}>Google Meet Link *</Label>
-            <Input
-              id={`meet-link-${application.id}`}
-              type="url"
-              placeholder="https://meet.google.com/xxx-xxxx-xxx"
-              value={meetLink}
-              onChange={(e) => setMeetLink(e.target.value)}
-              className="max-w-md"
-            />
-            <p className="text-xs text-muted-foreground">
-              Create a meeting at <a href="https://meet.google.com" target="_blank" rel="noopener noreferrer" className="text-primary hover:underline">meet.google.com</a> and paste the link here
-            </p>
+            <div className="space-y-2">
+              <Label>Select Time *</Label>
+              <Select value={selectedTime} onValueChange={setSelectedTime}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select time slot" />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableTimeSlots.map((time) => (
+                    <SelectItem key={time} value={time}>
+                      {time}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor={`meet-link-${application.id}`}>Google Meet Link *</Label>
+              <div className="flex gap-2">
+                <Input
+                  id={`meet-link-${application.id}`}
+                  type="url"
+                  placeholder="https://meet.google.com/xxx-xxxx-xxx"
+                  value={meetLink}
+                  onChange={(e) => setMeetLink(e.target.value)}
+                  className="flex-1"
+                />
+                <Button
+                  type="button"
+                  variant="secondary"
+                  onClick={handleGenerateMeetLink}
+                  disabled={generatingMeet || !selectedDate || !selectedTime}
+                >
+                  {generatingMeet ? "Generating..." : "Generate Link"}
+                </Button>
+              </div>
+              <p className="text-xs text-muted-foreground">
+                Click "Generate Link" to automatically create a Google Meet from info@lanatutors.africa
+              </p>
+            </div>
           </div>
         </div>
 
@@ -2096,9 +2197,25 @@ const ApplicationReviewCard = ({ application, onReview }: any) => {
 
         <div className="flex gap-2 mt-4">
           <Button
-            onClick={() => onReview(application.id, "schedule_interview", notes, interviewDate, meetLink)}
+            onClick={() => {
+              if (!selectedDate || !selectedTime || !meetLink) {
+                toast.error("Please fill in all required fields");
+                return;
+              }
+              // Convert to datetime string format
+              const [time, period] = selectedTime.split(' ');
+              let [hours, minutes] = time.split(':').map(Number);
+              if (period === 'PM' && hours !== 12) hours += 12;
+              if (period === 'AM' && hours === 12) hours = 0;
+              
+              const dateTime = new Date(selectedDate);
+              dateTime.setHours(hours, minutes, 0, 0);
+              const interviewDateTime = dateTime.toISOString().slice(0, 16);
+              
+              onReview(application.id, "schedule_interview", notes, interviewDateTime, meetLink);
+            }}
             className="bg-blue-600 hover:bg-blue-700"
-            disabled={!interviewDate || !meetLink}
+            disabled={!selectedDate || !selectedTime || !meetLink}
           >
             <CheckCircle className="w-4 h-4 mr-2" />
             Schedule Interview & Send Invitation
