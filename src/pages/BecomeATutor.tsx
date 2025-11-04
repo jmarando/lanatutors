@@ -89,7 +89,7 @@ const BecomeATutor = () => {
     yearsOfExperience: "",
     tscNumber: "",
     cambridgeQualification: "",
-    teachingLevel: "",
+    teachingLevels: [] as string[],
     subjects: "",
   });
 
@@ -139,6 +139,16 @@ const BecomeATutor = () => {
       return;
     }
 
+    // Validate that at least one teaching level is selected
+    if (formData.teachingLevels.length === 0) {
+      toast({
+        title: "Teaching level required",
+        description: "Please select at least one teaching level",
+        variant: "destructive"
+      });
+      return;
+    }
+
     // Validate and normalize phone number
     const phoneValidation = validateAndNormalizePhone(formData.phoneNumber);
     if (!phoneValidation.isValid) {
@@ -182,7 +192,7 @@ const BecomeATutor = () => {
           years_of_experience: parseInt(formData.yearsOfExperience),
           tsc_number: formData.tscNumber || null,
           cambridge_qualification: formData.cambridgeQualification || null,
-          teaching_level: formData.teachingLevel || null,
+          teaching_level: formData.teachingLevels.length > 0 ? formData.teachingLevels.join(', ') : null,
           subjects: formData.subjects ? formData.subjects.split(',').map(s => s.trim()) : [],
           cv_url: cvUrl,
           agreed_to_terms: agreedToTerms,
@@ -403,28 +413,51 @@ const BecomeATutor = () => {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="teachingLevel">Teaching Level *</Label>
-                      <Input
-                        id="teachingLevel"
-                        placeholder="e.g., KCSE, IGCSE, IB, Primary"
-                        value={formData.teachingLevel}
-                        onChange={(e) => setFormData({ ...formData, teachingLevel: e.target.value })}
-                        required
-                      />
+                  <div className="space-y-2">
+                    <Label>Teaching Levels *</Label>
+                    <div className="grid grid-cols-2 gap-3">
+                      {[
+                        "Early Years",
+                        "Primary",
+                        "Middle School/Junior Secondary",
+                        "Secondary/A-Level"
+                      ].map((level) => (
+                        <div key={level} className="flex items-center space-x-2">
+                          <Checkbox
+                            id={level}
+                            checked={formData.teachingLevels.includes(level)}
+                            onCheckedChange={(checked) => {
+                              if (checked) {
+                                setFormData({
+                                  ...formData,
+                                  teachingLevels: [...formData.teachingLevels, level]
+                                });
+                              } else {
+                                setFormData({
+                                  ...formData,
+                                  teachingLevels: formData.teachingLevels.filter((l) => l !== level)
+                                });
+                              }
+                            }}
+                          />
+                          <Label htmlFor={level} className="font-normal cursor-pointer">
+                            {level}
+                          </Label>
+                        </div>
+                      ))}
                     </div>
-                    <div className="space-y-2">
-                      <Label htmlFor="subjects">Subjects *</Label>
-                      <Input
-                        id="subjects"
-                        placeholder="e.g., Mathematics, Physics, Chemistry"
-                        value={formData.subjects}
-                        onChange={(e) => setFormData({ ...formData, subjects: e.target.value })}
-                        required
-                      />
-                      <p className="text-xs text-muted-foreground">Separate multiple subjects with commas</p>
-                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="subjects">Subjects *</Label>
+                    <Input
+                      id="subjects"
+                      placeholder="e.g., Mathematics, Physics, Chemistry"
+                      value={formData.subjects}
+                      onChange={(e) => setFormData({ ...formData, subjects: e.target.value })}
+                      required
+                    />
+                    <p className="text-xs text-muted-foreground">Separate multiple subjects with commas</p>
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
