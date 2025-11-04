@@ -2131,7 +2131,7 @@ const ApplicationReviewCard = ({ application, onReview }: any) => {
           <div className="space-y-4">
             <div className="space-y-2">
               <Label>Select Interview Date *</Label>
-              <Popover>
+              <Popover modal>
                 <PopoverTrigger asChild>
                   <Button
                     variant="outline"
@@ -2144,7 +2144,7 @@ const ApplicationReviewCard = ({ application, onReview }: any) => {
                     {selectedDate ? format(selectedDate, "PPP") : "Pick a date"}
                   </Button>
                 </PopoverTrigger>
-                <PopoverContent className="w-auto p-0" align="start">
+                <PopoverContent className="w-auto p-0 z-50" align="start" sideOffset={5}>
                   <Calendar
                     mode="single"
                     selected={selectedDate}
