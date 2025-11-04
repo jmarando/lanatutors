@@ -27,6 +27,7 @@ const TutorProfileSetup = () => {
   const [step, setStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
+  const [userName, setUserName] = useState<string>("");
   const photoInputRef = useRef<HTMLInputElement>(null);
   
   const [formData, setFormData] = useState({
@@ -65,6 +66,26 @@ const TutorProfileSetup = () => {
     }
     
     setUserId(session.user.id);
+    
+    // Get user's name from auth metadata or profile
+    const fullName = session.user.user_metadata?.full_name || 
+                     session.user.user_metadata?.name || 
+                     "";
+    
+    if (fullName) {
+      setUserName(fullName);
+    } else {
+      // Try to get from profiles table
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("full_name")
+        .eq("id", session.user.id)
+        .single();
+      
+      if (profile?.full_name) {
+        setUserName(profile.full_name);
+      }
+    }
   };
 
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -133,7 +154,7 @@ const TutorProfileSetup = () => {
         .from("profiles")
         .upsert({
           id: userId,
-          full_name: formData.currentInstitution, // This should come from auth metadata
+          full_name: userName,
           avatar_url: photoUrl,
           updated_at: new Date().toISOString()
         });
@@ -510,12 +531,12 @@ const TutorProfileSetup = () => {
                     <AvatarImage src={URL.createObjectURL(photoFile)} />
                   ) : (
                     <AvatarFallback className="text-xl bg-primary text-primary-foreground">
-                      {formData.currentInstitution.split(' ').map(n => n[0]).join('').slice(0, 2) || "T"}
+                      {userName.split(' ').map(n => n[0]).join('').slice(0, 2) || "T"}
                     </AvatarFallback>
                   )}
                 </Avatar>
                 <div>
-                  <p className="font-semibold">{formData.currentInstitution || "Your Name"}</p>
+                  <p className="font-semibold">{userName || "Your Name"}</p>
                   <p className="text-sm text-muted-foreground">
                     {formData.subjects.join(", ") || "Your Subjects"}
                   </p>
