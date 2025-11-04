@@ -13,4 +13,4 @@ Allow: /
 User-agent: *
 Allow: /
 
-Sitemap: https://elimuconnect.co.ke/sitemap.xml
+Sitemap: https://lanatutors.africa/sitemap.xml
