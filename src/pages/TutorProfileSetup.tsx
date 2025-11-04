@@ -18,6 +18,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 
 const CURRICULUM_OPTIONS = ["CBC", "8-4-4", "IGCSE", "IB", "American Curriculum"];
 const TEACHING_MODES = ["Online", "In-Person", "Hybrid"];
+const TEACHING_LEVELS = ["Early Years", "Primary", "Middle School/Junior Secondary", "Secondary/A-Level"];
 const SERVICES = ["One-on-One Tutoring", "Group Sessions", "Exam Preparation", "Homework Help"];
 
 const TutorProfileSetup = () => {
@@ -33,6 +34,7 @@ const TutorProfileSetup = () => {
     subjects: [] as string[],
     curriculum: [] as string[],
     teachingMode: [] as string[],
+    teachingLevels: [] as string[],
     servicesOffered: [] as string[],
     hourlyRate: "",
     experienceYears: "",
@@ -147,6 +149,7 @@ const TutorProfileSetup = () => {
           subjects: formData.subjects,
           curriculum: formData.curriculum,
           teaching_mode: formData.teachingMode,
+          teaching_levels: formData.teachingLevels,
           services_offered: formData.servicesOffered,
           hourly_rate: parseFloat(formData.hourlyRate),
           experience_years: parseInt(formData.experienceYears),
@@ -358,6 +361,28 @@ const TutorProfileSetup = () => {
                             }}
                           />
                           <Label htmlFor={mode} className="cursor-pointer">{mode}</Label>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Teaching Levels *</Label>
+                    <div className="space-y-2">
+                      {TEACHING_LEVELS.map(level => (
+                        <div key={level} className="flex items-center space-x-2">
+                          <Checkbox
+                            id={level}
+                            checked={formData.teachingLevels.includes(level)}
+                            onCheckedChange={(checked) => {
+                              if (checked) {
+                                setFormData({ ...formData, teachingLevels: [...formData.teachingLevels, level] });
+                              } else {
+                                setFormData({ ...formData, teachingLevels: formData.teachingLevels.filter(l => l !== level) });
+                              }
+                            }}
+                          />
+                          <Label htmlFor={level} className="cursor-pointer">{level}</Label>
                         </div>
                       ))}
                     </div>
