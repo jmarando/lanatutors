@@ -22,7 +22,7 @@ const TUTOR_REQUIREMENTS = [
   {
     icon: FileText,
     title: "Qualifications",
-    description: "Bachelor's degree or Diploma in Education or relevant subject area required. Valid TSC (Teachers Service Commission) number or equivalent qualification number mandatory"
+    description: "Bachelor's degree or Diploma in Education or relevant subject area required, or a degree in the relevant subject area with teaching qualifications. Valid TSC (Teachers Service Commission) number or equivalent qualification number mandatory"
   },
   {
     icon: CheckCircle,
