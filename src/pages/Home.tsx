@@ -258,7 +258,7 @@ const Home = () => {
               },
               {
                 title: "Diaspora Learning",
-                description: "Connect Kenyan and African students abroad (US, UK, etc.) with top Kenyan tutors for authentic cultural and academic excellence",
+                description: "Parents abroad — get access to trusted Kenyan tutors at home rates. Same quality. Same care. Anywhere in the world.",
               },
             ].map((service, index) => (
               <Card key={index} className="text-center p-6 hover:shadow-lg transition-shadow">
