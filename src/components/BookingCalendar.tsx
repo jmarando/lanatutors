@@ -199,8 +199,8 @@ export const BookingCalendar = ({
             new Date(selectedSlot.start_time).getTime()) /
           (1000 * 60 * 60);
         
-        // Calculate rate (30% more for in-person)
-        const rate = selectedClassType === 'in-person' ? hourlyRate * 1.3 : hourlyRate;
+        // Calculate rate (50% more for in-person)
+        const rate = selectedClassType === 'in-person' ? hourlyRate * 1.5 : hourlyRate;
         totalAmount = duration * rate;
         
         // Handle different payment options
@@ -712,7 +712,7 @@ export const BookingCalendar = ({
                     >
                       <div className="font-semibold mb-1">Single Session (1 hour)</div>
                       <div className="text-sm text-muted-foreground">
-                        KES {selectedClassType === 'online' ? hourlyRate : (hourlyRate * 1.3).toFixed(0)}
+                        KES {selectedClassType === 'online' ? hourlyRate : (hourlyRate * 1.5).toFixed(0)}
                       </div>
                     </button>
                     <button
@@ -727,7 +727,7 @@ export const BookingCalendar = ({
                     >
                       <div className="font-semibold mb-1">Double Session (2 hours)</div>
                       <div className="text-sm text-muted-foreground">
-                        KES {selectedClassType === 'online' ? hourlyRate * 2 : (hourlyRate * 1.3 * 2).toFixed(0)}
+                        KES {selectedClassType === 'online' ? hourlyRate * 2 : (hourlyRate * 1.5 * 2).toFixed(0)}
                       </div>
                     </button>
                   </div>
@@ -776,7 +776,7 @@ export const BookingCalendar = ({
                   {selectedSlot && (() => {
                     const slotDuration = (new Date(selectedSlot.end_time).getTime() - new Date(selectedSlot.start_time).getTime()) / (1000 * 60 * 60);
                     const duration = slotDuration * sessionDuration;
-                    const rate = selectedClassType === 'in-person' ? hourlyRate * 1.3 : hourlyRate;
+                    const rate = selectedClassType === 'in-person' ? hourlyRate * 1.5 : hourlyRate;
                     const total = duration * rate;
                     const deposit = total * 0.3;
                     const balance = total - deposit;

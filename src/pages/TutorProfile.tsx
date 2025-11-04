@@ -6,11 +6,12 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Star, GraduationCap, Clock, BookOpen, Award, MapPin, Users, CheckCircle2, Heart } from "lucide-react";
+import { Star, GraduationCap, Clock, BookOpen, Award, MapPin, Users, CheckCircle2, Heart, Sparkles } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { SEO } from "@/components/SEO";
 import { BookingCalendar } from "@/components/BookingCalendar";
+import { PackageSelector } from "@/components/PackageSelector";
 
 import tutor1 from "@/assets/tutor-1.jpg";
 import tutor2 from "@/assets/tutor-2.jpg";
@@ -29,11 +30,13 @@ const TutorProfile = () => {
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [reviews, setReviews] = useState<any[]>([]);
+  const [packages, setPackages] = useState<any[]>([]);
 
   useEffect(() => {
     fetchTutorProfile();
     fetchCurrentUser();
     fetchReviews();
+    fetchPackages();
   }, [id]);
 
   // Auto-open booking dialog when returning from login via redirect
@@ -153,6 +156,19 @@ const TutorProfile = () => {
       }));
 
       setReviews(enrichedReviews);
+    }
+  };
+
+  const fetchPackages = async () => {
+    const { data: packagesData } = await supabase
+      .from("package_offers")
+      .select("*")
+      .eq("tutor_id", id)
+      .eq("is_active", true)
+      .order("session_count");
+
+    if (packagesData) {
+      setPackages(packagesData);
     }
   };
 
@@ -293,7 +309,7 @@ const TutorProfile = () => {
                     </div>
                     <div className="flex items-baseline gap-2">
                       <div className="text-lg font-semibold text-muted-foreground">
-                        KES {(tutor.hourlyRate * 1.3).toLocaleString()}
+                        KES {(tutor.hourlyRate * 1.5).toLocaleString()}
                         <span className="text-xs font-normal">/hr</span>
                       </div>
                       <span className="text-xs text-muted-foreground">in-person</span>
@@ -493,6 +509,67 @@ const TutorProfile = () => {
                   </li>
                 ))}
               </ul>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Package Bundles */}
+        {packages.length > 0 && (
+          <Card className="mb-6 border-border/50 bg-gradient-to-br from-green-50 to-green-100 dark:from-green-950/20 dark:to-green-900/20">
+            <CardContent className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center gap-2">
+                  <Sparkles className="w-5 h-5 text-green-600 dark:text-green-400" />
+                  <h2 className="font-bold text-lg">Package Deals - Save More!</h2>
+                </div>
+                <Badge variant="secondary" className="bg-green-600 text-white">
+                  Up to {Math.max(...packages.map((p: any) => p.discount_percentage))}% Off
+                </Badge>
+              </div>
+              <p className="text-sm text-muted-foreground mb-4">
+                Save money by booking multiple sessions upfront. Packages are valid for {packages[0]?.validity_days || 90} days.
+              </p>
+              <div className="grid sm:grid-cols-2 gap-4">
+                {packages.map((pkg: any) => {
+                  const pricePerSession = pkg.total_price / pkg.session_count;
+                  const originalPrice = pricePerSession / (1 - pkg.discount_percentage / 100) * pkg.session_count;
+                  const savings = originalPrice - pkg.total_price;
+                  
+                  return (
+                    <div key={pkg.id} className="bg-background rounded-lg p-4 border border-border">
+                      <div className="flex items-start justify-between mb-2">
+                        <div>
+                          <h3 className="font-semibold">{pkg.name}</h3>
+                          <p className="text-xs text-muted-foreground">{pkg.session_count} sessions</p>
+                        </div>
+                        <Badge variant="outline" className="text-green-600 border-green-600">
+                          {pkg.discount_percentage}% off
+                        </Badge>
+                      </div>
+                      <p className="text-sm text-muted-foreground mb-3">{pkg.description}</p>
+                      <div className="space-y-1">
+                        <div className="flex justify-between text-sm">
+                          <span className="text-muted-foreground">Per session:</span>
+                          <span className="font-medium">KES {Math.round(pricePerSession).toLocaleString()}</span>
+                        </div>
+                        <div className="flex justify-between items-baseline pt-2 border-t">
+                          <div>
+                            <p className="text-xs text-muted-foreground line-through">
+                              KES {Math.round(originalPrice).toLocaleString()}
+                            </p>
+                            <p className="text-xl font-bold text-green-600">
+                              KES {Math.round(pkg.total_price).toLocaleString()}
+                            </p>
+                          </div>
+                          <p className="text-sm text-green-600 font-medium">
+                            Save {Math.round(savings).toLocaleString()}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
             </CardContent>
           </Card>
         )}

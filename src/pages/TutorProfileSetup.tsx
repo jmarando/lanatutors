@@ -54,6 +54,8 @@ const TutorProfileSetup = () => {
     specializations: "",
     whyStudentsLove: "",
     teachingLocations: [] as string[],
+    package5Price: "",
+    package10Price: "",
     // Education history
     educationHistory: [] as Array<{
       institution: string;
@@ -297,6 +299,65 @@ const TutorProfileSetup = () => {
         });
 
       if (tutorError) throw tutorError;
+
+      // Get the tutor profile ID
+      const { data: tutorProfile } = await supabase
+        .from("tutor_profiles")
+        .select("id")
+        .eq("user_id", userId)
+        .single();
+
+      // Create package offers if specified
+      if (tutorProfile && (formData.package5Price || formData.package10Price)) {
+        const packages = [];
+        
+        if (formData.package5Price) {
+          const price5 = parseFloat(formData.package5Price);
+          const regularPrice5 = parseFloat(formData.hourlyRate) * 5;
+          const discount5 = ((regularPrice5 - price5) / regularPrice5) * 100;
+          
+          packages.push({
+            tutor_id: tutorProfile.id,
+            name: "5-Session Bundle",
+            description: "Perfect for consistent weekly learning",
+            session_count: 5,
+            total_price: price5,
+            discount_percentage: Math.round(discount5),
+            validity_days: 90,
+            is_active: true,
+            package_type: 'single_subject',
+            max_students: 1
+          });
+        }
+        
+        if (formData.package10Price) {
+          const price10 = parseFloat(formData.package10Price);
+          const regularPrice10 = parseFloat(formData.hourlyRate) * 10;
+          const discount10 = ((regularPrice10 - price10) / regularPrice10) * 100;
+          
+          packages.push({
+            tutor_id: tutorProfile.id,
+            name: "10-Session Bundle",
+            description: "Best value for comprehensive mastery",
+            session_count: 10,
+            total_price: price10,
+            discount_percentage: Math.round(discount10),
+            validity_days: 90,
+            is_active: true,
+            package_type: 'single_subject',
+            max_students: 1,
+            is_featured: true
+          });
+        }
+        
+        if (packages.length > 0) {
+          const { error: packageError } = await supabase
+            .from("package_offers")
+            .insert(packages);
+          
+          if (packageError) console.error("Package creation error:", packageError);
+        }
+      }
 
       // Assign tutor role
       const { error: roleError } = await supabase.rpc('assign_user_role', {
@@ -976,7 +1037,7 @@ const TutorProfileSetup = () => {
                   <h3 className="font-semibold text-lg">Rates & Additional Info</h3>
                   
                   <div className="space-y-2">
-                    <Label htmlFor="hourlyRate">Hourly Rate (KES) *</Label>
+                    <Label htmlFor="hourlyRate">Online Hourly Rate (KES) *</Label>
                     <Input
                       id="hourlyRate"
                       type="number"
@@ -988,8 +1049,77 @@ const TutorProfileSetup = () => {
                       onChange={(e) => setFormData({ ...formData, hourlyRate: e.target.value })}
                       required
                     />
-                    <p className="text-xs text-muted-foreground">
-                      Range: KES 2,000 - 6,000. You'll earn 70% of this amount.
+                    <div className="space-y-1">
+                      <p className="text-xs text-muted-foreground">
+                        Range: KES 2,000 - 6,000. You'll earn 70% of this amount.
+                      </p>
+                      {formData.hourlyRate && (
+                        <div className="flex items-center gap-2 p-2 bg-muted/50 rounded-md">
+                          <p className="text-xs font-medium">
+                            In-person rate: KES {(parseFloat(formData.hourlyRate) * 1.5).toLocaleString()}/hr
+                          </p>
+                          <span className="text-xs text-muted-foreground">(50% higher)</span>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    <div>
+                      <Label className="text-base font-semibold">Package Bundles (Optional)</Label>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Offer discounted packages to encourage bulk bookings. We recommend at least a 5-session and 10-session bundle.
+                      </p>
+                    </div>
+                    
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <div className="space-y-2 p-4 border rounded-lg bg-muted/20">
+                        <Label className="font-medium">5-Session Bundle</Label>
+                        <div className="space-y-2">
+                          <div>
+                            <Label htmlFor="package5Price" className="text-xs">Total Price (KES)</Label>
+                            <Input
+                              id="package5Price"
+                              type="number"
+                              step="100"
+                              placeholder={formData.hourlyRate ? (parseFloat(formData.hourlyRate) * 5 * 0.9).toFixed(0) : "13500"}
+                              value={formData.package5Price}
+                              onChange={(e) => setFormData({ ...formData, package5Price: e.target.value })}
+                            />
+                            {formData.hourlyRate && formData.package5Price && (
+                              <p className="text-xs text-green-600 mt-1">
+                                {(((parseFloat(formData.hourlyRate) * 5 - parseFloat(formData.package5Price)) / (parseFloat(formData.hourlyRate) * 5)) * 100).toFixed(0)}% discount
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="space-y-2 p-4 border rounded-lg bg-muted/20">
+                        <Label className="font-medium">10-Session Bundle</Label>
+                        <div className="space-y-2">
+                          <div>
+                            <Label htmlFor="package10Price" className="text-xs">Total Price (KES)</Label>
+                            <Input
+                              id="package10Price"
+                              type="number"
+                              step="100"
+                              placeholder={formData.hourlyRate ? (parseFloat(formData.hourlyRate) * 10 * 0.85).toFixed(0) : "25500"}
+                              value={formData.package10Price}
+                              onChange={(e) => setFormData({ ...formData, package10Price: e.target.value })}
+                            />
+                            {formData.hourlyRate && formData.package10Price && (
+                              <p className="text-xs text-green-600 mt-1">
+                                {(((parseFloat(formData.hourlyRate) * 10 - parseFloat(formData.package10Price)) / (parseFloat(formData.hourlyRate) * 10)) * 100).toFixed(0)}% discount
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <p className="text-xs text-muted-foreground italic">
+                      💡 Tip: Offering bundles increases student commitment and provides you with more predictable income!
                     </p>
                   </div>
 
