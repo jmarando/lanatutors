@@ -13,6 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, CreditCard, Smartphone } from "lucide-react";
 import { PaymentOptionsCard } from "./PaymentOptionsCard";
+import { NAIROBI_LOCATIONS } from "@/utils/locationData";
 
 interface AvailabilitySlot {
   id: string;
@@ -69,6 +70,7 @@ export const BookingCalendar = ({
   const [notes, setNotes] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [selectedClassType, setSelectedClassType] = useState<'online' | 'in-person'>(classType);
+  const [selectedLocation, setSelectedLocation] = useState("");
   const [sessionDuration, setSessionDuration] = useState<1 | 2>(1); // 1 hour or 2 hours
   const [paymentMethod, setPaymentMethod] = useState<'mpesa' | 'card'>('mpesa');
   const [paymentOption, setPaymentOption] = useState<'deposit' | 'full' | 'package'>('deposit');
@@ -150,6 +152,16 @@ export const BookingCalendar = ({
       toast({
         title: "Missing information",
         description: "Please select a slot and enter a subject",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate location for in-person sessions
+    if (selectedClassType === 'in-person' && !selectedLocation) {
+      toast({
+        title: "Missing location",
+        description: "Please select a teaching location for in-person sessions",
         variant: "destructive",
       });
       return;
@@ -552,6 +564,7 @@ export const BookingCalendar = ({
     setSelectedSlot(null);
     setPaymentInitiated(false);
     setSelectedClassType('online');
+    setSelectedLocation("");
     fetchAvailableSlots();
     onBookingComplete?.();
   };
@@ -641,6 +654,24 @@ export const BookingCalendar = ({
                       </ul>
                     </button>
                   </div>
+                </div>
+              )}
+
+              {!isTrialSession && selectedClassType === 'in-person' && (
+                <div>
+                  <Label className="text-sm font-medium mb-2 block">Teaching Location *</Label>
+                  <Select value={selectedLocation} onValueChange={setSelectedLocation} disabled={paymentInitiated}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select location" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-background z-50 max-h-[300px]">
+                      {NAIROBI_LOCATIONS.map((location) => (
+                        <SelectItem key={location} value={location}>
+                          {location}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               )}
 

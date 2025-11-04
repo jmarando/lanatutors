@@ -1,0 +1,25 @@
+export const NAIROBI_LOCATIONS = [
+  "Kilimani / Kileleshwa / Lavington",
+  "Upper Hill / CBD / Hurlingham",
+  "Westlands / Parklands / Riverside",
+  "Karen / Lang'ata",
+  "South B / South C / Nairobi West",
+  "Mbagathi / Madaraka",
+  "Runda / Gigiri / Muthaiga",
+  "Garden Estate / Thome / Roysambu",
+  "Kasarani / Zimmerman / Githurai",
+  "Donholm / Buruburu / Tena",
+  "Embakasi / Fedha / Tassia / Pipeline",
+  "Utawala / Ruai",
+  "Kangemi / Mountain View / Uthiru",
+  "Kikuyu / Dagoretti / Waithaka",
+  "Ngong / Karen (Outer)",
+  "Kiambu / Ruaka / Ruiru",
+  "Kitengela / Athi River / Syokimau",
+  "Thika",
+  "Limuru",
+  "Rongai / Ole Kasasi",
+  "Juja",
+] as const;
+
+export type NairobiLocation = typeof NAIROBI_LOCATIONS[number];

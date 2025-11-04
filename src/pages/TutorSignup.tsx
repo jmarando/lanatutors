@@ -9,6 +9,8 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Award, Upload } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { NAIROBI_LOCATIONS } from "@/utils/locationData";
 
 const CBC_SUBJECTS = [
   "Mathematics", "English", "Kiswahili", "Science", "Social Studies",
@@ -583,13 +585,22 @@ const TutorSignup = () => {
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="teachingLocation">Teaching Location *</Label>
-                    <Input
-                      id="teachingLocation"
-                      placeholder="e.g., Nairobi, Westlands"
+                    <Select
                       value={formData.teachingLocation}
-                      onChange={(e) => setFormData({ ...formData, teachingLocation: e.target.value })}
+                      onValueChange={(value) => setFormData({ ...formData, teachingLocation: value })}
                       required
-                    />
+                    >
+                      <SelectTrigger id="teachingLocation">
+                        <SelectValue placeholder="Select location" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-background z-50 max-h-[300px]">
+                        {NAIROBI_LOCATIONS.map((location) => (
+                          <SelectItem key={location} value={location}>
+                            {location}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
 
