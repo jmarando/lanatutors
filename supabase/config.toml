@@ -42,3 +42,9 @@ verify_jwt = false
 [functions.google-calendar-oauth]
 verify_jwt = false
 
+[functions.send-tutor-application-whatsapp]
+verify_jwt = false
+
+[functions.send-consultation-whatsapp]
+verify_jwt = false
+
