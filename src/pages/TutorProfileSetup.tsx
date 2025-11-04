@@ -62,23 +62,6 @@ const TutorProfileSetup = () => {
       return;
     }
     
-    // Check if user has an approved tutor application
-    const { data: application } = await supabase
-      .from("tutor_applications")
-      .select("status")
-      .eq("user_id", session.user.id)
-      .single();
-    
-    if (!application || application.status !== 'approved') {
-      toast({
-        title: "Access Denied",
-        description: "Only approved tutors can set up their profile. Please wait for your application to be approved.",
-        variant: "destructive"
-      });
-      navigate("/");
-      return;
-    }
-    
     setUserId(session.user.id);
   };
 
