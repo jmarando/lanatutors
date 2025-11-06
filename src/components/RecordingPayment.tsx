@@ -1,7 +1,5 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2 } from "lucide-react";
@@ -13,64 +11,44 @@ interface RecordingPaymentProps {
 }
 
 export const RecordingPayment = ({ classId, className, onSuccess }: RecordingPaymentProps) => {
-  const [phoneNumber, setPhoneNumber] = useState("");
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
   const handlePayment = async (paymentType: 'single_recording' | 'subscription') => {
-    if (!phoneNumber || phoneNumber.length !== 10) {
-      toast({
-        title: "Invalid Phone Number",
-        description: "Please enter a valid 10-digit phone number",
-        variant: "destructive"
-      });
-      return;
-    }
-
     setLoading(true);
     
     try {
       const amount = paymentType === 'subscription' ? 500 : 200;
-      const { data: { session } } = await supabase.auth.getSession();
-      
-      if (!session) {
-        throw new Error('Not authenticated');
-      }
+      const description = paymentType === 'subscription' 
+        ? 'Monthly Recording Subscription'
+        : `Recording: ${className}`;
 
-      const { data, error } = await supabase.functions.invoke('initiate-mpesa-payment', {
+      const { data, error } = await supabase.functions.invoke('initiate-pesapal-payment', {
         body: {
-          phoneNumber: `254${phoneNumber.substring(1)}`,
           amount,
+          description,
           paymentType: paymentType,
-          classId: paymentType === 'single_recording' ? classId : null,
-          referenceId: paymentType === 'single_recording' ? classId : null
+          referenceId: paymentType === 'single_recording' ? classId : null,
+          callbackUrl: window.location.origin + '/payment-callback',
         }
       });
 
       if (error) throw error;
 
-      toast({
-        title: "Payment Initiated",
-        description: "Please check your phone and enter your M-Pesa PIN to complete the payment",
-      });
+      // Redirect to Pesapal payment page
+      if (data.redirect_url) {
+        window.location.href = data.redirect_url;
+      } else {
+        throw new Error('No redirect URL received from payment gateway');
+      }
 
-      // Poll for payment completion (in production, use webhooks)
-      setTimeout(() => {
-        toast({
-          title: "Payment Processing",
-          description: "Your payment is being processed. You'll be notified once complete.",
-        });
-        onSuccess();
-      }, 5000);
-
-    } catch (error) {
+    } catch (error: any) {
       console.error('Payment error:', error);
       toast({
         title: "Payment Failed",
         description: error.message || "Failed to initiate payment. Please try again.",
         variant: "destructive"
       });
-    } finally {
       setLoading(false);
     }
   };
@@ -85,22 +63,6 @@ export const RecordingPayment = ({ classId, className, onSuccess }: RecordingPay
       </div>
 
       <div className="space-y-4">
-        <div>
-          <Label htmlFor="phone">M-Pesa Phone Number</Label>
-          <Input
-            id="phone"
-            type="tel"
-            placeholder="0712345678"
-            value={phoneNumber}
-            onChange={(e) => setPhoneNumber(e.target.value)}
-            maxLength={10}
-            className="mt-1"
-          />
-          <p className="text-xs text-muted-foreground mt-1">
-            Enter your Safaricom number (format: 07XXXXXXXX)
-          </p>
-        </div>
-
         <div className="grid gap-3">
           <div className="border rounded-lg p-4 space-y-2">
             <div className="flex justify-between items-start">
@@ -118,7 +80,7 @@ export const RecordingPayment = ({ classId, className, onSuccess }: RecordingPay
               {loading ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Processing...
+                  Redirecting...
                 </>
               ) : (
                 'Pay KES 200'
@@ -146,7 +108,7 @@ export const RecordingPayment = ({ classId, className, onSuccess }: RecordingPay
               {loading ? (
                 <>
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Processing...
+                  Redirecting...
                 </>
               ) : (
                 'Subscribe for KES 500/month'
@@ -157,8 +119,8 @@ export const RecordingPayment = ({ classId, className, onSuccess }: RecordingPay
       </div>
 
       <div className="text-xs text-muted-foreground space-y-1">
-        <p>• You will receive an M-Pesa prompt on your phone</p>
-        <p>• Enter your M-Pesa PIN to complete the payment</p>
+        <p>• You will be redirected to secure Pesapal payment page</p>
+        <p>• Pay using M-Pesa, card, or bank transfer</p>
         <p>• Access is granted immediately after successful payment</p>
       </div>
     </div>

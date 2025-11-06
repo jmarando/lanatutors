@@ -495,13 +495,15 @@ export type Database = {
       payments: {
         Row: {
           amount: number
-          checkout_request_id: string | null
           created_at: string | null
           id: string
-          merchant_request_id: string | null
-          mpesa_receipt_number: string | null
           payment_type: string
+          pesapal_confirmation_code: string | null
+          pesapal_merchant_reference: string | null
+          pesapal_order_tracking_id: string | null
+          pesapal_payment_method: string | null
           phone_number: string
+          redirect_url: string | null
           reference_id: string | null
           status: Database["public"]["Enums"]["payment_status"] | null
           updated_at: string | null
@@ -509,13 +511,15 @@ export type Database = {
         }
         Insert: {
           amount: number
-          checkout_request_id?: string | null
           created_at?: string | null
           id?: string
-          merchant_request_id?: string | null
-          mpesa_receipt_number?: string | null
           payment_type: string
+          pesapal_confirmation_code?: string | null
+          pesapal_merchant_reference?: string | null
+          pesapal_order_tracking_id?: string | null
+          pesapal_payment_method?: string | null
           phone_number: string
+          redirect_url?: string | null
           reference_id?: string | null
           status?: Database["public"]["Enums"]["payment_status"] | null
           updated_at?: string | null
@@ -523,13 +527,15 @@ export type Database = {
         }
         Update: {
           amount?: number
-          checkout_request_id?: string | null
           created_at?: string | null
           id?: string
-          merchant_request_id?: string | null
-          mpesa_receipt_number?: string | null
           payment_type?: string
+          pesapal_confirmation_code?: string | null
+          pesapal_merchant_reference?: string | null
+          pesapal_order_tracking_id?: string | null
+          pesapal_payment_method?: string | null
           phone_number?: string
+          redirect_url?: string | null
           reference_id?: string | null
           status?: Database["public"]["Enums"]["payment_status"] | null
           updated_at?: string | null

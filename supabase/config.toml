@@ -3,10 +3,10 @@ project_id = "iccemuiqcdumgxiwxzdq"
 [functions.create-google-meet-session]
 verify_jwt = true
 
-[functions.initiate-mpesa-payment]
+[functions.initiate-pesapal-payment]
 verify_jwt = true
 
-[functions.mpesa-callback]
+[functions.pesapal-callback]
 verify_jwt = false
 
 [functions.send-booking-email]
