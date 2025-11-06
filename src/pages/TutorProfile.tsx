@@ -288,7 +288,7 @@ const TutorProfile = () => {
               </div>
             </div>
 
-            <div className="p-6 flex flex-col gap-4 bg-muted/30">
+            <div className="p-6 flex flex-col gap-6 bg-muted/30">
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6">
                   <div className="flex items-center gap-2">
@@ -319,37 +319,98 @@ const TutorProfile = () => {
               </div>
 
               {/* Booking Options */}
-              <div className="grid sm:grid-cols-2 gap-4 pt-2 max-w-2xl">
-                <Button 
-                  size="lg" 
-                  variant="outline"
-                  onClick={() => handleBookingTypeSelect('trial')}
-                  className="w-full relative overflow-hidden border-2 border-primary/50 hover:bg-primary/10 h-auto py-4"
-                >
-                  <div className="absolute top-0 right-0 bg-primary text-primary-foreground text-xs px-3 py-1 rounded-bl-lg font-bold shadow-sm">
-                    50% OFF
-                  </div>
-                  <div className="flex flex-col items-center gap-1.5 pt-1">
-                    <span className="font-bold text-base">Book Trial Lesson</span>
-                    <span className="text-sm text-muted-foreground">
-                      KES {Math.floor(tutor.hourlyRate * 0.5).toLocaleString()}
-                    </span>
-                  </div>
-                </Button>
+              <div>
+                <h3 className="font-bold text-base mb-3">Choose Your Booking Option</h3>
+                <div className="grid sm:grid-cols-2 gap-3">
+                  <Button 
+                    size="lg" 
+                    variant="outline"
+                    onClick={() => handleBookingTypeSelect('trial')}
+                    className="w-full relative overflow-hidden border-2 border-primary/50 hover:bg-primary/10 h-auto py-4"
+                  >
+                    <div className="absolute top-0 right-0 bg-primary text-primary-foreground text-xs px-3 py-1 rounded-bl-lg font-bold shadow-sm">
+                      50% OFF
+                    </div>
+                    <div className="flex flex-col items-center gap-1.5 pt-1">
+                      <span className="font-bold text-base">Book Trial Lesson</span>
+                      <span className="text-sm text-muted-foreground">
+                        KES {Math.floor(tutor.hourlyRate * 0.5).toLocaleString()}
+                      </span>
+                    </div>
+                  </Button>
 
-                <Button 
-                  size="lg" 
-                  onClick={() => handleBookingTypeSelect('paid')}
-                  className="w-full h-auto py-4"
-                >
-                  <div className="flex flex-col items-center gap-1.5">
-                    <span className="font-bold text-base">Book Session</span>
-                    <span className="text-sm opacity-90">
-                      Full Price
-                    </span>
-                  </div>
-                </Button>
+                  <Button 
+                    size="lg" 
+                    onClick={() => handleBookingTypeSelect('paid')}
+                    className="w-full h-auto py-4"
+                  >
+                    <div className="flex flex-col items-center gap-1.5">
+                      <span className="font-bold text-base">Book Session</span>
+                      <span className="text-sm opacity-90">
+                        Full Price
+                      </span>
+                    </div>
+                  </Button>
+                </div>
               </div>
+
+              {/* Package Deals - Inline */}
+              {packages.length > 0 && (
+                <div className="border-t border-border/50 pt-5">
+                  <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                      <Sparkles className="w-5 h-5 text-green-600 dark:text-green-400" />
+                      <h3 className="font-bold text-base">Package Deals - Save More!</h3>
+                    </div>
+                    <Badge variant="secondary" className="bg-green-600 text-white text-xs">
+                      Up to {Math.max(...packages.map((p: any) => p.discount_percentage))}% Off
+                    </Badge>
+                  </div>
+                  <p className="text-xs text-muted-foreground mb-3">
+                    Save money by booking multiple sessions upfront. Packages valid for {packages[0]?.validity_days || 90} days.
+                  </p>
+                  <div className="grid sm:grid-cols-2 gap-3">
+                    {packages.map((pkg: any) => {
+                      const pricePerSession = pkg.total_price / pkg.session_count;
+                      const originalPrice = pricePerSession / (1 - pkg.discount_percentage / 100) * pkg.session_count;
+                      const savings = originalPrice - pkg.total_price;
+                      
+                      return (
+                        <div key={pkg.id} className="bg-background rounded-lg p-3 border-2 border-green-600/30 hover:border-green-600/60 transition-colors">
+                          <div className="flex items-start justify-between mb-2">
+                            <div>
+                              <h4 className="font-semibold text-sm">{pkg.name}</h4>
+                              <p className="text-xs text-muted-foreground">{pkg.session_count} sessions</p>
+                            </div>
+                            <Badge variant="outline" className="text-green-600 border-green-600 text-xs">
+                              {pkg.discount_percentage}% off
+                            </Badge>
+                          </div>
+                          <div className="space-y-1 mb-3">
+                            <div className="flex justify-between text-xs">
+                              <span className="text-muted-foreground">Per session:</span>
+                              <span className="font-medium">KES {Math.round(pricePerSession).toLocaleString()}</span>
+                            </div>
+                            <div className="flex justify-between items-baseline pt-1.5 border-t border-border/50">
+                              <div>
+                                <p className="text-xs text-muted-foreground line-through">
+                                  KES {Math.round(originalPrice).toLocaleString()}
+                                </p>
+                                <p className="text-lg font-bold text-green-600">
+                                  KES {Math.round(pkg.total_price).toLocaleString()}
+                                </p>
+                              </div>
+                              <p className="text-xs text-green-600 font-medium">
+                                Save {Math.round(savings).toLocaleString()}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
           </CardContent>
         </Card>
@@ -513,66 +574,6 @@ const TutorProfile = () => {
           </Card>
         )}
 
-        {/* Package Bundles */}
-        {packages.length > 0 && (
-          <Card className="mb-6 border-border/50 bg-gradient-to-br from-green-50 to-green-100 dark:from-green-950/20 dark:to-green-900/20">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between mb-4">
-                <div className="flex items-center gap-2">
-                  <Sparkles className="w-5 h-5 text-green-600 dark:text-green-400" />
-                  <h2 className="font-bold text-lg">Package Deals - Save More!</h2>
-                </div>
-                <Badge variant="secondary" className="bg-green-600 text-white">
-                  Up to {Math.max(...packages.map((p: any) => p.discount_percentage))}% Off
-                </Badge>
-              </div>
-              <p className="text-sm text-muted-foreground mb-4">
-                Save money by booking multiple sessions upfront. Packages are valid for {packages[0]?.validity_days || 90} days.
-              </p>
-              <div className="grid sm:grid-cols-2 gap-4">
-                {packages.map((pkg: any) => {
-                  const pricePerSession = pkg.total_price / pkg.session_count;
-                  const originalPrice = pricePerSession / (1 - pkg.discount_percentage / 100) * pkg.session_count;
-                  const savings = originalPrice - pkg.total_price;
-                  
-                  return (
-                    <div key={pkg.id} className="bg-background rounded-lg p-4 border border-border">
-                      <div className="flex items-start justify-between mb-2">
-                        <div>
-                          <h3 className="font-semibold">{pkg.name}</h3>
-                          <p className="text-xs text-muted-foreground">{pkg.session_count} sessions</p>
-                        </div>
-                        <Badge variant="outline" className="text-green-600 border-green-600">
-                          {pkg.discount_percentage}% off
-                        </Badge>
-                      </div>
-                      <p className="text-sm text-muted-foreground mb-3">{pkg.description}</p>
-                      <div className="space-y-1">
-                        <div className="flex justify-between text-sm">
-                          <span className="text-muted-foreground">Per session:</span>
-                          <span className="font-medium">KES {Math.round(pricePerSession).toLocaleString()}</span>
-                        </div>
-                        <div className="flex justify-between items-baseline pt-2 border-t">
-                          <div>
-                            <p className="text-xs text-muted-foreground line-through">
-                              KES {Math.round(originalPrice).toLocaleString()}
-                            </p>
-                            <p className="text-xl font-bold text-green-600">
-                              KES {Math.round(pkg.total_price).toLocaleString()}
-                            </p>
-                          </div>
-                          <p className="text-sm text-green-600 font-medium">
-                            Save {Math.round(savings).toLocaleString()}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </CardContent>
-          </Card>
-        )}
 
         {/* About / Bio */}
         <Card className="mb-6 border-border/50">
