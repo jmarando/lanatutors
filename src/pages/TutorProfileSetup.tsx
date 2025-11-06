@@ -651,7 +651,7 @@ const TutorProfileSetup = () => {
                         />
                         <p className="text-xs text-muted-foreground">
                           {formData.showPhoto 
-                            ? "Recommended: Upload a professional photo (max 5MB)" 
+                            ? "Profiles with photos perform better! Upload a professional photo (max 5MB)" 
                             : "Photo display is disabled in privacy settings"}
                         </p>
                       </div>
