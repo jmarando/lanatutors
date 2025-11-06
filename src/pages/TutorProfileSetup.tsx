@@ -666,16 +666,20 @@ const TutorProfileSetup = () => {
 
                   <div className="space-y-4">
                     <div className="space-y-2">
-                      <Label htmlFor="bio">Professional Bio *</Label>
+                      <Label htmlFor="bio">Professional Bio * (200-500 characters)</Label>
                       <Textarea
                         id="bio"
-                        placeholder="Tell students about your teaching philosophy and approach..."
+                        placeholder="Share your teaching background, methodology, and what makes you effective. Focus on your qualifications, experience, and teaching approach rather than personality traits."
                         value={formData.bio}
                         onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
                         rows={4}
                         required
+                        maxLength={500}
                       />
-                      <p className="text-xs text-muted-foreground">This will be displayed on your profile</p>
+                      <div className="flex justify-between text-xs text-muted-foreground">
+                        <span>Example: "BSc Mathematics graduate with 5+ years teaching IGCSE and IB. Specialize in making calculus accessible through real-world applications."</span>
+                        <span>{formData.bio.length}/500</span>
+                      </div>
                     </div>
 
                     <div className="grid grid-cols-2 gap-4">
@@ -684,11 +688,12 @@ const TutorProfileSetup = () => {
                         <Input
                           id="experienceYears"
                           type="number"
-                          min="0"
+                          min="1"
                           value={formData.experienceYears}
                           onChange={(e) => setFormData({ ...formData, experienceYears: e.target.value })}
                           required
                         />
+                        <p className="text-xs text-muted-foreground">Minimum 1 year required</p>
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="currentInstitution">Current Institution (Optional)</Label>
@@ -891,13 +896,13 @@ const TutorProfileSetup = () => {
                     <Label htmlFor="qualifications">Professional Certifications (one per line) *</Label>
                     <Textarea
                       id="qualifications"
-                      placeholder="Bachelor of Education&#10;PGDE in Mathematics&#10;TSC Certification"
+                      placeholder="TSC Certification&#10;Cambridge IGCSE Teaching Certificate&#10;IB Educator Certificate&#10;TEFL/TESOL Certification"
                       value={formData.qualifications}
                       onChange={(e) => setFormData({ ...formData, qualifications: e.target.value })}
                       rows={4}
                       required
                     />
-                    <p className="text-xs text-muted-foreground">List your certifications, diplomas, and professional qualifications</p>
+                    <p className="text-xs text-muted-foreground">List teaching certifications and professional qualifications (degrees are captured above)</p>
                   </div>
                 </div>
               )}
