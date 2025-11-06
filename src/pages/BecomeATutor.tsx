@@ -11,6 +11,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Progress } from "@/components/ui/progress";
 import { validateAndNormalizePhone } from "@/utils/phoneValidation";
 import { SEO } from "@/components/SEO";
+import { getCurriculums } from "@/utils/curriculumData";
 
 
 const TUTOR_REQUIREMENTS = [
@@ -90,6 +91,7 @@ const BecomeATutor = () => {
     qualificationNumber: "",
     teachingLevels: [] as string[],
     subjects: "",
+    curricula: [] as string[],
   });
 
   const handleCvChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -190,7 +192,7 @@ const BecomeATutor = () => {
           current_school: formData.currentSchool,
           years_of_experience: parseInt(formData.yearsOfExperience),
           tsc_number: formData.qualificationNumber,
-          cambridge_qualification: null,
+          cambridge_qualification: formData.curricula.length > 0 ? formData.curricula.join(', ') : null,
           teaching_level: formData.teachingLevels.length > 0 ? formData.teachingLevels.join(', ') : null,
           subjects: formData.subjects ? formData.subjects.split(',').map(s => s.trim()) : [],
           cv_url: cvUrl,
@@ -332,11 +334,11 @@ const BecomeATutor = () => {
                 </div>
 
 
-                <div className="flex justify-end gap-4 pt-4">
-                  <Link to="/">
-                    <Button variant="outline">Cancel</Button>
+                <div className="flex flex-col sm:flex-row justify-end gap-4 pt-4">
+                  <Link to="/" className="w-full sm:w-auto">
+                    <Button variant="outline" className="w-full">Cancel</Button>
                   </Link>
-                  <Button onClick={() => setStep(2)}>
+                  <Button onClick={() => setStep(2)} className="w-full sm:w-auto">
                     Continue to Application
                   </Button>
                 </div>
@@ -363,7 +365,7 @@ const BecomeATutor = () => {
                     />
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid sm:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="email">Email *</Label>
                       <Input
@@ -379,7 +381,7 @@ const BecomeATutor = () => {
                       <Input
                         id="phoneNumber"
                         type="tel"
-                        placeholder="+254712345678 or 0712345678"
+                        placeholder="+254712345678"
                         value={formData.phoneNumber}
                         onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
                         required
@@ -388,7 +390,7 @@ const BecomeATutor = () => {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
+                  <div className="grid sm:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="currentSchool">Current School/Institution *</Label>
                       <Input
@@ -414,7 +416,7 @@ const BecomeATutor = () => {
 
                   <div className="space-y-2">
                     <Label>Teaching Levels *</Label>
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       {[
                         "Early Years",
                         "Primary",
@@ -439,12 +441,43 @@ const BecomeATutor = () => {
                               }
                             }}
                           />
-                          <Label htmlFor={level} className="font-normal cursor-pointer">
+                          <Label htmlFor={level} className="font-normal cursor-pointer text-sm">
                             {level}
                           </Label>
                         </div>
                       ))}
                     </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Curricula *</Label>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                      {getCurriculums().map((curriculum) => (
+                        <div key={curriculum} className="flex items-center space-x-2">
+                          <Checkbox
+                            id={curriculum}
+                            checked={formData.curricula.includes(curriculum)}
+                            onCheckedChange={(checked) => {
+                              if (checked) {
+                                setFormData({
+                                  ...formData,
+                                  curricula: [...formData.curricula, curriculum]
+                                });
+                              } else {
+                                setFormData({
+                                  ...formData,
+                                  curricula: formData.curricula.filter((c) => c !== curriculum)
+                                });
+                              }
+                            }}
+                          />
+                          <Label htmlFor={curriculum} className="font-normal cursor-pointer text-sm">
+                            {curriculum}
+                          </Label>
+                        </div>
+                      ))}
+                    </div>
+                    <p className="text-xs text-muted-foreground">Select all curricula you can teach</p>
                   </div>
 
                   <div className="space-y-2">
@@ -523,11 +556,11 @@ const BecomeATutor = () => {
                   </div>
                 </div>
 
-                <div className="flex justify-between gap-4 pt-4">
-                  <Button type="button" variant="outline" onClick={() => setStep(1)}>
+                <div className="flex flex-col sm:flex-row justify-between gap-4 pt-4">
+                  <Button type="button" variant="outline" onClick={() => setStep(1)} className="w-full sm:w-auto">
                     Back
                   </Button>
-                  <Button type="submit" disabled={isLoading}>
+                  <Button type="submit" disabled={isLoading} className="w-full sm:w-auto">
                     {isLoading ? "Submitting..." : "Submit Application"}
                   </Button>
                 </div>
