@@ -652,7 +652,7 @@ const TutorProfileSetup = () => {
                           }} placeholder="e.g., University of Nairobi" />
                             </div>
                             <div className="space-y-2">
-                              <Label>Degree *</Label>
+                              <Label>Qualification/Degree *</Label>
                               <Input value={edu.degree} onChange={e => {
                             const newHistory = [...formData.educationHistory];
                             newHistory[index].degree = e.target.value;
