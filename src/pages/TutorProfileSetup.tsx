@@ -688,12 +688,12 @@ const TutorProfileSetup = () => {
                         <Input
                           id="experienceYears"
                           type="number"
-                          min="1"
+                          min="2"
                           value={formData.experienceYears}
                           onChange={(e) => setFormData({ ...formData, experienceYears: e.target.value })}
                           required
                         />
-                        <p className="text-xs text-muted-foreground">Minimum 1 year required</p>
+                        <p className="text-xs text-muted-foreground">Minimum 2 years required</p>
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="currentInstitution">Current Institution (Optional)</Label>
