@@ -786,7 +786,7 @@ const TutorProfileSetup = () => {
                   <Separator />
 
                   <div className="space-y-2">
-                    <Label htmlFor="qualifications">Professional Certifications (one per line) *</Label>
+                    <Label htmlFor="qualifications">Professional certification/ Qualifications *</Label>
                     <Textarea id="qualifications" placeholder="TSC Certification
 Cambridge IGCSE Teaching Certificate
 IB Educator Certificate
