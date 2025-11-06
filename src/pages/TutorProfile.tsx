@@ -6,7 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Star, GraduationCap, Clock, BookOpen, Award, MapPin, Users, CheckCircle2, Heart, Sparkles } from "lucide-react";
+import { Star, GraduationCap, Clock, BookOpen, Award, MapPin, Users, CheckCircle2, Heart, Sparkles, Video } from "lucide-react";
 import { toast } from "sonner";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -309,18 +309,32 @@ const TutorProfile = () => {
                   <p className="text-base text-muted-foreground mb-3">
                     {tutor.subjects.join(" • ")}
                   </p>
-                  {tutor.displayInstitution && tutor.school && (
-                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                      <MapPin className="w-4 h-4" />
-                      <span>{tutor.school}</span>
-                    </div>
-                  )}
-                  {!tutor.displayInstitution && (
+                  
+                  {/* Enhanced Tutor Details */}
+                  <div className="space-y-2">
+                    {tutor.displayInstitution && tutor.school && (
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <MapPin className="w-4 h-4" />
+                        <span>{tutor.school}</span>
+                      </div>
+                    )}
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                       <Award className="w-4 h-4" />
                       <span>{tutor.experience}+ years teaching experience</span>
                     </div>
-                  )}
+                    {tutor.curriculum && tutor.curriculum.length > 0 && (
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <BookOpen className="w-4 h-4" />
+                        <span>{tutor.curriculum.join(", ")}</span>
+                      </div>
+                    )}
+                    {tutor.teachingMode && tutor.teachingMode.length > 0 && (
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <Video className="w-4 h-4" />
+                        <span>{tutor.teachingMode.join(" & ")}</span>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             </div>
@@ -357,85 +371,86 @@ const TutorProfile = () => {
 
               {/* Booking Options */}
               <div>
-                <h3 className="font-bold text-base mb-3">Book a Session</h3>
-                <Button 
-                  size="lg" 
-                  onClick={() => handleBookingTypeSelect('paid')}
-                  className="w-full h-auto py-4"
-                >
-                  <div className="flex flex-col items-center gap-1.5">
-                    <span className="font-bold text-base">Book Single Session</span>
-                    <span className="text-sm opacity-90">
-                      1-2 hours • Full Price
-                    </span>
-                  </div>
-                </Button>
-              </div>
-
-              {/* Package Deals - Inline */}
-              {packages.length > 0 && (
-                <div className="border-t border-border/50 pt-5">
-                  <div className="flex items-center justify-between mb-3">
-                    <div className="flex items-center gap-2">
-                      <Sparkles className="w-5 h-5 text-green-600 dark:text-green-400" />
-                      <h3 className="font-bold text-base">Package Deals - Save More!</h3>
+                <h3 className="font-bold text-base mb-3">Choose Your Booking Option</h3>
+                <p className="text-xs text-muted-foreground mb-3">
+                  Book a single session or save more with a package deal. All packages valid for {packages[0]?.validity_days || 90} days.
+                </p>
+                <div className="grid sm:grid-cols-2 gap-3">
+                  {/* Single Session Option */}
+                  <div className="bg-background rounded-lg p-3 border-2 border-primary/30 hover:border-primary/60 transition-colors">
+                    <div className="flex items-start justify-between mb-2">
+                      <div>
+                        <h4 className="font-semibold text-sm">Single Session</h4>
+                        <p className="text-xs text-muted-foreground">1-2 hours</p>
+                      </div>
                     </div>
-                    <Badge variant="secondary" className="bg-green-600 text-white text-xs">
-                      Up to {Math.max(...packages.map((p: any) => p.discount_percentage))}% Off
-                    </Badge>
+                    <div className="space-y-1 mb-3">
+                      <div className="flex justify-between text-xs">
+                        <span className="text-muted-foreground">Online:</span>
+                        <span className="font-medium">KES {tutor.hourlyRate.toLocaleString()}/hr</span>
+                      </div>
+                      <div className="flex justify-between text-xs">
+                        <span className="text-muted-foreground">In-person:</span>
+                        <span className="font-medium">KES {(tutor.hourlyRate * 1.5).toLocaleString()}/hr</span>
+                      </div>
+                    </div>
+                    <Button 
+                      size="sm" 
+                      className="w-full"
+                      onClick={() => handleBookingTypeSelect('paid')}
+                    >
+                      Book Now
+                    </Button>
                   </div>
-                  <p className="text-xs text-muted-foreground mb-3">
-                    Save money by booking multiple sessions upfront. Packages valid for {packages[0]?.validity_days || 90} days.
-                  </p>
-                  <div className="grid sm:grid-cols-2 gap-3">
-                    {packages.map((pkg: any) => {
-                      const pricePerSession = pkg.total_price / pkg.session_count;
-                      const originalPrice = pricePerSession / (1 - pkg.discount_percentage / 100) * pkg.session_count;
-                      const savings = originalPrice - pkg.total_price;
-                      
-                      return (
-                        <div key={pkg.id} className="bg-background rounded-lg p-3 border-2 border-green-600/30 hover:border-green-600/60 transition-colors">
-                          <div className="flex items-start justify-between mb-2">
-                            <div>
-                              <h4 className="font-semibold text-sm">{pkg.name}</h4>
-                              <p className="text-xs text-muted-foreground">{pkg.session_count} sessions</p>
-                            </div>
-                            <Badge variant="outline" className="text-green-600 border-green-600 text-xs">
-                              {pkg.discount_percentage}% off
-                            </Badge>
+
+                  {/* Package Deals */}
+                  {packages.length > 0 && packages.map((pkg: any) => {
+                    const pricePerSession = pkg.total_price / pkg.session_count;
+                    const originalPrice = pricePerSession / (1 - pkg.discount_percentage / 100) * pkg.session_count;
+                    const savings = originalPrice - pkg.total_price;
+                    
+                    return (
+                      <div key={pkg.id} className="bg-background rounded-lg p-3 border-2 border-green-600/30 hover:border-green-600/60 transition-colors">
+                        <div className="flex items-start justify-between mb-2">
+                          <div>
+                            <h4 className="font-semibold text-sm">{pkg.name}</h4>
+                            <p className="text-xs text-muted-foreground">{pkg.session_count} sessions</p>
                           </div>
-                          <div className="space-y-1 mb-3">
-                            <div className="flex justify-between text-xs">
-                              <span className="text-muted-foreground">Per session:</span>
-                              <span className="font-medium">KES {Math.round(pricePerSession).toLocaleString()}</span>
-                            </div>
-                            <div className="flex justify-between items-baseline pt-1.5 border-t border-border/50">
-                              <div>
-                                <p className="text-xs text-muted-foreground line-through">
-                                  KES {Math.round(originalPrice).toLocaleString()}
-                                </p>
-                                <p className="text-lg font-bold text-green-600">
-                                  KES {Math.round(pkg.total_price).toLocaleString()}
-                                </p>
-                              </div>
-                              <p className="text-xs text-green-600 font-medium">
-                                Save {Math.round(savings).toLocaleString()}
+                          <Badge variant="outline" className="text-green-600 border-green-600 text-xs">
+                            {pkg.discount_percentage}% off
+                          </Badge>
+                        </div>
+                        <div className="space-y-1 mb-3">
+                          <div className="flex justify-between text-xs">
+                            <span className="text-muted-foreground">Per session:</span>
+                            <span className="font-medium">KES {Math.round(pricePerSession).toLocaleString()}</span>
+                          </div>
+                          <div className="flex justify-between items-baseline pt-1.5 border-t border-border/50">
+                            <div>
+                              <p className="text-xs text-muted-foreground line-through">
+                                KES {Math.round(originalPrice).toLocaleString()}
+                              </p>
+                              <p className="text-lg font-bold text-green-600">
+                                KES {Math.round(pkg.total_price).toLocaleString()}
                               </p>
                             </div>
+                            <p className="text-xs text-green-600 font-medium">
+                              Save {Math.round(savings).toLocaleString()}
+                            </p>
                           </div>
-                          <Button 
-                            size="sm" 
-                            className="w-full bg-green-600 hover:bg-green-700"
-                            onClick={() => handlePackageSelect(pkg)}
-                          >
-                            Purchase Package
-                          </Button>
                         </div>
-                      );
-                    })}
-                  </div>
+                        <Button 
+                          size="sm" 
+                          className="w-full bg-green-600 hover:bg-green-700"
+                          onClick={() => handlePackageSelect(pkg)}
+                        >
+                          Purchase Package
+                        </Button>
+                      </div>
+                    );
+                  })}
                 </div>
-              )}
+              </div>
             </div>
           </CardContent>
         </Card>
