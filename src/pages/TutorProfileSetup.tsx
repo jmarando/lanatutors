@@ -17,6 +17,7 @@ import { SEO } from "@/components/SEO";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { getCurriculums, getLevelsForCurriculum, getSubjectsForCurriculumLevel } from "@/utils/curriculumData";
 import { NAIROBI_LOCATIONS } from "@/utils/locationData";
+import { validateAndNormalizePhone } from "@/utils/phoneValidation";
 
 const TEACHING_MODES = ["Online", "In-Person", "Hybrid"];
 
@@ -34,6 +35,7 @@ const TutorProfileSetup = () => {
     fullName: "",
     email: "",
     phoneNumber: "",
+    gender: "",
     // Privacy settings
     showFullName: true,
     showCurrentInstitution: true,
@@ -77,6 +79,10 @@ const TutorProfileSetup = () => {
   const [selectedLevelForSubjects, setSelectedLevelForSubjects] = useState("");
 
   const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [validationErrors, setValidationErrors] = useState<{
+    fullName?: string;
+    phoneNumber?: string;
+  }>({});
   
   const curriculums = getCurriculums();
   const availableLevelsForSubjects = selectedCurriculumForSubjects 
@@ -228,6 +234,38 @@ const TutorProfileSetup = () => {
     }
   };
 
+  const validateStep1 = () => {
+    const errors: { fullName?: string; phoneNumber?: string } = {};
+
+    // Validate full name
+    if (formData.fullName.trim().length < 2) {
+      errors.fullName = "Name must be at least 2 characters long";
+    } else if (!/^[a-zA-Z\s'-]+$/.test(formData.fullName)) {
+      errors.fullName = "Name should only contain letters, spaces, hyphens, and apostrophes";
+    }
+
+    // Validate phone number
+    const phoneValidation = validateAndNormalizePhone(formData.phoneNumber);
+    if (!phoneValidation.isValid) {
+      errors.phoneNumber = phoneValidation.error || "Invalid phone number";
+    }
+
+    setValidationErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
+
+  const handleContinueFromStep1 = () => {
+    if (validateStep1()) {
+      setStep(2);
+    } else {
+      toast({
+        title: "Validation Error",
+        description: "Please fix the errors before continuing",
+        variant: "destructive"
+      });
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -263,13 +301,16 @@ const TutorProfileSetup = () => {
         photoUrl = urlData.publicUrl;
       }
 
+      // Normalize phone number before saving
+      const phoneValidation = validateAndNormalizePhone(formData.phoneNumber);
+      
       // Create profile first
       const { error: profileError } = await supabase
         .from("profiles")
         .upsert({
           id: userId,
           full_name: formData.fullName,
-          phone_number: formData.phoneNumber,
+          phone_number: phoneValidation.normalized,
           avatar_url: formData.showPhoto ? photoUrl : null,
           updated_at: new Date().toISOString()
         });
@@ -301,6 +342,7 @@ const TutorProfileSetup = () => {
           teaching_location: formData.teachingLocations.join(', '),
           teaching_experience: formData.teachingHistory,
           graduation_year: formData.educationHistory[0]?.graduationYear ? parseInt(formData.educationHistory[0].graduationYear) : null,
+          gender: formData.gender || null,
           verified: false // Requires admin approval
         });
 
@@ -435,10 +477,19 @@ const TutorProfileSetup = () => {
                       <Input
                         id="fullName"
                         value={formData.fullName}
-                        onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+                        onChange={(e) => {
+                          setFormData({ ...formData, fullName: e.target.value });
+                          if (validationErrors.fullName) {
+                            setValidationErrors({ ...validationErrors, fullName: undefined });
+                          }
+                        }}
                         placeholder="John Doe"
                         required
+                        className={validationErrors.fullName ? "border-destructive" : ""}
                       />
+                      {validationErrors.fullName && (
+                        <p className="text-sm text-destructive">{validationErrors.fullName}</p>
+                      )}
                     </div>
 
                     <div className="space-y-2">
@@ -461,10 +512,39 @@ const TutorProfileSetup = () => {
                         id="phoneNumber"
                         type="tel"
                         value={formData.phoneNumber}
-                        onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
+                        onChange={(e) => {
+                          setFormData({ ...formData, phoneNumber: e.target.value });
+                          if (validationErrors.phoneNumber) {
+                            setValidationErrors({ ...validationErrors, phoneNumber: undefined });
+                          }
+                        }}
                         placeholder="+254 700 000 000"
                         required
+                        className={validationErrors.phoneNumber ? "border-destructive" : ""}
                       />
+                      {validationErrors.phoneNumber && (
+                        <p className="text-sm text-destructive">{validationErrors.phoneNumber}</p>
+                      )}
+                      <p className="text-xs text-muted-foreground">Format: +254XXXXXXXXX, 254XXXXXXXXX, or 0XXXXXXXXX</p>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="gender">Gender (Optional)</Label>
+                      <Select
+                        value={formData.gender}
+                        onValueChange={(value) => setFormData({ ...formData, gender: value })}
+                      >
+                        <SelectTrigger id="gender">
+                          <SelectValue placeholder="Select gender" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="male">Male</SelectItem>
+                          <SelectItem value="female">Female</SelectItem>
+                          <SelectItem value="other">Other</SelectItem>
+                          <SelectItem value="prefer_not_to_say">Prefer not to say</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <p className="text-xs text-muted-foreground">Some parents may have preferences</p>
                     </div>
                   </div>
 
@@ -1164,7 +1244,13 @@ const TutorProfileSetup = () => {
                 {step < 4 ? (
                   <Button 
                     type="button" 
-                    onClick={() => setStep(step + 1)}
+                    onClick={() => {
+                      if (step === 1) {
+                        handleContinueFromStep1();
+                      } else {
+                        setStep(step + 1);
+                      }
+                    }}
                     className="ml-auto"
                   >
                     Continue
