@@ -896,7 +896,10 @@ const TutorProfileSetup = () => {
                     <Label htmlFor="qualifications">Professional Certifications (one per line) *</Label>
                     <Textarea
                       id="qualifications"
-                      placeholder="TSC Certification&#10;Cambridge IGCSE Teaching Certificate&#10;IB Educator Certificate&#10;TEFL/TESOL Certification"
+                      placeholder="TSC Certification
+Cambridge IGCSE Teaching Certificate
+IB Educator Certificate
+TEFL/TESOL Certification"
                       value={formData.qualifications}
                       onChange={(e) => setFormData({ ...formData, qualifications: e.target.value })}
                       rows={4}
