@@ -312,22 +312,43 @@ const TutorProfile = () => {
                   
                   {/* Enhanced Tutor Details */}
                   <div className="space-y-2">
-                    {tutor.displayInstitution && tutor.school && (
+                    {/* Academic Qualifications */}
+                    {tutor.education && tutor.education.length > 0 && (
+                      <div className="flex items-start gap-2 text-sm">
+                        <GraduationCap className="w-4 h-4 mt-0.5 text-primary shrink-0" />
+                        <div className="space-y-0.5">
+                          {tutor.education.map((qual: string, index: number) => (
+                            <div key={index} className="text-muted-foreground">
+                              {qual}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                    
+                    {/* Current School/Institution */}
+                    {tutor.school && tutor.school !== "Not specified" && (
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <MapPin className="w-4 h-4" />
                         <span>{tutor.school}</span>
                       </div>
                     )}
+                    
+                    {/* Teaching Experience */}
                     <div className="flex items-center gap-2 text-sm text-muted-foreground">
                       <Award className="w-4 h-4" />
                       <span>{tutor.experience}+ years teaching experience</span>
                     </div>
+                    
+                    {/* Curriculum */}
                     {tutor.curriculum && tutor.curriculum.length > 0 && (
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <BookOpen className="w-4 h-4" />
                         <span>{tutor.curriculum.join(", ")}</span>
                       </div>
                     )}
+                    
+                    {/* Teaching Mode */}
                     {tutor.teachingMode && tutor.teachingMode.length > 0 && (
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <Video className="w-4 h-4" />
