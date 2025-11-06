@@ -55,8 +55,9 @@ const TutorProfileSetup = () => {
     currentInstitution: "",
     qualifications: "",
     teachingLocations: [] as string[],
-    package5Price: "",
-    package10Price: "",
+    package5Discount: "10",
+    package10Discount: "15",
+    doubleSessionDiscount: "5",
     // Education history
     educationHistory: [] as Array<{
       institution: string;
@@ -366,35 +367,37 @@ const TutorProfileSetup = () => {
         .eq("user_id", userId)
         .single();
 
-      // Create package offers with auto-calculated prices if rates specified
+      // Create package offers with auto-calculated prices based on selected discounts
       if (tutorProfile) {
         const packages = [];
         const hourlyRate = parseFloat(formData.hourlyRate);
         
-        // 5-session bundle with 10% discount
-        const price5 = Math.round(hourlyRate * 5 * 0.9);
+        // 5-session bundle with custom discount
+        const discount5 = parseFloat(formData.package5Discount) / 100;
+        const price5 = Math.round(hourlyRate * 5 * (1 - discount5));
         packages.push({
           tutor_id: tutorProfile.id,
           name: "5-Session Bundle",
           description: "Perfect for consistent weekly learning",
           session_count: 5,
           total_price: price5,
-          discount_percentage: 10,
+          discount_percentage: parseFloat(formData.package5Discount),
           validity_days: 90,
           is_active: true,
           package_type: 'single_subject',
           max_students: 1
         });
         
-        // 10-session bundle with 15% discount
-        const price10 = Math.round(hourlyRate * 10 * 0.85);
+        // 10-session bundle with custom discount
+        const discount10 = parseFloat(formData.package10Discount) / 100;
+        const price10 = Math.round(hourlyRate * 10 * (1 - discount10));
         packages.push({
           tutor_id: tutorProfile.id,
           name: "10-Session Bundle",
           description: "Best value for comprehensive mastery",
           session_count: 10,
           total_price: price10,
-          discount_percentage: 15,
+          discount_percentage: parseFloat(formData.package10Discount),
           validity_days: 90,
           is_active: true,
           package_type: 'single_subject',
@@ -402,15 +405,16 @@ const TutorProfileSetup = () => {
           is_featured: true
         });
         
-        // Double session bundle (2 hours)
-        const priceDouble = Math.round(hourlyRate * 2 * 0.95);
+        // Double session bundle (2 hours) with custom discount
+        const discountDouble = parseFloat(formData.doubleSessionDiscount) / 100;
+        const priceDouble = Math.round(hourlyRate * 2 * (1 - discountDouble));
         packages.push({
           tutor_id: tutorProfile.id,
           name: "Double Session",
           description: "2-hour intensive session",
           session_count: 1,
           total_price: priceDouble,
-          discount_percentage: 5,
+          discount_percentage: parseFloat(formData.doubleSessionDiscount),
           validity_days: 30,
           is_active: true,
           package_type: 'single_subject',
@@ -1204,7 +1208,7 @@ TEFL/TESOL Certification"
                     <div>
                       <Label className="text-base font-semibold">Package Bundles (Optional)</Label>
                       <p className="text-sm text-muted-foreground mt-1">
-                        Offer discounted packages to encourage bulk bookings. We recommend at least a 5-session and 10-session bundle.
+                        Choose discount percentages for your package bundles. We'll calculate the prices automatically.
                       </p>
                     </div>
                     
@@ -1213,18 +1217,24 @@ TEFL/TESOL Certification"
                         <Label className="font-medium">5-Session Bundle</Label>
                         <div className="space-y-2">
                           <div>
-                            <Label htmlFor="package5Price" className="text-xs">Total Price (KES)</Label>
-                            <Input
-                              id="package5Price"
-                              type="number"
-                              step="100"
-                              placeholder={formData.hourlyRate ? (parseFloat(formData.hourlyRate) * 5 * 0.9).toFixed(0) : "13500"}
-                              value={formData.package5Price}
-                              onChange={(e) => setFormData({ ...formData, package5Price: e.target.value })}
-                            />
-                            {formData.hourlyRate && formData.package5Price && (
+                            <Label htmlFor="package5Discount" className="text-xs">Discount Percentage</Label>
+                            <Select
+                              value={formData.package5Discount}
+                              onValueChange={(value) => setFormData({ ...formData, package5Discount: value })}
+                            >
+                              <SelectTrigger id="package5Discount">
+                                <SelectValue placeholder="Select discount" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="5">5%</SelectItem>
+                                <SelectItem value="10">10%</SelectItem>
+                                <SelectItem value="15">15%</SelectItem>
+                                <SelectItem value="20">20%</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            {formData.hourlyRate && formData.package5Discount && (
                               <p className="text-xs text-green-600 mt-1">
-                                {(((parseFloat(formData.hourlyRate) * 5 - parseFloat(formData.package5Price)) / (parseFloat(formData.hourlyRate) * 5)) * 100).toFixed(0)}% discount
+                                Total Price: KES {Math.round(parseFloat(formData.hourlyRate) * 5 * (1 - parseFloat(formData.package5Discount) / 100)).toLocaleString()}
                               </p>
                             )}
                           </div>
@@ -1235,18 +1245,24 @@ TEFL/TESOL Certification"
                         <Label className="font-medium">10-Session Bundle</Label>
                         <div className="space-y-2">
                           <div>
-                            <Label htmlFor="package10Price" className="text-xs">Total Price (KES)</Label>
-                            <Input
-                              id="package10Price"
-                              type="number"
-                              step="100"
-                              placeholder={formData.hourlyRate ? (parseFloat(formData.hourlyRate) * 10 * 0.85).toFixed(0) : "25500"}
-                              value={formData.package10Price}
-                              onChange={(e) => setFormData({ ...formData, package10Price: e.target.value })}
-                            />
-                            {formData.hourlyRate && formData.package10Price && (
+                            <Label htmlFor="package10Discount" className="text-xs">Discount Percentage</Label>
+                            <Select
+                              value={formData.package10Discount}
+                              onValueChange={(value) => setFormData({ ...formData, package10Discount: value })}
+                            >
+                              <SelectTrigger id="package10Discount">
+                                <SelectValue placeholder="Select discount" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="10">10%</SelectItem>
+                                <SelectItem value="15">15%</SelectItem>
+                                <SelectItem value="20">20%</SelectItem>
+                                <SelectItem value="25">25%</SelectItem>
+                              </SelectContent>
+                            </Select>
+                            {formData.hourlyRate && formData.package10Discount && (
                               <p className="text-xs text-green-600 mt-1">
-                                {(((parseFloat(formData.hourlyRate) * 10 - parseFloat(formData.package10Price)) / (parseFloat(formData.hourlyRate) * 10)) * 100).toFixed(0)}% discount
+                                Total Price: KES {Math.round(parseFloat(formData.hourlyRate) * 10 * (1 - parseFloat(formData.package10Discount) / 100)).toLocaleString()}
                               </p>
                             )}
                           </div>
@@ -1269,16 +1285,16 @@ TEFL/TESOL Certification"
                       {formData.hourlyRate && (
                         <div className="space-y-2 text-sm">
                           <div className="flex justify-between items-center p-2 bg-background rounded">
-                            <span>5-Session Bundle (10% off)</span>
-                            <span className="font-medium">KES {(parseFloat(formData.hourlyRate) * 5 * 0.9).toLocaleString()}</span>
+                            <span>5-Session Bundle ({formData.package5Discount}% off)</span>
+                            <span className="font-medium">KES {Math.round(parseFloat(formData.hourlyRate) * 5 * (1 - parseFloat(formData.package5Discount) / 100)).toLocaleString()}</span>
                           </div>
                           <div className="flex justify-between items-center p-2 bg-background rounded">
-                            <span>10-Session Bundle (15% off)</span>
-                            <span className="font-medium">KES {(parseFloat(formData.hourlyRate) * 10 * 0.85).toLocaleString()}</span>
+                            <span>10-Session Bundle ({formData.package10Discount}% off)</span>
+                            <span className="font-medium">KES {Math.round(parseFloat(formData.hourlyRate) * 10 * (1 - parseFloat(formData.package10Discount) / 100)).toLocaleString()}</span>
                           </div>
                           <div className="flex justify-between items-center p-2 bg-background rounded">
-                            <span>Double Session - 2hrs (5% off)</span>
-                            <span className="font-medium">KES {(parseFloat(formData.hourlyRate) * 2 * 0.95).toLocaleString()}</span>
+                            <span>Double Session - 2hrs ({formData.doubleSessionDiscount}% off)</span>
+                            <span className="font-medium">KES {Math.round(parseFloat(formData.hourlyRate) * 2 * (1 - parseFloat(formData.doubleSessionDiscount) / 100)).toLocaleString()}</span>
                           </div>
                           <p className="text-xs text-muted-foreground italic mt-3">
                             💡 These packages apply to {formData.teachingMode.length === 2 ? "both online and in-person" : formData.teachingMode[0]?.toLowerCase() || "online"} sessions
