@@ -660,7 +660,7 @@ const TutorProfileSetup = () => {
                               ...formData,
                               educationHistory: newHistory
                             });
-                          }} placeholder="e.g., Bachelor's, Master's" />
+                          }} placeholder="e.g., Bachelor's, Master's, Diploma" />
                             </div>
                           </div>
                           <div className="grid grid-cols-2 gap-3">
