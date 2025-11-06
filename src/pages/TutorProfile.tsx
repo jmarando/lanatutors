@@ -8,6 +8,7 @@ import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Star, GraduationCap, Clock, BookOpen, Award, MapPin, Users, CheckCircle2, Heart, Sparkles } from "lucide-react";
 import { toast } from "sonner";
+import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { SEO } from "@/components/SEO";
 import { BookingCalendar } from "@/components/BookingCalendar";
@@ -25,6 +26,8 @@ const TutorProfile = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [isBookingOpen, setIsBookingOpen] = useState(false);
+  const [isPackagePurchaseOpen, setIsPackagePurchaseOpen] = useState(false);
+  const [selectedPackage, setSelectedPackage] = useState<any>(null);
   const [bookingType, setBookingType] = useState<'paid' | 'trial' | 'free'>('paid');
   const [tutor, setTutor] = useState<any>(null);
   const [currentUser, setCurrentUser] = useState<any>(null);
@@ -205,6 +208,40 @@ const TutorProfile = () => {
     }
     
     setIsBookingOpen(true);
+  };
+
+  const { toast: showToast } = useToast();
+
+  const handlePackageSelect = async (pkg: any) => {
+    setSelectedPackage(pkg);
+    
+    // Check if user is logged in
+    if (!currentUser) {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        showToast({
+          title: "Please Sign In",
+          description: "You need to sign in to purchase a package",
+          variant: "destructive",
+        });
+        navigate(`/login?redirect=${encodeURIComponent(window.location.pathname)}`);
+        return;
+      }
+      
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", user.id)
+        .single();
+      
+      setCurrentUser({
+        id: user.id,
+        email: user.email,
+        name: profile?.full_name || "Student",
+      });
+    }
+    
+    setIsPackagePurchaseOpen(true);
   };
 
   if (loading) {
@@ -405,6 +442,13 @@ const TutorProfile = () => {
                               </p>
                             </div>
                           </div>
+                          <Button 
+                            size="sm" 
+                            className="w-full bg-green-600 hover:bg-green-700"
+                            onClick={() => handlePackageSelect(pkg)}
+                          >
+                            Purchase Package
+                          </Button>
                         </div>
                       );
                     })}
@@ -703,6 +747,152 @@ const TutorProfile = () => {
                 </div>
               )}
             </div>
+          </DialogContent>
+        </Dialog>
+
+        {/* Package Purchase Dialog */}
+        <Dialog open={isPackagePurchaseOpen} onOpenChange={setIsPackagePurchaseOpen}>
+          <DialogContent className="max-w-2xl">
+            <DialogHeader>
+              <DialogTitle>Purchase {selectedPackage?.name}</DialogTitle>
+              <DialogDescription>
+                You're about to purchase a package of {selectedPackage?.session_count} sessions. After purchase, you'll be able to book individual sessions from your package credit.
+              </DialogDescription>
+            </DialogHeader>
+            
+            {selectedPackage && (
+              <div className="space-y-6 py-4">
+                <Card className="bg-muted/50">
+                  <CardContent className="p-4">
+                    <div className="space-y-3">
+                      <div className="flex justify-between">
+                        <span className="text-sm text-muted-foreground">Package:</span>
+                        <span className="font-semibold">{selectedPackage.name}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-sm text-muted-foreground">Total Sessions:</span>
+                        <span className="font-semibold">{selectedPackage.session_count} sessions</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-sm text-muted-foreground">Valid for:</span>
+                        <span className="font-semibold">{selectedPackage.validity_days} days</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-sm text-muted-foreground">Price per session:</span>
+                        <span className="font-semibold">
+                          KES {Math.round(selectedPackage.total_price / selectedPackage.session_count).toLocaleString()}
+                        </span>
+                      </div>
+                      <Separator />
+                      <div className="flex justify-between items-baseline">
+                        <span className="font-semibold">Total Amount:</span>
+                        <div className="text-right">
+                          <p className="text-2xl font-bold text-primary">
+                            KES {Math.round(selectedPackage.total_price).toLocaleString()}
+                          </p>
+                          <p className="text-xs text-green-600">
+                            You save {selectedPackage.discount_percentage}%
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <div className="bg-blue-50 dark:bg-blue-950/20 p-4 rounded-lg">
+                  <h4 className="font-semibold text-sm mb-2 flex items-center gap-2">
+                    <CheckCircle2 className="w-4 h-4 text-blue-600" />
+                    How It Works
+                  </h4>
+                  <ul className="space-y-2 text-sm text-muted-foreground">
+                    <li className="flex gap-2">
+                      <span className="text-blue-600 font-bold">1.</span>
+                      <span>Purchase this package now</span>
+                    </li>
+                    <li className="flex gap-2">
+                      <span className="text-blue-600 font-bold">2.</span>
+                      <span>Book individual sessions one at a time when it suits you</span>
+                    </li>
+                    <li className="flex gap-2">
+                      <span className="text-blue-600 font-bold">3.</span>
+                      <span>Each booking uses 1 session from your package credit</span>
+                    </li>
+                    <li className="flex gap-2">
+                      <span className="text-blue-600 font-bold">4.</span>
+                      <span>Use all {selectedPackage.session_count} sessions within {selectedPackage.validity_days} days</span>
+                    </li>
+                  </ul>
+                </div>
+
+                <Button 
+                  size="lg" 
+                  className="w-full"
+                  onClick={async () => {
+                    try {
+                      const { data: { user } } = await supabase.auth.getUser();
+                      if (!user) {
+                        showToast({
+                          title: "Please Sign In",
+                          description: "You need to be signed in to purchase",
+                          variant: "destructive",
+                        });
+                        return;
+                      }
+
+                      // Create package purchase
+                      const expiresAt = new Date();
+                      expiresAt.setDate(expiresAt.getDate() + selectedPackage.validity_days);
+
+                      const { data: purchase, error } = await supabase
+                        .from('package_purchases')
+                        .insert({
+                          student_id: user.id,
+                          tutor_id: id,
+                          package_offer_id: selectedPackage.id,
+                          total_sessions: selectedPackage.session_count,
+                          sessions_remaining: selectedPackage.session_count,
+                          total_amount: selectedPackage.total_price,
+                          amount_paid: 0,
+                          expires_at: expiresAt.toISOString(),
+                          payment_status: 'pending',
+                        })
+                        .select()
+                        .single();
+
+                      if (error) throw error;
+
+                      // Initiate payment
+                      const { data: paymentData, error: paymentError } = await supabase.functions.invoke('initiate-pesapal-payment', {
+                        body: {
+                          amount: selectedPackage.total_price,
+                          description: `${selectedPackage.name} - ${selectedPackage.session_count} sessions with ${tutor.name}`,
+                          paymentType: 'package',
+                          referenceId: purchase.id,
+                          callbackUrl: window.location.origin + '/payment-callback',
+                        },
+                      });
+
+                      if (paymentError) throw paymentError;
+
+                      // Redirect to payment
+                      if (paymentData.redirect_url) {
+                        window.location.href = paymentData.redirect_url;
+                      }
+
+                    } catch (error: any) {
+                      console.error('Package purchase error:', error);
+                      showToast({
+                        title: "Purchase Failed",
+                        description: error.message || "Failed to initiate package purchase",
+                        variant: "destructive",
+                      });
+                    }
+                  }}
+                >
+                  Proceed to Payment
+                </Button>
+              </div>
+            )}
           </DialogContent>
         </Dialog>
       </div>
