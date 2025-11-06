@@ -802,15 +802,27 @@ const TutorProfile = () => {
                       </div>
                       <Separator />
                       <div className="flex justify-between items-baseline">
-                        <span className="font-semibold">Total Amount:</span>
+                        <span className="font-semibold">Total Package Price:</span>
                         <div className="text-right">
-                          <p className="text-2xl font-bold text-primary">
+                          <p className="text-lg font-bold">
                             KES {Math.round(selectedPackage.total_price).toLocaleString()}
                           </p>
                           <p className="text-xs text-green-600">
                             You save {selectedPackage.discount_percentage}%
                           </p>
                         </div>
+                      </div>
+                      <Separator />
+                      <div className="bg-blue-50 dark:bg-blue-950/20 p-3 rounded-lg">
+                        <div className="flex justify-between items-baseline mb-1">
+                          <span className="text-sm font-semibold text-blue-900 dark:text-blue-100">Pay Today (30% Deposit):</span>
+                          <p className="text-xl font-bold text-blue-600">
+                            KES {Math.round(selectedPackage.total_price * 0.3).toLocaleString()}
+                          </p>
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          Remaining balance: KES {Math.round(selectedPackage.total_price * 0.7).toLocaleString()} (pay later)
+                        </p>
                       </div>
                     </div>
                   </CardContent>
@@ -824,7 +836,7 @@ const TutorProfile = () => {
                   <ul className="space-y-2 text-sm text-muted-foreground">
                     <li className="flex gap-2">
                       <span className="text-blue-600 font-bold">1.</span>
-                      <span>Purchase this package now</span>
+                      <span>Pay 30% deposit today to secure your package</span>
                     </li>
                     <li className="flex gap-2">
                       <span className="text-blue-600 font-bold">2.</span>
@@ -836,6 +848,10 @@ const TutorProfile = () => {
                     </li>
                     <li className="flex gap-2">
                       <span className="text-blue-600 font-bold">4.</span>
+                      <span>Pay the remaining 70% balance anytime from your dashboard</span>
+                    </li>
+                    <li className="flex gap-2">
+                      <span className="text-blue-600 font-bold">5.</span>
                       <span>Use all {selectedPackage.session_count} sessions within {selectedPackage.validity_days} days</span>
                     </li>
                   </ul>
@@ -862,6 +878,13 @@ const TutorProfile = () => {
                       console.log('Package details:', selectedPackage);
                       console.log('Tutor ID:', id);
 
+                      // Calculate deposit (30% of total)
+                      const depositAmount = Math.round(selectedPackage.total_price * 0.3);
+                      const remainingBalance = selectedPackage.total_price - depositAmount;
+
+                      console.log('Deposit amount:', depositAmount);
+                      console.log('Remaining balance:', remainingBalance);
+
                       // Create package purchase
                       const expiresAt = new Date();
                       expiresAt.setDate(expiresAt.getDate() + selectedPackage.validity_days);
@@ -876,9 +899,9 @@ const TutorProfile = () => {
                           total_sessions: selectedPackage.session_count,
                           sessions_remaining: selectedPackage.session_count,
                           total_amount: selectedPackage.total_price,
-                          amount_paid: 0,
+                          amount_paid: depositAmount,
                           expires_at: expiresAt.toISOString(),
-                          payment_status: 'pending',
+                          payment_status: 'partial',
                         })
                         .select()
                         .single();
@@ -890,13 +913,13 @@ const TutorProfile = () => {
 
                       console.log('Package purchase created:', purchase);
 
-                      // Initiate payment
-                      console.log('Initiating Pesapal payment...');
+                      // Initiate payment for deposit
+                      console.log('Initiating Pesapal payment for deposit...');
                       const { data: paymentData, error: paymentError } = await supabase.functions.invoke('initiate-pesapal-payment', {
                         body: {
-                          amount: selectedPackage.total_price,
-                          description: `${selectedPackage.name} - ${selectedPackage.session_count} sessions with ${tutor.name}`,
-                          paymentType: 'package',
+                          amount: depositAmount,
+                          description: `${selectedPackage.name} - Deposit (30%) for ${selectedPackage.session_count} sessions with ${tutor.name}`,
+                          paymentType: 'package_deposit',
                           referenceId: purchase.id,
                           callbackUrl: window.location.origin + '/payment-callback',
                         },
@@ -928,7 +951,7 @@ const TutorProfile = () => {
                     }
                   }}
                 >
-                  Proceed to Payment
+                  Pay 30% Deposit (KES {Math.round(selectedPackage.total_price * 0.3).toLocaleString()})
                 </Button>
               </div>
             )}
