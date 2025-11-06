@@ -673,7 +673,7 @@ const TutorProfileSetup = () => {
                               ...formData,
                               educationHistory: newHistory
                             });
-                          }} placeholder="e.g., Mathematics Education" />
+                          }} placeholder="e.g., Mathematics, English" />
                             </div>
                             <div className="space-y-2">
                               <Label>Graduation Year *</Label>
