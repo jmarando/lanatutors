@@ -424,10 +424,6 @@ const TutorProfileSetup = () => {
       <SEO title="Complete Your Tutor Profile - Lana" description="Set up your tutor profile to start teaching on Lana" keywords="tutor profile setup, online teaching, Lana" />
       
       <div className="w-full max-w-7xl">
-        <div className="flex items-center justify-center gap-2 mb-8">
-          <Award className="w-10 h-10 text-primary" />
-          <span className="text-3xl font-bold">Lana</span>
-        </div>
 
         <div className="grid lg:grid-cols-2 gap-6">
           {/* Form Section */}
