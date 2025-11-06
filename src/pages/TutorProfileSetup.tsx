@@ -19,7 +19,7 @@ import { getCurriculums, getLevelsForCurriculum, getSubjectsForCurriculumLevel }
 import { NAIROBI_LOCATIONS } from "@/utils/locationData";
 import { validateAndNormalizePhone } from "@/utils/phoneValidation";
 
-const TEACHING_MODES = ["Online", "In-Person", "Hybrid"];
+const TEACHING_MODES = ["Online", "In-Person"];
 
 const TutorProfileSetup = () => {
   const navigate = useNavigate();
@@ -43,6 +43,7 @@ const TutorProfileSetup = () => {
     // Bio & basic info
     bio: "",
     curriculum: [] as string[],
+    customCurriculum: "",
     subjectsWithContext: [] as Array<{
       curriculum: string;
       level: string;
@@ -53,8 +54,6 @@ const TutorProfileSetup = () => {
     experienceYears: "",
     currentInstitution: "",
     qualifications: "",
-    specializations: "",
-    whyStudentsLove: "",
     teachingLocations: [] as string[],
     package5Price: "",
     package10Price: "",
@@ -158,6 +157,15 @@ const TutorProfileSetup = () => {
     if (checked) {
       setFormData({ ...formData, curriculum: [...formData.curriculum, curriculum] });
     } else {
+      // Don't allow unchecking "Other" if there's a custom curriculum entered
+      if (curriculum === "Other" && formData.customCurriculum) {
+        toast({
+          title: "Clear custom curriculum first",
+          description: "Please remove your custom curriculum text before unchecking 'Other'",
+          variant: "destructive"
+        });
+        return;
+      }
       setFormData({ ...formData, curriculum: formData.curriculum.filter(c => c !== curriculum) });
       // Remove associated levels and subjects
       const newLevels = { ...curriculumLevels };
@@ -322,6 +330,11 @@ const TutorProfileSetup = () => {
         levels.map(level => `${curriculum} - ${level}`)
       );
 
+      // Build final curriculum array including custom curriculum
+      const finalCurriculum = formData.curriculum.includes("Other") && formData.customCurriculum
+        ? [...formData.curriculum.filter(c => c !== "Other"), formData.customCurriculum]
+        : formData.curriculum;
+
       // Create tutor profile
       const { error: tutorError } = await supabase
         .from("tutor_profiles")
@@ -329,7 +342,7 @@ const TutorProfileSetup = () => {
           user_id: userId,
           bio: formData.bio,
           subjects: derivedSubjects,
-          curriculum: formData.curriculum,
+          curriculum: finalCurriculum,
           teaching_mode: formData.teachingMode,
           teaching_levels: teachingLevels,
           hourly_rate: parseFloat(formData.hourlyRate),
@@ -337,8 +350,6 @@ const TutorProfileSetup = () => {
           current_institution: formData.currentInstitution,
           display_institution: formData.showCurrentInstitution,
           qualifications: formData.qualifications.split('\n').filter(q => q.trim()),
-          specializations: formData.specializations,
-          why_students_love: formData.whyStudentsLove.split('\n').filter(w => w.trim()),
           teaching_location: formData.teachingLocations.join(', '),
           teaching_experience: formData.teachingHistory,
           graduation_year: formData.educationHistory[0]?.graduationYear ? parseInt(formData.educationHistory[0].graduationYear) : null,
@@ -355,56 +366,62 @@ const TutorProfileSetup = () => {
         .eq("user_id", userId)
         .single();
 
-      // Create package offers if specified
-      if (tutorProfile && (formData.package5Price || formData.package10Price)) {
+      // Create package offers with auto-calculated prices if rates specified
+      if (tutorProfile) {
         const packages = [];
+        const hourlyRate = parseFloat(formData.hourlyRate);
         
-        if (formData.package5Price) {
-          const price5 = parseFloat(formData.package5Price);
-          const regularPrice5 = parseFloat(formData.hourlyRate) * 5;
-          const discount5 = ((regularPrice5 - price5) / regularPrice5) * 100;
-          
-          packages.push({
-            tutor_id: tutorProfile.id,
-            name: "5-Session Bundle",
-            description: "Perfect for consistent weekly learning",
-            session_count: 5,
-            total_price: price5,
-            discount_percentage: Math.round(discount5),
-            validity_days: 90,
-            is_active: true,
-            package_type: 'single_subject',
-            max_students: 1
-          });
-        }
+        // 5-session bundle with 10% discount
+        const price5 = Math.round(hourlyRate * 5 * 0.9);
+        packages.push({
+          tutor_id: tutorProfile.id,
+          name: "5-Session Bundle",
+          description: "Perfect for consistent weekly learning",
+          session_count: 5,
+          total_price: price5,
+          discount_percentage: 10,
+          validity_days: 90,
+          is_active: true,
+          package_type: 'single_subject',
+          max_students: 1
+        });
         
-        if (formData.package10Price) {
-          const price10 = parseFloat(formData.package10Price);
-          const regularPrice10 = parseFloat(formData.hourlyRate) * 10;
-          const discount10 = ((regularPrice10 - price10) / regularPrice10) * 100;
-          
-          packages.push({
-            tutor_id: tutorProfile.id,
-            name: "10-Session Bundle",
-            description: "Best value for comprehensive mastery",
-            session_count: 10,
-            total_price: price10,
-            discount_percentage: Math.round(discount10),
-            validity_days: 90,
-            is_active: true,
-            package_type: 'single_subject',
-            max_students: 1,
-            is_featured: true
-          });
-        }
+        // 10-session bundle with 15% discount
+        const price10 = Math.round(hourlyRate * 10 * 0.85);
+        packages.push({
+          tutor_id: tutorProfile.id,
+          name: "10-Session Bundle",
+          description: "Best value for comprehensive mastery",
+          session_count: 10,
+          total_price: price10,
+          discount_percentage: 15,
+          validity_days: 90,
+          is_active: true,
+          package_type: 'single_subject',
+          max_students: 1,
+          is_featured: true
+        });
         
-        if (packages.length > 0) {
-          const { error: packageError } = await supabase
-            .from("package_offers")
-            .insert(packages);
-          
-          if (packageError) console.error("Package creation error:", packageError);
-        }
+        // Double session bundle (2 hours)
+        const priceDouble = Math.round(hourlyRate * 2 * 0.95);
+        packages.push({
+          tutor_id: tutorProfile.id,
+          name: "Double Session",
+          description: "2-hour intensive session",
+          session_count: 1,
+          total_price: priceDouble,
+          discount_percentage: 5,
+          validity_days: 30,
+          is_active: true,
+          package_type: 'single_subject',
+          max_students: 1
+        });
+        
+        const { error: packageError } = await supabase
+          .from("package_offers")
+          .insert(packages);
+        
+        if (packageError) console.error("Package creation error:", packageError);
       }
 
       // Assign tutor role
@@ -916,7 +933,7 @@ TEFL/TESOL Certification"
                   <p className="text-sm text-muted-foreground">
                     First select curricula and levels you teach, then choose your subjects
                   </p>
-                  
+                   
                   <div className="space-y-6">
                     {/* Step 1: Select Curricula */}
                     <div className="space-y-3">
@@ -932,7 +949,26 @@ TEFL/TESOL Certification"
                             <Label htmlFor={`curriculum-${curr}`} className="cursor-pointer">{curr}</Label>
                           </div>
                         ))}
+                        <div className="flex items-center space-x-2">
+                          <Checkbox
+                            id="curriculum-Other"
+                            checked={formData.curriculum.includes("Other")}
+                            onCheckedChange={(checked) => handleCurriculumToggle("Other", checked as boolean)}
+                          />
+                          <Label htmlFor="curriculum-Other" className="cursor-pointer">Other</Label>
+                        </div>
                       </div>
+                      
+                      {formData.curriculum.includes("Other") && (
+                        <div className="mt-3">
+                          <Input
+                            placeholder="Enter curriculum name (e.g., ACE, French Baccalaureate)"
+                            value={formData.customCurriculum}
+                            onChange={(e) => setFormData({ ...formData, customCurriculum: e.target.value })}
+                            className="max-w-md"
+                          />
+                        </div>
+                      )}
                     </div>
 
                     {/* Step 2: Select Levels for each Curriculum */}
@@ -1089,14 +1125,15 @@ TEFL/TESOL Certification"
 
 
                   <div className="space-y-2">
-                    <Label>Teaching Locations (if in-person)</Label>
+                    <Label>Teaching Locations (required for in-person)</Label>
                     <p className="text-sm text-muted-foreground mb-2">Select all areas where you can teach</p>
-                    <div className="border rounded-lg p-4 bg-background max-h-[300px] overflow-y-auto space-y-2">
+                    <div className={`border rounded-lg p-4 bg-background max-h-[300px] overflow-y-auto space-y-2 ${!formData.teachingMode.includes("In-Person") ? "opacity-50" : ""}`}>
                       {NAIROBI_LOCATIONS.map((location) => (
                         <div key={location} className="flex items-center space-x-2">
                           <Checkbox
                             id={`location-${location}`}
                             checked={formData.teachingLocations.includes(location)}
+                            disabled={!formData.teachingMode.includes("In-Person")}
                             onCheckedChange={(checked) => {
                               if (checked) {
                                 setFormData({
@@ -1111,12 +1148,17 @@ TEFL/TESOL Certification"
                               }
                             }}
                           />
-                          <Label htmlFor={`location-${location}`} className="cursor-pointer text-sm">
+                          <Label htmlFor={`location-${location}`} className={`cursor-pointer text-sm ${!formData.teachingMode.includes("In-Person") ? "text-muted-foreground" : ""}`}>
                             {location}
                           </Label>
                         </div>
                       ))}
                     </div>
+                    {!formData.teachingMode.includes("In-Person") && (
+                      <p className="text-sm text-muted-foreground mt-2">
+                        Enable "In-Person" teaching mode to select locations
+                      </p>
+                    )}
                     {formData.teachingLocations.length > 0 && (
                       <p className="text-sm text-muted-foreground mt-2">
                         Selected: {formData.teachingLocations.length} location{formData.teachingLocations.length > 1 ? 's' : ''}
@@ -1217,26 +1259,33 @@ TEFL/TESOL Certification"
                     </p>
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor="specializations">Specializations</Label>
-                    <Textarea
-                      id="specializations"
-                      placeholder="e.g., KCSE Exam Prep, Weak Students, Advanced Learners"
-                      value={formData.specializations}
-                      onChange={(e) => setFormData({ ...formData, specializations: e.target.value })}
-                      rows={3}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label htmlFor="whyStudentsLove">Why Students Love You (one per line)</Label>
-                    <Textarea
-                      id="whyStudentsLove"
-                      placeholder="Patient and encouraging&#10;Makes complex topics simple&#10;Focuses on exam strategies"
-                      value={formData.whyStudentsLove}
-                      onChange={(e) => setFormData({ ...formData, whyStudentsLove: e.target.value })}
-                      rows={4}
-                    />
+                  <div className="space-y-3 pt-4">
+                    <div className="bg-muted/30 p-4 rounded-lg">
+                      <h4 className="font-semibold mb-2">Package Bundles (Auto-generated)</h4>
+                      <p className="text-sm text-muted-foreground mb-3">
+                        We'll automatically create discounted packages based on your hourly rate to encourage bulk bookings.
+                      </p>
+                      
+                      {formData.hourlyRate && (
+                        <div className="space-y-2 text-sm">
+                          <div className="flex justify-between items-center p-2 bg-background rounded">
+                            <span>5-Session Bundle (10% off)</span>
+                            <span className="font-medium">KES {(parseFloat(formData.hourlyRate) * 5 * 0.9).toLocaleString()}</span>
+                          </div>
+                          <div className="flex justify-between items-center p-2 bg-background rounded">
+                            <span>10-Session Bundle (15% off)</span>
+                            <span className="font-medium">KES {(parseFloat(formData.hourlyRate) * 10 * 0.85).toLocaleString()}</span>
+                          </div>
+                          <div className="flex justify-between items-center p-2 bg-background rounded">
+                            <span>Double Session - 2hrs (5% off)</span>
+                            <span className="font-medium">KES {(parseFloat(formData.hourlyRate) * 2 * 0.95).toLocaleString()}</span>
+                          </div>
+                          <p className="text-xs text-muted-foreground italic mt-3">
+                            💡 These packages apply to {formData.teachingMode.length === 2 ? "both online and in-person" : formData.teachingMode[0]?.toLowerCase() || "online"} sessions
+                          </p>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               )}
@@ -1275,109 +1324,107 @@ TEFL/TESOL Certification"
             </Card>
 
             {/* Preview Section - Tutor Card */}
-            <Card className="sticky top-6">
-          <CardHeader>
-            <CardTitle className="text-lg">Tutor Card Preview</CardTitle>
-            <CardDescription>How you'll appear in "Find a Tutor" search results</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {/* Tutor Search Card Preview */}
-            <Card className="border-2 hover:border-primary/50 transition-all cursor-pointer">
-              <CardContent className="p-6">
-                <div className="flex gap-4 mb-4">
-                  <Avatar className="w-16 h-16 shrink-0">
-                    {formData.showPhoto && photoFile ? (
-                      <AvatarImage src={URL.createObjectURL(photoFile)} />
-                    ) : (
-                      <AvatarFallback className="text-xl bg-primary text-primary-foreground">
-                        {formData.fullName.split(' ').map(n => n[0]).join('').slice(0, 2) || "T"}
-                      </AvatarFallback>
-                    )}
-                  </Avatar>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-bold text-lg mb-1 truncate">
-                      {formData.showFullName 
-                        ? (formData.fullName || "Your Name")
-                        : (formData.fullName.split(' ')[0] || "Your Name")}
-                    </h3>
-                    <p className="text-sm text-muted-foreground mb-2 line-clamp-1">
-                      {derivedSubjects.length > 0 ? derivedSubjects.join(", ") : "Your Subjects"}
-                    </p>
-                    {formData.showCurrentInstitution && formData.currentInstitution && (
-                      <div className="flex items-center gap-1 text-xs text-muted-foreground mb-2">
-                        <MapPin className="w-3 h-3" />
-                        <span className="truncate">{formData.currentInstitution}</span>
-                      </div>
-                    )}
-                    {!formData.showCurrentInstitution && formData.experienceYears && (
-                      <div className="flex items-center gap-1 text-xs text-muted-foreground mb-2">
-                        <Award className="w-3 h-3" />
-                        <span>{formData.experienceYears}+ years experience</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                {formData.bio && (
-                  <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
-                    {formData.bio}
-                  </p>
-                )}
-
-                {formData.curriculum.length > 0 && (
-                  <div className="flex flex-wrap gap-1 mb-4">
-                    {formData.curriculum.slice(0, 3).map(curr => (
-                      <Badge key={curr} variant="secondary" className="text-xs">
-                        {curr}
-                      </Badge>
-                    ))}
-                    {formData.curriculum.length > 3 && (
-                      <Badge variant="secondary" className="text-xs">
-                        +{formData.curriculum.length - 3}
-                      </Badge>
-                    )}
-                  </div>
-                )}
-
-                <div className="flex items-center justify-between pt-4 border-t">
-                  <div className="flex items-center gap-3">
-                    <div className="flex items-center gap-1">
-                      <Star className="w-4 h-4 fill-yellow-500 text-yellow-500" />
-                      <span className="font-semibold text-sm">5.0</span>
-                      <span className="text-xs text-muted-foreground">(New)</span>
-                    </div>
-                  </div>
-                  <div className="text-right">
-                    {formData.hourlyRate && (
-                      <>
-                        <div className="font-bold text-lg">
-                          KES {Number(formData.hourlyRate).toLocaleString()}
-                          <span className="text-sm font-normal text-muted-foreground">/hr</span>
+            <div className="space-y-4">
+              <Card className="sticky top-6">
+                <CardHeader>
+                  <CardTitle className="text-lg">Search Card Preview</CardTitle>
+                  <CardDescription>How you'll appear in "Find a Tutor" results</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  {/* Tutor Search Card Preview */}
+                  <Card className="border-2 hover:border-primary/50 transition-all cursor-pointer">
+                    <CardContent className="p-6">
+                      <div className="flex gap-4 mb-4">
+                        <Avatar className="w-16 h-16 shrink-0">
+                          {formData.showPhoto && photoFile ? (
+                            <AvatarImage src={URL.createObjectURL(photoFile)} />
+                          ) : (
+                            <AvatarFallback className="text-xl bg-primary text-primary-foreground">
+                              {formData.fullName.split(' ').map(n => n[0]).join('').slice(0, 2) || "T"}
+                            </AvatarFallback>
+                          )}
+                        </Avatar>
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-bold text-lg mb-1 truncate">
+                            {formData.showFullName 
+                              ? (formData.fullName || "Your Name")
+                              : (formData.fullName.split(' ')[0] || "Your Name")}
+                          </h3>
+                          <p className="text-sm text-muted-foreground mb-2 line-clamp-1">
+                            {derivedSubjects.length > 0 ? derivedSubjects.join(", ") : "Your Subjects"}
+                          </p>
+                          {formData.showCurrentInstitution && formData.currentInstitution && (
+                            <div className="flex items-center gap-1 text-xs text-muted-foreground mb-2">
+                              <MapPin className="w-3 h-3" />
+                              <span className="truncate">{formData.currentInstitution}</span>
+                            </div>
+                          )}
                         </div>
-                        <span className="text-xs text-muted-foreground">online</span>
-                      </>
-                    )}
-                    {!formData.hourlyRate && (
-                      <span className="text-sm text-muted-foreground">Set rate in Step 4</span>
-                    )}
+                      </div>
+
+                      {formData.bio && (
+                        <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
+                          {formData.bio}
+                        </p>
+                      )}
+
+                      {formData.curriculum.length > 0 && (
+                        <div className="flex flex-wrap gap-1 mb-4">
+                          {formData.curriculum.slice(0, 3).map(curr => (
+                            <Badge key={curr} variant="secondary" className="text-xs">
+                              {curr}
+                            </Badge>
+                          ))}
+                          {formData.curriculum.length > 3 && (
+                            <Badge variant="secondary" className="text-xs">
+                              +{formData.curriculum.length - 3}
+                            </Badge>
+                          )}
+                        </div>
+                      )}
+
+                      <div className="flex items-center justify-between pt-4 border-t">
+                        <div className="flex items-center gap-1">
+                          <Star className="w-4 h-4 fill-yellow-500 text-yellow-500" />
+                          <span className="font-semibold text-sm">New</span>
+                        </div>
+                        <div className="text-right">
+                          {formData.hourlyRate && (
+                            <>
+                              <div className="font-bold text-lg">
+                                KES {Number(formData.hourlyRate).toLocaleString()}
+                                <span className="text-sm font-normal text-muted-foreground">/hr</span>
+                              </div>
+                              <span className="text-xs text-muted-foreground">online</span>
+                            </>
+                          )}
+                          {!formData.hourlyRate && (
+                            <span className="text-sm text-muted-foreground">Set rate in Step 4</span>
+                          )}
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  <Separator className="my-4" />
+
+                  {/* Profile Summary */}
+                  <div className="space-y-2 text-xs bg-muted/30 p-3 rounded-lg">
+                    <p className="font-semibold">Profile Summary:</p>
+                    <ul className="space-y-1 ml-4">
+                      <li>• {formData.experienceYears || "X"} years experience</li>
+                      <li>• Teaching: {formData.teachingMode.join(" & ") || "Not set"}</li>
+                      {formData.curriculum.length > 0 && (
+                        <li>• Curricula: {formData.curriculum.join(", ")}</li>
+                      )}
+                      {formData.customCurriculum && (
+                        <li>• Custom: {formData.customCurriculum}</li>
+                      )}
+                    </ul>
                   </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Separator className="my-4" />
-
-            {/* Privacy Notice */}
-            <div className="space-y-2 text-xs text-muted-foreground bg-muted/30 p-3 rounded-lg">
-              <p className="font-semibold">Privacy Settings Applied:</p>
-              <ul className="space-y-1 ml-4">
-                <li>• Name: {formData.showFullName ? "Full name" : "First name only"}</li>
-                <li>• School: {formData.showCurrentInstitution ? "Visible" : "Hidden"}</li>
-                <li>• Photo: {formData.showPhoto ? "Visible" : "Initials only"}</li>
-              </ul>
+                </CardContent>
+              </Card>
             </div>
-          </CardContent>
-            </Card>
           </div>
         </div>
       </div>

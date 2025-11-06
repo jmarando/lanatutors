@@ -9,6 +9,60 @@ export interface CurriculumData {
 }
 
 export const CURRICULUM_DATA: CurriculumData = {
+  "8-4-4": [
+    {
+      level: "Form 3",
+      years: "Form 3",
+      subjects: [
+        "Mathematics",
+        "English",
+        "Kiswahili",
+        "Biology",
+        "Chemistry",
+        "Physics",
+        "History & Government",
+        "Geography",
+        "CRE",
+        "IRE",
+        "HRE",
+        "Business Studies",
+        "Agriculture",
+        "Home Science",
+        "Computer Studies",
+        "French",
+        "German",
+        "Arabic",
+        "Music",
+        "Art & Design"
+      ]
+    },
+    {
+      level: "Form 4",
+      years: "Form 4",
+      subjects: [
+        "Mathematics",
+        "English",
+        "Kiswahili",
+        "Biology",
+        "Chemistry",
+        "Physics",
+        "History & Government",
+        "Geography",
+        "CRE",
+        "IRE",
+        "HRE",
+        "Business Studies",
+        "Agriculture",
+        "Home Science",
+        "Computer Studies",
+        "French",
+        "German",
+        "Arabic",
+        "Music",
+        "Art & Design"
+      ]
+    }
+  ],
   "CBC": [
     {
       level: "Early Years / Pre-Primary",
