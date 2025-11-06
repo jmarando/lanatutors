@@ -28,6 +28,21 @@ serve(async (req) => {
       throw new Error('Missing OrderTrackingId in callback')
     }
 
+    // Security: Check for duplicate processing (idempotency)
+    const { data: existingPayment } = await supabase
+      .from('payments')
+      .select('status')
+      .eq('pesapal_order_tracking_id', OrderTrackingId)
+      .single()
+
+    if (existingPayment?.status === 'completed') {
+      console.log('Payment already processed, ignoring duplicate webhook')
+      return new Response(
+        JSON.stringify({ success: true, message: 'Already processed' }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
     // Get Pesapal access token
     const consumerKey = Deno.env.get('PESAPAL_CONSUMER_KEY')
     const consumerSecret = Deno.env.get('PESAPAL_CONSUMER_SECRET')
@@ -70,6 +85,13 @@ serve(async (req) => {
     const statusData = await statusResponse.json()
     console.log('Transaction status:', statusData)
 
+    // Security: Verify the transaction status directly with Pesapal
+    // This prevents spoofed webhook data from being trusted
+    if (!statusData.order_tracking_id) {
+      console.error('Invalid Pesapal response - missing order_tracking_id')
+      throw new Error('Invalid transaction verification')
+    }
+
     // Find payment record
     const { data: payment, error: findError } = await supabase
       .from('payments')
@@ -83,6 +105,9 @@ serve(async (req) => {
     }
 
     console.log('Found payment record:', payment)
+
+    // Security: Log webhook attempt for audit trail
+    console.log('Webhook validation passed for order:', OrderTrackingId, 'User:', payment.user_id)
 
     // Map Pesapal status to our status
     let status: 'completed' | 'failed' | 'cancelled' | 'pending' = 'pending'
