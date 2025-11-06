@@ -135,6 +135,27 @@ serve(async (req) => {
     const orderData = await orderResponse.json()
     console.log('Pesapal order response:', orderData)
 
+    // If Pesapal returned an error in the payload, surface it and stop here
+    if (orderData?.error) {
+      const gatewayMessage = typeof orderData.error === 'object'
+        ? (orderData.error.message || JSON.stringify(orderData.error))
+        : String(orderData.error)
+      console.error('Pesapal gateway error:', orderData.error)
+      return new Response(
+        JSON.stringify({ success: false, error: gatewayMessage, code: orderData.error.code }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    // Defensive check: redirect_url and order_tracking_id must exist
+    if (!orderData?.redirect_url || !orderData?.order_tracking_id) {
+      console.error('Missing redirect_url or order_tracking_id from Pesapal response')
+      return new Response(
+        JSON.stringify({ success: false, error: 'Payment gateway did not return a redirect URL. Please try again later.' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
     // Step 4: Create payment record in database
     const { data: payment, error: paymentError } = await supabase
       .from('payments')
@@ -154,7 +175,10 @@ serve(async (req) => {
 
     if (paymentError) {
       console.error('Error creating payment record:', paymentError)
-      throw paymentError
+      return new Response(
+        JSON.stringify({ success: false, error: 'Failed to create payment record.' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
     }
 
     console.log('Payment record created:', payment.id)

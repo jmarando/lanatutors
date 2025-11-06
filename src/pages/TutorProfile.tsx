@@ -910,11 +910,12 @@ const TutorProfile = () => {
                       console.log('Payment initiated:', paymentData);
 
                       // Redirect to payment
-                      if (paymentData && paymentData.redirect_url) {
-                        console.log('Redirecting to Pesapal:', paymentData.redirect_url);
-                        window.location.href = paymentData.redirect_url;
+                      if (paymentData && (paymentData as any).redirect_url) {
+                        console.log('Redirecting to Pesapal:', (paymentData as any).redirect_url);
+                        window.location.href = (paymentData as any).redirect_url as string;
                       } else {
-                        throw new Error('No redirect URL received from payment gateway');
+                        const msg = (paymentData as any)?.error || 'Payment could not be initiated. Please try again later.';
+                        throw new Error(msg);
                       }
 
                     } catch (error: any) {
