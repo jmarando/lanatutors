@@ -384,16 +384,20 @@ export const BookingCalendar = ({
       const amountToPay = depositAmount;
       
       if (paymentMethod === 'mpesa') {
-        // Initiate M-Pesa payment
+        // Initiate Pesapal payment
+        const description = paymentOption === 'package' 
+          ? `${selectedPackage?.name} - ${selectedPackage?.session_count} sessions`
+          : `${subject} tutoring session with ${tutorName}`;
+
         const { data: paymentData, error: paymentError} = await supabase.functions.invoke(
-          "initiate-mpesa-payment",
+          "initiate-pesapal-payment",
           {
             body: {
-              phoneNumber: `254${phoneNumber.substring(1)}`,
               amount: Math.round(amountToPay),
+              description,
               paymentType: paymentOption === 'package' ? "package_purchase" : "tutor_booking_deposit",
               referenceId: paymentOption === 'package' ? packagePurchaseId : booking.id,
-              testMode: true  // TEST MODE
+              callbackUrl: window.location.origin + '/payment-callback',
             },
           }
         );
@@ -406,56 +410,11 @@ export const BookingCalendar = ({
           throw paymentError;
         }
 
-        // In test mode, payment is auto-confirmed
-        if (paymentData?.testMode) {
-          // Update package payment status if applicable
-          if (paymentOption === 'package' && packagePurchaseId) {
-            await supabase
-              .from("package_purchases")
-              .update({ 
-                payment_status: "completed",
-                amount_paid: amountToPay
-              })
-              .eq("id", packagePurchaseId);
-          }
-
-          // Confirm booking
-          await supabase
-            .from("bookings")
-            .update({ status: "confirmed" })
-            .eq("id", booking.id);
-
-          // Send confirmation email
-          await supabase.functions.invoke("send-booking-email", {
-            body: {
-              studentEmail,
-              studentName,
-              tutorEmail,
-              tutorName,
-              subject: subject.trim(),
-              startTime: selectedSlot.start_time,
-              endTime: selectedSlot.end_time,
-              meetingLink: meetData?.meetLink,
-              classType: selectedClassType,
-              totalAmount,
-              depositPaid: depositAmount,
-              balanceDue,
-              testEmail: "justin@glab.africa", // TEST MODE
-            },
-          });
-
-          // Redirect to booking confirmed page
-          window.location.href = `/booking-confirmed?bookingId=${booking.id}`;
-          resetForm();
+        // Redirect to Pesapal payment page
+        if (paymentData?.redirect_url) {
+          window.location.href = paymentData.redirect_url;
         } else {
-          setPaymentInitiated(true);
-          toast({
-            title: "Payment Initiated",
-            description: `Please check your phone and pay the deposit of KES ${depositAmount.toFixed(0)}. Balance of KES ${balanceDue.toFixed(0)} due before the session.`,
-          });
-
-          // Poll for payment completion
-          pollMpesaPayment(booking.id, balanceDue);
+          throw new Error('No redirect URL received from payment gateway');
         }
       } else {
         // Handle Stripe payment
@@ -473,66 +432,6 @@ export const BookingCalendar = ({
     }
   };
 
-  const pollMpesaPayment = async (bookingId: string, balanceDue: number) => {
-    // Poll for payment completion (simplified - in production use webhooks)
-    let attempts = 0;
-    const checkPayment = setInterval(async () => {
-      attempts++;
-      
-      // Check if booking status has been updated to "confirmed"
-      const { data: updatedBooking } = await supabase
-        .from("bookings")
-        .select("status")
-        .eq("id", bookingId)
-        .single();
-
-      if (updatedBooking?.status === "confirmed") {
-        clearInterval(checkPayment);
-        
-        // Get the booking to fetch the meeting link
-        const { data: fullBooking } = await supabase
-          .from("bookings")
-          .select("meeting_link")
-          .eq("id", bookingId)
-          .single();
-
-        // Send email notifications
-        await supabase.functions.invoke("send-booking-email", {
-          body: {
-            studentEmail,
-            studentName,
-            tutorEmail,
-            tutorName,
-            subject: subject.trim(),
-            startTime: selectedSlot!.start_time,
-            endTime: selectedSlot!.end_time,
-            meetingLink: fullBooking?.meeting_link,
-            classType: selectedClassType,
-            totalAmount: selectedSlot ? ((new Date(selectedSlot.end_time).getTime() - new Date(selectedSlot.start_time).getTime()) / (1000 * 60 * 60)) * (selectedClassType === 'in-person' ? hourlyRate * 1.3 : hourlyRate) : 0,
-            depositPaid: selectedSlot ? ((new Date(selectedSlot.end_time).getTime() - new Date(selectedSlot.start_time).getTime()) / (1000 * 60 * 60)) * (selectedClassType === 'in-person' ? hourlyRate * 1.3 : hourlyRate) * 0.3 : 0,
-            balanceDue,
-            testEmail: "justin@glab.africa", // TEST MODE
-          },
-        });
-
-        toast({
-          title: "Deposit confirmed!",
-          description: `Deposit payment successful. Balance of KES ${balanceDue.toFixed(0)} due before the session. You'll receive a confirmation email shortly.`,
-        });
-
-        window.location.href = `/booking-confirmed?bookingId=${bookingId}`;
-        resetForm();
-      } else if (attempts >= 24) { // 2 minutes (24 * 5 seconds)
-        clearInterval(checkPayment);
-        toast({
-          title: "Payment timeout",
-          description: "Payment is taking longer than expected. Please check your M-Pesa messages.",
-          variant: "destructive",
-        });
-        setPaymentInitiated(false);
-      }
-    }, 5000);
-  };
 
   const handleStripePayment = async (bookingId: string, depositAmount: number, balanceDue: number) => {
     try {
