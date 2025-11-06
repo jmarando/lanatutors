@@ -665,7 +665,7 @@ const TutorProfileSetup = () => {
                           </div>
                           <div className="grid grid-cols-2 gap-3">
                             <div className="space-y-2">
-                              <Label>Field of Study *</Label>
+                              <Label>Subject Specialization *</Label>
                               <Input value={edu.field} onChange={e => {
                             const newHistory = [...formData.educationHistory];
                             newHistory[index].field = e.target.value;
