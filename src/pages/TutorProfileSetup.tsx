@@ -1077,7 +1077,7 @@ TEFL/TESOL Certification" value={formData.qualifications} onChange={e => setForm
                             <span className="font-medium">KES {Math.round(parseFloat(formData.hourlyRate) * 10 * (1 - parseFloat(formData.package10Discount) / 100)).toLocaleString()}</span>
                           </div>
                           <div className="flex justify-between items-center p-2 bg-background rounded">
-                            <span>Double Session - 2hrs (15% off){formData.doubleSessionDiscount}% off)</span>
+                            <span>Double Session - 2hrs (5% off){formData.doubleSessionDiscount}% off)</span>
                             <span className="font-medium">KES {Math.round(parseFloat(formData.hourlyRate) * 2 * (1 - parseFloat(formData.doubleSessionDiscount) / 100)).toLocaleString()}</span>
                           </div>
                           <p className="text-xs text-muted-foreground italic mt-3">
