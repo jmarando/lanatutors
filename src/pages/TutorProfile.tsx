@@ -825,6 +825,8 @@ const TutorProfile = () => {
                   className="w-full"
                   onClick={async () => {
                     try {
+                      console.log('Starting package purchase process...');
+                      
                       const { data: { user } } = await supabase.auth.getUser();
                       if (!user) {
                         showToast({
@@ -835,10 +837,15 @@ const TutorProfile = () => {
                         return;
                       }
 
+                      console.log('User authenticated:', user.id);
+                      console.log('Package details:', selectedPackage);
+                      console.log('Tutor ID:', id);
+
                       // Create package purchase
                       const expiresAt = new Date();
                       expiresAt.setDate(expiresAt.getDate() + selectedPackage.validity_days);
 
+                      console.log('Creating package purchase...');
                       const { data: purchase, error } = await supabase
                         .from('package_purchases')
                         .insert({
@@ -855,9 +862,15 @@ const TutorProfile = () => {
                         .select()
                         .single();
 
-                      if (error) throw error;
+                      if (error) {
+                        console.error('Package purchase insert error:', error);
+                        throw error;
+                      }
+
+                      console.log('Package purchase created:', purchase);
 
                       // Initiate payment
+                      console.log('Initiating Pesapal payment...');
                       const { data: paymentData, error: paymentError } = await supabase.functions.invoke('initiate-pesapal-payment', {
                         body: {
                           amount: selectedPackage.total_price,
@@ -868,18 +881,26 @@ const TutorProfile = () => {
                         },
                       });
 
-                      if (paymentError) throw paymentError;
+                      if (paymentError) {
+                        console.error('Pesapal payment error:', paymentError);
+                        throw paymentError;
+                      }
+
+                      console.log('Payment initiated:', paymentData);
 
                       // Redirect to payment
-                      if (paymentData.redirect_url) {
+                      if (paymentData && paymentData.redirect_url) {
+                        console.log('Redirecting to Pesapal:', paymentData.redirect_url);
                         window.location.href = paymentData.redirect_url;
+                      } else {
+                        throw new Error('No redirect URL received from payment gateway');
                       }
 
                     } catch (error: any) {
                       console.error('Package purchase error:', error);
                       showToast({
                         title: "Purchase Failed",
-                        description: error.message || "Failed to initiate package purchase",
+                        description: error.message || "Failed to initiate package purchase. Please try again.",
                         variant: "destructive",
                       });
                     }
