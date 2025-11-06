@@ -357,38 +357,19 @@ const TutorProfile = () => {
 
               {/* Booking Options */}
               <div>
-                <h3 className="font-bold text-base mb-3">Choose Your Booking Option</h3>
-                <div className="grid sm:grid-cols-2 gap-3">
-                  <Button 
-                    size="lg" 
-                    variant="outline"
-                    onClick={() => handleBookingTypeSelect('trial')}
-                    className="w-full relative overflow-hidden border-2 border-primary/50 hover:bg-primary/10 h-auto py-4"
-                  >
-                    <div className="absolute top-0 right-0 bg-primary text-primary-foreground text-xs px-3 py-1 rounded-bl-lg font-bold shadow-sm">
-                      50% OFF
-                    </div>
-                    <div className="flex flex-col items-center gap-1.5 pt-1">
-                      <span className="font-bold text-base">Book Trial Lesson</span>
-                      <span className="text-sm text-muted-foreground">
-                        KES {Math.floor(tutor.hourlyRate * 0.5).toLocaleString()}
-                      </span>
-                    </div>
-                  </Button>
-
-                  <Button 
-                    size="lg" 
-                    onClick={() => handleBookingTypeSelect('paid')}
-                    className="w-full h-auto py-4"
-                  >
-                    <div className="flex flex-col items-center gap-1.5">
-                      <span className="font-bold text-base">Book Session</span>
-                      <span className="text-sm opacity-90">
-                        Full Price
-                      </span>
-                    </div>
-                  </Button>
-                </div>
+                <h3 className="font-bold text-base mb-3">Book a Session</h3>
+                <Button 
+                  size="lg" 
+                  onClick={() => handleBookingTypeSelect('paid')}
+                  className="w-full h-auto py-4"
+                >
+                  <div className="flex flex-col items-center gap-1.5">
+                    <span className="font-bold text-base">Book Single Session</span>
+                    <span className="text-sm opacity-90">
+                      1-2 hours • Full Price
+                    </span>
+                  </div>
+                </Button>
               </div>
 
               {/* Package Deals - Inline */}
