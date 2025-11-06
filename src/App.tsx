@@ -33,6 +33,7 @@ const ConsultationConfirmed = lazy(() => import("./pages/ConsultationConfirmed")
 const LearningAssessment = lazy(() => import("./pages/LearningAssessment"));
 const AssessmentResults = lazy(() => import("./pages/AssessmentResults"));
 const SetupCentralCalendar = lazy(() => import("./pages/SetupCentralCalendar"));
+const PaymentCallback = lazy(() => import("./pages/PaymentCallback"));
 
 const queryClient = new QueryClient();
 
@@ -75,6 +76,7 @@ const App = () => {
               <Route path="/learning-assessment" element={<LearningAssessment />} />
               <Route path="/assessment-results" element={<AssessmentResults />} />
               <Route path="/setup-central-calendar" element={<SetupCentralCalendar />} />
+              <Route path="/payment-callback" element={<PaymentCallback />} />
               {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
               <Route path="*" element={<NotFound />} />
             </Routes>
