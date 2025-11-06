@@ -599,7 +599,7 @@ const BecomeATutor = () => {
         <div className="text-center mt-6">
           <p className="text-sm text-muted-foreground">
             Questions?{" "}
-            <a href="mailto:support@learnwithlana.com" className="text-primary hover:underline">
+            <a href="mailto:info@lanatutors.africa" className="text-primary hover:underline">
               Contact our support team
             </a>
           </p>
