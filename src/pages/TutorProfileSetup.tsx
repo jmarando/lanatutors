@@ -586,18 +586,26 @@ const TutorProfileSetup = () => {
                   <div className="grid gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="fullName">Full Name *</Label>
-                      <Input id="fullName" value={formData.fullName} onChange={e => {
-                      setFormData({
-                        ...formData,
-                        fullName: e.target.value
-                      });
-                      if (validationErrors.fullName) {
-                        setValidationErrors({
-                          ...validationErrors,
-                          fullName: undefined
-                        });
-                      }
-                    }} placeholder="John Doe" required className={validationErrors.fullName ? "border-destructive" : ""} />
+                      <Input 
+                        id="fullName" 
+                        type="text"
+                        value={formData.fullName} 
+                        onChange={e => {
+                          setFormData({
+                            ...formData,
+                            fullName: e.target.value
+                          });
+                          if (validationErrors.fullName) {
+                            setValidationErrors({
+                              ...validationErrors,
+                              fullName: undefined
+                            });
+                          }
+                        }} 
+                        placeholder="John Doe" 
+                        required 
+                        className={validationErrors.fullName ? "border-destructive" : ""} 
+                      />
                       {validationErrors.fullName && <p className="text-sm text-destructive">{validationErrors.fullName}</p>}
                     </div>
 
