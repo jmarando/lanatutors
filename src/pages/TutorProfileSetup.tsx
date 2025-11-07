@@ -716,7 +716,7 @@ const TutorProfileSetup = () => {
                   <div className="space-y-4">
                     <h4 className="font-semibold">Profile Photo</h4>
                     <div className="flex items-start gap-4">
-                      <Avatar className="w-20 h-20">
+                      <Avatar className="w-20 h-20 ring-2 ring-primary/20 shadow-lg">
                         {photoFile ? <AvatarImage src={URL.createObjectURL(photoFile)} /> : <AvatarFallback className="text-xl">
                             {formData.fullName.split(' ').map(n => n[0]).join('').slice(0, 2) || "T"}
                           </AvatarFallback>}
@@ -1263,7 +1263,7 @@ TEFL/TESOL Certification" value={formData.qualifications} onChange={e => setForm
                   <Card className="border-2 hover:border-primary/50 transition-all cursor-pointer">
                     <CardContent className="p-6">
                       <div className="flex gap-4 mb-4">
-                        <Avatar className="w-16 h-16 shrink-0">
+                        <Avatar className="w-16 h-16 shrink-0 ring-2 ring-primary/20 shadow-lg">
                           {formData.showPhoto && photoFile ? <AvatarImage src={URL.createObjectURL(photoFile)} /> : <AvatarFallback className="text-xl bg-primary text-primary-foreground">
                               {formData.fullName.split(' ').map(n => n[0]).join('').slice(0, 2) || "T"}
                             </AvatarFallback>}
