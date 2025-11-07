@@ -1,3 +1,4 @@
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -13,11 +14,56 @@ import {
   Video,
   TrendingUp
 } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { SEO } from "@/components/SEO";
 import { TierExplainer } from "@/components/TutorTierBadge";
+import { supabase } from "@/integrations/supabase/client";
 
 const ForTutors = () => {
+  const navigate = useNavigate();
+  const [isChecking, setIsChecking] = useState(true);
+
+  useEffect(() => {
+    const checkTutorStatus = async () => {
+      try {
+        const { data: { session } } = await supabase.auth.getSession();
+        
+        if (session?.user) {
+          // Check if user has tutor role
+          const { data: roles } = await supabase
+            .from('user_roles')
+            .select('role')
+            .eq('user_id', session.user.id)
+            .eq('role', 'tutor')
+            .maybeSingle();
+          
+          if (roles) {
+            // User is a tutor, redirect to dashboard
+            navigate('/tutor-dashboard');
+            return;
+          }
+        }
+      } catch (error) {
+        console.error('Error checking tutor status:', error);
+      } finally {
+        setIsChecking(false);
+      }
+    };
+
+    checkTutorStatus();
+  }, [navigate]);
+
+  if (isChecking) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
   const benefits = [
     {
       icon: DollarSign,
