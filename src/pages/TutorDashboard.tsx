@@ -56,11 +56,15 @@ const TutorDashboard = () => {
       setProfile(profileData);
 
       // Fetch tutor profile
-      const { data: tutorData } = await supabase
+      const { data: tutorData, error: tutorError } = await supabase
         .from("tutor_profiles")
         .select("*")
         .eq("user_id", authUser.id)
         .single();
+
+      if (tutorError) {
+        console.error("Tutor profile fetch error:", tutorError);
+      }
 
       setTutorProfile(tutorData);
 
