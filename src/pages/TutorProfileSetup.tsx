@@ -607,7 +607,7 @@ const TutorProfileSetup = () => {
           title: "Profile updated!",
           description: "Your changes have been saved successfully."
         });
-        navigate("/tutor-dashboard");
+        navigate("/tutor/dashboard");
       }
     } catch (error: any) {
       console.error("Profile submission error:", error);

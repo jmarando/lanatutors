@@ -140,7 +140,7 @@ const Login = () => {
         if (roleData?.role === 'admin') {
           navigate('/admin');
         } else if (roleData?.role === 'tutor') {
-          navigate('/tutor-dashboard');
+          navigate('/tutor/dashboard');
         } else if (roleData?.role === 'student') {
           navigate('/student-dashboard');
         } else {

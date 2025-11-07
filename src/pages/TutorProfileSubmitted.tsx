@@ -183,7 +183,7 @@ const TutorProfileSubmitted = () => {
               Go to Home
             </Button>
             <Button 
-              onClick={() => navigate("/tutor-dashboard")}
+              onClick={() => navigate("/tutor/dashboard")}
               className="flex-1"
             >
               Go to Dashboard

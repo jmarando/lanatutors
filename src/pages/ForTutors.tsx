@@ -39,7 +39,7 @@ const ForTutors = () => {
           
           if (roles) {
             // User is a tutor, redirect to dashboard
-            navigate('/tutor-dashboard');
+            navigate('/tutor/dashboard');
             return;
           }
         }
