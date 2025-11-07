@@ -148,6 +148,11 @@ const TutorSearch = () => {
 
         // Check if this is Calvin
         const isCalvin = name === "Calvins Onuko";
+        
+        // Use uploaded avatar if available, otherwise use placeholder
+        const uploadedAvatar = prof?.avatar_url;
+        const fallbackPhoto = isCalvin ? calvinProfilePhoto : tutorImages[index % tutorImages.length];
+        
         return {
           id: tp.id,
           name,
@@ -162,7 +167,7 @@ const TutorSearch = () => {
           hourlyRate,
           gender: tp.gender || null,
           photo: name.split(' ').map((n: string) => n[0]).join('') || "T",
-          photoUrl: isCalvin ? calvinProfilePhoto : tutorImages[index % tutorImages.length],
+          photoUrl: uploadedAvatar || fallbackPhoto,
           isCalvin // Flag to sort Calvin first
         };
       });
