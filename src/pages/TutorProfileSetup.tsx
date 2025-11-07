@@ -87,6 +87,7 @@ const TutorProfileSetup = () => {
     fullName?: string;
     phoneNumber?: string;
   }>({});
+  const [touched, setTouched] = useState<{ fullName?: boolean; email?: boolean; phoneNumber?: boolean }>({});
   const curriculums = getCurriculums();
   const availableLevelsForSubjects = selectedCurriculumForSubjects ? getLevelsForCurriculum(selectedCurriculumForSubjects) : [];
   const availableSubjects = selectedCurriculumForSubjects && selectedLevelForSubjects ? getSubjectsForCurriculumLevel(selectedCurriculumForSubjects, selectedLevelForSubjects) : [];
@@ -101,45 +102,48 @@ const TutorProfileSetup = () => {
   // Derive subjects array from subjectsWithContext for display
   const derivedSubjects = Array.from(new Set(formData.subjectsWithContext.map(s => s.subject)));
   useEffect(() => {
-    checkAuth();
-  }, []);
-  const checkAuth = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-
-    if (!session) {
-      setIsAuthenticated(false);
-      return;
-    }
-    
-    setIsAuthenticated(true);
-    setUserId(session.user.id);
-
-    // Get user's info from auth metadata or profile
-    const fullName = session.user.user_metadata?.full_name || session.user.user_metadata?.name || "";
-    const email = session.user.email || "";
-
-    // Try to get from profiles table if not in metadata
-    const {
-      data: profile
-    } = await supabase.from("profiles").select("full_name, phone_number").eq("id", session.user.id).single();
-
-    // Pre-fill form data with existing info
-    setFormData(prev => ({
-      ...prev,
-      fullName: prev.fullName && prev.fullName.trim().length > 0 ? prev.fullName : (fullName || profile?.full_name || ""),
-      email: prev.email && prev.email.trim().length > 0 ? prev.email : email,
-      phoneNumber: prev.phoneNumber && prev.phoneNumber.trim().length > 0 ? prev.phoneNumber : (profile?.phone_number || "")
-    }));
-    setUserName(fullName || profile?.full_name || "");
-    
-    // Set up auth listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       setIsAuthenticated(!!session);
-      setUserId(session?.user.id ?? null);
+      setUserId(session?.user?.id ?? null);
+    });
+
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      setIsAuthenticated(!!session);
+      setUserId(session?.user?.id ?? null);
     });
 
     return () => subscription.unsubscribe();
-  };
+  }, []);
+
+  // Prefill profile details once authenticated, without overwriting touched fields
+  useEffect(() => {
+    if (!userId) return;
+    let cancelled = false;
+
+    (async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      const fullName = user?.user_metadata?.full_name || user?.user_metadata?.name || "";
+      const email = user?.email || "";
+
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("full_name, phone_number")
+        .eq("id", userId)
+        .single();
+
+      if (cancelled) return;
+
+      setFormData(prev => ({
+        ...prev,
+        fullName: touched.fullName ? prev.fullName : (prev.fullName?.trim()?.length ? prev.fullName : (fullName || profile?.full_name || "")),
+        email: touched.email ? prev.email : (prev.email?.trim()?.length ? prev.email : email),
+        phoneNumber: touched.phoneNumber ? prev.phoneNumber : (prev.phoneNumber?.trim()?.length ? prev.phoneNumber : (profile?.phone_number || ""))
+      }));
+      setUserName(fullName || profile?.full_name || "");
+    })();
+
+    return () => { cancelled = true; };
+  }, [userId, touched.fullName, touched.email, touched.phoneNumber]);
   const handleCurriculumToggle = (curriculum: string, checked: boolean) => {
     if (checked) {
       setFormData({
@@ -293,8 +297,7 @@ const TutorProfileSetup = () => {
             description: "Please complete your profile below."
           });
           
-          setIsAuthenticated(true);
-          checkAuth();
+          // Auth state will update via onAuthStateChange
         }
       } else {
         const { error } = await supabase.auth.signInWithPassword({
@@ -309,8 +312,7 @@ const TutorProfileSetup = () => {
           description: "Complete your tutor profile below."
         });
         
-        setIsAuthenticated(true);
-        checkAuth();
+        // Auth state will update via onAuthStateChange
       }
     } catch (error: any) {
       toast({
@@ -590,6 +592,7 @@ const TutorProfileSetup = () => {
                             ...formData,
                             fullName: e.target.value
                           });
+                          setTouched(prev => ({ ...prev, fullName: true }));
                           if (validationErrors.fullName) {
                             setValidationErrors({
                               ...validationErrors,
@@ -613,23 +616,24 @@ const TutorProfileSetup = () => {
                       <p className="text-xs text-muted-foreground">Email cannot be changed</p>
                     </div>
 
-                    <div className="space-y-2">
-                      <Label htmlFor="phoneNumber">Phone Number *</Label>
-                      <Input id="phoneNumber" type="tel" value={formData.phoneNumber} onChange={e => {
-                      setFormData({
-                        ...formData,
-                        phoneNumber: e.target.value
-                      });
-                      if (validationErrors.phoneNumber) {
-                        setValidationErrors({
-                          ...validationErrors,
-                          phoneNumber: undefined
+                      <div className="space-y-2">
+                        <Label htmlFor="phoneNumber">Phone Number *</Label>
+                        <Input id="phoneNumber" type="tel" value={formData.phoneNumber} onChange={e => {
+                        setFormData({
+                          ...formData,
+                          phoneNumber: e.target.value
                         });
-                      }
-                    }} placeholder="+254 700 000 000" required className={validationErrors.phoneNumber ? "border-destructive" : ""} />
-                      {validationErrors.phoneNumber && <p className="text-sm text-destructive">{validationErrors.phoneNumber}</p>}
-                      <p className="text-xs text-muted-foreground">Format: +254XXXXXXXXX, 254XXXXXXXXX, or 0XXXXXXXXX</p>
-                    </div>
+                        setTouched(prev => ({ ...prev, phoneNumber: true }));
+                        if (validationErrors.phoneNumber) {
+                          setValidationErrors({
+                            ...validationErrors,
+                            phoneNumber: undefined
+                          });
+                        }
+                      }} placeholder="+254 700 000 000" required className={validationErrors.phoneNumber ? "border-destructive" : ""} />
+                        {validationErrors.phoneNumber && <p className="text-sm text-destructive">{validationErrors.phoneNumber}</p>}
+                        <p className="text-xs text-muted-foreground">Format: +254XXXXXXXXX, 254XXXXXXXXX, or 0XXXXXXXXX</p>
+                      </div>
 
                     <div className="space-y-2">
                       <Label htmlFor="gender">Gender (Optional)</Label>
