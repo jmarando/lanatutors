@@ -131,7 +131,7 @@ serve(async (req) => {
           status: 302,
           headers: {
             ...corsHeaders,
-            'Location': `${fallbackOrigin}/tutor-dashboard?calendar_connected=true`,
+            'Location': `${fallbackOrigin}/tutor/dashboard?calendar_connected=true`,
           },
         });
       }
