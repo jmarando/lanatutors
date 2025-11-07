@@ -42,7 +42,8 @@ export const PackageSelector = ({ tutorId, onSelectPackage, selectedPackageId }:
         .eq("tutor_id", tutorId)
         .eq("is_active", true)
         .order("is_featured", { ascending: false })
-        .order("session_count");
+        .order("session_count")
+        .limit(4);
 
       if (error) throw error;
       setPackages(data || []);
