@@ -184,7 +184,7 @@ const Home = () => {
                 <Link to="/tutors">
                   <Button size="lg" variant="outline" className="h-14 px-8 text-lg hover-scale group">
                     <Sparkles className="w-5 h-5 mr-2 group-hover:rotate-12 transition-transform" />
-                    Smart Tutor Match
+                    Find a Tutor
                   </Button>
                 </Link>
               </div>
