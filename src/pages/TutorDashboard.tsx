@@ -60,10 +60,13 @@ const TutorDashboard = () => {
         .from("tutor_profiles")
         .select("*")
         .eq("user_id", authUser.id)
-        .single();
+        .maybeSingle();
 
       if (tutorError) {
         console.error("Tutor profile fetch error:", tutorError);
+        toast.error(`Failed to load tutor profile: ${tutorError.message}`);
+        setLoading(false);
+        return;
       }
 
       setTutorProfile(tutorData);
