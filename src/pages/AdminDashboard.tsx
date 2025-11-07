@@ -461,37 +461,38 @@ Yehtu Tutors`
   };
 
   const fetchPendingTutors = async () => {
-    const { data, error } = await supabase
+    const { data: tutorData, error } = await supabase
       .from("tutor_profiles")
-      .select(`
-        *,
-        profiles!tutor_profiles_user_id_fkey(full_name, phone_number)
-      `)
+      .select("*")
       .eq("verified", false);
 
     if (error) {
       console.error("Error fetching pending tutors:", error);
-      // Fetch without join as fallback
-      const { data: tutorData } = await supabase
-        .from("tutor_profiles")
-        .select("*")
-        .eq("verified", false);
-      
-      if (tutorData) {
-        const enriched = await Promise.all(
-          tutorData.map(async (tutor) => {
-            const { data: profile } = await supabase
-              .from("profiles")
-              .select("full_name, phone_number")
-              .eq("id", tutor.user_id)
-              .single();
-            return { ...tutor, profiles: profile };
-          })
-        );
-        setPendingTutors(enriched);
-      }
-    } else {
-      setPendingTutors(data || []);
+      setPendingTutors([]);
+      return;
+    }
+
+    if (tutorData) {
+      // Enrich with profile and user email data
+      const enriched = await Promise.all(
+        tutorData.map(async (tutor) => {
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("full_name, phone_number")
+            .eq("id", tutor.user_id)
+            .single();
+          
+          // Get email from auth.users
+          const { data: { user } } = await supabase.auth.admin.getUserById(tutor.user_id);
+          
+          return { 
+            ...tutor, 
+            profiles: profile,
+            email: user?.email || "Not provided"
+          };
+        })
+      );
+      setPendingTutors(enriched);
     }
   };
 
