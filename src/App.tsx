@@ -15,6 +15,7 @@ const ForTutors = lazy(() => import("./pages/ForTutors"));
 const TutorSearch = lazy(() => import("./pages/TutorSearch"));
 const TutorProfile = lazy(() => import("./pages/TutorProfile"));
 const Login = lazy(() => import("./pages/Login"));
+const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const StudentSignup = lazy(() => import("./pages/StudentSignup"));
 const TutorSignup = lazy(() => import("./pages/TutorSignup"));
 const BecomeATutor = lazy(() => import("./pages/BecomeATutor"));
@@ -59,6 +60,7 @@ const App = () => {
               <Route path="/tutors/:id" element={<TutorProfile />} />
               <Route path="/:id" element={<TutorProfile />} />
               <Route path="/login" element={<Login />} />
+              <Route path="/reset-password" element={<ResetPassword />} />
               <Route path="/student-signup" element={<StudentSignup />} />
               <Route path="/tutor-signup" element={<TutorSignup />} />
               <Route path="/become-a-tutor" element={<BecomeATutor />} />
