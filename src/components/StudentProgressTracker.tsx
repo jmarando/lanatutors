@@ -47,7 +47,7 @@ export const StudentProgressTracker = ({ tutorId }: StudentProgressTrackerProps)
         .from("student_progress")
         .select(`
           *,
-          profiles!student_progress_student_id_fkey(full_name)
+          profiles:student_id(full_name)
         `)
         .eq("tutor_id", tutorId)
         .order("last_updated", { ascending: false });
@@ -83,7 +83,7 @@ export const StudentProgressTracker = ({ tutorId }: StudentProgressTrackerProps)
         .from("bookings")
         .select(`
           student_id,
-          profiles!bookings_student_id_fkey(full_name)
+          profiles:student_id(full_name)
         `)
         .eq("tutor_id", tutorId);
 
