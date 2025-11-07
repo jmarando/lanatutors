@@ -567,6 +567,42 @@ export type Database = {
         }
         Relationships: []
       }
+      student_progress: {
+        Row: {
+          created_at: string | null
+          id: string
+          last_updated: string | null
+          notes: string | null
+          progress_percentage: number
+          student_id: string
+          subject: string
+          total_sessions: number | null
+          tutor_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          last_updated?: string | null
+          notes?: string | null
+          progress_percentage?: number
+          student_id: string
+          subject: string
+          total_sessions?: number | null
+          tutor_id: string
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          last_updated?: string | null
+          notes?: string | null
+          progress_percentage?: number
+          student_id?: string
+          subject?: string
+          total_sessions?: number | null
+          tutor_id?: string
+        }
+        Relationships: []
+      }
       tutor_applications: {
         Row: {
           admin_notes: string | null

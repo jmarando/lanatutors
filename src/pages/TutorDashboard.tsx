@@ -20,6 +20,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { format, isToday, isThisWeek, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from "date-fns";
 import { GoogleCalendarConnect } from "@/components/GoogleCalendarConnect";
+import { TutorCalendarOverview } from "@/components/TutorCalendarOverview";
+import { StudentProgressTracker } from "@/components/StudentProgressTracker";
 
 const TutorDashboard = () => {
   const navigate = useNavigate();
@@ -317,6 +319,12 @@ const TutorDashboard = () => {
             <TabsTrigger value="all">
               All Upcoming ({upcomingBookings.length})
             </TabsTrigger>
+            <TabsTrigger value="calendar">
+              Calendar
+            </TabsTrigger>
+            <TabsTrigger value="progress">
+              Student Progress
+            </TabsTrigger>
             <TabsTrigger value="reviews">
               Reviews ({reviews.length})
             </TabsTrigger>
@@ -495,6 +503,14 @@ const TutorDashboard = () => {
                 </Card>
               ))
             )}
+          </TabsContent>
+
+          <TabsContent value="calendar">
+            <TutorCalendarOverview tutorId={user?.id} />
+          </TabsContent>
+
+          <TabsContent value="progress">
+            <StudentProgressTracker tutorId={user?.id} />
           </TabsContent>
 
           <TabsContent value="reviews" className="space-y-4">
