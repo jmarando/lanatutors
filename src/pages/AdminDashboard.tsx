@@ -9,6 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import { CheckCircle, XCircle, AlertCircle, Star, Calendar as CalendarIcon, Clock, Mail, Phone, User, BookOpen, FileText, Video, Edit, Save, X, MessageCircle, Send, TrendingUp, Users, DollarSign, Target, ExternalLink, LayoutDashboard, GraduationCap, UserCheck, BookMarked, Activity, ArrowUpRight, ArrowDownRight } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
@@ -1347,48 +1348,114 @@ The Lana Team`;
                       </div>
                     </div>
                   </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="grid md:grid-cols-2 gap-4">
-                      <div>
-                        <p className="font-semibold">Subjects</p>
-                        <p className="text-sm text-muted-foreground">
-                          {tutor.subjects?.join(", ") || "None"}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="font-semibold">Curriculum</p>
-                        <p className="text-sm text-muted-foreground">
-                          {tutor.curriculum?.join(", ") || "None"}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="font-semibold">Institution</p>
-                        <p className="text-sm text-muted-foreground">
-                          {tutor.current_institution || "Not specified"}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="font-semibold">Experience</p>
-                        <p className="text-sm text-muted-foreground">
-                          {tutor.experience_years} years
-                        </p>
-                      </div>
-                      <div>
-                        <p className="font-semibold">Hourly Rate</p>
-                        <p className="text-sm text-muted-foreground">
-                          KES {tutor.hourly_rate}
-                        </p>
-                      </div>
-                      <div>
-                        <p className="font-semibold">Qualifications</p>
-                        <p className="text-sm text-muted-foreground">
-                          {tutor.qualifications?.join(", ") || "None"}
-                        </p>
+                  <CardContent className="space-y-6">
+                    {/* Contact Information */}
+                    <div>
+                      <h4 className="font-semibold mb-3 text-base">Contact Information</h4>
+                      <div className="grid md:grid-cols-2 gap-4">
+                        <div>
+                          <p className="text-sm font-medium text-muted-foreground">Email</p>
+                          <p className="text-sm">{tutor.email || "Not provided"}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-muted-foreground">Phone</p>
+                          <p className="text-sm">{tutor.profiles?.phone_number || "Not provided"}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-muted-foreground">Gender</p>
+                          <p className="text-sm capitalize">{tutor.gender || "Not specified"}</p>
+                        </div>
                       </div>
                     </div>
+
+                    <Separator />
+
+                    {/* Teaching Details */}
                     <div>
-                      <p className="font-semibold mb-2">Bio</p>
-                      <p className="text-sm text-muted-foreground">{tutor.bio}</p>
+                      <h4 className="font-semibold mb-3 text-base">Teaching Information</h4>
+                      <div className="grid md:grid-cols-2 gap-4">
+                        <div>
+                          <p className="text-sm font-medium text-muted-foreground">Subjects</p>
+                          <p className="text-sm">{tutor.subjects?.join(", ") || "None"}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-muted-foreground">Curriculum</p>
+                          <p className="text-sm">{tutor.curriculum?.join(", ") || "None"}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-muted-foreground">Teaching Levels</p>
+                          <p className="text-sm">{tutor.teaching_levels?.join(", ") || "None"}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-muted-foreground">Teaching Mode</p>
+                          <p className="text-sm capitalize">{tutor.teaching_mode?.join(", ") || "None"}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-muted-foreground">Teaching Locations</p>
+                          <p className="text-sm">{tutor.teaching_location || "Not specified"}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-muted-foreground">Current Institution</p>
+                          <p className="text-sm">{tutor.current_institution || "Not specified"}</p>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-muted-foreground">Experience</p>
+                          <p className="text-sm">{tutor.experience_years} years</p>
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium text-muted-foreground">Hourly Rate</p>
+                          <p className="text-sm">KES {tutor.hourly_rate?.toLocaleString()}</p>
+                        </div>
+                      </div>
+                    </div>
+
+                    <Separator />
+
+                    {/* Qualifications */}
+                    <div>
+                      <h4 className="font-semibold mb-3 text-base">Qualifications</h4>
+                      <ul className="text-sm space-y-1 list-disc list-inside">
+                        {tutor.qualifications?.map((qual: string, idx: number) => (
+                          <li key={idx}>{qual}</li>
+                        )) || <li className="text-muted-foreground">None provided</li>}
+                      </ul>
+                    </div>
+
+                    {/* Education History */}
+                    {tutor.graduation_year && (
+                      <>
+                        <Separator />
+                        <div>
+                          <h4 className="font-semibold mb-3 text-base">Education</h4>
+                          <p className="text-sm">Graduation Year: {tutor.graduation_year}</p>
+                        </div>
+                      </>
+                    )}
+
+                    {/* Teaching Experience */}
+                    {tutor.teaching_experience && Array.isArray(tutor.teaching_experience) && tutor.teaching_experience.length > 0 && (
+                      <>
+                        <Separator />
+                        <div>
+                          <h4 className="font-semibold mb-3 text-base">Teaching Experience</h4>
+                          <div className="space-y-3">
+                            {tutor.teaching_experience.map((exp: any, idx: number) => (
+                              <div key={idx} className="bg-muted/30 rounded-lg p-3">
+                                <p className="text-sm font-medium">{exp.institution}</p>
+                                <p className="text-sm text-muted-foreground">{exp.role} • {exp.years} years</p>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </>
+                    )}
+
+                    <Separator />
+
+                    {/* Bio */}
+                    <div>
+                      <h4 className="font-semibold mb-3 text-base">Bio</h4>
+                      <p className="text-sm text-muted-foreground whitespace-pre-wrap">{tutor.bio || "No bio provided"}</p>
                     </div>
                   </CardContent>
                 </Card>
