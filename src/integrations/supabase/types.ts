@@ -248,74 +248,6 @@ export type Database = {
         }
         Relationships: []
       }
-      learning_assessments: {
-        Row: {
-          assessment_responses: Json
-          completed_at: string | null
-          consultation_booking_id: string | null
-          created_at: string | null
-          grade_level: string
-          id: string
-          identified_gaps: string[] | null
-          learning_level: string | null
-          learning_style: string | null
-          recommended_approach: string | null
-          recommended_tutors: Json | null
-          strengths: string[] | null
-          student_email: string
-          student_name: string
-          subjects: string[]
-          suggested_learning_path: string | null
-          updated_at: string | null
-        }
-        Insert: {
-          assessment_responses?: Json
-          completed_at?: string | null
-          consultation_booking_id?: string | null
-          created_at?: string | null
-          grade_level: string
-          id?: string
-          identified_gaps?: string[] | null
-          learning_level?: string | null
-          learning_style?: string | null
-          recommended_approach?: string | null
-          recommended_tutors?: Json | null
-          strengths?: string[] | null
-          student_email: string
-          student_name: string
-          subjects: string[]
-          suggested_learning_path?: string | null
-          updated_at?: string | null
-        }
-        Update: {
-          assessment_responses?: Json
-          completed_at?: string | null
-          consultation_booking_id?: string | null
-          created_at?: string | null
-          grade_level?: string
-          id?: string
-          identified_gaps?: string[] | null
-          learning_level?: string | null
-          learning_style?: string | null
-          recommended_approach?: string | null
-          recommended_tutors?: Json | null
-          strengths?: string[] | null
-          student_email?: string
-          student_name?: string
-          subjects?: string[]
-          suggested_learning_path?: string | null
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "learning_assessments_consultation_booking_id_fkey"
-            columns: ["consultation_booking_id"]
-            isOneToOne: false
-            referencedRelation: "consultation_bookings"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       package_offers: {
         Row: {
           created_at: string | null
@@ -476,13 +408,6 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: [
-          {
-            foreignKeyName: "package_recommendations_assessment_id_fkey"
-            columns: ["assessment_id"]
-            isOneToOne: false
-            referencedRelation: "learning_assessments"
-            referencedColumns: ["id"]
-          },
           {
             foreignKeyName: "package_recommendations_consultation_booking_id_fkey"
             columns: ["consultation_booking_id"]
