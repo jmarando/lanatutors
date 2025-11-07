@@ -31,6 +31,7 @@ const TutorSearch = () => {
   const [selectedSubject, setSelectedSubject] = useState("all");
   const [selectedCurriculum, setSelectedCurriculum] = useState("all");
   const [selectedTeachingLevel, setSelectedTeachingLevel] = useState("all");
+  const [selectedGender, setSelectedGender] = useState("all");
   const [sortBy, setSortBy] = useState("rating");
   const [smartMatchOpen, setSmartMatchOpen] = useState(false);
   const [matchStep, setMatchStep] = useState(1);
@@ -159,6 +160,7 @@ const TutorSearch = () => {
           rating: Number(tp.rating) || 0,
           reviews: tp.total_reviews || 0,
           hourlyRate,
+          gender: tp.gender || null,
           photo: name.split(' ').map((n: string) => n[0]).join('') || "T",
           photoUrl: isCalvin ? calvinProfilePhoto : tutorImages[index % tutorImages.length],
           isCalvin // Flag to sort Calvin first
@@ -206,12 +208,13 @@ const TutorSearch = () => {
     const matchesSubject = selectedSubject === "all" || tutor.subjects.includes(selectedSubject);
     const matchesCurriculum = selectedCurriculum === "all" || tutor.curriculum.includes(selectedCurriculum);
     const matchesTeachingLevel = selectedTeachingLevel === "all" || tutor.teachingLevels?.includes(selectedTeachingLevel);
+    const matchesGender = selectedGender === "all" || tutor.gender === selectedGender;
     const matchesPrice = tutor.hourlyRate >= priceRange[0] && tutor.hourlyRate <= priceRange[1];
     const matchesRating = tutor.rating >= minRating;
 
     // Availability filter
     const matchesAvailability = !selectedDate || selectedTimeSlot === "all" || availabilityMap.get(tutor.id) === true;
-    return matchesSearch && matchesSubject && matchesCurriculum && matchesTeachingLevel && matchesPrice && matchesRating && matchesAvailability;
+    return matchesSearch && matchesSubject && matchesCurriculum && matchesTeachingLevel && matchesGender && matchesPrice && matchesRating && matchesAvailability;
   }).sort((a, b) => {
     if (sortBy === "rating") return b.rating - a.rating;
     if (sortBy === "price-low") return a.hourlyRate - b.hourlyRate;
@@ -390,12 +393,29 @@ const TutorSearch = () => {
                   </Select>
                 </div>
 
+                {/* Gender Filter */}
+                <div>
+                  <Label className="mb-3 block">Tutor Gender Preference</Label>
+                  <Select value={selectedGender} onValueChange={setSelectedGender}>
+                    <SelectTrigger className="w-full">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Any Gender</SelectItem>
+                      <SelectItem value="male">Male</SelectItem>
+                      <SelectItem value="female">Female</SelectItem>
+                      <SelectItem value="other">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
                 <Button variant="outline" className="w-full" onClick={() => {
                 setPriceRange([2000, 6000]);
                 setMinRating(0);
                 setSelectedDate(undefined);
                 setSelectedTimeSlot("all");
                 setSelectedTeachingLevel("all");
+                setSelectedGender("all");
                 setAvailabilityMap(new Map());
               }}>
                   Reset All Filters
@@ -414,12 +434,13 @@ const TutorSearch = () => {
                   • Available on {format(selectedDate, "MMM d")} ({timeSlots.find(t => t.value === selectedTimeSlot)?.label.split(' ')[0]})
                 </span>}
             </p>
-            {(selectedDate || selectedTimeSlot !== "all" || selectedSubject !== "all" || selectedCurriculum !== "all" || selectedTeachingLevel !== "all" || minRating > 0 || priceRange[0] !== 2000 || priceRange[1] !== 6000) && <Button variant="ghost" size="sm" onClick={() => {
+            {(selectedDate || selectedTimeSlot !== "all" || selectedSubject !== "all" || selectedCurriculum !== "all" || selectedTeachingLevel !== "all" || selectedGender !== "all" || minRating > 0 || priceRange[0] !== 2000 || priceRange[1] !== 6000) && <Button variant="ghost" size="sm" onClick={() => {
             setSelectedDate(undefined);
             setSelectedTimeSlot("all");
             setSelectedSubject("all");
             setSelectedCurriculum("all");
             setSelectedTeachingLevel("all");
+            setSelectedGender("all");
             setMinRating(0);
             setPriceRange([2000, 6000]);
             setAvailabilityMap(new Map());
