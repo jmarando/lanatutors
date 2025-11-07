@@ -9,6 +9,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Award, Upload, ArrowLeft, ArrowRight, CheckCircle, MapPin, Star } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -19,15 +20,18 @@ import { getCurriculums, getLevelsForCurriculum, getSubjectsForCurriculumLevel }
 import { NAIROBI_LOCATIONS } from "@/utils/locationData";
 import { validateAndNormalizePhone } from "@/utils/phoneValidation";
 const TEACHING_MODES = ["Online", "In-Person"];
+
 const TutorProfileSetup = () => {
   const navigate = useNavigate();
-  const {
-    toast
-  } = useToast();
+  const { toast } = useToast();
   const [step, setStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
   const [userName, setUserName] = useState<string>("");
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [authEmail, setAuthEmail] = useState("");
+  const [authPassword, setAuthPassword] = useState("");
+  const [authMode, setAuthMode] = useState<"signin" | "signup">("signup");
   const photoInputRef = useRef<HTMLInputElement>(null);
   const [formData, setFormData] = useState({
     // Personal info
@@ -100,21 +104,14 @@ const TutorProfileSetup = () => {
     checkAuth();
   }, []);
   const checkAuth = async () => {
-    const {
-      data: {
-        session
-      }
-    } = await supabase.auth.getSession();
+    const { data: { session } } = await supabase.auth.getSession();
 
     if (!session) {
-      toast({
-        title: "Authentication required",
-        description: "Please sign up first to access profile setup",
-        variant: "destructive"
-      });
-      navigate("/tutor-signup");
+      setIsAuthenticated(false);
       return;
     }
+    
+    setIsAuthenticated(true);
     setUserId(session.user.id);
 
     // Get user's info from auth metadata or profile
@@ -134,6 +131,19 @@ const TutorProfileSetup = () => {
       phoneNumber: profile?.phone_number || ""
     }));
     setUserName(fullName || profile?.full_name || "");
+    
+    // Set up auth listener
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      if (session) {
+        setIsAuthenticated(true);
+        checkAuth();
+      } else {
+        setIsAuthenticated(false);
+        setUserId(null);
+      }
+    });
+
+    return () => subscription.unsubscribe();
   };
   const handleCurriculumToggle = (curriculum: string, checked: boolean) => {
     if (checked) {
@@ -253,6 +263,71 @@ const TutorProfileSetup = () => {
       });
     }
   };
+  
+  const handleAuth = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+
+    try {
+      if (authMode === "signup") {
+        const { data, error } = await supabase.auth.signUp({
+          email: authEmail,
+          password: authPassword,
+          options: {
+            emailRedirectTo: `${window.location.origin}/tutor-profile-setup`,
+          }
+        });
+
+        if (error) throw error;
+
+        if (data.user) {
+          // Create profile
+          await supabase.from("profiles").insert({
+            id: data.user.id,
+            full_name: "",
+          });
+
+          // Assign tutor role
+          await supabase.rpc('assign_user_role', {
+            _user_id: data.user.id,
+            _role: 'tutor'
+          });
+
+          toast({
+            title: "Account created!",
+            description: "Please complete your profile below."
+          });
+          
+          setIsAuthenticated(true);
+          checkAuth();
+        }
+      } else {
+        const { error } = await supabase.auth.signInWithPassword({
+          email: authEmail,
+          password: authPassword,
+        });
+
+        if (error) throw error;
+
+        toast({
+          title: "Signed in successfully!",
+          description: "Complete your tutor profile below."
+        });
+        
+        setIsAuthenticated(true);
+        checkAuth();
+      }
+    } catch (error: any) {
+      toast({
+        title: authMode === "signup" ? "Signup failed" : "Sign in failed",
+        description: error.message,
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+  
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!userId) {
@@ -415,6 +490,73 @@ const TutorProfileSetup = () => {
     }
   };
   const progress = step / 4 * 100;
+  
+  // Show authentication form if not logged in
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-[image:var(--gradient-page)] flex items-center justify-center p-6">
+        <SEO title="Tutor Profile Setup - Lana" description="Sign up to set up your tutor profile on Lana" />
+        
+        <Card className="w-full max-w-md">
+          <CardHeader className="text-center">
+            <div className="flex items-center justify-center gap-2 mb-4">
+              <Award className="w-10 h-10 text-primary" />
+              <span className="text-3xl font-bold">Lana</span>
+            </div>
+            <CardTitle className="text-2xl">Welcome to Lana Tutors</CardTitle>
+            <CardDescription>
+              Sign in or create an account to set up your tutor profile
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Tabs value={authMode} onValueChange={(v) => setAuthMode(v as "signin" | "signup")}>
+              <TabsList className="grid w-full grid-cols-2 mb-6">
+                <TabsTrigger value="signup">Sign Up</TabsTrigger>
+                <TabsTrigger value="signin">Sign In</TabsTrigger>
+              </TabsList>
+              
+              <form onSubmit={handleAuth} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="auth-email">Email</Label>
+                  <Input
+                    id="auth-email"
+                    type="email"
+                    value={authEmail}
+                    onChange={(e) => setAuthEmail(e.target.value)}
+                    placeholder="your.email@example.com"
+                    required
+                  />
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="auth-password">Password</Label>
+                  <Input
+                    id="auth-password"
+                    type="password"
+                    value={authPassword}
+                    onChange={(e) => setAuthPassword(e.target.value)}
+                    placeholder="••••••••"
+                    required
+                    minLength={6}
+                  />
+                  {authMode === "signup" && (
+                    <p className="text-xs text-muted-foreground">
+                      Minimum 6 characters
+                    </p>
+                  )}
+                </div>
+
+                <Button type="submit" className="w-full" disabled={isLoading}>
+                  {isLoading ? "Loading..." : authMode === "signup" ? "Create Account" : "Sign In"}
+                </Button>
+              </form>
+            </Tabs>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
+  
   return <div className="min-h-screen bg-[image:var(--gradient-page)] flex items-center justify-center p-6">
       <SEO title="Complete Your Tutor Profile - Lana" description="Set up your tutor profile to start teaching on Lana" keywords="tutor profile setup, online teaching, Lana" />
       
