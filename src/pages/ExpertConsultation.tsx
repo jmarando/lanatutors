@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { Loader2, Users, BookOpen, Award, Phone } from "lucide-react";
 import { SEO } from "@/components/SEO";
+import { validateAndNormalizePhone } from "@/utils/phoneValidation";
 
 const ExpertConsultation = () => {
   const navigate = useNavigate();
@@ -65,6 +66,13 @@ const ExpertConsultation = () => {
       return;
     }
 
+    // Validate phone number
+    const phoneValidation = validateAndNormalizePhone(formData.phoneNumber);
+    if (!phoneValidation.isValid) {
+      toast.error(phoneValidation.error || "Invalid phone number");
+      return;
+    }
+
     if (formData.subjectsOfInterest.length === 0) {
       toast.error("Please select at least one subject");
       return;
@@ -83,7 +91,7 @@ const ExpertConsultation = () => {
         .insert({
           parent_name: formData.parentName,
           email: formData.email,
-          phone_number: formData.phoneNumber,
+          phone_number: phoneValidation.normalized,
           number_of_children: parseInt(formData.numberOfChildren),
           subjects_of_interest: formData.subjectsOfInterest,
           grade_levels: formData.gradeLevels,
@@ -188,9 +196,10 @@ const ExpertConsultation = () => {
                       type="tel"
                       value={formData.phoneNumber}
                       onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
-                      placeholder="0712345678"
+                      placeholder="+254712345678 or 0712345678"
                       required
                     />
+                    <p className="text-xs text-muted-foreground">Accepts: +254, 254, or 0 prefix</p>
                   </div>
                   <div>
                     <Label htmlFor="numberOfChildren">Number of Children</Label>

@@ -274,54 +274,15 @@ const BookConsultation = () => {
                     <div className="w-full border-t border-muted"></div>
                   </div>
                   <div className="relative flex justify-center text-xs">
-                    <span className="bg-background px-4 text-muted-foreground">or try our AI assessment</span>
+                    <span className="bg-background px-4 text-muted-foreground">or browse tutors directly</span>
                   </div>
                 </div>
 
-                {/* AI Assessment Option - Now Second */}
-                <Card className="border-2 border-primary/30 bg-gradient-to-br from-primary/5 to-primary/10 hover:shadow-lg transition-shadow cursor-pointer"
-                      onClick={() => navigate(`/learning-assessment?studentName=${formData.studentName || 'Student'}&email=${formData.email || ''}`)}>
-                  <CardContent className="p-6">
-                    <div className="flex items-start gap-4">
-                      <div className="p-3 bg-primary rounded-lg">
-                        <Sparkles className="w-8 h-8 text-primary-foreground" />
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2 mb-2">
-                          <h4 className="font-semibold text-lg">AI Learning Assessment</h4>
-                          <Badge variant="secondary" className="bg-primary/20">Recommended</Badge>
-                        </div>
-                        <p className="text-sm text-muted-foreground mb-4">
-                          Take a quick 5-minute AI-powered assessment to instantly discover your learning style, 
-                          identify gaps, and get matched with the perfect tutors for your needs.
-                        </p>
-                        <ul className="space-y-2 text-sm mb-4">
-                          <li className="flex items-start gap-2">
-                            <CheckCircle className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
-                            <span>Instant personalized tutor recommendations</span>
-                          </li>
-                          <li className="flex items-start gap-2">
-                            <CheckCircle className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
-                            <span>AI analysis of learning style & gaps</span>
-                          </li>
-                          <li className="flex items-start gap-2">
-                            <CheckCircle className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
-                            <span>Custom learning path created for you</span>
-                          </li>
-                          <li className="flex items-start gap-2">
-                            <CheckCircle className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
-                            <span>Saves time - no need to wait for consultation</span>
-                          </li>
-                        </ul>
-                        <Button variant="outline" className="w-full group">
-                          Start AI Assessment
-                          <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
-                        </Button>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
+                <div className="flex justify-center pt-4">
+                  <Link to="/tutors">
+                    <Button variant="outline">Browse Tutors</Button>
+                  </Link>
+                </div>
 
                 <div className="flex justify-center pt-4">
                   <Link to="/">

@@ -33,9 +33,6 @@ verify_jwt = false
 [functions.send-interview-invitation]
 verify_jwt = false
 
-[functions.ai-learning-assessment]
-verify_jwt = false
-
 [functions.setup-central-calendar-oauth]
 verify_jwt = false
 
