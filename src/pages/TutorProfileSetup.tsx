@@ -474,7 +474,7 @@ const TutorProfileSetup = () => {
         title: "Profile submitted!",
         description: "Your profile is under review. We'll notify you once it's approved."
       });
-      navigate("/tutor-dashboard");
+      navigate("/tutor-profile-submitted");
     } catch (error: any) {
       console.error("Profile submission error:", error);
       toast({
