@@ -279,11 +279,13 @@ const TutorSignup = () => {
       if (roleError) throw roleError;
 
       toast({
-        title: "Application submitted!",
-        description: "Your profile is under review. We'll notify you once approved."
+        title: "Account created successfully!",
+        description: "Please complete your tutor profile to get started."
       });
 
-      navigate("/tutor/dashboard");
+      // NOTE: Pre-vetted tutors go straight to profile setup
+      // TODO: In future, add application approval workflow before profile access
+      navigate("/tutor-profile-setup");
     } catch (error: any) {
       toast({
         title: "Signup failed",

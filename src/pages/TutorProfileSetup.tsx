@@ -100,24 +100,19 @@ const TutorProfileSetup = () => {
     checkAuth();
   }, []);
   const checkAuth = async () => {
-    // ⚠️ TEMPORARY: Authentication bypassed for testing - REMOVE BEFORE PRODUCTION ⚠️
     const {
       data: {
         session
       }
     } = await supabase.auth.getSession();
 
-    // Temporarily allow access without authentication
     if (!session) {
-      // Use a test user ID for form testing
-      setUserId("00000000-0000-0000-0000-000000000000");
-      setFormData(prev => ({
-        ...prev,
-        fullName: "",
-        email: "test@example.com",
-        phoneNumber: ""
-      }));
-      setUserName("Test User");
+      toast({
+        title: "Authentication required",
+        description: "Please sign up first to access profile setup",
+        variant: "destructive"
+      });
+      navigate("/tutor-signup");
       return;
     }
     setUserId(session.user.id);
