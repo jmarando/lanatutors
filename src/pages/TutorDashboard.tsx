@@ -39,7 +39,8 @@ const TutorDashboard = () => {
     try {
       const { data: { user: authUser } } = await supabase.auth.getUser();
       if (!authUser) {
-        navigate("/login");
+        // Not signed in - redirect to application
+        navigate("/become-a-tutor");
         return;
       }
 
@@ -64,8 +65,9 @@ const TutorDashboard = () => {
       setTutorProfile(tutorData);
 
       if (!tutorData) {
-        toast.error("Tutor profile not found");
-        navigate("/tutor-profile-setup");
+        // User is signed in but not a tutor - redirect to application
+        toast.error("You don't have a tutor profile. Please apply to become a tutor.");
+        navigate("/become-a-tutor");
         return;
       }
 
