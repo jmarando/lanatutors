@@ -393,7 +393,6 @@ const TutorProfileSetup = () => {
         teaching_location: formData.teachingLocations.join(', '),
         teaching_experience: formData.teachingHistory,
         graduation_year: formData.educationHistory[0]?.graduationYear ? parseInt(formData.educationHistory[0].graduationYear) : null,
-        gender: formData.gender || null,
         verified: false // Requires admin approval
       });
       if (tutorError) throw tutorError;
