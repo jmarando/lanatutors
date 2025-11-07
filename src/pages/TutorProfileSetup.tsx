@@ -126,21 +126,16 @@ const TutorProfileSetup = () => {
     // Pre-fill form data with existing info
     setFormData(prev => ({
       ...prev,
-      fullName: fullName || profile?.full_name || "",
-      email: email,
-      phoneNumber: profile?.phone_number || ""
+      fullName: prev.fullName && prev.fullName.trim().length > 0 ? prev.fullName : (fullName || profile?.full_name || ""),
+      email: prev.email && prev.email.trim().length > 0 ? prev.email : email,
+      phoneNumber: prev.phoneNumber && prev.phoneNumber.trim().length > 0 ? prev.phoneNumber : (profile?.phone_number || "")
     }));
     setUserName(fullName || profile?.full_name || "");
     
     // Set up auth listener
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (session) {
-        setIsAuthenticated(true);
-        checkAuth();
-      } else {
-        setIsAuthenticated(false);
-        setUserId(null);
-      }
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setIsAuthenticated(!!session);
+      setUserId(session?.user.id ?? null);
     });
 
     return () => subscription.unsubscribe();
