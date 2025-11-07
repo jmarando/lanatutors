@@ -22,10 +22,10 @@ const TutorProfileSubmitted = () => {
           return;
         }
 
-        // Get tutor profile
+        // Get tutor profile with slug
         const { data: tutorProfile } = await supabase
           .from("tutor_profiles")
-          .select("id")
+          .select("id, profile_slug")
           .eq("user_id", user.id)
           .single();
 
@@ -44,9 +44,10 @@ const TutorProfileSubmitted = () => {
         const name = profile?.full_name || user.user_metadata?.full_name || "there";
         setTutorName(name);
 
-        // Build the shareable URL
+        // Build the shareable URL using slug or fallback to ID
         const baseUrl = window.location.origin;
-        const url = `${baseUrl}/tutor-profile/${tutorProfile.id}`;
+        const identifier = tutorProfile.profile_slug || tutorProfile.id;
+        const url = `${baseUrl}/${identifier}`;
         setProfileUrl(url);
       } catch (error) {
         console.error("Error fetching tutor info:", error);

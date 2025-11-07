@@ -71,13 +71,33 @@ const TutorProfile = () => {
 
   const fetchTutorProfile = async () => {
     setLoading(true);
-    const { data: tutorProfile, error } = await supabase
+    
+    // Try to fetch by slug first, then fall back to ID
+    let tutorProfile;
+    let error;
+    
+    // Try by slug
+    const { data: profileBySlug, error: slugError } = await supabase
       .from("tutor_profiles")
       .select("*")
-      .eq("id", id)
-      .single();
+      .eq("profile_slug", id)
+      .maybeSingle();
+    
+    if (profileBySlug) {
+      tutorProfile = profileBySlug;
+    } else {
+      // Fall back to ID
+      const { data: profileById, error: idError } = await supabase
+        .from("tutor_profiles")
+        .select("*")
+        .eq("id", id)
+        .maybeSingle();
+      
+      tutorProfile = profileById;
+      error = idError;
+    }
 
-    if (error) {
+    if (error || !tutorProfile) {
       console.error("Error fetching tutor:", error);
       toast.error("Failed to load tutor profile");
       setLoading(false);

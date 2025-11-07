@@ -144,6 +144,61 @@ const TutorProfileSetup = () => {
 
     return () => { cancelled = true; };
   }, [userId, touched.fullName, touched.email, touched.phoneNumber]);
+
+  // Load existing tutor profile data for editing
+  useEffect(() => {
+    if (!userId) return;
+    
+    const loadExistingProfile = async () => {
+      const { data: existingTutor } = await supabase
+        .from("tutor_profiles")
+        .select("*")
+        .eq("user_id", userId)
+        .maybeSingle();
+      
+      if (existingTutor) {
+        // Populate form with existing data
+        setFormData(prev => ({
+          ...prev,
+          bio: existingTutor.bio || "",
+          curriculum: existingTutor.curriculum || [],
+          subjects: existingTutor.subjects || [],
+          teachingMode: existingTutor.teaching_mode || [],
+          hourlyRate: existingTutor.hourly_rate?.toString() || "",
+          experienceYears: existingTutor.experience_years?.toString() || "",
+          currentInstitution: existingTutor.current_institution || "",
+          showCurrentInstitution: existingTutor.display_institution || false,
+          qualifications: Array.isArray(existingTutor.qualifications) 
+            ? existingTutor.qualifications.join('\n') 
+            : "",
+          teachingLocations: existingTutor.teaching_location?.split(', ') || [],
+          gender: existingTutor.gender || "",
+        }));
+
+        // Set package discounts if they exist
+        const { data: packages } = await supabase
+          .from("package_offers")
+          .select("*")
+          .eq("tutor_id", existingTutor.id);
+        
+        if (packages) {
+          const pkg5 = packages.find(p => p.session_count === 5);
+          const pkg10 = packages.find(p => p.session_count === 10);
+          const pkgDouble = packages.find(p => p.session_count === 1);
+          
+          setFormData(prev => ({
+            ...prev,
+            package5Discount: pkg5?.discount_percentage?.toString() || "10",
+            package10Discount: pkg10?.discount_percentage?.toString() || "15",
+            doubleSessionDiscount: pkgDouble?.discount_percentage?.toString() || "5",
+          }));
+        }
+      }
+    };
+    
+    loadExistingProfile();
+  }, [userId]);
+  
   const handleCurriculumToggle = (curriculum: string, checked: boolean) => {
     if (checked) {
       setFormData({
@@ -375,33 +430,82 @@ const TutorProfileSetup = () => {
       // Build final curriculum array including custom curriculum
       const finalCurriculum = formData.curriculum.includes("Other") && formData.customCurriculum ? [...formData.curriculum.filter(c => c !== "Other"), formData.customCurriculum] : formData.curriculum;
 
-      // Create tutor profile
-      const {
-        error: tutorError
-      } = await supabase.from("tutor_profiles").insert({
-        user_id: userId,
-        bio: formData.bio,
-        subjects: derivedSubjects,
-        curriculum: finalCurriculum,
-        teaching_mode: formData.teachingMode,
-        teaching_levels: teachingLevels,
-        hourly_rate: parseFloat(formData.hourlyRate),
-        experience_years: parseInt(formData.experienceYears),
-        current_institution: formData.currentInstitution,
-        display_institution: formData.showCurrentInstitution,
-        qualifications: formData.qualifications.split('\n').filter(q => q.trim()),
-        teaching_location: formData.teachingLocations.join(', '),
-        teaching_experience: formData.teachingHistory,
-        graduation_year: formData.educationHistory[0]?.graduationYear ? parseInt(formData.educationHistory[0].graduationYear) : null,
-        gender: formData.gender || null,
-        verified: false // Requires admin approval
-      });
-      if (tutorError) throw tutorError;
+      // Check if tutor profile already exists
+      const { data: existingProfile } = await supabase
+        .from("tutor_profiles")
+        .select("id")
+        .eq("user_id", userId)
+        .maybeSingle();
 
-      // Get the tutor profile ID
-      const {
-        data: tutorProfile
-      } = await supabase.from("tutor_profiles").select("id").eq("user_id", userId).single();
+      let tutorProfileId;
+      let isNewProfile = !existingProfile;
+
+      if (existingProfile) {
+        // Update existing profile
+        const { error: tutorError } = await supabase
+          .from("tutor_profiles")
+          .update({
+            bio: formData.bio,
+            subjects: derivedSubjects,
+            curriculum: finalCurriculum,
+            teaching_mode: formData.teachingMode,
+            teaching_levels: teachingLevels,
+            hourly_rate: parseFloat(formData.hourlyRate),
+            experience_years: parseInt(formData.experienceYears),
+            current_institution: formData.currentInstitution,
+            display_institution: formData.showCurrentInstitution,
+            qualifications: formData.qualifications.split('\n').filter(q => q.trim()),
+            teaching_location: formData.teachingLocations.join(', '),
+            teaching_experience: formData.teachingHistory,
+            graduation_year: formData.educationHistory[0]?.graduationYear ? parseInt(formData.educationHistory[0].graduationYear) : null,
+            gender: formData.gender || null,
+          })
+          .eq("user_id", userId);
+        
+        if (tutorError) throw tutorError;
+        tutorProfileId = existingProfile.id;
+      } else {
+        // Create new tutor profile
+        const {
+          data: newTutorProfile,
+          error: tutorError
+        } = await supabase.from("tutor_profiles").insert({
+          user_id: userId,
+          bio: formData.bio,
+          subjects: derivedSubjects,
+          curriculum: finalCurriculum,
+          teaching_mode: formData.teachingMode,
+          teaching_levels: teachingLevels,
+          hourly_rate: parseFloat(formData.hourlyRate),
+          experience_years: parseInt(formData.experienceYears),
+          current_institution: formData.currentInstitution,
+          display_institution: formData.showCurrentInstitution,
+          qualifications: formData.qualifications.split('\n').filter(q => q.trim()),
+          teaching_location: formData.teachingLocations.join(', '),
+          teaching_experience: formData.teachingHistory,
+          graduation_year: formData.educationHistory[0]?.graduationYear ? parseInt(formData.educationHistory[0].graduationYear) : null,
+          gender: formData.gender || null,
+          verified: false // Requires admin approval
+        }).select('id').single();
+        if (tutorError) throw tutorError;
+
+        tutorProfileId = newTutorProfile.id;
+
+        // Generate and update slug for new profile
+        const { data: slugData } = await supabase.rpc('generate_tutor_slug', {
+          full_name: formData.fullName,
+          tutor_id: tutorProfileId
+        });
+        
+        if (slugData) {
+          await supabase.from('tutor_profiles')
+            .update({ profile_slug: slugData })
+            .eq('id', tutorProfileId);
+        }
+      }
+
+      // Get the tutor profile ID (use from above)
+      const tutorProfile = { id: tutorProfileId };
 
       // Create package offers with auto-calculated prices based on selected discounts
       if (tutorProfile) {
@@ -470,11 +574,41 @@ const TutorProfileSetup = () => {
         _role: 'tutor'
       });
       if (roleError) console.error("Role assignment error:", roleError);
-      toast({
-        title: "Profile submitted!",
-        description: "Your profile is under review. We'll notify you once it's approved."
-      });
-      navigate("/tutor-profile-submitted");
+      
+      // Only send email and redirect for new submissions
+      if (isNewProfile) {
+        // Send confirmation email
+        try {
+          const { data: slugData } = await supabase.rpc('generate_tutor_slug', {
+            full_name: formData.fullName,
+            tutor_id: tutorProfileId
+          });
+
+          await supabase.functions.invoke('send-tutor-submission-confirmation', {
+            body: {
+              tutorName: formData.fullName,
+              email: formData.email,
+              profileSlug: slugData || tutorProfileId
+            }
+          });
+        } catch (emailError) {
+          console.error("Email sending error:", emailError);
+          // Don't block submission if email fails
+        }
+
+        toast({
+          title: "Profile submitted!",
+          description: "Check your email for confirmation and next steps."
+        });
+        navigate("/tutor-profile-submitted");
+      } else {
+        // For updates, just go to dashboard
+        toast({
+          title: "Profile updated!",
+          description: "Your changes have been saved successfully."
+        });
+        navigate("/tutor-dashboard");
+      }
     } catch (error: any) {
       console.error("Profile submission error:", error);
       toast({

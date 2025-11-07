@@ -56,8 +56,8 @@ const App = () => {
               <Route path="/for-students" element={<ForStudents />} />
               <Route path="/for-tutors" element={<ForTutors />} />
               <Route path="/tutors" element={<TutorSearch />} />
-              <Route path="/tutor-profile/:id" element={<TutorProfile />} />
               <Route path="/tutors/:id" element={<TutorProfile />} />
+              <Route path="/:id" element={<TutorProfile />} />
               <Route path="/login" element={<Login />} />
               <Route path="/student-signup" element={<StudentSignup />} />
               <Route path="/tutor-signup" element={<TutorSignup />} />

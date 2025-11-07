@@ -686,6 +686,7 @@ export type Database = {
           hourly_rate: number | null
           id: string
           institution_years: number | null
+          profile_slug: string | null
           qualifications: string[] | null
           rating: number | null
           referees: Json | null
@@ -722,6 +723,7 @@ export type Database = {
           hourly_rate?: number | null
           id?: string
           institution_years?: number | null
+          profile_slug?: string | null
           qualifications?: string[] | null
           rating?: number | null
           referees?: Json | null
@@ -758,6 +760,7 @@ export type Database = {
           hourly_rate?: number | null
           id?: string
           institution_years?: number | null
+          profile_slug?: string | null
           qualifications?: string[] | null
           rating?: number | null
           referees?: Json | null
@@ -872,6 +875,10 @@ export type Database = {
       assign_user_role: {
         Args: { _role: string; _user_id: string }
         Returns: undefined
+      }
+      generate_tutor_slug: {
+        Args: { full_name: string; tutor_id: string }
+        Returns: string
       }
       has_recording_access: {
         Args: { _class_id: string; _user_id: string }

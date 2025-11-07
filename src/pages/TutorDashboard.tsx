@@ -76,8 +76,8 @@ const TutorDashboard = () => {
       {/* Dashboard Header with Actions */}
       <div className="border-b bg-background">
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-end gap-4">
-          <Button variant="ghost" onClick={() => navigate("/tutor/profile")}>
-            My Profile
+          <Button variant="ghost" onClick={() => navigate("/tutor-profile-setup")}>
+            Edit Profile
           </Button>
           <Button variant="ghost" onClick={() => navigate("/tutor/availability")}>
             Availability
