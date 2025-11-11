@@ -38,6 +38,8 @@ const TutorProfileSetup = () => {
   const [showResetPassword, setShowResetPassword] = useState(false);
   const [resetEmail, setResetEmail] = useState("");
   const photoInputRef = useRef<HTMLInputElement>(null);
+  const logoutTimerRef = useRef<number | null>(null);
+  const hadSessionRef = useRef(false);
   const [formData, setFormData] = useState({
     // Personal info
     fullName: "",
@@ -123,21 +125,57 @@ const TutorProfileSetup = () => {
   // Derive subjects array from subjectsWithContext for display
   const derivedSubjects = Array.from(new Set(formData.subjectsWithContext.map(s => s.subject)));
   useEffect(() => {
-    // Set up listener first
+    // Set up listener first with logout grace period
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      setIsAuthenticated(!!session);
-      setUserId(session?.user?.id ?? null);
-      setIsAuthChecked(true);
+      if (session) {
+        // Active session
+        if (logoutTimerRef.current) {
+          clearTimeout(logoutTimerRef.current);
+          logoutTimerRef.current = null;
+        }
+        hadSessionRef.current = true;
+        setIsAuthenticated(true);
+        setUserId(session.user?.id ?? null);
+        setIsAuthChecked(true);
+      } else {
+        // No session. If we've had a session before, enter grace period to avoid flicker
+        if (hadSessionRef.current) {
+          if (!logoutTimerRef.current) {
+            logoutTimerRef.current = window.setTimeout(() => {
+              setIsAuthenticated(false);
+              setUserId(null);
+              logoutTimerRef.current = null;
+            }, 5000);
+          }
+        } else {
+          // First load and no session
+          setIsAuthenticated(false);
+          setUserId(null);
+          setIsAuthChecked(true);
+        }
+      }
     });
 
-    // Then fetch existing session
+    // Then fetch existing session once
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setIsAuthenticated(!!session);
-      setUserId(session?.user?.id ?? null);
+      if (session) {
+        hadSessionRef.current = true;
+        setIsAuthenticated(true);
+        setUserId(session.user?.id ?? null);
+      } else {
+        setIsAuthenticated(false);
+        setUserId(null);
+      }
       setIsAuthChecked(true);
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      if (logoutTimerRef.current) {
+        clearTimeout(logoutTimerRef.current);
+        logoutTimerRef.current = null;
+      }
+      subscription.unsubscribe();
+    };
   }, []);
 
   // Prefill profile details once authenticated, without overwriting touched fields
