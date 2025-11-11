@@ -664,12 +664,12 @@ const TutorProfileSetup = () => {
         });
         navigate("/tutor-profile-submitted");
       } else {
-        // For updates, just go to dashboard
+        // For updates, also go to submitted page
         toast({
           title: "Profile updated!",
           description: "Your changes have been saved successfully."
         });
-        navigate("/tutor/dashboard");
+        navigate("/tutor-profile-submitted");
       }
     } catch (error: any) {
       console.error("Profile submission error:", error);
