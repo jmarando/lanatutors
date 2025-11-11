@@ -860,7 +860,13 @@ const TutorProfileSetup = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <form onSubmit={handleSubmit} className="space-y-6">
+              <form onSubmit={(e) => {
+                e.preventDefault();
+                // Only submit if we're on step 4
+                if (step === 4) {
+                  handleSubmit(e);
+                }
+              }} className="space-y-6">
               {step === 1 && <div className="space-y-6">
                   <h3 className="font-semibold text-lg">Personal Information</h3>
                   <p className="text-sm text-muted-foreground">
@@ -1530,7 +1536,10 @@ TEFL/TESOL Certification" value={formData.qualifications} onChange={e => setForm
                 }} className="ml-auto">
                     Continue
                     <ArrowRight className="ml-2 h-4 w-4" />
-                  </Button> : <Button type="submit" disabled={isLoading} className="ml-auto">
+                  </Button> : <Button type="button" onClick={(e) => {
+                    e.preventDefault();
+                    handleSubmit(e as any);
+                  }} disabled={isLoading} className="ml-auto">
                     {isLoading ? "Submitting..." : "Submit Profile"}
                   </Button>}
               </div>
