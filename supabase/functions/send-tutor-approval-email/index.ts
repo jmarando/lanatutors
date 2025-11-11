@@ -20,7 +20,7 @@ const handler = async (req: Request): Promise<Response> => {
   try {
     const { email, fullName }: ApprovalEmailRequest = await req.json();
     
-    console.log("Sending tutor approval email to:", email);
+    console.log("Sending tutor approval email");
 
     const signupUrl = `${Deno.env.get('VITE_SUPABASE_URL')}/auth/v1/signup?redirect_to=${encodeURIComponent('https://iccemuiqcdumgxiwxzdq.supabase.co/tutor-profile-setup')}`;
 
@@ -144,7 +144,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     const emailResponse = await response.json();
 
-    console.log("Approval email sent successfully:", emailResponse);
+    console.log("Approval email sent successfully");
 
     return new Response(JSON.stringify(emailResponse), {
       status: 200,

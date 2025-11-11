@@ -33,6 +33,7 @@ const StudentSignup = () => {
   const [formData, setFormData] = useState({
     email: "",
     password: "",
+    confirmPassword: "",
     fullName: "",
     phoneNumber: "",
     age: "",
@@ -95,6 +96,16 @@ const StudentSignup = () => {
       toast({
         title: "Invalid email",
         description: emailValidation.error.errors[0].message,
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Validate password confirmation
+    if (formData.password !== formData.confirmPassword) {
+      toast({
+        title: "Passwords don't match",
+        description: "Please make sure both passwords are the same",
         variant: "destructive"
       });
       return;
@@ -285,6 +296,18 @@ const StudentSignup = () => {
                     type="password"
                     value={formData.password}
                     onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                    required
+                    minLength={6}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label htmlFor="confirmPassword">Confirm Password *</Label>
+                  <Input
+                    id="confirmPassword"
+                    type="password"
+                    value={formData.confirmPassword}
+                    onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
                     required
                     minLength={6}
                   />

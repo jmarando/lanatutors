@@ -20,7 +20,7 @@ serve(async (req) => {
     )
 
     const body = await req.json()
-    console.log('Pesapal IPN received:', JSON.stringify(body, null, 2))
+    console.log('Pesapal callback received for order:', body.OrderTrackingId)
 
     const { OrderTrackingId, OrderMerchantReference } = body
 
@@ -83,7 +83,7 @@ serve(async (req) => {
     }
 
     const statusData = await statusResponse.json()
-    console.log('Transaction status:', statusData)
+    console.log('Transaction status retrieved for order:', OrderTrackingId, '- Status:', statusData.payment_status_description)
 
     // Security: Verify the transaction status directly with Pesapal
     // This prevents spoofed webhook data from being trusted
@@ -104,10 +104,10 @@ serve(async (req) => {
       throw new Error('Payment record not found')
     }
 
-    console.log('Found payment record:', payment)
+    console.log('Payment record found for order:', OrderTrackingId)
 
     // Security: Log webhook attempt for audit trail
-    console.log('Webhook validation passed for order:', OrderTrackingId, 'User:', payment.user_id)
+    console.log('Webhook validation passed - User ID:', payment.user_id)
 
     // Map Pesapal status to our status
     let status: 'completed' | 'failed' | 'cancelled' | 'pending' = 'pending'
@@ -141,7 +141,7 @@ serve(async (req) => {
       throw updateError
     }
 
-    console.log('Payment updated successfully:', { status, confirmation_code: statusData.confirmation_code })
+    console.log('Payment status updated:', status)
 
     // Handle payment completion
     if (status === 'completed') {
@@ -157,7 +157,7 @@ serve(async (req) => {
         if (bookingError) {
           console.error('Error updating booking:', bookingError)
         } else {
-          console.log('Booking confirmed:', payment.reference_id)
+          console.log('Booking confirmed')
 
           // Send confirmation email
           const { data: booking } = await supabase

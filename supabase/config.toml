@@ -48,3 +48,6 @@ verify_jwt = false
 [functions.generate-google-meet-link]
 verify_jwt = true
 
+[functions.validate-phone]
+verify_jwt = true
+

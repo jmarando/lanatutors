@@ -22,7 +22,7 @@ const handler = async (req: Request): Promise<Response> => {
   try {
     const { email, fullName, meetLink, interviewDate }: InterviewInvitationRequest = await req.json();
     
-    console.log("Sending interview invitation to:", email);
+    console.log("Sending interview invitation");
 
     const response = await fetch("https://api.resend.com/emails", {
       method: "POST",
@@ -164,7 +164,7 @@ const handler = async (req: Request): Promise<Response> => {
     });
 
     const emailResponse = await response.json();
-    console.log("Interview invitation sent successfully:", emailResponse);
+    console.log("Interview invitation sent successfully");
 
     return new Response(JSON.stringify(emailResponse), {
       status: 200,

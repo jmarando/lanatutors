@@ -34,7 +34,7 @@ serve(async (req) => {
 
     const { amount, description, referenceId, paymentType, callbackUrl } = await req.json()
 
-    console.log('Initiating Pesapal payment:', { amount, description, referenceId, paymentType })
+    console.log('Initiating payment - Amount:', amount, 'Type:', paymentType)
 
     // Step 1: Get Pesapal access token
     const consumerKey = Deno.env.get('PESAPAL_CONSUMER_KEY')

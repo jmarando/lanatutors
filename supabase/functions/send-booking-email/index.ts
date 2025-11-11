@@ -48,9 +48,9 @@ const handler = async (req: Request): Promise<Response> => {
     // Use testEmail if provided for testing purposes
     const recipientEmail = testEmail || studentEmail;
 
-    console.log("Sending booking confirmation emails to:", recipientEmail, "and", tutorEmail);
+    console.log("Sending booking confirmation emails", testEmail ? "(TEST MODE)" : "");
     if (testEmail) {
-      console.log("TEST MODE: Original email was", studentEmail, "but sending to", testEmail);
+      console.log("TEST: Redirecting email to test address");
     }
 
     const formattedStart = new Date(startTime).toLocaleString('en-US', {
@@ -276,11 +276,11 @@ const handler = async (req: Request): Promise<Response> => {
     const studentEmailData = await studentEmailResponse.json();
 
     if (!studentEmailResponse.ok) {
-      console.error("Error sending student email:", studentEmailData);
+      console.error("Failed to send student email");
       throw new Error(studentEmailData.message || "Failed to send student email");
     }
 
-    console.log("Student email sent successfully:", studentEmailData);
+    console.log("Student email sent successfully");
 
     // Simple tutor notification email
     const tutorEmailResponse = await fetch("https://api.resend.com/emails", {
@@ -315,10 +315,10 @@ const handler = async (req: Request): Promise<Response> => {
     const tutorEmailData = await tutorEmailResponse.json();
 
     if (!tutorEmailResponse.ok) {
-      console.error("Error sending tutor email:", tutorEmailData);
+      console.error("Failed to send tutor email");
     }
 
-    console.log("Tutor email sent successfully:", tutorEmailData);
+    console.log("Tutor email sent successfully");
 
     return new Response(
       JSON.stringify({ 
