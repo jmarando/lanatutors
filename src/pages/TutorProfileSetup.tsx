@@ -1551,9 +1551,12 @@ TEFL/TESOL Certification" value={formData.qualifications} onChange={e => setForm
                     <CardContent className="p-6">
                       <div className="flex gap-4 mb-4">
                         <Avatar className="w-16 h-16 shrink-0 ring-2 ring-primary/20 shadow-lg">
-                          {formData.showPhoto && photoFile ? <AvatarImage src={URL.createObjectURL(photoFile)} /> : <AvatarFallback className="text-xl bg-primary text-primary-foreground">
-                              {formData.fullName.split(' ').map(n => n[0]).join('').slice(0, 2) || "T"}
-                            </AvatarFallback>}
+                          {formData.showPhoto && photoFile ? (
+                            <AvatarImage src={URL.createObjectURL(photoFile)} />
+                          ) : null}
+                          <AvatarFallback className="text-xl bg-primary text-primary-foreground">
+                            {formData.fullName.split(' ').map(n => n[0]).join('').slice(0, 2) || "T"}
+                          </AvatarFallback>
                         </Avatar>
                         <div className="flex-1 min-w-0">
                           <h3 className="font-bold text-lg mb-1 truncate">
