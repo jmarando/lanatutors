@@ -89,6 +89,13 @@ const TutorProfileSetup = () => {
     [key: string]: 'standard' | 'advanced'; // key format: "curriculum-level"
   }>({});
 
+  // Sync hourlyRate with standardRate for package calculations
+  useEffect(() => {
+    if (formData.standardRate && !formData.hourlyRate) {
+      setFormData(prev => ({ ...prev, hourlyRate: prev.standardRate }));
+    }
+  }, [formData.standardRate]);
+
   // State for hierarchical curriculum/level/subject selection
   const [curriculumLevels, setCurriculumLevels] = useState<{
     [key: string]: string[];
@@ -115,7 +122,15 @@ const TutorProfileSetup = () => {
   // Derive subjects array from subjectsWithContext for display
   const derivedSubjects = Array.from(new Set(formData.subjectsWithContext.map(s => s.subject)));
   useEffect(() => {
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+      console.log('Auth state change:', event, !!session);
+      
+      // Don't log out on SIGNED_OUT if we're in the middle of the form
+      if (event === 'SIGNED_OUT' && step > 1) {
+        console.warn('Preventing logout during form completion');
+        return;
+      }
+      
       setIsAuthenticated(!!session);
       setUserId(session?.user?.id ?? null);
     });
@@ -126,7 +141,7 @@ const TutorProfileSetup = () => {
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [step]);
 
   // Prefill profile details once authenticated, without overwriting touched fields
   useEffect(() => {
@@ -923,11 +938,9 @@ const TutorProfileSetup = () => {
             </CardHeader>
             <CardContent>
               <form onSubmit={(e) => {
+                // ALWAYS prevent default form submission
                 e.preventDefault();
-                // Only submit if we're on step 4
-                if (step === 4) {
-                  handleSubmit(e);
-                }
+                // Form submission is only handled via explicit button clicks
               }} className="space-y-6">
               {step === 1 && <div className="space-y-6">
                   <h3 className="font-semibold text-lg">Personal Information</h3>
@@ -1709,10 +1722,16 @@ TEFL/TESOL Certification" value={formData.qualifications} onChange={e => setForm
                 }} className="ml-auto">
                     Continue
                     <ArrowRight className="ml-2 h-4 w-4" />
-                  </Button> : <Button type="button" onClick={(e) => {
-                    e.preventDefault();
-                    handleSubmit(e as any);
-                  }} disabled={isLoading} className="ml-auto">
+                  </Button> : <Button 
+                    type="button" 
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleSubmit(e as any);
+                    }} 
+                    disabled={isLoading || !formData.standardRate || !formData.advancedRate} 
+                    className="ml-auto"
+                  >
                     {isLoading ? "Submitting..." : "Submit Profile"}
                   </Button>}
               </div>
