@@ -22,13 +22,11 @@ const BecomeATutor = lazy(() => import("./pages/BecomeATutor"));
 const StudentDashboard = lazy(() => import("./pages/NewStudentDashboard"));
 const TutorDashboard = lazy(() => import("./pages/TutorDashboard"));
 const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
-const SeedTutors = lazy(() => import("./pages/SeedTutors"));
 const BookConsultation = lazy(() => import("./pages/BookConsultation"));
 const ExpertConsultation = lazy(() => import("./pages/ExpertConsultation"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const TestEmail = lazy(() => import("./pages/TestEmail"));
 const BookingConfirmed = lazy(() => import("./pages/BookingConfirmed"));
-const CreateCalvinProfile = lazy(() => import("./pages/CreateCalvinProfile"));
 const TutorProfileSetup = lazy(() => import("./pages/TutorProfileSetup"));
 const TutorProfileSubmitted = lazy(() => import("./pages/TutorProfileSubmitted"));
 const ConsultationConfirmed = lazy(() => import("./pages/ConsultationConfirmed"));
@@ -71,12 +69,10 @@ const App = () => {
               <Route path="/tutor-profile-setup" element={<TutorProfileSetup />} />
               <Route path="/tutor-profile-submitted" element={<TutorProfileSubmitted />} />
               <Route path="/admin" element={<AdminDashboard />} />
-              <Route path="/seed-tutors" element={<SeedTutors />} />
               <Route path="/book-consultation" element={<BookConsultation />} />
               <Route path="/expert-consultation" element={<ExpertConsultation />} />
               <Route path="/test-email" element={<TestEmail />} />
               <Route path="/booking-confirmed" element={<BookingConfirmed />} />
-              <Route path="/create-calvin-profile" element={<CreateCalvinProfile />} />
               <Route path="/consultation-confirmed" element={<ConsultationConfirmed />} />
               <Route path="/setup-central-calendar" element={<SetupCentralCalendar />} />
               <Route path="/payment-callback" element={<PaymentCallback />} />

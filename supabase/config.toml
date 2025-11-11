@@ -1,5 +1,8 @@
 project_id = "iccemuiqcdumgxiwxzdq"
 
+[functions.create-tutor-profile]
+verify_jwt = true
+
 [functions.create-google-meet-session]
 verify_jwt = true
 
