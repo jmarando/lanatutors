@@ -30,6 +30,7 @@ const TutorProfileSetup = () => {
   const [userId, setUserId] = useState<string | null>(null);
   const [userName, setUserName] = useState<string>("");
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuthChecked, setIsAuthChecked] = useState(false);
   const [authEmail, setAuthEmail] = useState("");
   const [authPassword, setAuthPassword] = useState("");
   const [authConfirmPassword, setAuthConfirmPassword] = useState("");
@@ -122,26 +123,22 @@ const TutorProfileSetup = () => {
   // Derive subjects array from subjectsWithContext for display
   const derivedSubjects = Array.from(new Set(formData.subjectsWithContext.map(s => s.subject)));
   useEffect(() => {
+    // Set up listener first
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      console.log('Auth state change:', event, !!session);
-      
-      // Don't log out on SIGNED_OUT if we're in the middle of the form
-      if (event === 'SIGNED_OUT' && step > 1) {
-        console.warn('Preventing logout during form completion');
-        return;
-      }
-      
       setIsAuthenticated(!!session);
       setUserId(session?.user?.id ?? null);
+      setIsAuthChecked(true);
     });
 
+    // Then fetch existing session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setIsAuthenticated(!!session);
       setUserId(session?.user?.id ?? null);
+      setIsAuthChecked(true);
     });
 
     return () => subscription.unsubscribe();
-  }, [step]);
+  }, []);
 
   // Prefill profile details once authenticated, without overwriting touched fields
   useEffect(() => {
@@ -760,6 +757,21 @@ const TutorProfileSetup = () => {
     }
   };
   const progress = step / 4 * 100;
+  
+  // Auth gating
+  if (!isAuthChecked) {
+    return (
+      <div className="min-h-screen bg-[image:var(--gradient-page)] flex items-center justify-center p-6">
+        <SEO title="Tutor Profile Setup - Loading" description="Checking your session" />
+        <Card className="w-full max-w-md">
+          <CardHeader>
+            <CardTitle>Loading</CardTitle>
+            <CardDescription>Checking your session…</CardDescription>
+          </CardHeader>
+        </Card>
+      </div>
+    );
+  }
   
   // Show authentication form if not logged in
   if (!isAuthenticated) {
