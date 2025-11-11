@@ -57,6 +57,10 @@ const TutorProfileSetup = () => {
       subject: string;
     }>,
     teachingMode: [] as string[],
+    // Tiered pricing
+    standardRate: "",
+    advancedRate: "",
+    // Legacy field for backwards compatibility
     hourlyRate: "",
     experienceYears: "",
     currentInstitution: "",
@@ -79,6 +83,11 @@ const TutorProfileSetup = () => {
       years: string;
     }>
   });
+
+  // State for tier assignments
+  const [tierAssignments, setTierAssignments] = useState<{
+    [key: string]: 'standard' | 'advanced'; // key format: "curriculum-level"
+  }>({});
 
   // State for hierarchical curriculum/level/subject selection
   const [curriculumLevels, setCurriculumLevels] = useState<{
@@ -512,7 +521,7 @@ const TutorProfileSetup = () => {
             curriculum: finalCurriculum,
             teaching_mode: formData.teachingMode,
             teaching_levels: teachingLevels,
-            hourly_rate: parseFloat(formData.hourlyRate),
+            hourly_rate: parseFloat(formData.standardRate || formData.hourlyRate), // Use standard rate as base
             experience_years: parseInt(formData.experienceYears),
             current_institution: formData.currentInstitution,
             display_institution: formData.showCurrentInstitution,
@@ -526,6 +535,10 @@ const TutorProfileSetup = () => {
         
         if (tutorError) throw tutorError;
         tutorProfileId = existingProfile.id;
+
+        // Delete existing pricing tiers and assignments for update
+        await supabase.from("curriculum_level_tier_assignments").delete().eq("tutor_id", tutorProfileId);
+        await supabase.from("tutor_pricing_tiers").delete().eq("tutor_id", tutorProfileId);
       } else {
         // Create new tutor profile
         const {
@@ -538,7 +551,7 @@ const TutorProfileSetup = () => {
           curriculum: finalCurriculum,
           teaching_mode: formData.teachingMode,
           teaching_levels: teachingLevels,
-          hourly_rate: parseFloat(formData.hourlyRate),
+          hourly_rate: parseFloat(formData.standardRate || formData.hourlyRate), // Use standard rate as base
           experience_years: parseInt(formData.experienceYears),
           current_institution: formData.currentInstitution,
           display_institution: formData.showCurrentInstitution,
@@ -564,6 +577,55 @@ const TutorProfileSetup = () => {
             .update({ profile_slug: slugData })
             .eq('id', tutorProfileId);
         }
+      }
+
+      // Create pricing tiers
+      const standardRate = parseFloat(formData.standardRate);
+      const advancedRate = parseFloat(formData.advancedRate);
+
+      const { data: tiers, error: tiersError } = await supabase
+        .from("tutor_pricing_tiers")
+        .insert([
+          {
+            tutor_id: tutorProfileId,
+            tier_name: 'standard',
+            online_hourly_rate: standardRate
+          },
+          {
+            tutor_id: tutorProfileId,
+            tier_name: 'advanced',
+            online_hourly_rate: advancedRate
+          }
+        ])
+        .select();
+      
+      if (tiersError) throw tiersError;
+
+      // Create tier assignments for each curriculum-level combination
+      const standardTier = tiers.find(t => t.tier_name === 'standard');
+      const advancedTier = tiers.find(t => t.tier_name === 'advanced');
+
+      const assignments = Object.entries(curriculumLevels).flatMap(([curriculum, levels]) =>
+        levels.map(level => {
+          const key = `${curriculum}-${level}`;
+          const assignedTier = tierAssignments[key] || 'standard';
+          const tierId = assignedTier === 'standard' ? standardTier?.id : advancedTier?.id;
+          
+          return {
+            tutor_id: tutorProfileId,
+            curriculum,
+            level,
+            tier_id: tierId
+          };
+        })
+      );
+
+      if (assignments.length > 0) {
+        const { error: assignmentsError } = await supabase
+          .from("curriculum_level_tier_assignments")
+          .insert(assignments);
+        
+        if (assignmentsError) throw assignmentsError;
       }
 
       // Get the tutor profile ID (use from above)
@@ -1404,27 +1466,138 @@ TEFL/TESOL Certification" value={formData.qualifications} onChange={e => setForm
                   </div>
                 </div>}
 
-              {step === 4 && <div className="space-y-4">
-                  <h3 className="font-semibold text-lg">Rates & Additional Info</h3>
+              {step === 4 && <div className="space-y-6">
+                  <div>
+                    <h3 className="font-semibold text-lg">Pricing Tiers</h3>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Set different rates for different curriculum levels
+                    </p>
+                  </div>
                   
-                  <div className="space-y-2">
-                    <Label htmlFor="hourlyRate">Online Hourly Rate (KES) *</Label>
-                    <Input id="hourlyRate" type="number" min="2000" max="6000" step="100" placeholder="3000" value={formData.hourlyRate} onChange={e => setFormData({
-                    ...formData,
-                    hourlyRate: e.target.value
-                  })} required />
-                    <div className="space-y-1">
+                  {/* Pricing Tiers */}
+                  <div className="grid md:grid-cols-2 gap-4">
+                    {/* Standard Tier */}
+                    <div className="border rounded-lg p-4 space-y-3 bg-muted/20">
+                      <div className="flex items-center gap-2">
+                        <Badge variant="secondary">Standard Tier</Badge>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="standardRate">Online Hourly Rate (KES) *</Label>
+                        <Input 
+                          id="standardRate" 
+                          type="number" 
+                          min="1500" 
+                          max="6000" 
+                          step="100" 
+                          placeholder="2000" 
+                          value={formData.standardRate} 
+                          onChange={e => setFormData({
+                            ...formData,
+                            standardRate: e.target.value
+                          })} 
+                          required 
+                        />
+                        {formData.standardRate && (
+                          <div className="space-y-1">
+                            <p className="text-xs text-muted-foreground">
+                              In-person: KES {(parseFloat(formData.standardRate) * 1.5).toLocaleString()}/hr
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              You earn 70%: KES {(parseFloat(formData.standardRate) * 0.7).toLocaleString()}/hr
+                            </p>
+                          </div>
+                        )}
+                      </div>
                       <p className="text-xs text-muted-foreground">
-                        Range: KES 2,000 - 6,000. You'll earn 70% of this amount.
+                        For foundational curriculum levels
                       </p>
-                      {formData.hourlyRate && <div className="flex items-center gap-2 p-2 bg-muted/50 rounded-md">
-                          <p className="text-xs font-medium">
-                            In-person rate: KES {(parseFloat(formData.hourlyRate) * 1.5).toLocaleString()}/hr
-                          </p>
-                          <span className="text-xs text-muted-foreground">(50% higher)</span>
-                        </div>}
+                    </div>
+
+                    {/* Advanced Tier */}
+                    <div className="border rounded-lg p-4 space-y-3 bg-primary/5">
+                      <div className="flex items-center gap-2">
+                        <Badge>Advanced Tier</Badge>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="advancedRate">Online Hourly Rate (KES) *</Label>
+                        <Input 
+                          id="advancedRate" 
+                          type="number" 
+                          min="1500" 
+                          max="6000" 
+                          step="100" 
+                          placeholder="3500" 
+                          value={formData.advancedRate} 
+                          onChange={e => setFormData({
+                            ...formData,
+                            advancedRate: e.target.value
+                          })} 
+                          required 
+                        />
+                        {formData.advancedRate && (
+                          <div className="space-y-1">
+                            <p className="text-xs text-muted-foreground">
+                              In-person: KES {(parseFloat(formData.advancedRate) * 1.5).toLocaleString()}/hr
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              You earn 70%: KES {(parseFloat(formData.advancedRate) * 0.7).toLocaleString()}/hr
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        For advanced curriculum levels (IB, A-Level, IGCSE)
+                      </p>
                     </div>
                   </div>
+
+                  {/* Tier Assignments */}
+                  {formData.subjectsWithContext.length > 0 && (
+                    <div className="space-y-3">
+                      <div>
+                        <Label className="text-base font-semibold">Assign Curriculum Levels to Tiers</Label>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          Choose which pricing tier applies to each curriculum-level combination
+                        </p>
+                      </div>
+                      
+                      <div className="border rounded-lg p-4 space-y-3 bg-background">
+                        {Object.entries(
+                          formData.subjectsWithContext.reduce((acc, s) => {
+                            const key = `${s.curriculum}-${s.level}`;
+                            const displayKey = `${s.curriculum} - ${s.level}`;
+                            if (!acc[key]) {
+                              acc[key] = { displayKey, curriculum: s.curriculum, level: s.level };
+                            }
+                            return acc;
+                          }, {} as { [key: string]: { displayKey: string; curriculum: string; level: string } })
+                        ).map(([key, { displayKey }]) => (
+                          <div key={key} className="flex items-center justify-between p-3 border rounded-lg bg-muted/20">
+                            <p className="text-sm font-medium">{displayKey}</p>
+                            <Select
+                              value={tierAssignments[key] || 'standard'}
+                              onValueChange={(value: 'standard' | 'advanced') => {
+                                setTierAssignments({
+                                  ...tierAssignments,
+                                  [key]: value
+                                });
+                              }}
+                            >
+                              <SelectTrigger className="w-[180px]">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="standard">Standard Tier</SelectItem>
+                                <SelectItem value="advanced">Advanced Tier</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  <Separator />
 
                   <div className="space-y-3">
                     <div>

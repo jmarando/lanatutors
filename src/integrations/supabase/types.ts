@@ -194,6 +194,48 @@ export type Database = {
         }
         Relationships: []
       }
+      curriculum_level_tier_assignments: {
+        Row: {
+          created_at: string
+          curriculum: string
+          id: string
+          level: string
+          tier_id: string
+          tutor_id: string
+        }
+        Insert: {
+          created_at?: string
+          curriculum: string
+          id?: string
+          level: string
+          tier_id: string
+          tutor_id: string
+        }
+        Update: {
+          created_at?: string
+          curriculum?: string
+          id?: string
+          level?: string
+          tier_id?: string
+          tutor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "curriculum_level_tier_assignments_tier_id_fkey"
+            columns: ["tier_id"]
+            isOneToOne: false
+            referencedRelation: "tutor_pricing_tiers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "curriculum_level_tier_assignments_tutor_id_fkey"
+            columns: ["tutor_id"]
+            isOneToOne: false
+            referencedRelation: "tutor_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       expert_consultation_requests: {
         Row: {
           additional_notes: string | null
@@ -730,6 +772,41 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      tutor_pricing_tiers: {
+        Row: {
+          created_at: string
+          id: string
+          online_hourly_rate: number
+          tier_name: string
+          tutor_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          online_hourly_rate: number
+          tier_name: string
+          tutor_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          online_hourly_rate?: number
+          tier_name?: string
+          tutor_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tutor_pricing_tiers_tutor_id_fkey"
+            columns: ["tutor_id"]
+            isOneToOne: false
+            referencedRelation: "tutor_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       tutor_profiles: {
         Row: {
