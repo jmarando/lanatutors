@@ -121,6 +121,10 @@ const TutorProfile = () => {
       // Check if this is Calvin's profile
       const isCalvin = profile?.full_name === "Calvins Onuko";
       
+      // Check if tutor wants to show photo
+      const showPhoto = tutorProfile.show_photo !== false; // Default to true if not set
+      const uploadedAvatar = profile?.avatar_url;
+      
       setTutor({
         id: tutorProfile.id,
         userId: tutorProfile.user_id,
@@ -135,7 +139,7 @@ const TutorProfile = () => {
         photo: profile?.full_name 
           ? profile.full_name.split(' ').map((n: string) => n[0]).join('') 
           : "T",
-        photoUrl: isCalvin ? calvinProfilePhoto : randomImage,
+        photoUrl: (showPhoto && uploadedAvatar) ? uploadedAvatar : null, // Only show photo if allowed
         bio: tutorProfile.bio || "",
         education: Array.isArray(tutorProfile.qualifications) 
           ? tutorProfile.qualifications 
