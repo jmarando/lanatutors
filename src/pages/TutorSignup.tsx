@@ -11,6 +11,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { NAIROBI_LOCATIONS } from "@/utils/locationData";
+import { z } from "zod";
+
+const emailSchema = z.string().email({ message: "Please enter a valid email address" });
 
 const CBC_SUBJECTS = [
   "Mathematics", "English", "Kiswahili", "Science", "Social Studies",
@@ -155,6 +158,17 @@ const TutorSignup = () => {
       toast({
         title: "Select at least one subject",
         description: "Please select subjects you can teach",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Validate email format
+    const emailValidation = emailSchema.safeParse(formData.email);
+    if (!emailValidation.success) {
+      toast({
+        title: "Invalid email",
+        description: emailValidation.error.errors[0].message,
         variant: "destructive"
       });
       return;

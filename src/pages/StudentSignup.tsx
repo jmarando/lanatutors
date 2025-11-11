@@ -13,6 +13,9 @@ import { useToast } from "@/hooks/use-toast";
 import { Separator } from "@/components/ui/separator";
 import { validateAndNormalizePhone } from "@/utils/phoneValidation";
 import { getCurriculums, getLevelsForCurriculum, getSubjectsForCurriculumLevel } from "@/utils/curriculumData";
+import { z } from "zod";
+
+const emailSchema = z.string().email({ message: "Please enter a valid email address" });
 
 const LEARNING_STYLES = [
   "Visual (diagrams, videos)",
@@ -81,6 +84,17 @@ const StudentSignup = () => {
       toast({
         title: "Select at least one subject",
         description: "Please select subjects you need help with",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Validate email format
+    const emailValidation = emailSchema.safeParse(formData.email);
+    if (!emailValidation.success) {
+      toast({
+        title: "Invalid email",
+        description: emailValidation.error.errors[0].message,
         variant: "destructive"
       });
       return;
