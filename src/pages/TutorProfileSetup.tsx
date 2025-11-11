@@ -1075,7 +1075,7 @@ TEFL/TESOL Certification" value={formData.qualifications} onChange={e => setForm
               {step === 3 && <div className="space-y-6">
                   <h3 className="font-semibold text-lg">Subjects & Curriculum</h3>
                   <p className="text-sm text-muted-foreground">
-                    First select curricula and levels you teach, then choose your subjects
+                    First select curricula and levels you teach in the order of your teaching experience, then choose your subjects
                   </p>
                    
                   <div className="space-y-6">
