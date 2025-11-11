@@ -770,7 +770,7 @@ const TutorProfileSetup = () => {
                       </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="gender">Gender (Optional)</Label>
+                      <Label htmlFor="gender">Gender</Label>
                       <Select value={formData.gender} onValueChange={value => setFormData({
                       ...formData,
                       gender: value
