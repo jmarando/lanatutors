@@ -32,6 +32,7 @@ const TutorProfileSetup = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isEditMode, setIsEditMode] = useState(false);
   const [existingTutorId, setExistingTutorId] = useState<string | null>(null);
+  const [isCheckingProfile, setIsCheckingProfile] = useState(true);
   const [isAuthChecked, setIsAuthChecked] = useState(false);
   const [authEmail, setAuthEmail] = useState("");
   const [authPassword, setAuthPassword] = useState("");
@@ -214,9 +215,13 @@ const TutorProfileSetup = () => {
 
   // Load existing tutor profile data for editing
   useEffect(() => {
-    if (!userId) return;
+    if (!userId) {
+      setIsCheckingProfile(false);
+      return;
+    }
     
     const loadExistingProfile = async () => {
+      setIsCheckingProfile(true);
       const { data: existingTutor } = await supabase
         .from("tutor_profiles")
         .select("*")
@@ -263,6 +268,8 @@ const TutorProfileSetup = () => {
           }));
         }
       }
+      
+      setIsCheckingProfile(false);
     };
     
     loadExistingProfile();
@@ -987,14 +994,23 @@ const TutorProfileSetup = () => {
                 <Progress value={progress} className="h-2" />
                 <p className="text-sm text-muted-foreground mt-2">Step {step} of 4</p>
               </div>
-              <CardTitle className="text-2xl">
-                {isEditMode ? "Edit Your Tutor Profile" : "Complete Your Tutor Profile"}
-              </CardTitle>
-              <CardDescription>
-                {isEditMode 
-                  ? "Update your professional profile and teaching information" 
-                  : "Set up your professional profile to start teaching on Lana"}
-              </CardDescription>
+              {isCheckingProfile ? (
+                <div className="space-y-2">
+                  <div className="h-8 bg-muted animate-pulse rounded" />
+                  <div className="h-4 bg-muted animate-pulse rounded w-3/4" />
+                </div>
+              ) : (
+                <>
+                  <CardTitle className="text-2xl">
+                    {isEditMode ? "Edit Your Tutor Profile" : "Complete Your Tutor Profile"}
+                  </CardTitle>
+                  <CardDescription>
+                    {isEditMode 
+                      ? "Update your professional profile and teaching information" 
+                      : "Set up your professional profile to start teaching on Lana"}
+                  </CardDescription>
+                </>
+              )}
             </CardHeader>
             <CardContent>
               <form onSubmit={(e) => {
