@@ -1443,10 +1443,30 @@ TEFL/TESOL Certification" value={formData.qualifications} onChange={e => setForm
                 </div>}
 
               {step === 3 && <div className="space-y-6">
-                  <h3 className="font-semibold text-lg">Your Pricing</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Set your rates and package discounts
-                  </p>
+                  <div>
+                    <h3 className="font-semibold text-lg">Your Pricing</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Set your rates and package discounts
+                    </p>
+                  </div>
+
+                  {/* Pricing Explainer */}
+                  <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 space-y-3">
+                    <h4 className="font-medium text-blue-900 dark:text-blue-100 flex items-center gap-2">
+                      <span className="text-lg">💡</span> Understanding Your Pricing Tiers
+                    </h4>
+                    <div className="space-y-2 text-sm text-blue-800 dark:text-blue-200">
+                      <p>
+                        <strong>Standard Tier:</strong> Your rate for foundational and intermediate levels (e.g., CBC Grade 1-9, IGCSE Year 9-10, lower secondary levels).
+                      </p>
+                      <p>
+                        <strong>Advanced Tier:</strong> Your rate for advanced curriculum levels (e.g., IB, A-Level, IGCSE Year 11-13, university prep).
+                      </p>
+                      <p className="pt-2 border-t border-blue-200 dark:border-blue-800">
+                        After setting your rates, you'll assign which tier applies to each specific curriculum-level combination based on your subjects.
+                      </p>
+                    </div>
+                  </div>
 
                   {/* Tier Rate Inputs */}
                   <div className="space-y-4">
@@ -1528,7 +1548,7 @@ TEFL/TESOL Certification" value={formData.qualifications} onChange={e => setForm
                           Choose which rate applies to each curriculum-level combination
                         </p>
                       </div>
-                      
+
                       <div className="space-y-2 max-h-[250px] overflow-y-auto">
                         {Object.entries(
                           formData.subjectsWithContext.reduce((acc, s) => {
@@ -1594,7 +1614,7 @@ TEFL/TESOL Certification" value={formData.qualifications} onChange={e => setForm
                           </SelectContent>
                         </Select>
                         {formData.standardRate && formData.package5Discount && <p className="text-xs text-green-600 font-medium">
-                            Price: KES {Math.round(parseFloat(formData.standardRate) * 5 * (1 - parseFloat(formData.package5Discount) / 100)).toLocaleString()}
+                            Rate: KES {Math.round(parseFloat(formData.standardRate) * 5 * (1 - parseFloat(formData.package5Discount) / 100)).toLocaleString()}
                           </p>}
                       </div>
 
@@ -1615,7 +1635,7 @@ TEFL/TESOL Certification" value={formData.qualifications} onChange={e => setForm
                           </SelectContent>
                         </Select>
                         {formData.standardRate && formData.package10Discount && <p className="text-xs text-green-600 font-medium">
-                            Price: KES {Math.round(parseFloat(formData.standardRate) * 10 * (1 - parseFloat(formData.package10Discount) / 100)).toLocaleString()}
+                            Rate: KES {Math.round(parseFloat(formData.standardRate) * 10 * (1 - parseFloat(formData.package10Discount) / 100)).toLocaleString()}
                           </p>}
                       </div>
                     </div>
