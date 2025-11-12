@@ -485,9 +485,19 @@ Yehtu Tutors`
           // Get email from auth.users
           const { data: { user } } = await supabase.auth.admin.getUserById(tutor.user_id);
           
+          // Log if profile data is missing for debugging
+          if (!profile?.full_name || !profile?.phone_number) {
+            console.warn(`Missing profile data for tutor ${tutor.id}:`, {
+              userId: tutor.user_id,
+              fullName: profile?.full_name,
+              phoneNumber: profile?.phone_number,
+              email: user?.email
+            });
+          }
+          
           return { 
             ...tutor, 
-            profiles: profile,
+            profiles: profile || { full_name: "No name provided", phone_number: "No phone provided" },
             email: user?.email || "Not provided"
           };
         })

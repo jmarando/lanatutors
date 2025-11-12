@@ -21,6 +21,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { getCurriculums, getLevelsForCurriculum, getSubjectsForCurriculumLevel } from "@/utils/curriculumData";
 import { NAIROBI_LOCATIONS } from "@/utils/locationData";
 import { validateAndNormalizePhone } from "@/utils/phoneValidation";
+import { z } from "zod";
+
+const emailSchema = z.string().email({ message: "Please enter a valid email address" });
 const TEACHING_MODES = ["Online", "In-Person"];
 
 const TutorProfileSetup = () => {
@@ -526,6 +529,37 @@ const TutorProfileSetup = () => {
       });
       return;
     }
+
+    // Validate email format before submission
+    const emailValidation = emailSchema.safeParse(formData.email);
+    if (!emailValidation.success) {
+      toast({
+        title: "Invalid email",
+        description: emailValidation.error.errors[0].message,
+        variant: "destructive"
+      });
+      return;
+    }
+
+    // Validate required fields
+    if (!formData.fullName.trim()) {
+      toast({
+        title: "Missing information",
+        description: "Please enter your full name",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (!formData.phoneNumber.trim()) {
+      toast({
+        title: "Missing information",
+        description: "Please enter your phone number",
+        variant: "destructive"
+      });
+      return;
+    }
+
     setIsLoading(true);
     try {
       // Upload photo if provided
@@ -548,12 +582,12 @@ const TutorProfileSetup = () => {
       // Normalize phone number before saving
       const phoneValidation = validateAndNormalizePhone(formData.phoneNumber);
 
-      // Create profile first
+      // Create profile first - this ensures name and phone are saved
       const {
         error: profileError
       } = await supabase.from("profiles").upsert({
         id: userId,
-        full_name: formData.fullName,
+        full_name: formData.fullName.trim(),
         phone_number: phoneValidation.normalized,
         avatar_url: formData.showPhoto ? photoUrl : null,
         updated_at: new Date().toISOString()
