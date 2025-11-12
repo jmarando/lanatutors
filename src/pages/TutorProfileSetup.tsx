@@ -30,6 +30,8 @@ const TutorProfileSetup = () => {
   const [userId, setUserId] = useState<string | null>(null);
   const [userName, setUserName] = useState<string>("");
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [existingTutorId, setExistingTutorId] = useState<string | null>(null);
   const [isAuthChecked, setIsAuthChecked] = useState(false);
   const [authEmail, setAuthEmail] = useState("");
   const [authPassword, setAuthPassword] = useState("");
@@ -222,17 +224,19 @@ const TutorProfileSetup = () => {
         .maybeSingle();
       
       if (existingTutor) {
+        setIsEditMode(true);
+        setExistingTutorId(existingTutor.id);
+        
         // Populate form with existing data
         setFormData(prev => ({
           ...prev,
           bio: existingTutor.bio || "",
           curriculum: existingTutor.curriculum || [],
-          subjects: existingTutor.subjects || [],
           teachingMode: existingTutor.teaching_mode || [],
           hourlyRate: existingTutor.hourly_rate?.toString() || "",
           experienceYears: existingTutor.experience_years?.toString() || "",
           currentInstitution: existingTutor.current_institution || "",
-          showCurrentInstitution: existingTutor.display_institution || false,
+          showCurrentInstitution: existingTutor.display_institution ?? true,
           qualifications: Array.isArray(existingTutor.qualifications) 
             ? existingTutor.qualifications.join('\n') 
             : "",
@@ -983,9 +987,13 @@ const TutorProfileSetup = () => {
                 <Progress value={progress} className="h-2" />
                 <p className="text-sm text-muted-foreground mt-2">Step {step} of 4</p>
               </div>
-              <CardTitle className="text-2xl">Complete Your Tutor Profile</CardTitle>
+              <CardTitle className="text-2xl">
+                {isEditMode ? "Edit Your Tutor Profile" : "Complete Your Tutor Profile"}
+              </CardTitle>
               <CardDescription>
-                Set up your professional profile to start teaching on Lana
+                {isEditMode 
+                  ? "Update your professional profile and teaching information" 
+                  : "Set up your professional profile to start teaching on Lana"}
               </CardDescription>
             </CardHeader>
             <CardContent>
