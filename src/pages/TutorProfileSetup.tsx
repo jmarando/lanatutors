@@ -1364,10 +1364,8 @@ TEFL/TESOL Certification" value={formData.qualifications} onChange={e => setForm
                     Select what you teach and set your pricing tiers for each curriculum level
                   </p>
 
-                  {/* Two-column layout */}
-                  <div className="grid md:grid-cols-2 gap-6">
-                    {/* Left column: Curriculum & Subjects */}
-                    <div className="space-y-6 border rounded-lg p-4 bg-muted/10">
+                  {/* Curriculum & Subjects Section */}
+                  <div className="space-y-6 border rounded-lg p-4 bg-muted/10">
                       <div>
                         <h4 className="font-semibold mb-2">Step 1: Select Curriculum & Subjects</h4>
                         <p className="text-sm text-muted-foreground">Choose what you can teach</p>
@@ -1465,10 +1463,10 @@ TEFL/TESOL Certification" value={formData.qualifications} onChange={e => setForm
                               </Badge>)}
                           </div>
                         </div>}
-                    </div>
+                  </div>
 
-                    {/* Right column: Pricing Tiers */}
-                    <div className="space-y-6 border rounded-lg p-4 bg-muted/10">
+                  {/* Pricing Tiers Section */}
+                  <div className="space-y-6 border rounded-lg p-4 bg-muted/10">
                       <div>
                         <h4 className="font-semibold mb-2">Step 2: Set Pricing Tiers</h4>
                         <p className="text-sm text-muted-foreground">Define your hourly rates</p>
@@ -1594,7 +1592,6 @@ TEFL/TESOL Certification" value={formData.qualifications} onChange={e => setForm
                           </div>
                         </div>
                       )}
-                    </div>
                   </div>
 
                 </div>}
