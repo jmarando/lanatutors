@@ -26,7 +26,7 @@ const handler = async (req: Request): Promise<Response> => {
     const profileUrl = `https://lanatutors.africa/${profileSlug}`;
 
     const emailResponse = await resend.emails.send({
-      from: "Lana Tutors <onboarding@resend.dev>",
+      from: "Lana Tutors <noreply@lanatutors.africa>",
       to: [email],
       subject: "Profile Submitted Successfully - Lana Tutors",
       html: `
