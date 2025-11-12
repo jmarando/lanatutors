@@ -981,7 +981,7 @@ const TutorProfileSetup = () => {
             <CardHeader>
               <div className="mb-4">
                 <Progress value={progress} className="h-2" />
-                <p className="text-sm text-muted-foreground mt-2">Step {step} of 4</p>
+                <p className="text-sm text-muted-foreground mt-2">Step {step} of 6</p>
               </div>
               <CardTitle className="text-2xl">Complete Your Tutor Profile</CardTitle>
               <CardDescription>
