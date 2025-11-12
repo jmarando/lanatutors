@@ -140,13 +140,15 @@ const TutorProfileSetup = () => {
       } else {
         // No session. If we've had a session before, enter grace period to avoid flicker
         if (hadSessionRef.current) {
-          if (!logoutTimerRef.current) {
-            logoutTimerRef.current = window.setTimeout(() => {
-              setIsAuthenticated(false);
-              setUserId(null);
-              logoutTimerRef.current = null;
-            }, 5000);
+          // Always reset (debounce) the logout timer to extend grace while reconnecting
+          if (logoutTimerRef.current) {
+            clearTimeout(logoutTimerRef.current);
           }
+          logoutTimerRef.current = window.setTimeout(() => {
+            setIsAuthenticated(false);
+            setUserId(null);
+            logoutTimerRef.current = null;
+          }, 30000); // 30s grace period to ride out token refresh hiccups
         } else {
           // First load and no session
           setIsAuthenticated(false);
@@ -811,8 +813,8 @@ const TutorProfileSetup = () => {
     );
   }
   
-  // Show authentication form if not logged in
-  if (!isAuthenticated) {
+  // Show authentication form if not logged in (but keep setup if we previously had a session)
+  if (!isAuthenticated && !hadSessionRef.current) {
     return (
       <div className="min-h-screen bg-[image:var(--gradient-page)] flex items-center justify-center p-6">
         <SEO title="Tutor Profile Setup - Lana" description="Sign up to set up your tutor profile on Lana" />
