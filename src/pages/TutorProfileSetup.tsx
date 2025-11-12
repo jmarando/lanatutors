@@ -1359,244 +1359,297 @@ TEFL/TESOL Certification" value={formData.qualifications} onChange={e => setForm
                 </div>}
 
               {step === 3 && <div className="space-y-6">
-                  <h3 className="font-semibold text-lg">Teaching Specialization & Pricing</h3>
+                  <h3 className="font-semibold text-lg">Part A: What You Teach</h3>
                   <p className="text-sm text-muted-foreground">
-                    Select what you teach and set your pricing tiers for each curriculum level
+                    Select your curriculum, levels, and subjects
                   </p>
 
-                  {/* Curriculum & Subjects Section */}
-                  <div className="space-y-6 border rounded-lg p-4 bg-muted/10">
-                      <div>
-                        <h4 className="font-semibold mb-2">Step 1: Select Curriculum & Subjects</h4>
-                        <p className="text-sm text-muted-foreground">Choose what you can teach</p>
-                      </div>
+                  {/* Curriculum Selection */}
+                  <div className="space-y-3">
+                    <Label className="font-medium">Select Curriculum *</Label>
+                    <div className="border rounded-lg p-3 bg-background space-y-2">
+                      {curriculums.map(curriculum => <div key={curriculum} className="flex items-center space-x-2">
+                          <Checkbox id={curriculum} checked={formData.curriculum.includes(curriculum)} onCheckedChange={checked => handleCurriculumToggle(curriculum, checked as boolean)} />
+                          <Label htmlFor={curriculum} className="cursor-pointer font-normal">{curriculum}</Label>
+                        </div>)}
+                    </div>
+                    {formData.curriculum.includes("Other") && <div className="space-y-2 pl-6">
+                        <Label htmlFor="customCurriculum">Specify Custom Curriculum</Label>
+                        <Input id="customCurriculum" value={formData.customCurriculum} onChange={e => setFormData({
+                        ...formData,
+                        customCurriculum: e.target.value
+                      })} placeholder="e.g., American Curriculum" />
+                      </div>}
+                  </div>
 
-                      {/* Curriculum Selection */}
-                      <div className="space-y-3">
-                        <Label className="font-medium">Curriculum *</Label>
-                        <div className="border rounded-lg p-3 bg-background space-y-2">
-                          {curriculums.map(curriculum => <div key={curriculum} className="flex items-center space-x-2">
-                              <Checkbox id={curriculum} checked={formData.curriculum.includes(curriculum)} onCheckedChange={checked => handleCurriculumToggle(curriculum, checked as boolean)} />
-                              <Label htmlFor={curriculum} className="cursor-pointer font-normal">{curriculum}</Label>
-                            </div>)}
-                        </div>
-                        {formData.curriculum.includes("Other") && <div className="space-y-2 pl-6">
-                            <Label htmlFor="customCurriculum">Specify Custom Curriculum</Label>
-                            <Input id="customCurriculum" value={formData.customCurriculum} onChange={e => setFormData({
-                            ...formData,
-                            customCurriculum: e.target.value
-                          })} placeholder="e.g., American Curriculum" />
-                          </div>}
-                      </div>
-
-                      {/* Level Selection for each curriculum */}
-                      {formData.curriculum.filter(c => c !== "Other").map(curriculum => {
-                      const levels = getLevelsForCurriculum(curriculum);
-                      return <div key={curriculum} className="space-y-3 p-3 border rounded-lg bg-background">
-                            <Label className="font-medium">{curriculum} - Select Levels *</Label>
-                            <div className="space-y-2 pl-2">
-                              {levels.map(level => {
-                                const levelStr = typeof level === 'string' ? level : level.value || level.label;
-                                return <div key={levelStr} className="flex items-center space-x-2">
-                                  <Checkbox id={`${curriculum}-${levelStr}`} checked={(curriculumLevels[curriculum] || []).includes(levelStr)} onCheckedChange={checked => handleLevelToggle(curriculum, levelStr, checked as boolean)} />
-                                  <Label htmlFor={`${curriculum}-${levelStr}`} className="cursor-pointer font-normal text-sm">{levelStr}</Label>
-                                </div>;
-                              })}
-                            </div>
-                          </div>;
-                    })}
-
-                      {/* Subject Selection */}
-                      <div className="space-y-3">
-                        <Label className="font-medium">Add Subjects *</Label>
-                        <div className="space-y-2">
-                          <Select value={selectedCurriculumForSubjects} onValueChange={setSelectedCurriculumForSubjects}>
-                            <SelectTrigger>
-                              <SelectValue placeholder="1. Choose curriculum" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {formData.curriculum.filter(c => c !== "Other").map(curriculum => <SelectItem key={curriculum} value={curriculum}>{curriculum}</SelectItem>)}
-                            </SelectContent>
-                          </Select>
-                          
-                          {selectedCurriculumForSubjects && <Select value={selectedLevelForSubjects} onValueChange={setSelectedLevelForSubjects}>
-                              <SelectTrigger>
-                                <SelectValue placeholder="2. Choose level" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {availableLevelsForSubjects.map(level => {
-                                  const levelStr = typeof level === 'string' ? level : level.value || level.label;
-                                  return <SelectItem key={levelStr} value={levelStr}>{levelStr}</SelectItem>;
-                                })}
-                              </SelectContent>
-                            </Select>}
-                          
-                          {selectedCurriculumForSubjects && selectedLevelForSubjects && availableSubjects.length > 0 && <div className="border rounded-lg p-3 bg-background max-h-[200px] overflow-y-auto space-y-2">
-                              {availableSubjects.map(subject => {
-                            const isAdded = formData.subjectsWithContext.some(s => s.curriculum === selectedCurriculumForSubjects && s.level === selectedLevelForSubjects && s.subject === subject);
-                            return <div key={subject} className="flex items-center justify-between">
-                                  <div className="flex items-center space-x-2">
-                                    <Checkbox id={`subject-${subject}`} checked={isAdded} onCheckedChange={checked => {
-                                  if (checked) {
-                                    addSubjectWithContext(selectedCurriculumForSubjects, selectedLevelForSubjects, subject);
-                                  } else {
-                                    removeSubjectWithContext(selectedCurriculumForSubjects, selectedLevelForSubjects, subject);
-                                  }
-                                }} />
-                                    <Label htmlFor={`subject-${subject}`} className="cursor-pointer text-sm">{subject}</Label>
-                                  </div>
-                                </div>;
+                  {/* Level Selection for each curriculum */}
+                  {formData.curriculum.filter(c => c !== "Other").map(curriculum => {
+                  const levels = getLevelsForCurriculum(curriculum);
+                  return <div key={curriculum} className="space-y-3 p-3 border rounded-lg bg-muted/10">
+                        <Label className="font-medium">{curriculum} - Select Levels *</Label>
+                        <div className="space-y-2 pl-2">
+                          {levels.map(level => {
+                            const levelStr = typeof level === 'string' ? level : level.value || level.label;
+                            return <div key={levelStr} className="flex items-center space-x-2">
+                              <Checkbox id={`${curriculum}-${levelStr}`} checked={(curriculumLevels[curriculum] || []).includes(levelStr)} onCheckedChange={checked => handleLevelToggle(curriculum, levelStr, checked as boolean)} />
+                              <Label htmlFor={`${curriculum}-${levelStr}`} className="cursor-pointer font-normal text-sm">{levelStr}</Label>
+                            </div>;
                           })}
-                            </div>}
                         </div>
+                      </div>;
+                })}
+
+                  {/* Subject Selection - Simplified */}
+                  {Object.keys(curriculumLevels).length > 0 && <div className="space-y-3 border rounded-lg p-4 bg-primary/5">
+                    <Label className="font-medium">Select Subjects *</Label>
+                    <p className="text-sm text-muted-foreground">Choose subjects for each curriculum-level combination</p>
+                    
+                    {allAvailableSubjects.length > 0 && <div className="space-y-3">
+                      {Object.entries(
+                        allAvailableSubjects.reduce((acc, item) => {
+                          const key = `${item.curriculum}-${item.level}`;
+                          if (!acc[key]) {
+                            acc[key] = {
+                              curriculum: item.curriculum,
+                              level: item.level,
+                              subjects: []
+                            };
+                          }
+                          if (!acc[key].subjects.includes(item.subject)) {
+                            acc[key].subjects.push(item.subject);
+                          }
+                          return acc;
+                        }, {} as Record<string, { curriculum: string; level: string; subjects: string[] }>)
+                      ).map(([key, { curriculum, level, subjects }]) => (
+                        <div key={key} className="border rounded-lg p-3 bg-background space-y-2">
+                          <div className="font-medium text-sm">{curriculum} - {level}</div>
+                          <div className="grid grid-cols-2 gap-2 pl-2">
+                            {subjects.map(subject => {
+                              const isAdded = formData.subjectsWithContext.some(
+                                s => s.curriculum === curriculum && s.level === level && s.subject === subject
+                              );
+                              return <div key={subject} className="flex items-center space-x-2">
+                                <Checkbox 
+                                  id={`${key}-${subject}`} 
+                                  checked={isAdded} 
+                                  onCheckedChange={checked => {
+                                    if (checked) {
+                                      addSubjectWithContext(curriculum, level, subject);
+                                    } else {
+                                      removeSubjectWithContext(curriculum, level, subject);
+                                    }
+                                  }} 
+                                />
+                                <Label htmlFor={`${key}-${subject}`} className="cursor-pointer text-sm">{subject}</Label>
+                              </div>;
+                            })}
+                          </div>
+                        </div>
+                      ))}
+                    </div>}
+                  </div>}
+
+                  {/* Selected Subjects Summary */}
+                  {formData.subjectsWithContext.length > 0 && <div className="space-y-2 p-4 border-2 rounded-lg bg-primary/10 border-primary/20">
+                      <Label className="font-semibold">✓ Selected Subjects ({formData.subjectsWithContext.length})</Label>
+                      <div className="flex flex-wrap gap-2">
+                        {formData.subjectsWithContext.map((s, idx) => <Badge key={idx} variant="secondary" className="text-xs">
+                            {s.subject} ({s.curriculum} - {s.level})
+                            <button type="button" onClick={() => removeSubjectWithContext(s.curriculum, s.level, s.subject)} className="ml-1.5 hover:text-destructive font-bold">
+                              ×
+                            </button>
+                          </Badge>)}
                       </div>
-
-                      {/* Selected Subjects Summary */}
-                      {formData.subjectsWithContext.length > 0 && <div className="space-y-2 p-3 border rounded-lg bg-primary/5">
-                          <Label className="font-medium text-sm">Your Selected Subjects ({formData.subjectsWithContext.length})</Label>
-                          <div className="flex flex-wrap gap-2">
-                            {formData.subjectsWithContext.map((s, idx) => <Badge key={idx} variant="secondary" className="text-xs">
-                                {s.subject}
-                                <button type="button" onClick={() => removeSubjectWithContext(s.curriculum, s.level, s.subject)} className="ml-1 hover:text-destructive">
-                                  ×
-                                </button>
-                              </Badge>)}
-                          </div>
-                        </div>}
-                  </div>
-
-                  {/* Pricing Tiers Section */}
-                  <div className="space-y-6 border rounded-lg p-4 bg-muted/10">
-                      <div>
-                        <h4 className="font-semibold mb-2">Step 2: Set Pricing Tiers</h4>
-                        <p className="text-sm text-muted-foreground">Define your hourly rates</p>
-                      </div>
-
-                      {/* Tier Rate Inputs */}
-                      <div className="space-y-4">
-                        <div className="border rounded-lg p-4 space-y-3 bg-secondary/10">
-                          <div className="flex items-center gap-2">
-                            <Badge variant="secondary">Standard Tier</Badge>
-                          </div>
-                          <div className="space-y-2">
-                            <Label htmlFor="standardRate">Online Hourly Rate (KES) *</Label>
-                            <Input 
-                              id="standardRate" 
-                              type="number" 
-                              min="1500" 
-                              max="6000" 
-                              step="100" 
-                              placeholder="2000" 
-                              value={formData.standardRate} 
-                              onChange={e => setFormData({
-                                ...formData,
-                                standardRate: e.target.value
-                              })} 
-                              required 
-                            />
-                            {formData.standardRate && (
-                              <div className="space-y-1">
-                                <p className="text-xs text-muted-foreground">
-                                  In-person: KES {(parseFloat(formData.standardRate) * 1.5).toLocaleString()}/hr
-                                </p>
-                                <p className="text-xs text-muted-foreground">
-                                  You earn 70%: KES {(parseFloat(formData.standardRate) * 0.7).toLocaleString()}/hr
-                                </p>
-                              </div>
-                            )}
-                          </div>
-                          <p className="text-xs text-muted-foreground">
-                            For foundational curriculum levels
-                          </p>
-                        </div>
-
-                        <div className="border rounded-lg p-4 space-y-3 bg-primary/5">
-                          <div className="flex items-center gap-2">
-                            <Badge>Advanced Tier</Badge>
-                          </div>
-                          <div className="space-y-2">
-                            <Label htmlFor="advancedRate">Online Hourly Rate (KES) *</Label>
-                            <Input 
-                              id="advancedRate" 
-                              type="number" 
-                              min="1500" 
-                              max="6000" 
-                              step="100" 
-                              placeholder="3500" 
-                              value={formData.advancedRate} 
-                              onChange={e => setFormData({
-                                ...formData,
-                                advancedRate: e.target.value
-                              })} 
-                              required 
-                            />
-                            {formData.advancedRate && (
-                              <div className="space-y-1">
-                                <p className="text-xs text-muted-foreground">
-                                  In-person: KES {(parseFloat(formData.advancedRate) * 1.5).toLocaleString()}/hr
-                                </p>
-                                <p className="text-xs text-muted-foreground">
-                                  You earn 70%: KES {(parseFloat(formData.advancedRate) * 0.7).toLocaleString()}/hr
-                                </p>
-                              </div>
-                            )}
-                          </div>
-                          <p className="text-xs text-muted-foreground">
-                            For advanced curriculum levels (IB, A-Level, IGCSE)
-                          </p>
-                        </div>
-                      </div>
-
-                      {/* Tier Assignments - shown once subjects are selected */}
-                      {formData.subjectsWithContext.length > 0 && formData.standardRate && formData.advancedRate && (
-                        <div className="space-y-3 pt-2">
-                          <div>
-                            <Label className="font-medium">Step 3: Assign Tiers to Levels</Label>
-                            <p className="text-sm text-muted-foreground mt-1">
-                              Choose which rate applies to each curriculum-level
-                            </p>
-                          </div>
-                          
-                          <div className="border rounded-lg p-3 space-y-2 bg-background max-h-[300px] overflow-y-auto">
-                            {Object.entries(
-                              formData.subjectsWithContext.reduce((acc, s) => {
-                                const key = `${s.curriculum}-${s.level}`;
-                                const displayKey = `${s.curriculum} - ${s.level}`;
-                                if (!acc[key]) {
-                                  acc[key] = { displayKey, curriculum: s.curriculum, level: s.level };
-                                }
-                                return acc;
-                              }, {} as { [key: string]: { displayKey: string; curriculum: string; level: string } })
-                            ).map(([key, { displayKey }]) => (
-                              <div key={key} className="flex items-center justify-between p-2 border rounded bg-muted/20">
-                                <p className="text-sm font-medium">{displayKey}</p>
-                                <Select
-                                  value={tierAssignments[key] || 'standard'}
-                                  onValueChange={(value: 'standard' | 'advanced') => {
-                                    setTierAssignments({
-                                      ...tierAssignments,
-                                      [key]: value
-                                    });
-                                  }}
-                                >
-                                  <SelectTrigger className="w-[140px]">
-                                    <SelectValue />
-                                  </SelectTrigger>
-                                  <SelectContent>
-                                    <SelectItem value="standard">Standard</SelectItem>
-                                    <SelectItem value="advanced">Advanced</SelectItem>
-                                  </SelectContent>
-                                </Select>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
-                  </div>
+                    </div>}
 
                 </div>}
 
               {step === 4 && <div className="space-y-6">
+                  <h3 className="font-semibold text-lg">Part B: Your Pricing</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Set your rates and package discounts
+                  </p>
+
+                  {/* Tier Rate Inputs */}
+                  <div className="space-y-4">
+                    <div className="border rounded-lg p-4 space-y-3 bg-secondary/10">
+                      <div className="flex items-center gap-2">
+                        <Badge variant="secondary">Standard Tier</Badge>
+                        <span className="text-xs text-muted-foreground">For foundational levels</span>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="standardRate">Online Hourly Rate (KES) *</Label>
+                        <Input 
+                          id="standardRate" 
+                          type="number" 
+                          min="1500" 
+                          max="6000" 
+                          step="100" 
+                          placeholder="2000" 
+                          value={formData.standardRate} 
+                          onChange={e => setFormData({
+                            ...formData,
+                            standardRate: e.target.value
+                          })} 
+                          required 
+                        />
+                        {formData.standardRate && (
+                          <div className="space-y-1">
+                            <p className="text-xs text-muted-foreground">
+                              In-person: KES {(parseFloat(formData.standardRate) * 1.5).toLocaleString()}/hr
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              You earn 70%: KES {(parseFloat(formData.standardRate) * 0.7).toLocaleString()}/hr
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    <div className="border rounded-lg p-4 space-y-3 bg-primary/5">
+                      <div className="flex items-center gap-2">
+                        <Badge>Advanced Tier</Badge>
+                        <span className="text-xs text-muted-foreground">For IB, A-Level, IGCSE</span>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="advancedRate">Online Hourly Rate (KES) *</Label>
+                        <Input 
+                          id="advancedRate" 
+                          type="number" 
+                          min="1500" 
+                          max="6000" 
+                          step="100" 
+                          placeholder="3500" 
+                          value={formData.advancedRate} 
+                          onChange={e => setFormData({
+                            ...formData,
+                            advancedRate: e.target.value
+                          })} 
+                          required 
+                        />
+                        {formData.advancedRate && (
+                          <div className="space-y-1">
+                            <p className="text-xs text-muted-foreground">
+                              In-person: KES {(parseFloat(formData.advancedRate) * 1.5).toLocaleString()}/hr
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              You earn 70%: KES {(parseFloat(formData.advancedRate) * 0.7).toLocaleString()}/hr
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Tier Assignments */}
+                  {formData.subjectsWithContext.length > 0 && formData.standardRate && formData.advancedRate && (
+                    <div className="space-y-3 border rounded-lg p-4 bg-muted/10">
+                      <div>
+                        <Label className="font-medium">Assign Tiers to Your Curriculum Levels</Label>
+                        <p className="text-sm text-muted-foreground mt-1">
+                          Choose which rate applies to each curriculum-level combination
+                        </p>
+                      </div>
+                      
+                      <div className="space-y-2 max-h-[250px] overflow-y-auto">
+                        {Object.entries(
+                          formData.subjectsWithContext.reduce((acc, s) => {
+                            const key = `${s.curriculum}-${s.level}`;
+                            const displayKey = `${s.curriculum} - ${s.level}`;
+                            if (!acc[key]) {
+                              acc[key] = { displayKey, curriculum: s.curriculum, level: s.level };
+                            }
+                            return acc;
+                          }, {} as { [key: string]: { displayKey: string; curriculum: string; level: string } })
+                        ).map(([key, { displayKey }]) => (
+                          <div key={key} className="flex items-center justify-between p-3 border rounded bg-background">
+                            <p className="text-sm font-medium">{displayKey}</p>
+                            <Select
+                              value={tierAssignments[key] || 'standard'}
+                              onValueChange={(value: 'standard' | 'advanced') => {
+                                setTierAssignments({
+                                  ...tierAssignments,
+                                  [key]: value
+                                });
+                              }}
+                            >
+                              <SelectTrigger className="w-[140px]">
+                                <SelectValue />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="standard">Standard</SelectItem>
+                                <SelectItem value="advanced">Advanced</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  <Separator />
+
+                  {/* Package Bundles */}
+                  <div className="space-y-4 border rounded-lg p-4 bg-accent/5">
+                    <div>
+                      <Label className="text-base font-semibold">Package Discounts (Optional)</Label>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        Offer bundle discounts to encourage bulk bookings
+                      </p>
+                    </div>
+                    
+                    <div className="grid md:grid-cols-2 gap-4">
+                      <div className="space-y-2 p-3 border rounded-lg bg-background">
+                        <Label className="font-medium text-sm">5-Session Bundle</Label>
+                        <Select value={formData.package5Discount} onValueChange={value => setFormData({
+                        ...formData,
+                        package5Discount: value
+                      })}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select discount" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="5">5% off</SelectItem>
+                            <SelectItem value="10">10% off</SelectItem>
+                            <SelectItem value="15">15% off</SelectItem>
+                            <SelectItem value="20">20% off</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        {formData.standardRate && formData.package5Discount && <p className="text-xs text-green-600 font-medium">
+                            Price: KES {Math.round(parseFloat(formData.standardRate) * 5 * (1 - parseFloat(formData.package5Discount) / 100)).toLocaleString()}
+                          </p>}
+                      </div>
+
+                      <div className="space-y-2 p-3 border rounded-lg bg-background">
+                        <Label className="font-medium text-sm">10-Session Bundle</Label>
+                        <Select value={formData.package10Discount} onValueChange={value => setFormData({
+                        ...formData,
+                        package10Discount: value
+                      })}>
+                          <SelectTrigger>
+                            <SelectValue placeholder="Select discount" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="10">10% off</SelectItem>
+                            <SelectItem value="15">15% off</SelectItem>
+                            <SelectItem value="20">20% off</SelectItem>
+                            <SelectItem value="25">25% off</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        {formData.standardRate && formData.package10Discount && <p className="text-xs text-green-600 font-medium">
+                            Price: KES {Math.round(parseFloat(formData.standardRate) * 10 * (1 - parseFloat(formData.package10Discount) / 100)).toLocaleString()}
+                          </p>}
+                      </div>
+                    </div>
+                    
+                    <p className="text-xs text-muted-foreground italic">
+                      💡 Bundles increase student commitment and provide predictable income
+                    </p>
+                  </div>
+
+                </div>}
+
+              {step === 5 && <div className="space-y-6">
                   <h3 className="font-semibold text-lg">Teaching Preferences</h3>
                   <p className="text-sm text-muted-foreground">
                     Tell us how and where you prefer to teach
@@ -1658,99 +1711,49 @@ TEFL/TESOL Certification" value={formData.qualifications} onChange={e => setForm
                     </div>
                   </div>
 
-                  <Separator />
+                </div>}
 
+              {step === 6 && <div className="space-y-6">
+                  <h3 className="font-semibold text-lg">Privacy & Profile Visibility</h3>
+                  <p className="text-sm text-muted-foreground">
+                    Choose what students will see on your profile
+                  </p>
+                  
                   <div className="space-y-3">
-                    <div>
-                      <Label className="text-base font-semibold">Package Bundles (Optional)</Label>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        Choose discount percentages for your package bundles. We'll calculate the prices automatically.
-                      </p>
+                    <div className="flex items-center justify-between p-3 border rounded-lg">
+                      <div>
+                        <Label htmlFor="showFullName">Show Full Name</Label>
+                        <p className="text-xs text-muted-foreground">Display your complete name to students</p>
+                      </div>
+                      <Checkbox 
+                        id="showFullName"
+                        checked={formData.showFullName}
+                        onCheckedChange={(checked) => setFormData({ ...formData, showFullName: checked as boolean })}
+                      />
                     </div>
                     
-                    <div className="grid md:grid-cols-2 gap-4">
-                      <div className="space-y-2 p-4 border rounded-lg bg-muted/20">
-                        <Label className="font-medium">5-Session Bundle</Label>
-                        <div className="space-y-2">
-                          <div>
-                            <Label htmlFor="package5Discount" className="text-xs">Discount Percentage</Label>
-                            <Select value={formData.package5Discount} onValueChange={value => setFormData({
-                            ...formData,
-                            package5Discount: value
-                          })}>
-                              <SelectTrigger id="package5Discount">
-                                <SelectValue placeholder="Select discount" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="5">5%</SelectItem>
-                                <SelectItem value="10">10%</SelectItem>
-                                <SelectItem value="15">15%</SelectItem>
-                                <SelectItem value="20">20%</SelectItem>
-                              </SelectContent>
-                            </Select>
-                            {formData.hourlyRate && formData.package5Discount && <p className="text-xs text-green-600 mt-1">
-                                Total Price: KES {Math.round(parseFloat(formData.hourlyRate) * 5 * (1 - parseFloat(formData.package5Discount) / 100)).toLocaleString()}
-                              </p>}
-                          </div>
-                        </div>
+                    <div className="flex items-center justify-between p-3 border rounded-lg">
+                      <div>
+                        <Label htmlFor="showCurrentInstitution">Show Current Institution</Label>
+                        <p className="text-xs text-muted-foreground">Display where you currently teach/study</p>
                       </div>
-
-                      <div className="space-y-2 p-4 border rounded-lg bg-muted/20">
-                        <Label className="font-medium">10-Session Bundle</Label>
-                        <div className="space-y-2">
-                          <div>
-                            <Label htmlFor="package10Discount" className="text-xs">Discount Percentage</Label>
-                            <Select value={formData.package10Discount} onValueChange={value => setFormData({
-                            ...formData,
-                            package10Discount: value
-                          })}>
-                              <SelectTrigger id="package10Discount">
-                                <SelectValue placeholder="Select discount" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="10">10%</SelectItem>
-                                <SelectItem value="15">15%</SelectItem>
-                                <SelectItem value="20">20%</SelectItem>
-                                <SelectItem value="25">25%</SelectItem>
-                              </SelectContent>
-                            </Select>
-                            {formData.hourlyRate && formData.package10Discount && <p className="text-xs text-green-600 mt-1">
-                                Total Price: KES {Math.round(parseFloat(formData.hourlyRate) * 10 * (1 - parseFloat(formData.package10Discount) / 100)).toLocaleString()}
-                              </p>}
-                          </div>
-                        </div>
-                      </div>
+                      <Checkbox 
+                        id="showCurrentInstitution"
+                        checked={formData.showCurrentInstitution}
+                        onCheckedChange={(checked) => setFormData({ ...formData, showCurrentInstitution: checked as boolean })}
+                      />
                     </div>
                     
-                    <p className="text-xs text-muted-foreground italic">
-                      💡 Tip: Offering bundles increases student commitment and provides you with more predictable income!
-                    </p>
-                  </div>
-
-                  <div className="space-y-3 pt-4">
-                    <div className="bg-muted/30 p-4 rounded-lg">
-                      <h4 className="font-semibold mb-2">Package Bundles (Auto-generated)</h4>
-                      <p className="text-sm text-muted-foreground mb-3">
-                        We'll automatically create discounted packages based on your hourly rate to encourage bulk bookings.
-                      </p>
-                      
-                      {formData.hourlyRate && <div className="space-y-2 text-sm">
-                          <div className="flex justify-between items-center p-2 bg-background rounded">
-                            <span>5-Session Bundle ({formData.package5Discount}% off)</span>
-                            <span className="font-medium">KES {Math.round(parseFloat(formData.hourlyRate) * 5 * (1 - parseFloat(formData.package5Discount) / 100)).toLocaleString()}</span>
-                          </div>
-                          <div className="flex justify-between items-center p-2 bg-background rounded">
-                            <span>10-Session Bundle ({formData.package10Discount}% off)</span>
-                            <span className="font-medium">KES {Math.round(parseFloat(formData.hourlyRate) * 10 * (1 - parseFloat(formData.package10Discount) / 100)).toLocaleString()}</span>
-                          </div>
-                          <div className="flex justify-between items-center p-2 bg-background rounded">
-                            <span>Double Session - 2hrs (5% off){formData.doubleSessionDiscount}% off)</span>
-                            <span className="font-medium">KES {Math.round(parseFloat(formData.hourlyRate) * 2 * (1 - parseFloat(formData.doubleSessionDiscount) / 100)).toLocaleString()}</span>
-                          </div>
-                          <p className="text-xs text-muted-foreground italic mt-3">
-                            💡 These packages apply to {formData.teachingMode.length === 2 ? "both online and in-person" : formData.teachingMode[0]?.toLowerCase() || "online"} sessions
-                          </p>
-                        </div>}
+                    <div className="flex items-center justify-between p-3 border rounded-lg">
+                      <div>
+                        <Label htmlFor="showPhoto">Show Profile Photo</Label>
+                        <p className="text-xs text-muted-foreground">Display your photo in search results</p>
+                      </div>
+                      <Checkbox 
+                        id="showPhoto"
+                        checked={formData.showPhoto}
+                        onCheckedChange={(checked) => setFormData({ ...formData, showPhoto: checked as boolean })}
+                      />
                     </div>
                   </div>
                 </div>}
@@ -1761,7 +1764,7 @@ TEFL/TESOL Certification" value={formData.qualifications} onChange={e => setForm
                     <ArrowLeft className="mr-2 h-4 w-4" />
                     Back
                   </Button>}
-                {step < 4 ? <Button type="button" onClick={() => {
+                {step < 6 ? <Button type="button" onClick={() => {
                   if (step === 1) {
                     handleContinueFromStep1();
                   } else {
