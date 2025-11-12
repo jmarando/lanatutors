@@ -174,19 +174,12 @@ const TutorProfileSubmitted = () => {
             </ul>
           </div>
 
-          <div className="flex gap-3 pt-4">
+          <div className="pt-4">
             <Button 
-              variant="outline" 
               onClick={() => navigate("/")}
-              className="flex-1"
+              className="w-full"
             >
               Go to Home
-            </Button>
-            <Button 
-              onClick={() => navigate("/tutor/dashboard")}
-              className="flex-1"
-            >
-              Go to Dashboard
             </Button>
           </div>
         </CardContent>

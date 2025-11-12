@@ -70,14 +70,8 @@ const handler = async (req: Request): Promise<Response> => {
               
               <div style="margin-top: 30px; padding: 20px; background: #fef3c7; border-radius: 8px; border: 1px solid #fbbf24;">
                 <p style="margin: 0; color: #92400e; font-size: 14px;">
-                  <strong>📝 Note:</strong> If you need to make any changes to your profile before approval, please log in to your tutor dashboard.
+                  <strong>📝 Note:</strong> Once your profile is approved, you'll be able to access your tutor dashboard and start managing your bookings.
                 </p>
-              </div>
-              
-              <div style="text-align: center; margin-top: 40px;">
-                <a href="https://lanatutors.africa/tutor-dashboard" style="display: inline-block; background: #667eea; color: white; padding: 14px 32px; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 16px;">
-                  Go to Dashboard
-                </a>
               </div>
               
               <div style="margin-top: 40px; padding-top: 30px; border-top: 1px solid #e5e7eb; text-align: center;">
