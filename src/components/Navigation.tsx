@@ -2,64 +2,24 @@ import { Button } from "@/components/ui/button";
 import { Menu, LogOut, MessageCircle } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { User } from "@supabase/supabase-js";
+import { useAuth } from "@/contexts/AuthContext";
 import lanaLogo from "@/assets/lana-header-logo-2025.png";
 
 const Navigation = () => {
   const [open, setOpen] = useState(false);
-  const [user, setUser] = useState<User | null>(null);
+  const { user, signOut } = useAuth();
   const [isAdmin, setIsAdmin] = useState(false);
   const navigate = useNavigate();
-  const logoutTimerRef = useRef<number | null>(null);
-  const hadSessionRef = useRef(false);
 
   useEffect(() => {
-    // Get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) {
-        hadSessionRef.current = true;
-        checkAdminStatus(session.user.id);
-      }
-      setUser(session?.user ?? null);
-    });
-
-    // Listen for auth changes with a grace period to avoid flicker
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      if (session?.user) {
-        if (logoutTimerRef.current) {
-          clearTimeout(logoutTimerRef.current);
-          logoutTimerRef.current = null;
-        }
-        hadSessionRef.current = true;
-        setUser(session.user);
-        checkAdminStatus(session.user.id);
-      } else {
-        if (hadSessionRef.current) {
-          if (logoutTimerRef.current) {
-            clearTimeout(logoutTimerRef.current);
-          }
-          logoutTimerRef.current = window.setTimeout(() => {
-            setUser(null);
-            setIsAdmin(false);
-            logoutTimerRef.current = null;
-          }, 30000);
-        } else {
-          setUser(null);
-          setIsAdmin(false);
-        }
-      }
-    });
-
-    return () => {
-      if (logoutTimerRef.current) {
-        clearTimeout(logoutTimerRef.current);
-        logoutTimerRef.current = null;
-      }
-      subscription.unsubscribe();
-    };
-  }, []);
+    if (user?.id) {
+      checkAdminStatus(user.id);
+    } else {
+      setIsAdmin(false);
+    }
+  }, [user?.id]);
 
   const checkAdminStatus = async (userId: string) => {
     const { data } = await supabase
@@ -73,7 +33,7 @@ const Navigation = () => {
   };
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut();
+    await signOut();
     navigate("/");
     setOpen(false);
   };

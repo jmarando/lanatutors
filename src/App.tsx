@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { lazy, Suspense } from "react";
 import Navigation from "./components/Navigation";
+import { AuthProvider } from "@/contexts/AuthContext";
 
 // Lazy load pages for code splitting
 const Home = lazy(() => import("./pages/Home"));
@@ -39,49 +40,51 @@ const queryClient = new QueryClient();
 const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <Navigation />
-          <Suspense fallback={
-            <div className="min-h-screen flex items-center justify-center">
-              <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-            </div>
-          }>
-            <Routes>
-              <Route path="/" element={<Home />} />
-              <Route path="/how-it-works" element={<HowItWorks />} />
-              <Route path="/about" element={<AboutUs />} />
-              <Route path="/for-students" element={<ForStudents />} />
-              <Route path="/for-tutors" element={<ForTutors />} />
-              <Route path="/tutors" element={<TutorSearch />} />
-              <Route path="/tutors/:id" element={<TutorProfile />} />
-              <Route path="/:id" element={<TutorProfile />} />
-              <Route path="/login" element={<Login />} />
-              <Route path="/reset-password" element={<ResetPassword />} />
-              <Route path="/student-signup" element={<StudentSignup />} />
-              <Route path="/tutor-signup" element={<TutorSignup />} />
-              <Route path="/become-a-tutor" element={<BecomeATutor />} />
-              <Route path="/student/dashboard" element={<StudentDashboard />} />
-              <Route path="/tutor/dashboard" element={<TutorDashboard />} />
-              <Route path="/tutor/availability" element={<TutorAvailability />} />
-              <Route path="/tutor-profile-setup" element={<TutorProfileSetup />} />
-              <Route path="/tutor-profile-submitted" element={<TutorProfileSubmitted />} />
-              <Route path="/admin" element={<AdminDashboard />} />
-              <Route path="/book-consultation" element={<BookConsultation />} />
-              <Route path="/expert-consultation" element={<ExpertConsultation />} />
-              <Route path="/test-email" element={<TestEmail />} />
-              <Route path="/booking-confirmed" element={<BookingConfirmed />} />
-              <Route path="/consultation-confirmed" element={<ConsultationConfirmed />} />
-              <Route path="/setup-central-calendar" element={<SetupCentralCalendar />} />
-              <Route path="/payment-callback" element={<PaymentCallback />} />
-              {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </Suspense>
-        </TooltipProvider>
-      </BrowserRouter>
+      <AuthProvider>
+        <BrowserRouter>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <Navigation />
+            <Suspense fallback={
+              <div className="min-h-screen flex items-center justify-center">
+                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+              </div>
+            }>
+              <Routes>
+                <Route path="/" element={<Home />} />
+                <Route path="/how-it-works" element={<HowItWorks />} />
+                <Route path="/about" element={<AboutUs />} />
+                <Route path="/for-students" element={<ForStudents />} />
+                <Route path="/for-tutors" element={<ForTutors />} />
+                <Route path="/tutors" element={<TutorSearch />} />
+                <Route path="/tutors/:id" element={<TutorProfile />} />
+                <Route path="/:id" element={<TutorProfile />} />
+                <Route path="/login" element={<Login />} />
+                <Route path="/reset-password" element={<ResetPassword />} />
+                <Route path="/student-signup" element={<StudentSignup />} />
+                <Route path="/tutor-signup" element={<TutorSignup />} />
+                <Route path="/become-a-tutor" element={<BecomeATutor />} />
+                <Route path="/student/dashboard" element={<StudentDashboard />} />
+                <Route path="/tutor/dashboard" element={<TutorDashboard />} />
+                <Route path="/tutor/availability" element={<TutorAvailability />} />
+                <Route path="/tutor-profile-setup" element={<TutorProfileSetup />} />
+                <Route path="/tutor-profile-submitted" element={<TutorProfileSubmitted />} />
+                <Route path="/admin" element={<AdminDashboard />} />
+                <Route path="/book-consultation" element={<BookConsultation />} />
+                <Route path="/expert-consultation" element={<ExpertConsultation />} />
+                <Route path="/test-email" element={<TestEmail />} />
+                <Route path="/booking-confirmed" element={<BookingConfirmed />} />
+                <Route path="/consultation-confirmed" element={<ConsultationConfirmed />} />
+                <Route path="/setup-central-calendar" element={<SetupCentralCalendar />} />
+                <Route path="/payment-callback" element={<PaymentCallback />} />
+                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </Suspense>
+          </TooltipProvider>
+        </BrowserRouter>
+      </AuthProvider>
     </QueryClientProvider>
   );
 };

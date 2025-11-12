@@ -16,6 +16,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Progress } from "@/components/ui/progress";
 import { SEO } from "@/components/SEO";
+import { useAuth } from "@/contexts/AuthContext";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { getCurriculums, getLevelsForCurriculum, getSubjectsForCurriculumLevel } from "@/utils/curriculumData";
 import { NAIROBI_LOCATIONS } from "@/utils/locationData";
@@ -25,6 +26,7 @@ const TEACHING_MODES = ["Online", "In-Person"];
 const TutorProfileSetup = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user, initialized } = useAuth();
   const [step, setStep] = useState(1);
   const [isLoading, setIsLoading] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
