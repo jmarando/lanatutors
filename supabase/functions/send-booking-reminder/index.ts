@@ -54,7 +54,7 @@ const handler = async (req: Request): Promise<Response> => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: "Lana Tutors <info@lanatutors.africa>",
+        from: "Lana Tutors <noreply@lanatutors.africa>",
         to: [studentEmail],
         subject: `Reminder: Upcoming Session with ${tutorName}`,
         html: `

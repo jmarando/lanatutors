@@ -183,7 +183,7 @@ END:VCALENDAR`;
         Authorization: `Bearer ${RESEND_API_KEY}`,
       },
       body: JSON.stringify({
-        from: "Lana <info@lanatutors.africa>",
+        from: "Lana Tutors <noreply@lanatutors.africa>",
         to: [email],
         subject: "Your Free Consultation is Confirmed! 📚",
         html: emailHtml,

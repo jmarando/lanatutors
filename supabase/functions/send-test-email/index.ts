@@ -37,7 +37,7 @@ serve(async (req) => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: "Lana <info@lanatutors.africa>",
+        from: "Lana Tutors <noreply@lanatutors.africa>",
         to: [to],
         subject: "Lana Test Email",
         html,

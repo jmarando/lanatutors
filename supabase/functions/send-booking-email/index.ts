@@ -266,7 +266,7 @@ const handler = async (req: Request): Promise<Response> => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: "Lana <info@lanatutors.africa>",
+        from: "Lana Tutors <noreply@lanatutors.africa>",
         to: [recipientEmail],
         subject: `${testEmail ? '[TEST] ' : ''}✓ Booking Confirmed: ${subject} with ${tutorName}`,
         html: studentEmailHtml,
@@ -290,7 +290,7 @@ const handler = async (req: Request): Promise<Response> => {
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        from: "Lana <info@lanatutors.africa>",
+        from: "Lana Tutors <noreply@lanatutors.africa>",
         to: [tutorEmail],
         subject: `New Booking: ${subject} with ${studentName}`,
         html: `
