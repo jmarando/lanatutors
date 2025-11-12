@@ -57,3 +57,5 @@ verify_jwt = true
 [functions.send-tutor-submission-confirmation]
 verify_jwt = false
 
+[functions.send-tutor-rejection-email]
+verify_jwt = false

@@ -662,6 +662,8 @@ Yehtu Tutors`
   };
 
   const handleTutorApproval = async (tutorId: string, approved: boolean) => {
+    const tutor = pendingTutors.find(t => t.id === tutorId);
+    
     const { error } = await supabase
       .from("tutor_profiles")
       .update({ verified: approved })
@@ -670,6 +672,23 @@ Yehtu Tutors`
     if (error) {
       toast.error("Failed to update tutor status");
       return;
+    }
+
+    // Send rejection email if tutor is rejected
+    if (!approved && tutor) {
+      try {
+        await supabase.functions.invoke("send-tutor-rejection-email", {
+          body: {
+            tutorName: tutor.profiles?.full_name || "Tutor",
+            email: tutor.email,
+            rejectionReason: "After careful review, we are unable to proceed with your application at this time."
+          }
+        });
+        console.log("Rejection email sent");
+      } catch (emailError) {
+        console.error("Failed to send rejection email:", emailError);
+        // Don't fail the whole operation if email fails
+      }
     }
 
     toast.success(approved ? "Tutor approved!" : "Tutor rejected");
