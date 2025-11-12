@@ -142,7 +142,7 @@ const Login = () => {
         } else if (roleData?.role === 'tutor') {
           navigate('/tutor/dashboard');
         } else if (roleData?.role === 'student') {
-          navigate('/student-dashboard');
+          navigate('/student/dashboard');
         } else {
           // Default redirect if no role found
           navigate('/');
