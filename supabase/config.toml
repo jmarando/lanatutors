@@ -54,3 +54,6 @@ verify_jwt = true
 [functions.validate-phone]
 verify_jwt = true
 
+[functions.send-tutor-submission-confirmation]
+verify_jwt = false
+
