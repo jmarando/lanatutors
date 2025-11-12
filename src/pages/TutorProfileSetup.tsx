@@ -981,7 +981,7 @@ const TutorProfileSetup = () => {
             <CardHeader>
               <div className="mb-4">
                 <Progress value={progress} className="h-2" />
-                <p className="text-sm text-muted-foreground mt-2">Step {step} of 6</p>
+                <p className="text-sm text-muted-foreground mt-2">Step {step} of 4</p>
               </div>
               <CardTitle className="text-2xl">Complete Your Tutor Profile</CardTitle>
               <CardDescription>
@@ -995,9 +995,9 @@ const TutorProfileSetup = () => {
                 // Form submission is only handled via explicit button clicks
               }} className="space-y-6">
               {step === 1 && <div className="space-y-6">
-                  <h3 className="font-semibold text-lg">Personal Information</h3>
+                  <h3 className="font-semibold text-lg">About You</h3>
                   <p className="text-sm text-muted-foreground">
-                    Let's start with your basic information. We may have some details already, but please verify or update them.
+                    Tell us about your background and education
                   </p>
                   
                   <div className="grid gap-4">
@@ -1076,88 +1076,6 @@ const TutorProfileSetup = () => {
                   </div>
 
                   <Separator />
-
-                  <div className="space-y-4">
-                    <h4 className="font-semibold">Privacy Settings</h4>
-                    <p className="text-sm text-muted-foreground">
-                      Control what information is visible on your public profile
-                    </p>
-
-                    <div className="space-y-3 border rounded-lg p-4 bg-muted/30">
-                      <div className="flex items-start space-x-3">
-                        <Checkbox id="showFullName" checked={formData.showFullName} onCheckedChange={checked => setFormData({
-                        ...formData,
-                        showFullName: checked as boolean
-                      })} />
-                        <div className="space-y-1">
-                          <Label htmlFor="showFullName" className="cursor-pointer font-medium">
-                            Show full name
-                          </Label>
-                          <p className="text-xs text-muted-foreground">
-                            {formData.showFullName ? "Students will see your full name" : "Students will only see your first name"}
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="flex items-start space-x-3">
-                        <Checkbox id="showCurrentInstitution" checked={formData.showCurrentInstitution} onCheckedChange={checked => setFormData({
-                        ...formData,
-                        showCurrentInstitution: checked as boolean
-                      })} />
-                        <div className="space-y-1">
-                          <Label htmlFor="showCurrentInstitution" className="cursor-pointer font-medium">
-                            Show current institution/school
-                          </Label>
-                          <p className="text-xs text-muted-foreground">
-                            Display where you currently teach
-                          </p>
-                        </div>
-                      </div>
-
-                      <div className="flex items-start space-x-3">
-                        <Checkbox id="showPhoto" checked={formData.showPhoto} onCheckedChange={checked => setFormData({
-                        ...formData,
-                        showPhoto: checked as boolean
-                      })} />
-                        <div className="space-y-1">
-                          <Label htmlFor="showPhoto" className="cursor-pointer font-medium">
-                            Display profile photo
-                          </Label>
-                          <p className="text-xs text-muted-foreground">
-                            {formData.showPhoto ? "Recommended: Students can see your photo" : "Only initials will be shown"}
-                          </p>
-                        </div>
-                      </div>
-                    </div>
-                  </div>
-
-                  <Separator />
-
-                  <div className="space-y-4">
-                    <h4 className="font-semibold">Profile Photo</h4>
-                    <div className="flex items-start gap-4">
-                      <Avatar className="w-20 h-20 ring-2 ring-primary/20 shadow-lg">
-                        {photoFile ? <AvatarImage src={URL.createObjectURL(photoFile)} /> : <AvatarFallback className="text-xl">
-                            {formData.fullName.split(' ').map(n => n[0]).join('').slice(0, 2) || "T"}
-                          </AvatarFallback>}
-                      </Avatar>
-                      <div className="flex-1 space-y-2">
-                        <Label>Upload Photo {formData.showPhoto && "*"}</Label>
-                        <Button type="button" variant="outline" onClick={() => photoInputRef.current?.click()} disabled={!formData.showPhoto}>
-                          <Upload className="mr-2 h-4 w-4" />
-                          {photoFile ? "Change Photo" : "Upload Photo"}
-                        </Button>
-                        <input ref={photoInputRef} type="file" accept="image/*" onChange={handlePhotoChange} className="hidden" />
-                        <p className="text-xs text-muted-foreground">
-                          {formData.showPhoto ? "Profiles with photos perform better! Upload a professional photo (max 5MB)" : "Photo display is disabled in privacy settings"}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                </div>}
-
-              {step === 2 && <div className="space-y-6">
-                  <h3 className="font-semibold text-lg">Professional Background</h3>
 
                   <div className="space-y-4">
                     <div className="space-y-2">
@@ -1358,8 +1276,8 @@ TEFL/TESOL Certification" value={formData.qualifications} onChange={e => setForm
                   </div>
                 </div>}
 
-              {step === 3 && <div className="space-y-6">
-                  <h3 className="font-semibold text-lg">Part A: What You Teach</h3>
+              {step === 2 && <div className="space-y-6">
+                  <h3 className="font-semibold text-lg">What You Teach</h3>
                   <p className="text-sm text-muted-foreground">
                     Select your curriculum, levels, and subjects
                   </p>
@@ -1464,8 +1382,8 @@ TEFL/TESOL Certification" value={formData.qualifications} onChange={e => setForm
 
                 </div>}
 
-              {step === 4 && <div className="space-y-6">
-                  <h3 className="font-semibold text-lg">Part B: Your Pricing</h3>
+              {step === 3 && <div className="space-y-6">
+                  <h3 className="font-semibold text-lg">Your Pricing</h3>
                   <p className="text-sm text-muted-foreground">
                     Set your rates and package discounts
                   </p>
@@ -1649,10 +1567,10 @@ TEFL/TESOL Certification" value={formData.qualifications} onChange={e => setForm
 
                 </div>}
 
-              {step === 5 && <div className="space-y-6">
-                  <h3 className="font-semibold text-lg">Teaching Preferences</h3>
+              {step === 4 && <div className="space-y-6">
+                  <h3 className="font-semibold text-lg">Preferences & Privacy</h3>
                   <p className="text-sm text-muted-foreground">
-                    Tell us how and where you prefer to teach
+                    Tell us how you prefer to teach and control your profile visibility
                   </p>
                   
                   <div className="space-y-4">
@@ -1711,52 +1629,77 @@ TEFL/TESOL Certification" value={formData.qualifications} onChange={e => setForm
                     </div>
                   </div>
 
-                </div>}
-
-              {step === 6 && <div className="space-y-6">
-                  <h3 className="font-semibold text-lg">Privacy & Profile Visibility</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Choose what students will see on your profile
-                  </p>
+                  <Separator />
                   
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between p-3 border rounded-lg">
-                      <div>
-                        <Label htmlFor="showFullName">Show Full Name</Label>
-                        <p className="text-xs text-muted-foreground">Display your complete name to students</p>
-                      </div>
-                      <Checkbox 
-                        id="showFullName"
-                        checked={formData.showFullName}
-                        onCheckedChange={(checked) => setFormData({ ...formData, showFullName: checked as boolean })}
-                      />
-                    </div>
+                  <div className="space-y-4">
+                    <h4 className="font-semibold">Profile Visibility</h4>
+                    <p className="text-sm text-muted-foreground">Choose what students will see on your profile</p>
                     
-                    <div className="flex items-center justify-between p-3 border rounded-lg">
-                      <div>
-                        <Label htmlFor="showCurrentInstitution">Show Current Institution</Label>
-                        <p className="text-xs text-muted-foreground">Display where you currently teach/study</p>
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between p-3 border rounded-lg">
+                        <div>
+                          <Label htmlFor="showFullName">Show Full Name</Label>
+                          <p className="text-xs text-muted-foreground">Display your complete name to students</p>
+                        </div>
+                        <Checkbox 
+                          id="showFullName"
+                          checked={formData.showFullName}
+                          onCheckedChange={(checked) => setFormData({ ...formData, showFullName: checked as boolean })}
+                        />
                       </div>
-                      <Checkbox 
-                        id="showCurrentInstitution"
-                        checked={formData.showCurrentInstitution}
-                        onCheckedChange={(checked) => setFormData({ ...formData, showCurrentInstitution: checked as boolean })}
-                      />
-                    </div>
-                    
-                    <div className="flex items-center justify-between p-3 border rounded-lg">
-                      <div>
-                        <Label htmlFor="showPhoto">Show Profile Photo</Label>
-                        <p className="text-xs text-muted-foreground">Display your photo in search results</p>
+                      
+                      <div className="flex items-center justify-between p-3 border rounded-lg">
+                        <div>
+                          <Label htmlFor="showCurrentInstitution">Show Current Institution</Label>
+                          <p className="text-xs text-muted-foreground">Display where you currently teach/study</p>
+                        </div>
+                        <Checkbox 
+                          id="showCurrentInstitution"
+                          checked={formData.showCurrentInstitution}
+                          onCheckedChange={(checked) => setFormData({ ...formData, showCurrentInstitution: checked as boolean })}
+                        />
                       </div>
-                      <Checkbox 
-                        id="showPhoto"
-                        checked={formData.showPhoto}
-                        onCheckedChange={(checked) => setFormData({ ...formData, showPhoto: checked as boolean })}
-                      />
+                      
+                      <div className="flex items-center justify-between p-3 border rounded-lg">
+                        <div>
+                          <Label htmlFor="showPhoto">Show Profile Photo</Label>
+                          <p className="text-xs text-muted-foreground">Display your photo in search results</p>
+                        </div>
+                        <Checkbox 
+                          id="showPhoto"
+                          checked={formData.showPhoto}
+                          onCheckedChange={(checked) => setFormData({ ...formData, showPhoto: checked as boolean })}
+                        />
+                      </div>
                     </div>
                   </div>
+
+                  <Separator />
+
+                  <div className="space-y-4">
+                    <h4 className="font-semibold">Profile Photo</h4>
+                    <div className="flex items-center gap-4">
+                      <Avatar className="w-20 h-20 ring-2 ring-primary/20">
+                        {photoFile ? <AvatarImage src={URL.createObjectURL(photoFile)} /> : <AvatarFallback className="text-xl">
+                            {formData.fullName.split(' ').map(n => n[0]).join('').slice(0, 2) || "T"}
+                          </AvatarFallback>}
+                      </Avatar>
+                      <div className="flex-1 space-y-2">
+                        <Label>Upload Photo {formData.showPhoto && "*"}</Label>
+                        <Button type="button" variant="outline" onClick={() => photoInputRef.current?.click()} disabled={!formData.showPhoto}>
+                          <Upload className="mr-2 h-4 w-4" />
+                          {photoFile ? "Change Photo" : "Upload Photo"}
+                        </Button>
+                        <input ref={photoInputRef} type="file" accept="image/*" onChange={handlePhotoChange} className="hidden" />
+                        <p className="text-xs text-muted-foreground">
+                          {formData.showPhoto ? "Profiles with photos perform better! Upload a professional photo (max 5MB)" : "Photo display is disabled in privacy settings"}
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
                 </div>}
+
 
 
               <div className="flex justify-between gap-4 pt-4">
@@ -1764,7 +1707,7 @@ TEFL/TESOL Certification" value={formData.qualifications} onChange={e => setForm
                     <ArrowLeft className="mr-2 h-4 w-4" />
                     Back
                   </Button>}
-                {step < 6 ? <Button type="button" onClick={() => {
+                {step < 4 ? <Button type="button" onClick={() => {
                   if (step === 1) {
                     handleContinueFromStep1();
                   } else {
@@ -1773,7 +1716,7 @@ TEFL/TESOL Certification" value={formData.qualifications} onChange={e => setForm
                 }} className="ml-auto">
                     Continue
                     <ArrowRight className="ml-2 h-4 w-4" />
-                  </Button> : <Button 
+                  </Button> : <Button
                     type="button" 
                     onClick={(e) => {
                       e.preventDefault();
