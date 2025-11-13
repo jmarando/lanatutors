@@ -1084,18 +1084,18 @@ The Lana Team`;
           </div>
 
           {/* Dashboard Tab */}
-          <TabsContent value="dashboard" className="space-y-6">
-            {/* Time Range Selector */}
-            <div className="flex justify-between items-center">
+          <TabsContent value="dashboard" className="space-y-8">
+            {/* Header Section */}
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <div>
-                <h2 className="text-3xl font-bold">Business Pulse</h2>
-                <p className="text-muted-foreground">Key metrics and trends at a glance</p>
+                <h2 className="text-3xl font-bold tracking-tight">Business Pulse</h2>
+                <p className="text-muted-foreground mt-1">Real-time insights and platform metrics</p>
               </div>
               <Select value={timeRange} onValueChange={(value: any) => {
                 setTimeRange(value);
                 setTimeout(() => fetchDashboardMetrics(), 100);
               }}>
-                <SelectTrigger className="w-40">
+                <SelectTrigger className="w-[180px]">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -1107,22 +1107,25 @@ The Lana Team`;
             </div>
 
             {dashboardMetrics ? (
-              <>
-                {/* Key Metrics Cards */}
-                <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                  <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                      <CardTitle className="text-sm font-medium">Total Students</CardTitle>
-                      <Users className="h-4 w-4 text-muted-foreground" />
+              <div className="space-y-8">
+                {/* Key Metrics Grid */}
+                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+                  <Card className="overflow-hidden">
+                    <CardHeader className="pb-3">
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="text-sm font-medium text-muted-foreground">Total Students</CardTitle>
+                        <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                          <Users className="h-5 w-5 text-primary" />
+                        </div>
+                      </div>
                     </CardHeader>
                     <CardContent>
-                      <div className="text-2xl font-bold">{dashboardMetrics.totalStudents || 0}</div>
-                      <p className="text-xs text-muted-foreground">
-                        <span className="text-green-600 flex items-center gap-1">
-                          <ArrowUpRight className="h-3 w-3" />
-                          {dashboardMetrics.newStudents} new
-                        </span>
-                      </p>
+                      <div className="text-3xl font-bold tracking-tight">{dashboardMetrics.totalStudents || 0}</div>
+                      <div className="flex items-center gap-1 mt-2 text-sm text-emerald-600 dark:text-emerald-400">
+                        <ArrowUpRight className="h-4 w-4" />
+                        <span className="font-medium">{dashboardMetrics.newStudents} new</span>
+                        <span className="text-muted-foreground ml-1">this period</span>
+                      </div>
                     </CardContent>
                   </Card>
 
