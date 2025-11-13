@@ -420,25 +420,33 @@ const TutorProfile = () => {
                   
                   {pricingTiers.length > 0 ? (
                     <div className="flex flex-col gap-3">
-                      <div className="flex gap-2">
-                        {pricingTiers.map(tier => {
-                          const tierName = tier.tier_name.toLowerCase();
-                          const isSelected = tierName === selectedTier;
-                          return (
-                            <button
-                              key={tier.id}
-                              onClick={() => setSelectedTier(tierName as 'standard' | 'advanced')}
-                              className={cn(
-                                "px-3 py-1.5 rounded-md text-sm font-medium transition-colors",
-                                isSelected 
-                                  ? "bg-primary text-primary-foreground" 
-                                  : "bg-background border border-border hover:bg-muted"
-                              )}
-                            >
-                              {tier.tier_name}
-                            </button>
-                          );
-                        })}
+                      <div className="flex items-center gap-3">
+                        <div className="flex gap-2">
+                          {pricingTiers.map(tier => {
+                            const tierName = tier.tier_name.toLowerCase();
+                            const isSelected = tierName === selectedTier;
+                            const displayName = tier.tier_name.charAt(0).toUpperCase() + tier.tier_name.slice(1);
+                            return (
+                              <button
+                                key={tier.id}
+                                onClick={() => setSelectedTier(tierName as 'standard' | 'advanced')}
+                                className={cn(
+                                  "px-4 py-2 rounded-lg text-base font-semibold transition-all",
+                                  isSelected 
+                                    ? "bg-primary text-primary-foreground shadow-md" 
+                                    : "bg-background border-2 border-border hover:border-primary/50"
+                                )}
+                              >
+                                {displayName}
+                              </button>
+                            );
+                          })}
+                        </div>
+                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground bg-muted/50 px-3 py-1.5 rounded-md border border-border/50">
+                          <span className="font-medium">
+                            {selectedTier === 'standard' ? '📚 CBC, 8-4-4' : '🎓 IGCSE, IB, A-Level'}
+                          </span>
+                        </div>
                       </div>
                       <div className="space-y-1">
                         <div className="flex items-baseline gap-2">
