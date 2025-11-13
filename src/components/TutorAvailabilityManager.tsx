@@ -7,12 +7,13 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Clock, Plus, Trash2 } from "lucide-react";
+import { Ban, Trash2, Info } from "lucide-react";
 import { format } from "date-fns";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export const TutorAvailabilityManager = () => {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
-  const [slots, setSlots] = useState<any[]>([]);
+  const [blockedSlots, setBlockedSlots] = useState<any[]>([]);
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
   const [loading, setLoading] = useState(false);
@@ -20,11 +21,11 @@ export const TutorAvailabilityManager = () => {
 
   useEffect(() => {
     if (selectedDate) {
-      fetchSlots();
+      fetchBlockedSlots();
     }
   }, [selectedDate]);
 
-  const fetchSlots = async () => {
+  const fetchBlockedSlots = async () => {
     if (!selectedDate) return;
 
     const { data: { user } } = await supabase.auth.getUser();
@@ -39,19 +40,20 @@ export const TutorAvailabilityManager = () => {
       .from("tutor_availability")
       .select("*")
       .eq("tutor_id", user.id)
+      .eq("slot_type", "blocked")
       .gte("start_time", startOfDay.toISOString())
       .lte("start_time", endOfDay.toISOString())
       .order("start_time");
 
     if (error) {
-      console.error("Error fetching slots:", error);
+      console.error("Error fetching blocked slots:", error);
       return;
     }
 
-    setSlots(data || []);
+    setBlockedSlots(data || []);
   };
 
-  const handleAddSlot = async () => {
+  const handleBlockTime = async () => {
     if (!selectedDate || !startTime || !endTime) {
       toast({
         title: "Missing information",
@@ -91,6 +93,7 @@ export const TutorAvailabilityManager = () => {
         start_time: startDateTime.toISOString(),
         end_time: endDateTime.toISOString(),
         is_booked: false,
+        slot_type: "blocked",
       });
 
     if (error) {
@@ -101,12 +104,12 @@ export const TutorAvailabilityManager = () => {
       });
     } else {
       toast({
-        title: "Slot added",
-        description: "Your availability has been updated",
+        title: "Time blocked",
+        description: "You will not be available during this time",
       });
       setStartTime("");
       setEndTime("");
-      fetchSlots();
+      fetchBlockedSlots();
     }
 
     setLoading(false);
