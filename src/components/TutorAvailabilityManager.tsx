@@ -175,6 +175,58 @@ export const TutorAvailabilityManager = () => {
       setStartTime("");
       setEndTime("");
       fetchBlockedSlots();
+      fetchWeekSlots();
+    }
+
+    setLoading(false);
+  };
+
+  const handleBlockEntireDay = async () => {
+    if (!selectedDate) {
+      toast({
+        title: "Missing information",
+        description: "Please select a date to block",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    setLoading(true);
+
+    // Block from 8 AM to 8 PM
+    const blockStart = new Date(selectedDate);
+    blockStart.setHours(8, 0, 0, 0);
+
+    const blockEnd = new Date(selectedDate);
+    blockEnd.setHours(20, 0, 0, 0);
+
+    const { error } = await supabase
+      .from("tutor_availability")
+      .insert({
+        tutor_id: user.id,
+        start_time: blockStart.toISOString(),
+        end_time: blockEnd.toISOString(),
+        is_booked: false,
+        slot_type: "blocked",
+      });
+
+    if (error) {
+      console.error("Error blocking entire day:", error);
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    } else {
+      toast({
+        title: "Entire day blocked",
+        description: `${format(selectedDate, "MMMM d, yyyy")} is now unavailable (8 AM - 8 PM)`,
+      });
+      fetchBlockedSlots();
+      fetchWeekSlots();
     }
 
     setLoading(false);
@@ -431,6 +483,34 @@ export const TutorAvailabilityManager = () => {
                   Block specific times when you're unavailable (meetings, personal time, etc.)
                 </AlertDescription>
               </Alert>
+              
+              <Button 
+                onClick={handleBlockEntireDay} 
+                disabled={loading || !selectedDate}
+                variant="outline"
+                className="w-full mb-4"
+              >
+                {loading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Blocking...
+                  </>
+                ) : (
+                  "Block Entire Day (8 AM - 8 PM)"
+                )}
+              </Button>
+
+              <div className="relative mb-4">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-background px-2 text-muted-foreground">
+                    Or block specific time
+                  </span>
+                </div>
+              </div>
+
               <div className="grid grid-cols-2 gap-2 mb-3">
                 <div>
                   <Label className="text-xs text-muted-foreground mb-1 block">Start Time</Label>
