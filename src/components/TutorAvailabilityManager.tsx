@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -7,18 +7,72 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Clock, Trash2, Info, Sparkles, Loader2 } from "lucide-react";
-import { format } from "date-fns";
+import { Clock, Trash2, Info, Sparkles, Loader2, ChevronLeft, ChevronRight } from "lucide-react";
+import { format, addDays, startOfWeek, addWeeks, subWeeks } from "date-fns";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
 export const TutorAvailabilityManager = () => {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
+  const [currentWeekStart, setCurrentWeekStart] = useState<Date>(startOfWeek(new Date(), { weekStartsOn: 0 }));
+  const [weekSlots, setWeekSlots] = useState<any[]>([]);
+  const [hasExistingSlots, setHasExistingSlots] = useState(false);
   const [blockedSlots, setBlockedSlots] = useState<any[]>([]);
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
   const [loading, setLoading] = useState(false);
   const [generatingAvailability, setGeneratingAvailability] = useState(false);
   const { toast } = useToast();
+
+  const checkExistingSlots = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const now = new Date();
+      const fourWeeksLater = addWeeks(now, 4);
+
+      const { data, error } = await supabase
+        .from("tutor_availability")
+        .select("id")
+        .eq("tutor_id", user.id)
+        .gte("start_time", now.toISOString())
+        .lte("start_time", fourWeeksLater.toISOString())
+        .limit(1);
+
+      if (!error && data && data.length > 0) {
+        setHasExistingSlots(true);
+      }
+    } catch (err) {
+      console.error("Error checking existing slots:", err);
+    }
+  };
+
+  const fetchWeekSlots = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const weekStart = new Date(currentWeekStart);
+      weekStart.setHours(0, 0, 0, 0);
+      const weekEnd = addDays(weekStart, 7);
+
+      const { data, error }: any = await supabase
+        .from("tutor_availability")
+        .select("*")
+        .eq("tutor_id", user.id)
+        .gte("start_time", weekStart.toISOString())
+        .lt("start_time", weekEnd.toISOString());
+
+      if (error) {
+        console.error("Error fetching week slots:", error);
+        return;
+      }
+
+      setWeekSlots(data || []);
+    } catch (err) {
+      console.error("Unexpected error:", err);
+    }
+  };
 
   const fetchBlockedSlots = async () => {
     if (!selectedDate) return;
@@ -58,8 +112,10 @@ export const TutorAvailabilityManager = () => {
   };
 
   useEffect(() => {
+    checkExistingSlots();
+    fetchWeekSlots();
     fetchBlockedSlots();
-  }, [selectedDate]);
+  }, [selectedDate, currentWeekStart]);
 
   const handleBlockTime = async () => {
     if (!selectedDate || !startTime || !endTime) {
@@ -174,6 +230,8 @@ export const TutorAvailabilityManager = () => {
           title: "Availability Generated",
           description: "Your availability for the next 4 weeks has been created (8 AM - 8 PM daily)",
         });
+        checkExistingSlots();
+        fetchWeekSlots();
         fetchBlockedSlots();
       }
     } catch (error) {
@@ -188,7 +246,128 @@ export const TutorAvailabilityManager = () => {
     }
   };
 
+  const getSlotStyle = (slot: any) => {
+    if (slot.is_booked) return "bg-blue-100 border-blue-300 text-blue-900";
+    if (slot.slot_type === "blocked") return "bg-red-50 border-red-200 text-red-700";
+    return "bg-green-50 border-green-200 text-green-700";
+  };
+
+  const getSlotLabel = (slot: any) => {
+    if (slot.is_booked) return "Booked";
+    if (slot.slot_type === "blocked") return "Blocked";
+    return "Available";
+  };
+
+  const hours = Array.from({ length: 14 }, (_, i) => i + 6); // 6 AM to 8 PM
+  const weekDays = Array.from({ length: 7 }, (_, i) => addDays(currentWeekStart, i));
+
+  const getSlotsForDayAndHour = (day: Date, hour: number) => {
+    const dayStart = new Date(day);
+    dayStart.setHours(hour, 0, 0, 0);
+    const dayEnd = new Date(day);
+    dayEnd.setHours(hour + 1, 0, 0, 0);
+
+    return weekSlots.filter(slot => {
+      const slotStart = new Date(slot.start_time);
+      return slotStart >= dayStart && slotStart < dayEnd;
+    });
+  };
+
   return (
+    <div className="space-y-6">
+      {/* Week Calendar View */}
+      <Card>
+        <CardHeader>
+          <div className="flex items-center justify-between">
+            <CardTitle className="flex items-center gap-2">
+              <Clock className="w-5 h-5 text-primary" />
+              Weekly Schedule
+            </CardTitle>
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentWeekStart(subWeeks(currentWeekStart, 1))}
+              >
+                <ChevronLeft className="w-4 h-4" />
+              </Button>
+              <span className="text-sm font-medium px-4">
+                {format(currentWeekStart, "MMM d")} - {format(addDays(currentWeekStart, 6), "MMM d, yyyy")}
+              </span>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setCurrentWeekStart(addWeeks(currentWeekStart, 1))}
+              >
+                <ChevronRight className="w-4 h-4" />
+              </Button>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          <div className="overflow-x-auto">
+            <div className="min-w-[800px]">
+              {/* Header Row */}
+              <div className="grid grid-cols-8 gap-1 mb-2">
+                <div className="text-xs font-medium text-muted-foreground p-2">Time</div>
+                {weekDays.map((day, i) => (
+                  <div key={i} className="text-center p-2">
+                    <div className="text-xs font-medium">{format(day, "EEE")}</div>
+                    <div className="text-lg font-bold">{format(day, "d")}</div>
+                  </div>
+                ))}
+              </div>
+              
+              {/* Time Grid */}
+              <div className="space-y-0.5">
+                {hours.map((hour) => (
+                  <div key={hour} className="grid grid-cols-8 gap-1">
+                    <div className="text-xs text-muted-foreground p-2 flex items-start">
+                      {format(new Date().setHours(hour, 0, 0, 0), "h a")}
+                    </div>
+                    {weekDays.map((day, dayIndex) => {
+                      const slots = getSlotsForDayAndHour(day, hour);
+                      return (
+                        <div key={dayIndex} className="min-h-[60px] border border-border/40 rounded p-1">
+                          {slots.map((slot, slotIndex) => (
+                            <div
+                              key={slotIndex}
+                              className={`text-xs p-1 rounded border mb-1 ${getSlotStyle(slot)}`}
+                            >
+                              <div className="font-medium truncate">{getSlotLabel(slot)}</div>
+                              <div className="text-[10px] opacity-75">
+                                {format(new Date(slot.start_time), "h:mm a")}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      );
+                    })}
+                  </div>
+                ))}
+              </div>
+              
+              {/* Legend */}
+              <div className="flex items-center gap-4 mt-4 pt-4 border-t">
+                <div className="flex items-center gap-2 text-xs">
+                  <div className="w-3 h-3 bg-green-50 border border-green-200 rounded"></div>
+                  <span>Available</span>
+                </div>
+                <div className="flex items-center gap-2 text-xs">
+                  <div className="w-3 h-3 bg-red-50 border border-red-200 rounded"></div>
+                  <span>Blocked</span>
+                </div>
+                <div className="flex items-center gap-2 text-xs">
+                  <div className="w-3 h-3 bg-blue-100 border border-blue-300 rounded"></div>
+                  <span>Booked</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
+      {/* Availability Manager */}
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
@@ -221,14 +400,19 @@ export const TutorAvailabilityManager = () => {
               </Alert>
               <Button 
                 onClick={handleGenerateAvailability} 
-                disabled={generatingAvailability}
-                variant="default"
+                disabled={generatingAvailability || hasExistingSlots}
+                variant={hasExistingSlots ? "secondary" : "default"}
                 className="w-full"
               >
                 {generatingAvailability ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                     Generating...
+                  </>
+                ) : hasExistingSlots ? (
+                  <>
+                    <Sparkles className="w-4 h-4 mr-2" />
+                    Availability Already Generated
                   </>
                 ) : (
                   <>
@@ -310,5 +494,6 @@ export const TutorAvailabilityManager = () => {
         </div>
       </CardContent>
     </Card>
+    </div>
   );
 };
