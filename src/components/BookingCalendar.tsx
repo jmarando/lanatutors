@@ -69,6 +69,7 @@ export const BookingCalendar = ({
 }: BookingCalendarProps) => {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [availableSlots, setAvailableSlots] = useState<AvailabilitySlot[]>([]);
+  const [monthSlots, setMonthSlots] = useState<any[]>([]);
   const [selectedSlot, setSelectedSlot] = useState<AvailabilitySlot | null>(null);
   const [subject, setSubject] = useState("");
   const [notes, setNotes] = useState("");
@@ -90,6 +91,7 @@ export const BookingCalendar = ({
   useEffect(() => {
     if (selectedDate) {
       fetchAvailableSlots();
+      fetchMonthSlots();
     }
   }, [selectedDate, tutorId]);
 
@@ -150,6 +152,29 @@ export const BookingCalendar = ({
     }
 
     setAvailableSlots(data || []);
+  };
+
+  const fetchMonthSlots = async () => {
+    if (!selectedDate) return;
+
+    const monthStart = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1);
+    monthStart.setHours(0, 0, 0, 0);
+    const monthEnd = new Date(selectedDate.getFullYear(), selectedDate.getMonth() + 1, 0);
+    monthEnd.setHours(23, 59, 59, 999);
+
+    const { data, error } = await supabase
+      .from("tutor_availability")
+      .select("*")
+      .eq("tutor_id", tutorId)
+      .gte("start_time", monthStart.toISOString())
+      .lte("start_time", monthEnd.toISOString());
+
+    if (error) {
+      console.error("Error fetching month slots:", error);
+      return;
+    }
+
+    setMonthSlots(data || []);
   };
 
   const handleBookSlot = async () => {
@@ -478,8 +503,49 @@ export const BookingCalendar = ({
     setSelectedClassType('online');
     setSelectedLocation("");
     fetchAvailableSlots();
+
     onBookingComplete?.();
   };
+
+  // Get availability status for a given date
+  const getDateStatus = (date: Date) => {
+    const dayStart = new Date(date);
+    dayStart.setHours(0, 0, 0, 0);
+    const dayEnd = new Date(date);
+    dayEnd.setHours(23, 59, 59, 999);
+
+    const daySlots = monthSlots.filter(slot => {
+      const slotStart = new Date(slot.start_time);
+      return slotStart >= dayStart && slotStart <= dayEnd;
+    });
+
+    if (daySlots.length === 0) return null;
+
+    const hasBooked = daySlots.some(s => s.is_booked);
+    const hasBlocked = daySlots.some(s => s.slot_type === "blocked");
+    const hasAvailable = daySlots.some(s => (s.slot_type === "available" || !s.slot_type) && !s.is_booked);
+
+    if (hasBooked && !hasAvailable) return "fully-booked";
+    if (hasBlocked && !hasAvailable) return "unavailable";
+    if (hasAvailable) return "available";
+    return null;
+  };
+
+  // Build modifiers for calendar styling
+  const availableDates: Date[] = [];
+  const unavailableDates: Date[] = [];
+
+  if (selectedDate) {
+    const monthStart = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1);
+    const monthEnd = new Date(selectedDate.getFullYear(), selectedDate.getMonth() + 1, 0);
+    
+    for (let d = new Date(monthStart); d <= monthEnd; d.setDate(d.getDate() + 1)) {
+      const status = getDateStatus(new Date(d));
+      if (status === "available") availableDates.push(new Date(d));
+      else if (status === "unavailable" || status === "fully-booked") unavailableDates.push(new Date(d));
+    }
+  }
+
 
   return (
     <div className="space-y-6">
@@ -493,7 +559,25 @@ export const BookingCalendar = ({
               onSelect={setSelectedDate}
               disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
               className="pointer-events-auto"
+              modifiers={{
+                available: availableDates,
+                unavailable: unavailableDates,
+              }}
+              modifiersClassNames={{
+                available: "relative after:absolute after:bottom-1 after:left-1/2 after:-translate-x-1/2 after:w-1.5 after:h-1.5 after:bg-green-500 after:rounded-full",
+                unavailable: "relative after:absolute after:bottom-1 after:left-1/2 after:-translate-x-1/2 after:w-1.5 after:h-1.5 after:bg-red-500 after:rounded-full opacity-60",
+              }}
             />
+            <div className="flex items-center gap-4 text-xs text-muted-foreground mt-2 pt-2 border-t">
+              <div className="flex items-center gap-1.5">
+                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                <span>Available</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                <span>Unavailable</span>
+              </div>
+            </div>
           </div>
         </div>
 
