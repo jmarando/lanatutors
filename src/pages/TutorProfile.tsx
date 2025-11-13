@@ -609,6 +609,43 @@ const TutorProfile = () => {
                         </div>
                       );
                     })}
+
+                  {/* Free Consultation Option */}
+                  <div className="bg-gradient-to-br from-primary/10 to-primary/5 rounded-lg p-4 border-2 border-primary/30 hover:border-primary/50 transition-colors">
+                    <div className="flex items-start gap-3 mb-3">
+                      <div className="bg-primary/20 rounded-full p-2">
+                        <Sparkles className="w-5 h-5 text-primary" />
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="font-semibold text-sm mb-1">Need a Custom Package?</h4>
+                        <p className="text-xs text-muted-foreground">
+                          Book a free consultation with our experts to craft a personalized learning plan tailored to your specific needs
+                        </p>
+                      </div>
+                    </div>
+                    <div className="space-y-2 mb-3">
+                      <div className="flex items-center gap-2 text-xs">
+                        <CheckCircle2 className="w-4 h-4 text-primary" />
+                        <span>Personalized package recommendations</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-xs">
+                        <CheckCircle2 className="w-4 h-4 text-primary" />
+                        <span>Expert guidance on curriculum & goals</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-xs">
+                        <CheckCircle2 className="w-4 h-4 text-primary" />
+                        <span>Flexible scheduling options</span>
+                      </div>
+                    </div>
+                    <Button 
+                      size="sm" 
+                      className="w-full"
+                      variant="default"
+                      onClick={() => navigate('/expert-consultation')}
+                    >
+                      Book Free Consultation
+                    </Button>
+                  </div>
                 </div>
               </div>
             </div>
