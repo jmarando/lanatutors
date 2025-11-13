@@ -321,7 +321,10 @@ export const TutorAvailabilityManager = () => {
 
     return weekSlots.filter(slot => {
       const slotStart = new Date(slot.start_time);
-      return slotStart >= dayStart && slotStart < dayEnd;
+      const slotEnd = new Date(slot.end_time);
+      
+      // Include slot if it overlaps with this hour in any way
+      return (slotStart < dayEnd && slotEnd > dayStart);
     });
   };
 
