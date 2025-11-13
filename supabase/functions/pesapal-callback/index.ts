@@ -159,20 +159,66 @@ serve(async (req) => {
         } else {
           console.log('Booking confirmed')
 
-          // Send confirmation email
+          // Send confirmation email and WhatsApp
           const { data: booking } = await supabase
             .from('bookings')
-            .select('*, student:student_id(*)')
+            .select(`
+              *,
+              student:student_id(full_name, phone_number),
+              tutor:tutor_id(full_name),
+              availability_slot:availability_slot_id(start_time, end_time)
+            `)
             .eq('id', payment.reference_id)
             .single()
 
           if (booking) {
+            const studentProfile = booking.student as any
+            const tutorProfile = booking.tutor as any
+            const availabilitySlot = booking.availability_slot as any
+
+            // Send email
             await supabase.functions.invoke('send-booking-email', {
               body: {
-                booking,
-                user: booking.student,
+                studentEmail: studentProfile.email,
+                studentName: studentProfile.full_name,
+                tutorEmail: tutorProfile.email,
+                tutorName: tutorProfile.full_name,
+                subject: booking.subject,
+                startTime: availabilitySlot.start_time,
+                endTime: availabilitySlot.end_time,
+                meetingLink: booking.meeting_link,
+                depositPaid: booking.deposit_paid,
+                balanceDue: booking.balance_due,
+                totalAmount: booking.amount,
+                classType: booking.class_type,
               },
             })
+
+            // Send WhatsApp if phone number exists
+            if (studentProfile.phone_number) {
+              const startTime = new Date(availabilitySlot.start_time)
+              const bookingTime = startTime.toLocaleTimeString('en-US', {
+                hour: '2-digit',
+                minute: '2-digit'
+              })
+
+              await supabase.functions.invoke('send-booking-whatsapp', {
+                body: {
+                  phoneNumber: studentProfile.phone_number,
+                  parentName: studentProfile.full_name,
+                  studentName: studentProfile.full_name,
+                  tutorName: tutorProfile.full_name,
+                  subject: booking.subject,
+                  bookingDate: availabilitySlot.start_time,
+                  bookingTime: bookingTime,
+                  meetingLink: booking.meeting_link,
+                  depositPaid: booking.deposit_paid,
+                  balanceDue: booking.balance_due,
+                  totalAmount: booking.amount,
+                  classType: booking.class_type,
+                },
+              })
+            }
           }
         }
       }

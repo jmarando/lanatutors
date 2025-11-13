@@ -51,6 +51,9 @@ verify_jwt = false
 [functions.send-consultation-whatsapp]
 verify_jwt = false
 
+[functions.send-booking-whatsapp]
+verify_jwt = false
+
 [functions.generate-google-meet-link]
 verify_jwt = true
 
