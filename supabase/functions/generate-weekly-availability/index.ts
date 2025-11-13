@@ -81,6 +81,7 @@ serve(async (req) => {
               start_time: slotStart.toISOString(),
               end_time: slotEnd.toISOString(),
               is_booked: false,
+              slot_type: 'available', // Mark as available for booking
             });
           }
         }
@@ -145,8 +146,9 @@ serve(async (req) => {
 
   } catch (error) {
     console.error('Error in generate-weekly-availability:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred';
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: errorMessage }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' }, status: 500 }
     );
   }
