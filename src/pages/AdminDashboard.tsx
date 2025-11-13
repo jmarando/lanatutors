@@ -461,17 +461,10 @@ Yehtu Tutors`
   };
 
   const fetchPendingTutors = async () => {
-    // Fetch tutor profiles with their linked profiles data
-    // The tutor_profiles table has the email field directly
+    // Fetch tutor profiles that are not verified
     const { data: tutorData, error } = await supabase
       .from("tutor_profiles")
-      .select(`
-        *,
-        profiles!inner (
-          full_name,
-          phone_number
-        )
-      `)
+      .select("*")
       .eq("verified", false);
 
     if (error) {
@@ -480,7 +473,24 @@ Yehtu Tutors`
       return;
     }
 
-    setPendingTutors(tutorData || []);
+    if (tutorData) {
+      // Enrich with profile data
+      const enriched = await Promise.all(
+        tutorData.map(async (tutor) => {
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("full_name, phone_number")
+            .eq("id", tutor.user_id)
+            .single();
+          
+          return { 
+            ...tutor, 
+            profiles: profile || { full_name: "No name provided", phone_number: "No phone provided" }
+          };
+        })
+      );
+      setPendingTutors(enriched);
+    }
   };
 
   const fetchPendingReviews = async () => {
@@ -599,11 +609,25 @@ Yehtu Tutors`
     passed: boolean,
     notes?: string
   ) => {
-    const application = pendingApplications.find(app => app.id === applicationId);
-    if (!application) return;
+    console.log("handleInterviewResult called with:", { applicationId, passed, notes });
+    console.log("pendingApplications:", pendingApplications);
+    console.log("interviewRecords:", interviewRecords);
+    
+    // Try finding in both arrays
+    const application = pendingApplications.find(app => app.id === applicationId) || 
+                       interviewRecords.find(app => app.id === applicationId);
+    
+    console.log("Found application:", application);
+    
+    if (!application) {
+      console.error("Application not found with ID:", applicationId);
+      toast.error("Application not found");
+      return;
+    }
 
     try {
       if (passed) {
+        console.log("Marking interview as passed for:", application.email);
         // Update to interview_passed and send approval email
         const { error: updateError } = await supabase
           .from("tutor_applications")
@@ -614,15 +638,21 @@ Yehtu Tutors`
           })
           .eq("id", applicationId);
 
-        if (updateError) throw updateError;
+        if (updateError) {
+          console.error("Update error:", updateError);
+          throw updateError;
+        }
 
+        console.log("Sending approval email to:", application.email);
         // Send approval email with profile setup link
-        await supabase.functions.invoke('send-tutor-approval-email', {
+        const emailResult = await supabase.functions.invoke('send-tutor-approval-email', {
           body: { 
             email: application.email,
             fullName: application.full_name 
           }
         });
+        
+        console.log("Email result:", emailResult);
 
         toast.success("Interview passed! Profile setup invitation sent.");
       } else {
@@ -642,9 +672,10 @@ Yehtu Tutors`
       }
 
       fetchInterviewRecords();
+      fetchPendingApplications();
     } catch (error: any) {
       console.error("Error updating interview result:", error);
-      toast.error("Failed to update interview result");
+      toast.error("Failed to update interview result: " + (error.message || "Unknown error"));
     }
   };
 
