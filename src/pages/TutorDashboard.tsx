@@ -183,6 +183,9 @@ const TutorDashboard = () => {
         <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
           <h2 className="text-xl font-semibold">Tutor Dashboard</h2>
           <div className="flex items-center gap-4">
+            <Button variant="ghost" onClick={() => navigate("/tutor-onboarding-guide")}>
+              Onboarding Guide
+            </Button>
             <Button variant="ghost" onClick={() => navigate("/tutor-profile-setup")}>
               Edit Profile
             </Button>
