@@ -139,6 +139,7 @@ export const BookingCalendar = ({
       .select("*")
       .eq("tutor_id", tutorId)
       .eq("is_booked", false)
+      .or("slot_type.is.null,slot_type.eq.available")
       .gte("start_time", startOfDay.toISOString())
       .lte("start_time", endOfDay.toISOString())
       .order("start_time");

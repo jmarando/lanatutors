@@ -10,49 +10,56 @@ import { useToast } from "@/hooks/use-toast";
 import { Clock, Trash2, Info, Sparkles, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import type { Database } from "@/integrations/supabase/types";
-
-type TutorAvailability = Database["public"]["Tables"]["tutor_availability"]["Row"];
 
 export const TutorAvailabilityManager = () => {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
-  const [blockedSlots, setBlockedSlots] = useState<TutorAvailability[]>([]);
+  const [blockedSlots, setBlockedSlots] = useState<any[]>([]);
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
   const [loading, setLoading] = useState(false);
   const [generatingAvailability, setGeneratingAvailability] = useState(false);
   const { toast } = useToast();
 
-  const fetchBlockedSlots = useCallback(async () => {
+  const fetchBlockedSlots = async () => {
     if (!selectedDate) return;
 
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return;
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
 
-    const startOfDay = new Date(selectedDate);
-    startOfDay.setHours(0, 0, 0, 0);
-    const endOfDay = new Date(selectedDate);
-    endOfDay.setHours(23, 59, 59, 999);
+      const startOfDay = new Date(selectedDate);
+      startOfDay.setHours(0, 0, 0, 0);
+      const endOfDay = new Date(selectedDate);
+      endOfDay.setHours(23, 59, 59, 999);
 
-    const { data, error } = await supabase
-      .from("tutor_availability")
-      .select("*")
-      .eq("tutor_id", user.id)
-      .gte("start_time", startOfDay.toISOString())
-      .lte("start_time", endOfDay.toISOString())
-      .order("start_time");
+      // Use simple query without complex chaining
+      const { data, error }: any = await supabase
+        .from("tutor_availability")
+        .select("*")
+        .eq("tutor_id", user.id)
+        .filter("slot_type", "eq", "blocked")
+        .filter("start_time", "gte", startOfDay.toISOString())
+        .filter("start_time", "lte", endOfDay.toISOString());
 
-    if (error) {
-      console.error("Error fetching blocked slots:", error);
-      return;
+      if (error) {
+        console.error("Error fetching blocked slots:", error);
+        return;
+      }
+
+      // Sort by start_time
+      const sorted = (data || []).sort((a: any, b: any) => 
+        new Date(a.start_time).getTime() - new Date(b.start_time).getTime()
+      );
+      
+      setBlockedSlots(sorted);
+    } catch (err) {
+      console.error("Unexpected error:", err);
     }
-
-    setBlockedSlots(data || []);
-  }, [selectedDate]);
+  };
 
   useEffect(() => {
     fetchBlockedSlots();
-  }, [fetchBlockedSlots]);
+  }, [selectedDate]);
 
   const handleBlockTime = async () => {
     if (!selectedDate || !startTime || !endTime) {
@@ -94,9 +101,11 @@ export const TutorAvailabilityManager = () => {
         start_time: startDateTime.toISOString(),
         end_time: endDateTime.toISOString(),
         is_booked: false,
+        slot_type: "blocked",
       });
 
     if (error) {
+      console.error("Error blocking time:", error);
       toast({
         title: "Error",
         description: error.message,
