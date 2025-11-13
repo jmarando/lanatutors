@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.7.1";
+import { toZonedTime, fromZonedTime } from "https://esm.sh/date-fns-tz@3.2.0";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -59,10 +60,13 @@ serve(async (req) => {
       );
     }
 
-    // Generate time slots for the next X weeks
+    // Generate time slots for the next X weeks in East Africa Time
     const slots = [];
+    const timezone = 'Africa/Nairobi'; // East Africa Time (UTC+3)
     const now = new Date();
-    const startDate = new Date(now);
+    const nowInEAT = toZonedTime(now, timezone);
+    
+    const startDate = new Date(nowInEAT);
     startDate.setHours(0, 0, 0, 0);
 
     for (let week = 0; week < weeksAhead; week++) {
@@ -70,7 +74,7 @@ serve(async (req) => {
         const currentDate = new Date(startDate);
         currentDate.setDate(startDate.getDate() + (week * 7) + day);
 
-        // Generate hourly slots from 8 AM to 8 PM (12 slots per day)
+        // Generate hourly slots from 8 AM to 8 PM EAT (12 slots per day)
         for (let hour = 8; hour < 20; hour++) {
           const slotStart = new Date(currentDate);
           slotStart.setHours(hour, 0, 0, 0);
@@ -79,11 +83,15 @@ serve(async (req) => {
           slotEnd.setHours(hour + 1, 0, 0, 0);
 
           // Only create slots for future times
-          if (slotStart > now) {
+          if (slotStart > nowInEAT) {
+            // Convert EAT times to UTC for storage
+            const slotStartUTC = fromZonedTime(slotStart, timezone);
+            const slotEndUTC = fromZonedTime(slotEnd, timezone);
+            
             slots.push({
               tutor_id: user.id,
-              start_time: slotStart.toISOString(),
-              end_time: slotEnd.toISOString(),
+              start_time: slotStartUTC.toISOString(),
+              end_time: slotEndUTC.toISOString(),
               is_booked: false,
               slot_type: 'available', // Mark as available for booking
             });
