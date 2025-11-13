@@ -31,14 +31,14 @@ export default function BlogPost() {
   const fetchPost = async () => {
     try {
       const { data, error } = await supabase
-        .from("blog_posts")
+        .from("blog_posts" as any)
         .select("*")
         .eq("slug", slug)
         .eq("published", true)
         .single();
 
       if (error) throw error;
-      setPost(data);
+      setPost(data as any);
     } catch (error) {
       console.error("Error fetching blog post:", error);
     } finally {

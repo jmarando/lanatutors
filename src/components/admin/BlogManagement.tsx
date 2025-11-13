@@ -49,12 +49,12 @@ export function BlogManagement() {
   const fetchPosts = async () => {
     try {
       const { data, error } = await supabase
-        .from("blog_posts")
+        .from("blog_posts" as any)
         .select("*")
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      setPosts(data || []);
+      setPosts(data as any || []);
     } catch (error) {
       console.error("Error fetching posts:", error);
       toast({
@@ -78,16 +78,16 @@ export function BlogManagement() {
 
       if (editingPost) {
         const { error } = await supabase
-          .from("blog_posts")
-          .update(postData)
+          .from("blog_posts" as any)
+          .update(postData as any)
           .eq("id", editingPost.id);
 
         if (error) throw error;
         toast({ title: "Success", description: "Blog post updated successfully" });
       } else {
         const { error } = await supabase
-          .from("blog_posts")
-          .insert([postData]);
+          .from("blog_posts" as any)
+          .insert([postData as any]);
 
         if (error) throw error;
         toast({ title: "Success", description: "Blog post created successfully" });
@@ -111,7 +111,7 @@ export function BlogManagement() {
 
     try {
       const { error } = await supabase
-        .from("blog_posts")
+        .from("blog_posts" as any)
         .delete()
         .eq("id", id);
 
