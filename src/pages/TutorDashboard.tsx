@@ -21,6 +21,7 @@ import { toast } from "sonner";
 import { format, isToday, isThisWeek, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from "date-fns";
 import { GoogleCalendarConnect } from "@/components/GoogleCalendarConnect";
 import { TutorCalendarOverview } from "@/components/TutorCalendarOverview";
+import { TutorWeeklyCalendar } from "@/components/TutorWeeklyCalendar";
 import { StudentProgressTracker } from "@/components/StudentProgressTracker";
 
 const TutorDashboard = () => {
@@ -223,13 +224,17 @@ const TutorDashboard = () => {
           </Card>
         )}
 
-        {/* Google Calendar Connection */}
+        {/* Google Calendar Connection or Weekly Calendar */}
         <div className="mb-8">
-          <GoogleCalendarConnect 
-            tutorId={tutorProfile?.id}
-            isConnected={tutorProfile?.google_calendar_connected}
-            calendarEmail={tutorProfile?.google_calendar_email}
-          />
+          {tutorProfile?.google_calendar_connected ? (
+            <TutorWeeklyCalendar tutorId={tutorProfile?.id} />
+          ) : (
+            <GoogleCalendarConnect 
+              tutorId={tutorProfile?.id}
+              isConnected={tutorProfile?.google_calendar_connected}
+              calendarEmail={tutorProfile?.google_calendar_email}
+            />
+          )}
         </div>
 
         {/* Stats Grid */}
