@@ -817,6 +817,7 @@ export type Database = {
           current_institution: string | null
           curriculum: string[] | null
           display_institution: boolean | null
+          email: string | null
           experience_years: number | null
           gender: string | null
           google_calendar_connected: boolean | null
@@ -854,6 +855,7 @@ export type Database = {
           current_institution?: string | null
           curriculum?: string[] | null
           display_institution?: boolean | null
+          email?: string | null
           experience_years?: number | null
           gender?: string | null
           google_calendar_connected?: boolean | null
@@ -891,6 +893,7 @@ export type Database = {
           current_institution?: string | null
           curriculum?: string[] | null
           display_institution?: boolean | null
+          email?: string | null
           experience_years?: number | null
           gender?: string | null
           google_calendar_connected?: boolean | null

@@ -629,6 +629,7 @@ const TutorProfileSetup = () => {
             teaching_experience: formData.teachingHistory,
             graduation_year: formData.educationHistory[0]?.graduationYear ? parseInt(formData.educationHistory[0].graduationYear) : null,
             gender: formData.gender || null,
+            email: formData.email  // Add email to tutor profile
           })
           .eq("user_id", userId);
         
@@ -659,6 +660,7 @@ const TutorProfileSetup = () => {
           teaching_experience: formData.teachingHistory,
           graduation_year: formData.educationHistory[0]?.graduationYear ? parseInt(formData.educationHistory[0].graduationYear) : null,
           gender: formData.gender || null,
+          email: formData.email,  // Add email to tutor profile
           verified: false // Requires admin approval
         }).select('id').single();
         if (tutorError) throw tutorError;

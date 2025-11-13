@@ -461,9 +461,17 @@ Yehtu Tutors`
   };
 
   const fetchPendingTutors = async () => {
+    // Fetch tutor profiles with their linked profiles data
+    // The tutor_profiles table has the email field directly
     const { data: tutorData, error } = await supabase
       .from("tutor_profiles")
-      .select("*")
+      .select(`
+        *,
+        profiles!inner (
+          full_name,
+          phone_number
+        )
+      `)
       .eq("verified", false);
 
     if (error) {
@@ -472,38 +480,7 @@ Yehtu Tutors`
       return;
     }
 
-    if (tutorData) {
-      // Enrich with profile and user email data
-      const enriched = await Promise.all(
-        tutorData.map(async (tutor) => {
-          const { data: profile } = await supabase
-            .from("profiles")
-            .select("full_name, phone_number")
-            .eq("id", tutor.user_id)
-            .single();
-          
-          // Get email from auth.users
-          const { data: { user } } = await supabase.auth.admin.getUserById(tutor.user_id);
-          
-          // Log if profile data is missing for debugging
-          if (!profile?.full_name || !profile?.phone_number) {
-            console.warn(`Missing profile data for tutor ${tutor.id}:`, {
-              userId: tutor.user_id,
-              fullName: profile?.full_name,
-              phoneNumber: profile?.phone_number,
-              email: user?.email
-            });
-          }
-          
-          return { 
-            ...tutor, 
-            profiles: profile || { full_name: "No name provided", phone_number: "No phone provided" },
-            email: user?.email || "Not provided"
-          };
-        })
-      );
-      setPendingTutors(enriched);
-    }
+    setPendingTutors(tutorData || []);
   };
 
   const fetchPendingReviews = async () => {
