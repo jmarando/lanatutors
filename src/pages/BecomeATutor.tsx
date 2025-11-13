@@ -261,6 +261,9 @@ const BecomeATutor = () => {
             <CardTitle className="text-2xl">Become a Tutor</CardTitle>
             <CardDescription>
               Join Kenya's leading tutoring platform through our simple 3-step vetting process.
+              <Link to="/tutor-onboarding-guide" className="block mt-2 text-primary hover:underline font-medium">
+                View Complete Onboarding Guide →
+              </Link>
             </CardDescription>
           </CardHeader>
           <CardContent>
