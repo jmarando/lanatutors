@@ -316,33 +316,35 @@ export const BookingCalendar = ({
 
       if (bookingError) throw bookingError;
 
-      // Create Google Meet session for all bookings
+      // Try to create Google Meet session for all bookings (optional)
       console.log("Creating Google Meet session...");
-      const { data: meetData, error: meetError } = await supabase.functions.invoke(
-        "create-google-meet-session",
-        {
-          body: {
-            bookingId: booking.id,
-            tutorEmail: tutorEmail || "tutor@example.com",
-            studentEmail: studentEmail || "student@example.com",
-            studentName: studentName || "Student",
-            tutorName: tutorName,
-            subject,
-            startTime: selectedSlot.start_time,
-            endTime: selectedSlot.end_time,
-          },
-        }
-      );
+      let meetData = null;
+      try {
+        const { data, error: meetError } = await supabase.functions.invoke(
+          "create-google-meet-session",
+          {
+            body: {
+              bookingId: booking.id,
+              tutorEmail: tutorEmail || "tutor@example.com",
+              studentEmail: studentEmail || "student@example.com",
+              studentName: studentName || "Student",
+              tutorName: tutorName,
+              subject,
+              startTime: selectedSlot.start_time,
+              endTime: selectedSlot.end_time,
+            },
+          }
+        );
 
-      if (meetError) {
-        console.error("Failed to create Google Meet session:", meetError);
-        toast({
-          title: "Warning",
-          description: "Booking created but failed to generate meeting link",
-          variant: "destructive",
-        });
-      } else {
-        console.log("Google Meet session created:", meetData);
+        if (meetError) {
+          console.error("Failed to create Google Meet session:", meetError);
+        } else {
+          meetData = data;
+          console.log("Google Meet session created:", meetData);
+        }
+      } catch (error) {
+        console.error("Error creating Google Meet session:", error);
+        // Continue with booking process even if Meet link fails
       }
 
       // For trial sessions, skip payment and send confirmation immediately
