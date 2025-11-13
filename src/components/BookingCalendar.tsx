@@ -428,6 +428,7 @@ export const BookingCalendar = ({
               paymentType: paymentOption === 'package' ? "package_purchase" : "tutor_booking_deposit",
               referenceId: paymentOption === 'package' ? packagePurchaseId : booking.id,
               callbackUrl: window.location.origin + '/payment-callback',
+              phoneNumber: phoneNumber,
             },
           }
         );
