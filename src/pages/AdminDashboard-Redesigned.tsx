@@ -12,10 +12,28 @@ const AdminDashboardRedesigned = () => {
   const [isAdmin, setIsAdmin] = useState(false);
   const [loading, setLoading] = useState(true);
   const [dashboardMetrics, setDashboardMetrics] = useState<any>(null);
+  const [pendingApplications, setPendingApplications] = useState<any[]>([]);
+  const [interviewRecords, setInterviewRecords] = useState<any[]>([]);
+  const [pendingTutors, setPendingTutors] = useState<any[]>([]);
+  const [pendingReviews, setPendingReviews] = useState<any[]>([]);
+  const [consultationBookings, setConsultationBookings] = useState<any[]>([]);
+  const [tutoringBookings, setTutoringBookings] = useState<any[]>([]);
+  const [interviewFilter, setInterviewFilter] = useState<'all' | 'scheduled' | 'passed' | 'failed'>('all');
 
   useEffect(() => {
     checkAdminAccess();
   }, []);
+
+  useEffect(() => {
+    if (isAdmin) {
+      fetchPendingApplications();
+      fetchInterviewRecords();
+      fetchPendingTutors();
+      fetchPendingReviews();
+      fetchConsultationBookings();
+      fetchTutoringBookings();
+    }
+  }, [isAdmin]);
 
   const checkAdminAccess = async () => {
     const { data: { user } } = await supabase.auth.getUser();
