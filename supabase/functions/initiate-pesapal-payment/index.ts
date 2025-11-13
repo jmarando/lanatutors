@@ -91,12 +91,16 @@ serve(async (req) => {
     // Step 3: Submit order request
     const merchantReference = `ORDER-${Date.now()}-${user.id.substring(0, 8)}`
     
+    // Pesapal will append OrderTrackingId as a query parameter to the callback URL
+    const baseCallbackUrl = callbackUrl || `${Deno.env.get('SUPABASE_URL')}/functions/v1/pesapal-callback`
+    
     const orderRequest = {
       id: merchantReference,
       currency: 'KES',
       amount: parseFloat(amount),
       description: description || 'Payment',
-      callback_url: callbackUrl || `${Deno.env.get('SUPABASE_URL')}/functions/v1/pesapal-callback`,
+      callback_url: baseCallbackUrl,
+      redirect_mode: 'TOP_WINDOW', // Ensures redirect happens in the same window
       notification_id: ipnId,
       billing_address: {
         email_address: user.email,
