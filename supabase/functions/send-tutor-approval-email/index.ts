@@ -87,7 +87,7 @@ const handler = async (req: Request): Promise<Response> => {
                       <table role="presentation" style="width: 100%; margin: 40px 0;">
                         <tr>
                           <td align="center">
-                            <a href="https://iccemuiqcdumgxiwxzdq.supabase.co/tutor-profile-setup" style="display: inline-block; background-color: #ed2644; color: #ffffff; padding: 16px 40px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px; box-shadow: 0 4px 12px rgba(237, 38, 68, 0.3);">
+                            <a href="${signupUrl}" style="display: inline-block; background-color: #ed2644; color: #ffffff; padding: 16px 40px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px; box-shadow: 0 4px 12px rgba(237, 38, 68, 0.3);">
                               Complete Your Profile Now
                             </a>
                           </td>
