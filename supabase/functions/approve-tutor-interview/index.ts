@@ -141,6 +141,7 @@ serve(async (req) => {
         id: userId,
         full_name: application.full_name,
         phone_number: application.phone_number,
+        must_reset_password: true,
       });
 
     if (profileError) {

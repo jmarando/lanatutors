@@ -520,6 +520,7 @@ export type Database = {
           grade_level: string | null
           id: string
           learning_goals: string | null
+          must_reset_password: boolean
           phone_number: string | null
           preferred_learning_style: string | null
           subjects_struggling: string[] | null
@@ -534,6 +535,7 @@ export type Database = {
           grade_level?: string | null
           id: string
           learning_goals?: string | null
+          must_reset_password?: boolean
           phone_number?: string | null
           preferred_learning_style?: string | null
           subjects_struggling?: string[] | null
@@ -548,6 +550,7 @@ export type Database = {
           grade_level?: string | null
           id?: string
           learning_goals?: string | null
+          must_reset_password?: boolean
           phone_number?: string | null
           preferred_learning_style?: string | null
           subjects_struggling?: string[] | null
