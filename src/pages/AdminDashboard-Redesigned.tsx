@@ -1129,45 +1129,56 @@ The Lana Team`;
                     </CardContent>
                   </Card>
 
-                  <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                      <CardTitle className="text-sm font-medium">Active Tutors</CardTitle>
-                      <GraduationCap className="h-4 w-4 text-muted-foreground" />
+                  <Card className="overflow-hidden">
+                    <CardHeader className="pb-3">
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="text-sm font-medium text-muted-foreground">Active Tutors</CardTitle>
+                        <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                          <GraduationCap className="h-5 w-5 text-primary" />
+                        </div>
+                      </div>
                     </CardHeader>
                     <CardContent>
-                      <div className="text-2xl font-bold">{dashboardMetrics.totalTutors || 0}</div>
-                      <p className="text-xs text-muted-foreground">
-                        <span className="text-green-600 flex items-center gap-1">
-                          <ArrowUpRight className="h-3 w-3" />
-                          {dashboardMetrics.newTutors} new
-                        </span>
-                      </p>
+                      <div className="text-3xl font-bold tracking-tight">{dashboardMetrics.totalTutors || 0}</div>
+                      <div className="flex items-center gap-1 mt-2 text-sm text-emerald-600 dark:text-emerald-400">
+                        <ArrowUpRight className="h-4 w-4" />
+                        <span className="font-medium">{dashboardMetrics.newTutors} new</span>
+                        <span className="text-muted-foreground ml-1">this period</span>
+                      </div>
                     </CardContent>
                   </Card>
 
-                  <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                      <CardTitle className="text-sm font-medium">Total Revenue</CardTitle>
-                      <DollarSign className="h-4 w-4 text-muted-foreground" />
+                  <Card className="overflow-hidden">
+                    <CardHeader className="pb-3">
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="text-sm font-medium text-muted-foreground">Total Revenue</CardTitle>
+                        <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                          <DollarSign className="h-5 w-5 text-primary" />
+                        </div>
+                      </div>
                     </CardHeader>
                     <CardContent>
-                      <div className="text-2xl font-bold">KES {dashboardMetrics.totalRevenue?.toLocaleString() || 0}</div>
-                      <p className="text-xs text-muted-foreground">
-                        {dashboardMetrics.totalBookings || 0} bookings
-                      </p>
+                      <div className="text-3xl font-bold tracking-tight">KES {dashboardMetrics.totalRevenue?.toLocaleString() || 0}</div>
+                      <div className="mt-2 text-sm text-muted-foreground">
+                        <span className="font-medium">{dashboardMetrics.totalBookings || 0}</span> bookings completed
+                      </div>
                     </CardContent>
                   </Card>
 
-                  <Card>
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                      <CardTitle className="text-sm font-medium">Conversion Rate</CardTitle>
-                      <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                  <Card className="overflow-hidden">
+                    <CardHeader className="pb-3">
+                      <div className="flex items-center justify-between">
+                        <CardTitle className="text-sm font-medium text-muted-foreground">Conversion Rate</CardTitle>
+                        <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                          <TrendingUp className="h-5 w-5 text-primary" />
+                        </div>
+                      </div>
                     </CardHeader>
                     <CardContent>
-                      <div className="text-2xl font-bold">{dashboardMetrics.conversionRate?.toFixed(1) || 0}%</div>
-                      <p className="text-xs text-muted-foreground">
-                        {dashboardMetrics.convertedConsultations}/{dashboardMetrics.totalConsultations} converted
-                      </p>
+                      <div className="text-3xl font-bold tracking-tight">{dashboardMetrics.conversionRate?.toFixed(1) || 0}%</div>
+                      <div className="mt-2 text-sm text-muted-foreground">
+                        <span className="font-medium">{dashboardMetrics.convertedConsultations}/{dashboardMetrics.totalConsultations}</span> converted
+                      </div>
                     </CardContent>
                   </Card>
                 </div>
@@ -1292,7 +1303,7 @@ The Lana Team`;
                     </CardContent>
                   </Card>
                 </div>
-              </>
+              </div>
             ) : (
               <div className="text-center py-12">
                 <p className="text-muted-foreground">Loading dashboard metrics...</p>
