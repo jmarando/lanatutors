@@ -24,11 +24,13 @@ serve(async (req) => {
       }
     );
 
-    // Get the authenticated user
+    // Get the authenticated user using the bearer token explicitly
+    const jwt = authHeader && authHeader.startsWith('Bearer ') ? authHeader.slice(7) : undefined;
+
     const {
       data: { user },
       error: userError,
-    } = await supabaseClient.auth.getUser();
+    } = await supabaseClient.auth.getUser(jwt);
 
     if (userError || !user) {
       console.error('User authentication error:', userError);
