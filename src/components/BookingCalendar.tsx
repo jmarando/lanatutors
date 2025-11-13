@@ -436,11 +436,35 @@ export const BookingCalendar = ({
         );
 
         if (paymentError) {
+          console.error("Payment initiation error:", paymentError);
+          
+          // Clean up booking and package if payment fails
           await supabase.from("bookings").delete().eq("id", booking.id);
           if (packagePurchaseId) {
             await supabase.from("package_purchases").delete().eq("id", packagePurchaseId);
           }
-          throw paymentError;
+
+          // Check for specific Pesapal test limit error
+          const errorMessage = paymentError.message || '';
+          if (errorMessage.includes('maximum_amount_limit_exceeded') || errorMessage.includes('test transactions limit')) {
+            throw new Error('Pesapal test transaction limit reached. Please contact support or try again later.');
+          }
+          
+          throw new Error(errorMessage || 'Payment initialization failed');
+        }
+
+        // Check if we got the data back with error
+        if (paymentData?.error) {
+          await supabase.from("bookings").delete().eq("id", booking.id);
+          if (packagePurchaseId) {
+            await supabase.from("package_purchases").delete().eq("id", packagePurchaseId);
+          }
+
+          if (paymentData.code === 'maximum_amount_limit_exceeded') {
+            throw new Error('Pesapal test transaction limit reached. Please contact support or try again later.');
+          }
+          
+          throw new Error(paymentData.error);
         }
 
         // Redirect to Pesapal payment page
