@@ -20,6 +20,7 @@ import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, R
 import { formatConsultationDate, formatToEAT, formatFullDateTime } from "@/utils/dateUtils";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import { BlogManagement } from "@/components/admin/BlogManagement";
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -1025,6 +1026,9 @@ The Lana Team`;
                 <Badge className="ml-2 bg-green-600">{pendingReviews.length}</Badge>
               )}
             </TabsTrigger>
+            <TabsTrigger value="blog" className="relative">
+              Blog
+            </TabsTrigger>
             <TabsTrigger value="consultations" className="relative">
               Consultations
               {consultationBookings.length > 0 && (
@@ -1519,6 +1523,10 @@ The Lana Team`;
                 />
               ))
             )}
+          </TabsContent>
+
+          <TabsContent value="blog" className="space-y-4">
+            <BlogManagement />
           </TabsContent>
 
           <TabsContent value="consultations" className="space-y-4">

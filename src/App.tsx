@@ -11,6 +11,8 @@ import { AuthProvider } from "@/contexts/AuthContext";
 const Home = lazy(() => import("./pages/Home"));
 const HowItWorks = lazy(() => import("./pages/HowItWorks"));
 const AboutUs = lazy(() => import("./pages/AboutUs"));
+const Blog = lazy(() => import("./pages/Blog"));
+const BlogPost = lazy(() => import("./pages/BlogPost"));
 const ForStudents = lazy(() => import("./pages/ForStudents"));
 const ForTutors = lazy(() => import("./pages/ForTutors"));
 const TutorSearch = lazy(() => import("./pages/TutorSearch"));
@@ -54,7 +56,9 @@ const App = () => {
               <Routes>
                 <Route path="/" element={<Home />} />
                 <Route path="/how-it-works" element={<HowItWorks />} />
-                <Route path="/about" element={<AboutUs />} />
+            <Route path="/about" element={<AboutUs />} />
+            <Route path="/blog" element={<Blog />} />
+            <Route path="/blog/:slug" element={<BlogPost />} />
                 <Route path="/for-students" element={<ForStudents />} />
                 <Route path="/for-tutors" element={<ForTutors />} />
                 <Route path="/tutors" element={<TutorSearch />} />

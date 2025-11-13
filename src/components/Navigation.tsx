@@ -43,6 +43,7 @@ const Navigation = () => {
     { to: "/for-students", label: "Student Hub", singleLine: true },
     { to: "/for-tutors", label: "Tutor Hub", singleLine: true },
     { to: "/about", label: "About Us", singleLine: true },
+    { to: "/blog", label: "Blog", singleLine: true },
   ];
 
   return (
