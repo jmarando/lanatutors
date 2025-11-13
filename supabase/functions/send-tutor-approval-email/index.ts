@@ -22,7 +22,7 @@ const handler = async (req: Request): Promise<Response> => {
     
     console.log("Sending tutor approval email");
 
-    const signupUrl = `${Deno.env.get('VITE_SUPABASE_URL')}/auth/v1/signup?redirect_to=${encodeURIComponent('https://iccemuiqcdumgxiwxzdq.supabase.co/tutor-profile-setup')}`;
+    const signupUrl = `https://lanatutors.africa/tutor-profile-setup`;
 
     const response = await fetch("https://api.resend.com/emails", {
       method: "POST",
