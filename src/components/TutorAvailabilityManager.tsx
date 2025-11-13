@@ -17,6 +17,7 @@ export const TutorAvailabilityManager = () => {
   const [weekSlots, setWeekSlots] = useState<any[]>([]);
   const [hasExistingSlots, setHasExistingSlots] = useState(false);
   const [blockedSlots, setBlockedSlots] = useState<any[]>([]);
+  const [monthSlots, setMonthSlots] = useState<any[]>([]);
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
   const [loading, setLoading] = useState(false);
@@ -121,10 +122,41 @@ export const TutorAvailabilityManager = () => {
     }
   };
 
+  const fetchMonthSlots = async () => {
+    if (!selectedDate) return;
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const monthStart = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1);
+      monthStart.setHours(0, 0, 0, 0);
+      const monthEnd = new Date(selectedDate.getFullYear(), selectedDate.getMonth() + 1, 0);
+      monthEnd.setHours(23, 59, 59, 999);
+
+      const { data, error }: any = await supabase
+        .from("tutor_availability")
+        .select("*")
+        .eq("tutor_id", user.id)
+        .gte("start_time", monthStart.toISOString())
+        .lte("start_time", monthEnd.toISOString());
+
+      if (error) {
+        console.error("Error fetching month slots:", error);
+        return;
+      }
+
+      setMonthSlots(data || []);
+    } catch (err) {
+      console.error("Unexpected error:", err);
+    }
+  };
+
   useEffect(() => {
     checkExistingSlots();
     fetchWeekSlots();
     fetchBlockedSlots();
+    fetchMonthSlots();
   }, [selectedDate, currentWeekStart]);
 
   const handleBlockTime = async () => {
@@ -186,6 +218,7 @@ export const TutorAvailabilityManager = () => {
       setEndTime("");
       fetchBlockedSlots();
       fetchWeekSlots();
+      fetchMonthSlots();
     }
 
     setLoading(false);
@@ -237,6 +270,7 @@ export const TutorAvailabilityManager = () => {
       });
       fetchBlockedSlots();
       fetchWeekSlots();
+      fetchMonthSlots();
     }
 
     setLoading(false);
@@ -269,6 +303,8 @@ export const TutorAvailabilityManager = () => {
         description: "The time slot has been removed",
       });
       fetchBlockedSlots();
+      fetchWeekSlots();
+      fetchMonthSlots();
     }
   };
 
@@ -295,6 +331,7 @@ export const TutorAvailabilityManager = () => {
         checkExistingSlots();
         fetchWeekSlots();
         fetchBlockedSlots();
+        fetchMonthSlots();
       }
     } catch (error) {
       console.error('Error:', error);
@@ -354,6 +391,48 @@ export const TutorAvailabilityManager = () => {
     });
   };
 
+  // Get availability status for a given date
+  const getDateStatus = (date: Date) => {
+    const dayStart = new Date(date);
+    dayStart.setHours(0, 0, 0, 0);
+    const dayEnd = new Date(date);
+    dayEnd.setHours(23, 59, 59, 999);
+
+    const daySlots = monthSlots.filter(slot => {
+      const slotStart = new Date(slot.start_time);
+      return slotStart >= dayStart && slotStart <= dayEnd;
+    });
+
+    if (daySlots.length === 0) return null;
+
+    const hasBooked = daySlots.some(s => s.is_booked);
+    const hasBlocked = daySlots.some(s => s.slot_type === "blocked");
+    const hasAvailable = daySlots.some(s => s.slot_type === "available" && !s.is_booked);
+
+    if (hasBooked) return "booked";
+    if (hasBlocked && !hasAvailable) return "blocked";
+    if (hasAvailable) return "available";
+    return null;
+  };
+
+  // Build modifiers for calendar styling
+  const availableDates: Date[] = [];
+  const blockedDates: Date[] = [];
+  const bookedDates: Date[] = [];
+
+  // Generate dates for the current month
+  if (selectedDate) {
+    const monthStart = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1);
+    const monthEnd = new Date(selectedDate.getFullYear(), selectedDate.getMonth() + 1, 0);
+    
+    for (let d = new Date(monthStart); d <= monthEnd; d.setDate(d.getDate() + 1)) {
+      const status = getDateStatus(new Date(d));
+      if (status === "available") availableDates.push(new Date(d));
+      else if (status === "blocked") blockedDates.push(new Date(d));
+      else if (status === "booked") bookedDates.push(new Date(d));
+    }
+  }
+
   return (
     <div className="space-y-4">
       {/* Manage Availability */}
@@ -368,13 +447,39 @@ export const TutorAvailabilityManager = () => {
           <div className="grid md:grid-cols-2 gap-6">
             <div>
               <Label className="mb-2 block">Select Date</Label>
-              <Calendar
-                mode="single"
-                selected={selectedDate}
-                onSelect={setSelectedDate}
-                disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
-                className="rounded-md border"
-              />
+              <div className="space-y-2">
+                <Calendar
+                  mode="single"
+                  selected={selectedDate}
+                  onSelect={setSelectedDate}
+                  disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
+                  className="rounded-md border"
+                  modifiers={{
+                    available: availableDates,
+                    blocked: blockedDates,
+                    booked: bookedDates,
+                  }}
+                  modifiersClassNames={{
+                    available: "relative after:absolute after:bottom-1 after:left-1/2 after:-translate-x-1/2 after:w-1.5 after:h-1.5 after:bg-green-500 after:rounded-full",
+                    blocked: "relative after:absolute after:bottom-1 after:left-1/2 after:-translate-x-1/2 after:w-1.5 after:h-1.5 after:bg-red-500 after:rounded-full",
+                    booked: "relative after:absolute after:bottom-1 after:left-1/2 after:-translate-x-1/2 after:w-1.5 after:h-1.5 after:bg-blue-500 after:rounded-full",
+                  }}
+                />
+                <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                    <span>Available</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                    <span>Blocked</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+                    <span>Booked</span>
+                  </div>
+                </div>
+              </div>
             </div>
 
             <div className="space-y-4">
