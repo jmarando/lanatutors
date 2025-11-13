@@ -323,13 +323,181 @@ export const TutorAvailabilityManager = () => {
       const slotStart = new Date(slot.start_time);
       const slotEnd = new Date(slot.end_time);
       
-      // Include slot if it overlaps with this hour in any way
+      // Only show slot if it STARTS in this hour (prevents duplicates for multi-hour blocks)
+      return slotStart >= dayStart && slotStart < dayEnd;
+    });
+  };
+
+  // Check if a given hour is covered by any blocked slot (for visual marking)
+  const isHourBlocked = (day: Date, hour: number) => {
+    const dayStart = new Date(day);
+    dayStart.setHours(hour, 0, 0, 0);
+    const dayEnd = new Date(day);
+    dayEnd.setHours(hour + 1, 0, 0, 0);
+
+    return weekSlots.some(slot => {
+      if (slot.slot_type !== "blocked") return false;
+      const slotStart = new Date(slot.start_time);
+      const slotEnd = new Date(slot.end_time);
+      // Check if this hour is covered by the blocked slot
       return (slotStart < dayEnd && slotEnd > dayStart);
     });
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
+      {/* Manage Availability */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Clock className="w-5 h-5 text-primary" />
+            Manage Availability
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid md:grid-cols-2 gap-6">
+            <div>
+              <Label className="mb-2 block">Select Date</Label>
+              <Calendar
+                mode="single"
+                selected={selectedDate}
+                onSelect={setSelectedDate}
+                disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
+                className="rounded-md border"
+              />
+            </div>
+
+            <div className="space-y-4">
+              {/* Generate Availability Button */}
+              <div>
+                <Label className="mb-2 block">Quick Setup</Label>
+                <Alert className="mb-3 bg-primary/10 border-primary/30">
+                  <Sparkles className="w-4 h-4 text-primary" />
+                  <AlertDescription>
+                    <strong>First time here?</strong> Generate your default availability (8 AM - 8 PM daily) for the next 4 weeks.
+                  </AlertDescription>
+                </Alert>
+                <Button 
+                  onClick={handleGenerateAvailability} 
+                  disabled={generatingAvailability || hasExistingSlots}
+                  variant={hasExistingSlots ? "secondary" : "default"}
+                  className="w-full"
+                >
+                  {generatingAvailability ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Generating...
+                    </>
+                  ) : hasExistingSlots ? (
+                    <>
+                      <Sparkles className="w-4 h-4 mr-2" />
+                      Availability Already Generated
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="w-4 h-4 mr-2" />
+                      Generate 4 Weeks of Availability
+                    </>
+                  )}
+                </Button>
+              </div>
+
+              <div>
+                <Label className="mb-2 block">Block Unavailable Time</Label>
+                <Alert className="mb-3">
+                  <Info className="w-4 h-4" />
+                  <AlertDescription>
+                    Block specific times when you're unavailable (meetings, personal time, etc.)
+                  </AlertDescription>
+                </Alert>
+                
+                <Button 
+                  onClick={handleBlockEntireDay} 
+                  disabled={loading || !selectedDate}
+                  variant="outline"
+                  className="w-full mb-4"
+                >
+                  {loading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Blocking...
+                    </>
+                  ) : (
+                    "Block Entire Day (8 AM - 8 PM)"
+                  )}
+                </Button>
+
+                <div className="relative mb-4">
+                  <div className="absolute inset-0 flex items-center">
+                    <span className="w-full border-t" />
+                  </div>
+                  <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-background px-2 text-muted-foreground">
+                      Or block specific time
+                    </span>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-2 mb-3">
+                  <div>
+                    <Label className="text-xs text-muted-foreground mb-1 block">Start Time</Label>
+                    <Input
+                      type="time"
+                      value={startTime}
+                      onChange={(e) => setStartTime(e.target.value)}
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs text-muted-foreground mb-1 block">End Time</Label>
+                    <Input
+                      type="time"
+                      value={endTime}
+                      onChange={(e) => setEndTime(e.target.value)}
+                    />
+                  </div>
+                </div>
+                <Button onClick={handleBlockTime} disabled={loading} className="w-full">
+                  <Info className="w-4 h-4 mr-2" />
+                  Block Time
+                </Button>
+              </div>
+
+              <div>
+                <Label className="mb-2 block">
+                  Blocked Times for {selectedDate ? format(selectedDate, "MMM d, yyyy") : "Selected Date"}
+                </Label>
+                {blockedSlots.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">No blocked times for this date</p>
+                ) : (
+                  <div className="space-y-2 max-h-[200px] overflow-y-auto">
+                    {blockedSlots.map((slot) => (
+                      <div
+                        key={slot.id}
+                        className="flex items-center justify-between p-2 border rounded-md"
+                      >
+                        <div>
+                          <p className="text-sm font-medium">
+                            {format(new Date(slot.start_time), "h:mm a")} -{" "}
+                            {format(new Date(slot.end_time), "h:mm a")}
+                          </p>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => handleDeleteSlot(slot.id, slot.is_booked)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Week Calendar View */}
       <Card>
         <CardHeader>
@@ -363,12 +531,12 @@ export const TutorAvailabilityManager = () => {
           <div className="overflow-x-auto">
             <div className="min-w-[800px]">
               {/* Header Row */}
-              <div className="grid grid-cols-8 gap-1 mb-2">
-                <div className="text-xs font-medium text-muted-foreground p-2">Time</div>
+              <div className="grid grid-cols-8 gap-1 mb-1">
+                <div className="text-xs font-medium text-muted-foreground p-1.5">Time</div>
                 {weekDays.map((day, i) => (
-                  <div key={i} className="text-center p-2">
+                  <div key={i} className="text-center p-1.5">
                     <div className="text-xs font-medium">{format(day, "EEE")}</div>
-                    <div className="text-lg font-bold">{format(day, "d")}</div>
+                    <div className="text-sm font-bold">{format(day, "d")}</div>
                   </div>
                 ))}
               </div>
@@ -377,13 +545,19 @@ export const TutorAvailabilityManager = () => {
               <div className="space-y-0.5">
                 {hours.map((hour) => (
                   <div key={hour} className="grid grid-cols-8 gap-1">
-                    <div className="text-xs text-muted-foreground p-2 flex items-start">
+                    <div className="text-xs text-muted-foreground p-1.5 flex items-start">
                       {format(new Date().setHours(hour, 0, 0, 0), "h a")}
                     </div>
                     {weekDays.map((day, dayIndex) => {
                       const slots = getSlotsForDayAndHour(day, hour);
+                      const blocked = isHourBlocked(day, hour);
                       return (
-                        <div key={dayIndex} className="min-h-[60px] border border-border/40 rounded p-1">
+                        <div 
+                          key={dayIndex} 
+                          className={`min-h-[40px] border border-border/40 rounded p-1 ${
+                            blocked && slots.length === 0 ? 'bg-red-50/50' : ''
+                          }`}
+                        >
                           {slots.map((slot, slotIndex) => (
                             <div
                               key={slotIndex}
@@ -395,6 +569,9 @@ export const TutorAvailabilityManager = () => {
                               </div>
                             </div>
                           ))}
+                          {blocked && slots.length === 0 && (
+                            <div className="text-[10px] text-red-600 opacity-60">Blocked</div>
+                          )}
                         </div>
                       );
                     })}
@@ -421,162 +598,6 @@ export const TutorAvailabilityManager = () => {
           </div>
         </CardContent>
       </Card>
-
-      {/* Availability Manager */}
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Clock className="w-5 h-5 text-primary" />
-          Manage Availability
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <div className="grid md:grid-cols-2 gap-6">
-          <div>
-            <Label className="mb-2 block">Select Date</Label>
-            <Calendar
-              mode="single"
-              selected={selectedDate}
-              onSelect={setSelectedDate}
-              disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
-              className="rounded-md border"
-            />
-          </div>
-
-          <div className="space-y-4">
-            {/* Generate Availability Button */}
-            <div>
-              <Label className="mb-2 block">Quick Setup</Label>
-              <Alert className="mb-3 bg-primary/10 border-primary/30">
-                <Sparkles className="w-4 h-4 text-primary" />
-                <AlertDescription>
-                  <strong>First time here?</strong> Generate your default availability (8 AM - 8 PM daily) for the next 4 weeks.
-                </AlertDescription>
-              </Alert>
-              <Button 
-                onClick={handleGenerateAvailability} 
-                disabled={generatingAvailability || hasExistingSlots}
-                variant={hasExistingSlots ? "secondary" : "default"}
-                className="w-full"
-              >
-                {generatingAvailability ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Generating...
-                  </>
-                ) : hasExistingSlots ? (
-                  <>
-                    <Sparkles className="w-4 h-4 mr-2" />
-                    Availability Already Generated
-                  </>
-                ) : (
-                  <>
-                    <Sparkles className="w-4 h-4 mr-2" />
-                    Generate 4 Weeks of Availability
-                  </>
-                )}
-              </Button>
-            </div>
-
-            <div>
-              <Label className="mb-2 block">Block Unavailable Time</Label>
-              <Alert className="mb-3">
-                <Info className="w-4 h-4" />
-                <AlertDescription>
-                  Block specific times when you're unavailable (meetings, personal time, etc.)
-                </AlertDescription>
-              </Alert>
-              
-              <Button 
-                onClick={handleBlockEntireDay} 
-                disabled={loading || !selectedDate}
-                variant="outline"
-                className="w-full mb-4"
-              >
-                {loading ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Blocking...
-                  </>
-                ) : (
-                  "Block Entire Day (8 AM - 8 PM)"
-                )}
-              </Button>
-
-              <div className="relative mb-4">
-                <div className="absolute inset-0 flex items-center">
-                  <span className="w-full border-t" />
-                </div>
-                <div className="relative flex justify-center text-xs uppercase">
-                  <span className="bg-background px-2 text-muted-foreground">
-                    Or block specific time
-                  </span>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-2 mb-3">
-                <div>
-                  <Label className="text-xs text-muted-foreground mb-1 block">Start Time</Label>
-                  <Input
-                    type="time"
-                    value={startTime}
-                    onChange={(e) => setStartTime(e.target.value)}
-                  />
-                </div>
-                <div>
-                  <Label className="text-xs text-muted-foreground mb-1 block">End Time</Label>
-                  <Input
-                    type="time"
-                    value={endTime}
-                    onChange={(e) => setEndTime(e.target.value)}
-                  />
-                </div>
-              </div>
-              <Button onClick={handleBlockTime} disabled={loading} className="w-full">
-                <Info className="w-4 h-4 mr-2" />
-                Block Time
-              </Button>
-            </div>
-
-            <div>
-              <Label className="mb-2 block">
-                Blocked Times for {selectedDate ? format(selectedDate, "MMM d, yyyy") : "selected date"}
-              </Label>
-              <div className="space-y-2 max-h-96 overflow-y-auto">
-                {blockedSlots.length === 0 ? (
-                  <p className="text-sm text-muted-foreground text-center py-8">
-                    No blocked times for this date
-                  </p>
-                ) : (
-                  blockedSlots.map((slot) => (
-                    <div
-                      key={slot.id}
-                      className="flex items-center justify-between p-3 border rounded-lg bg-muted/50"
-                    >
-                      <div className="flex items-center gap-2">
-                        <Clock className="w-4 h-4 text-muted-foreground" />
-                        <span className="text-sm font-medium">
-                          {format(new Date(slot.start_time), "h:mm a")} -{" "}
-                          {format(new Date(slot.end_time), "h:mm a")}
-                        </span>
-                        <Badge variant="secondary" className="text-xs">Blocked</Badge>
-                      </div>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => handleDeleteSlot(slot.id, slot.is_booked)}
-                      >
-                        <Trash2 className="w-4 h-4 text-destructive" />
-                      </Button>
-                    </div>
-                  ))
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      </CardContent>
-    </Card>
     </div>
   );
 };
