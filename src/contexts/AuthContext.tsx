@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import type { User, Session } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
+import { useNavigate } from "react-router-dom";
 
 interface AuthContextValue {
   user: User | null;
@@ -21,7 +22,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, newSession) => {
       setSession(newSession);
       setUser(newSession?.user ?? null);
-      // Do not set initialized here to avoid race; will be set after getSession
+      
+      // Check for forced password reset
+      if (newSession?.user) {
+        setTimeout(() => {
+          checkPasswordReset(newSession.user.id);
+        }, 0);
+      }
     });
 
     // 2) Initialize current session
@@ -29,10 +36,29 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setSession(session);
       setUser(session?.user ?? null);
       setInitialized(true);
+      
+      // Check for forced password reset on init
+      if (session?.user) {
+        setTimeout(() => {
+          checkPasswordReset(session.user.id);
+        }, 0);
+      }
     });
 
     return () => subscription.unsubscribe();
   }, []);
+
+  const checkPasswordReset = async (userId: string) => {
+    const { data: profile } = await supabase
+      .from("profiles")
+      .select("must_reset_password")
+      .eq("id", userId)
+      .single();
+
+    if (profile?.must_reset_password && window.location.pathname !== "/force-password-change") {
+      window.location.href = "/force-password-change";
+    }
+  };
 
   const signOut = async () => {
     await supabase.auth.signOut();

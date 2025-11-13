@@ -32,6 +32,22 @@ const Login = () => {
 
       if (error) throw error;
 
+      // Check if user needs to reset password
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("must_reset_password")
+        .eq("id", data.user.id)
+        .single();
+
+      if (profile?.must_reset_password) {
+        toast({
+          title: "Password reset required",
+          description: "Please set a new password to continue"
+        });
+        navigate("/force-password-change");
+        return;
+      }
+
       // If a redirect target is provided, go there first
       const params = new URLSearchParams(window.location.search);
       const redirect = params.get("redirect");
@@ -130,6 +146,18 @@ const Login = () => {
       const { data: { session } } = await supabase.auth.getSession();
       
       if (session?.user) {
+        // Check if password reset is required
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('must_reset_password')
+          .eq('id', session.user.id)
+          .single();
+
+        if (profile?.must_reset_password) {
+          navigate('/force-password-change');
+          return;
+        }
+
         // Check user role and redirect
         const { data: roleData } = await supabase
           .from('user_roles')
