@@ -70,16 +70,43 @@ export const TutorAvailabilityManager = () => {
         return;
       }
 
-      // Deduplicate slots based on start_time and end_time
-      const uniqueSlots = data?.reduce((acc: any[], slot: any) => {
-        const key = `${slot.start_time}_${slot.end_time}_${slot.slot_type}`;
-        if (!acc.find((s: any) => `${s.start_time}_${s.end_time}_${s.slot_type}` === key)) {
-          acc.push(slot);
-        }
-        return acc;
-      }, []) || [];
+      // Normalize overlapping slots so precedence is: booked > blocked > available
+      const slots = data || [];
 
-      setWeekSlots(uniqueSlots);
+      // Build blocked intervals for overlap checks
+      const blockedIntervals = slots
+        .filter((s: any) => s.slot_type === "blocked")
+        .map((s: any) => ({
+          start: new Date(s.start_time).getTime(),
+          end: new Date(s.end_time).getTime(),
+        }));
+
+      const overlaps = (aStart: number, aEnd: number, bStart: number, bEnd: number) =>
+        Math.max(aStart, bStart) < Math.min(aEnd, bEnd);
+
+      // Remove any available slots that overlap a blocked interval (unless booked)
+      const filtered = slots.filter((s: any) => {
+        if (s.is_booked) return true; // always include booked
+        if (s.slot_type === "blocked") return true; // keep blocked
+        const sStart = new Date(s.start_time).getTime();
+        const sEnd = new Date(s.end_time).getTime();
+        return !blockedIntervals.some((b) => overlaps(sStart, sEnd, b.start, b.end));
+      });
+
+      // Collapse duplicates by the same time window, keeping highest-precedence status
+      const rank = (sl: any) => (sl.is_booked ? 3 : sl.slot_type === "blocked" ? 2 : 1);
+      const byKey = new Map<string, any>();
+      for (const s of filtered) {
+        const key = `${s.start_time}_${s.end_time}`;
+        const existing = byKey.get(key);
+        if (!existing || rank(s) > rank(existing)) byKey.set(key, s);
+      }
+
+      const normalized = Array.from(byKey.values()).sort(
+        (a: any, b: any) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime()
+      );
+
+      setWeekSlots(normalized);
     } catch (err) {
       console.error("Unexpected error:", err);
     }
