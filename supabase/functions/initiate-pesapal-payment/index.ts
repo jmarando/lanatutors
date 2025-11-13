@@ -32,9 +32,9 @@ serve(async (req) => {
       throw new Error('Unauthorized')
     }
 
-    const { amount, description, referenceId, paymentType, callbackUrl } = await req.json()
+    const { amount, description, referenceId, paymentType, callbackUrl, phoneNumber } = await req.json()
 
-    console.log('Initiating payment - Amount:', amount, 'Type:', paymentType)
+    console.log('Initiating payment - Amount:', amount, 'Type:', paymentType, 'Phone:', phoneNumber)
 
     // Step 1: Get Pesapal access token
     const consumerKey = Deno.env.get('PESAPAL_CONSUMER_KEY')
@@ -100,7 +100,7 @@ serve(async (req) => {
       notification_id: ipnId,
       billing_address: {
         email_address: user.email,
-        phone_number: '',
+        phone_number: phoneNumber || '',
         country_code: 'KE',
         first_name: user.email?.split('@')[0] || 'Customer',
         middle_name: '',
