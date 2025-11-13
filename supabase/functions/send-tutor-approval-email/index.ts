@@ -10,6 +10,7 @@ const corsHeaders = {
 interface ApprovalEmailRequest {
   email: string;
   fullName: string;
+  tempPassword?: string;
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -18,7 +19,7 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    const { email, fullName }: ApprovalEmailRequest = await req.json();
+    const { email, fullName, tempPassword }: ApprovalEmailRequest = await req.json();
     
     console.log("Sending tutor approval email");
 
@@ -73,10 +74,24 @@ const handler = async (req: Request): Promise<Response> => {
                       <!-- Next Steps -->
                       <h2 style="color: #ed2644; margin: 30px 0 20px; font-size: 22px;">Next Steps - Complete Your Profile</h2>
                       
-                      <p style="margin: 0 0 20px; color: #666666; font-size: 15px; line-height: 1.6;">To start teaching and earning, you need to complete your tutor profile. This includes:</p>
+                      ${tempPassword ? `
+                      <div style="background-color: #fef3c7; border-left: 4px solid #f59e0b; padding: 20px; margin: 0 0 24px; border-radius: 8px;">
+                        <h3 style="margin: 0 0 12px; font-weight: 600; color: #92400e; font-size: 16px;">🔑 Your Login Credentials</h3>
+                        <p style="margin: 0 0 8px; color: #78350f; font-size: 15px;"><strong>Email:</strong> ${email}</p>
+                        <p style="margin: 0 0 8px; color: #78350f; font-size: 15px;"><strong>Temporary Password:</strong></p>
+                        <div style="background: #ffffff; padding: 12px; border-radius: 6px; font-family: 'Courier New', monospace; font-size: 16px; color: #1f2937; margin: 8px 0; font-weight: 600; letter-spacing: 1px;">
+                          ${tempPassword}
+                        </div>
+                        <p style="margin: 12px 0 0; font-size: 14px; color: #92400e; line-height: 1.6;">
+                          ⚠️ <strong>Important:</strong> You'll be required to change this password when you first log in for security purposes.
+                        </p>
+                      </div>
+                      ` : ''}
+                      
+                      <p style="margin: 0 0 20px; color: #666666; font-size: 15px; line-height: 1.6;">To start teaching and earning, complete your tutor profile:</p>
                       
                       <ol style="margin: 0 0 30px; padding-left: 24px; color: #666666; font-size: 15px; line-height: 1.8;">
-                        <li style="margin-bottom: 8px;"><strong>Create Your Account</strong> - Set up your login credentials</li>
+                        <li style="margin-bottom: 8px;"><strong>Log In</strong> - Use the credentials above to access your account</li>
                         <li style="margin-bottom: 8px;"><strong>Personal Information</strong> - Add your bio and teaching philosophy</li>
                         <li style="margin-bottom: 8px;"><strong>Professional Details</strong> - Upload your teaching video and qualifications</li>
                         <li style="margin-bottom: 8px;"><strong>Teaching Preferences</strong> - Set your subjects, rates, and availability</li>

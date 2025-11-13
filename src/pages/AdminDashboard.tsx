@@ -627,12 +627,62 @@ Yehtu Tutors`
     try {
       if (passed) {
         console.log("Marking interview as passed for:", application.email);
-        // Update to interview_passed and send approval email
+        
+        // Generate temporary password
+        const tempPassword = Math.random().toString(36).slice(-8) + Math.random().toString(36).slice(-8).toUpperCase() + "1!";
+        console.log("Generated temp password for:", application.email);
+
+        // Create auth user account
+        const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+          email: application.email,
+          password: tempPassword,
+          email_confirm: true,
+          user_metadata: {
+            full_name: application.full_name,
+          },
+        });
+
+        if (authError) {
+          console.error("Auth creation error:", authError);
+          throw new Error(`Failed to create account: ${authError.message}`);
+        }
+
+        console.log("Auth user created:", authData.user.id);
+
+        // Create profile
+        const { error: profileError } = await supabase
+          .from("profiles")
+          .insert({
+            id: authData.user.id,
+            full_name: application.full_name,
+            phone_number: application.phone_number,
+          });
+
+        if (profileError) {
+          console.error("Profile creation error:", profileError);
+          throw new Error(`Failed to create profile: ${profileError.message}`);
+        }
+
+        // Assign tutor role
+        const { error: roleError } = await supabase
+          .from("user_roles")
+          .insert({
+            user_id: authData.user.id,
+            role: 'tutor'
+          });
+
+        if (roleError) {
+          console.error("Role assignment error:", roleError);
+          throw new Error(`Failed to assign tutor role: ${roleError.message}`);
+        }
+
+        // Update application to interview_passed
         const { error: updateError } = await supabase
           .from("tutor_applications")
           .update({ 
             status: 'interview_passed',
             interview_notes: notes || null,
+            user_id: authData.user.id,
             updated_at: new Date().toISOString()
           })
           .eq("id", applicationId);
@@ -642,18 +692,19 @@ Yehtu Tutors`
           throw updateError;
         }
 
-        console.log("Sending approval email to:", application.email);
-        // Send approval email with profile setup link
+        console.log("Sending approval email with temp password to:", application.email);
+        // Send approval email with temporary password
         const emailResult = await supabase.functions.invoke('send-tutor-approval-email', {
           body: { 
             email: application.email,
-            fullName: application.full_name 
+            fullName: application.full_name,
+            tempPassword: tempPassword
           }
         });
         
         console.log("Email result:", emailResult);
 
-        toast.success("Interview passed! Profile setup invitation sent.");
+        toast.success("Account created! Profile setup invitation sent with temporary password.");
       } else {
         // Mark as interview failed
         const { error: updateError } = await supabase

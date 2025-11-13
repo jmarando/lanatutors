@@ -44,6 +44,9 @@ const TutorProfileSetup = () => {
   const [authConfirmPassword, setAuthConfirmPassword] = useState("");
   const [authMode, setAuthMode] = useState<"signin" | "signup">("signup");
   const [showResetPassword, setShowResetPassword] = useState(false);
+  const [showChangePassword, setShowChangePassword] = useState(false);
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmNewPassword, setConfirmNewPassword] = useState("");
   const [resetEmail, setResetEmail] = useState("");
   const photoInputRef = useRef<HTMLInputElement>(null);
   const logoutTimerRef = useRef<number | null>(null);
@@ -447,12 +450,28 @@ const TutorProfileSetup = () => {
           // Auth state will update via onAuthStateChange
         }
       } else {
-        const { error } = await supabase.auth.signInWithPassword({
+        const { data, error } = await supabase.auth.signInWithPassword({
           email: authEmail,
           password: authPassword,
         });
 
         if (error) throw error;
+
+        // Check if this is first login (user created less than 5 minutes ago with temp password)
+        if (data.user) {
+          const createdAt = new Date(data.user.created_at);
+          const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000);
+          
+          // If account was just created, prompt for password change
+          if (createdAt > fiveMinutesAgo) {
+            setShowChangePassword(true);
+            toast({
+              title: "Password Change Required",
+              description: "Please set a new password for your account.",
+            });
+            return;
+          }
+        }
 
         toast({
           title: "Signed in successfully!",
@@ -464,6 +483,57 @@ const TutorProfileSetup = () => {
     } catch (error: any) {
       toast({
         title: authMode === "signup" ? "Signup failed" : "Sign in failed",
+        description: error.message,
+        variant: "destructive"
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handlePasswordChange = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+
+    try {
+      if (newPassword !== confirmNewPassword) {
+        toast({
+          title: "Password mismatch",
+          description: "Passwords do not match",
+          variant: "destructive"
+        });
+        setIsLoading(false);
+        return;
+      }
+
+      if (newPassword.length < 8) {
+        toast({
+          title: "Password too short",
+          description: "Password must be at least 8 characters",
+          variant: "destructive"
+        });
+        setIsLoading(false);
+        return;
+      }
+
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Password changed successfully!",
+        description: "You can now complete your profile."
+      });
+
+      setShowChangePassword(false);
+      setNewPassword("");
+      setConfirmNewPassword("");
+      
+    } catch (error: any) {
+      toast({
+        title: "Password change failed",
         description: error.message,
         variant: "destructive"
       });
@@ -1009,6 +1079,49 @@ const TutorProfileSetup = () => {
                   </div>
                   <Button type="submit" className="w-full" disabled={isLoading}>
                     {isLoading ? "Sending..." : "Send Reset Link"}
+                  </Button>
+                </form>
+              </DialogContent>
+            </Dialog>
+
+            <Dialog open={showChangePassword} onOpenChange={setShowChangePassword}>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Change Your Password</DialogTitle>
+                  <DialogDescription>
+                    For security, please set a new password for your account
+                  </DialogDescription>
+                </DialogHeader>
+                <form onSubmit={handlePasswordChange} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="new-password">New Password</Label>
+                    <Input
+                      id="new-password"
+                      type="password"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      placeholder="••••••••"
+                      required
+                      minLength={8}
+                    />
+                    <p className="text-xs text-muted-foreground">
+                      Minimum 8 characters
+                    </p>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="confirm-new-password">Confirm New Password</Label>
+                    <Input
+                      id="confirm-new-password"
+                      type="password"
+                      value={confirmNewPassword}
+                      onChange={(e) => setConfirmNewPassword(e.target.value)}
+                      placeholder="••••••••"
+                      required
+                      minLength={8}
+                    />
+                  </div>
+                  <Button type="submit" className="w-full" disabled={isLoading}>
+                    {isLoading ? "Changing Password..." : "Change Password"}
                   </Button>
                 </form>
               </DialogContent>
