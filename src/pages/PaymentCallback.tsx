@@ -13,35 +13,61 @@ export default function PaymentCallback() {
 
   useEffect(() => {
     const processCallback = async () => {
-      const orderTrackingId = searchParams.get("OrderTrackingId");
+      // Pesapal can send the tracking ID in different formats
+      const orderTrackingId = searchParams.get("OrderTrackingId") || 
+                               searchParams.get("orderTrackingId") ||
+                               searchParams.get("order_tracking_id");
+
+      console.log("Payment callback received with OrderTrackingId:", orderTrackingId);
+      console.log("All URL params:", Object.fromEntries(searchParams.entries()));
 
       if (!orderTrackingId) {
+        console.error("No OrderTrackingId found in URL");
         setStatus("error");
         return;
       }
 
       try {
-        // Find the payment record
-        const { data: payment, error: paymentError } = await supabase
-          .from("payments")
-          .select("reference_id, payment_type")
-          .eq("pesapal_order_tracking_id", orderTrackingId)
-          .single();
+        // Poll for payment status for up to 30 seconds
+        let attempts = 0;
+        const maxAttempts = 15; // 15 attempts * 2 seconds = 30 seconds
+        
+        while (attempts < maxAttempts) {
+          const { data: payment, error: paymentError } = await supabase
+            .from("payments")
+            .select("reference_id, payment_type, status")
+            .eq("pesapal_order_tracking_id", orderTrackingId)
+            .single();
 
-        if (paymentError || !payment) {
-          console.error("Payment not found:", paymentError);
-          setStatus("error");
-          return;
+          if (paymentError) {
+            console.error("Payment lookup error:", paymentError);
+            attempts++;
+            await new Promise(resolve => setTimeout(resolve, 2000));
+            continue;
+          }
+
+          console.log("Payment found:", payment);
+
+          // If payment is completed, redirect
+          if (payment.status === "completed") {
+            if (payment.payment_type === "booking" && payment.reference_id) {
+              setBookingId(payment.reference_id);
+              setStatus("success");
+              return;
+            } else {
+              setStatus("success");
+              return;
+            }
+          }
+
+          // If still pending, wait and retry
+          attempts++;
+          await new Promise(resolve => setTimeout(resolve, 2000));
         }
 
-        // If it's a booking payment, redirect to booking confirmed page
-        if (payment.payment_type === "booking" && payment.reference_id) {
-          setBookingId(payment.reference_id);
-          setStatus("success");
-        } else {
-          // For other payment types, just show success
-          setStatus("success");
-        }
+        // If we get here, payment wasn't completed in time
+        console.warn("Payment processing timeout");
+        setStatus("error");
       } catch (error) {
         console.error("Error processing callback:", error);
         setStatus("error");
