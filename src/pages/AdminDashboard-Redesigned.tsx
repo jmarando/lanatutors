@@ -24,17 +24,6 @@ const AdminDashboardRedesigned = () => {
     checkAdminAccess();
   }, []);
 
-  useEffect(() => {
-    if (isAdmin) {
-      fetchPendingApplications();
-      fetchInterviewRecords();
-      fetchPendingTutors();
-      fetchPendingReviews();
-      fetchConsultationBookings();
-      fetchTutoringBookings();
-    }
-  }, [isAdmin]);
-
   const checkAdminAccess = async () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
@@ -57,6 +46,12 @@ const AdminDashboardRedesigned = () => {
 
     setIsAdmin(true);
     fetchDashboardMetrics();
+    fetchPendingApplications();
+    fetchInterviewRecords();
+    fetchPendingTutors();
+    fetchPendingReviews();
+    fetchConsultationBookings();
+    fetchTutoringBookings();
     setLoading(false);
   };
 
@@ -129,6 +124,99 @@ const AdminDashboardRedesigned = () => {
       });
     } catch (error: any) {
       console.error('Error fetching dashboard metrics:', error);
+    }
+  };
+
+  const fetchPendingApplications = async () => {
+    const { data, error } = await supabase
+      .from("tutor_applications")
+      .select("*")
+      .eq("status", "pending")
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("Error fetching applications:", error);
+    } else {
+      setPendingApplications(data || []);
+    }
+  };
+
+  const fetchInterviewRecords = async () => {
+    const { data, error } = await supabase
+      .from("tutor_applications")
+      .select("*")
+      .in("status", ["interview_scheduled", "interview_passed", "interview_failed"])
+      .order("interview_scheduled_at", { ascending: false });
+
+    if (error) {
+      console.error("Error fetching interview records:", error);
+    } else {
+      setInterviewRecords(data || []);
+    }
+  };
+
+  const fetchPendingTutors = async () => {
+    const { data, error } = await supabase
+      .from("tutor_applications")
+      .select("*")
+      .eq("status", "profile_pending")
+      .order("created_at", { ascending: false});
+
+    if (error) {
+      console.error("Error fetching pending tutors:", error);
+    } else {
+      setPendingTutors(data || []);
+    }
+  };
+
+  const fetchPendingReviews = async () => {
+    const { data, error } = await supabase
+      .from("tutor_reviews")
+      .select(`
+        *,
+        tutor_profiles!inner(id),
+        profiles!tutor_reviews_student_id_fkey(full_name)
+      `)
+      .eq("is_moderated", false)
+      .order("created_at", { ascending: false });
+
+    if (error) {
+      console.error("Error fetching pending reviews:", error);
+    } else {
+      setPendingReviews(data || []);
+    }
+  };
+
+  const fetchConsultationBookings = async () => {
+    const { data, error } = await supabase
+      .from("consultation_bookings")
+      .select("*")
+      .order("consultation_date", { ascending: false })
+      .limit(50);
+
+    if (error) {
+      console.error("Error fetching consultation bookings:", error);
+    } else {
+      setConsultationBookings(data || []);
+    }
+  };
+
+  const fetchTutoringBookings = async () => {
+    const { data, error } = await supabase
+      .from("bookings")
+      .select(`
+        *,
+        profiles!bookings_student_id_fkey(full_name, phone_number),
+        tutor_profiles!bookings_tutor_id_fkey(id),
+        tutor_availability(start_time, end_time)
+      `)
+      .order("created_at", { ascending: false })
+      .limit(50);
+
+    if (error) {
+      console.error("Error fetching tutoring bookings:", error);
+    } else {
+      setTutoringBookings(data || []);
     }
   };
 
