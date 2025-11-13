@@ -62,3 +62,6 @@ verify_jwt = false
 
 [functions.send-tutor-rejection-email]
 verify_jwt = false
+
+[functions.approve-tutor-interview]
+verify_jwt = true
