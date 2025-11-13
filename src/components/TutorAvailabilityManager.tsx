@@ -61,14 +61,24 @@ export const TutorAvailabilityManager = () => {
         .select("*")
         .eq("tutor_id", user.id)
         .gte("start_time", weekStart.toISOString())
-        .lt("start_time", weekEnd.toISOString());
+        .lt("start_time", weekEnd.toISOString())
+        .order("start_time", { ascending: true });
 
       if (error) {
         console.error("Error fetching week slots:", error);
         return;
       }
 
-      setWeekSlots(data || []);
+      // Deduplicate slots based on start_time and end_time
+      const uniqueSlots = data?.reduce((acc: any[], slot: any) => {
+        const key = `${slot.start_time}_${slot.end_time}_${slot.slot_type}`;
+        if (!acc.find((s: any) => `${s.start_time}_${s.end_time}_${s.slot_type}` === key)) {
+          acc.push(slot);
+        }
+        return acc;
+      }, []) || [];
+
+      setWeekSlots(uniqueSlots);
     } catch (err) {
       console.error("Unexpected error:", err);
     }
