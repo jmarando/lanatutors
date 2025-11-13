@@ -88,50 +88,77 @@ serve(async (req) => {
     // Generate temporary password
     const tempPassword = Math.random().toString(36).slice(-8) + Math.random().toString(36).slice(-8).toUpperCase() + "1!";
 
-    // Create auth user
-    const { data: authUser, error: authError } = await supabaseAdmin.auth.admin.createUser({
-      email: application.email,
-      password: tempPassword,
-      email_confirm: true,
-      user_metadata: {
-        full_name: application.full_name,
-      },
-    });
-
-    if (authError) {
-      console.error("Auth user creation error:", authError);
-      return new Response(
-        JSON.stringify({ error: `Failed to create account: ${authError.message}` }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+    // Check if user already exists
+    const { data: existingUsers } = await supabaseAdmin.auth.admin.listUsers();
+    const existingUser = existingUsers?.users.find(u => u.email === application.email);
+    
+    let userId: string;
+    
+    if (existingUser) {
+      // User already exists, use their ID and update their password
+      console.log("User already exists, updating password:", existingUser.id);
+      userId = existingUser.id;
+      
+      const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(
+        userId,
+        { password: tempPassword }
       );
+      
+      if (updateError) {
+        console.error("Password update error:", updateError);
+        return new Response(
+          JSON.stringify({ error: `Failed to update password: ${updateError.message}` }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+    } else {
+      // Create new auth user
+      const { data: authUser, error: authError } = await supabaseAdmin.auth.admin.createUser({
+        email: application.email,
+        password: tempPassword,
+        email_confirm: true,
+        user_metadata: {
+          full_name: application.full_name,
+        },
+      });
+
+      if (authError) {
+        console.error("Auth user creation error:", authError);
+        return new Response(
+          JSON.stringify({ error: `Failed to create account: ${authError.message}` }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+
+      userId = authUser.user.id;
+      console.log("Created auth user:", userId);
     }
 
-    const userId = authUser.user.id;
-    console.log("Created auth user:", userId);
-
-    // Create profile
+    // Create or update profile
     const { error: profileError } = await supabaseAdmin
       .from("profiles")
-      .insert({
+      .upsert({
         id: userId,
         full_name: application.full_name,
         phone_number: application.phone_number,
       });
 
     if (profileError) {
-      console.error("Profile creation error:", profileError);
+      console.error("Profile upsert error:", profileError);
       throw profileError;
     }
 
-    // Assign tutor role
+    // Assign tutor role (skip if already exists)
     const { error: roleError } = await supabaseAdmin
       .from("user_roles")
       .insert({
         user_id: userId,
         role: 'tutor'
-      });
+      })
+      .select()
+      .maybeSingle();
 
-    if (roleError) {
+    if (roleError && roleError.code !== '23505') { // 23505 is unique violation (role already exists)
       console.error("Role assignment error:", roleError);
       throw roleError;
     }
