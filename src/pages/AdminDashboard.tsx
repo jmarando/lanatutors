@@ -688,14 +688,14 @@ Yehtu Tutors`
     if (tutor) {
       try {
         if (approved) {
-          // Send approval email
-          await supabase.functions.invoke("send-tutor-approval-email", {
+          // Send profile live notification email
+          await supabase.functions.invoke("send-profile-live-email", {
             body: {
               email: tutor.email,
               fullName: tutor.profiles?.full_name || "Tutor"
             }
           });
-          console.log("Approval email sent to:", tutor.email);
+          console.log("Profile live email sent to:", tutor.email);
         } else {
           // Send rejection email
           await supabase.functions.invoke("send-tutor-rejection-email", {

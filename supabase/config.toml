@@ -1,5 +1,8 @@
 project_id = "iccemuiqcdumgxiwxzdq"
 
+[functions.send-profile-live-email]
+verify_jwt = false
+
 [functions.create-tutor-profile]
 verify_jwt = true
 
