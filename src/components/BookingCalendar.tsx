@@ -34,6 +34,7 @@ interface BookingCalendarProps {
   onBookingComplete?: () => void;
   classType?: 'online' | 'in-person';
   isTrialSession?: boolean;
+  selectedTier?: 'standard' | 'advanced';
 }
 
 interface PackageOffer {
@@ -64,6 +65,7 @@ export const BookingCalendar = ({
   onBookingComplete,
   classType = 'online',
   isTrialSession = false,
+  selectedTier = 'standard',
 }: BookingCalendarProps) => {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [availableSlots, setAvailableSlots] = useState<AvailabilitySlot[]>([]);
@@ -265,6 +267,8 @@ export const BookingCalendar = ({
         ? `${noteText ? noteText + ' | ' : ''}Location: ${selectedLocation}`
         : noteText;
 
+      const notesWithTier = `${notesWithLocation ? notesWithLocation + ' | ' : ''}Tier: ${selectedTier}`;
+
       const { data: booking, error: bookingError } = await supabase
         .from("bookings")
         .insert({
@@ -272,7 +276,7 @@ export const BookingCalendar = ({
           tutor_id: tutorId,
           availability_slot_id: selectedSlot.id,
           subject: subject.trim(),
-          notes: notesWithLocation,
+          notes: notesWithTier,
           amount: totalAmount,
           deposit_paid: depositAmount,
           balance_due: balanceDue,

@@ -13,6 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { SEO } from "@/components/SEO";
 import { BookingCalendar } from "@/components/BookingCalendar";
 import { PackageSelector } from "@/components/PackageSelector";
+import { cn } from "@/lib/utils";
 
 import tutor1 from "@/assets/tutor-1.jpg";
 import tutor2 from "@/assets/tutor-2.jpg";
@@ -34,12 +35,15 @@ const TutorProfile = () => {
   const [loading, setLoading] = useState(true);
   const [reviews, setReviews] = useState<any[]>([]);
   const [packages, setPackages] = useState<any[]>([]);
+  const [pricingTiers, setPricingTiers] = useState<any[]>([]);
+  const [selectedTier, setSelectedTier] = useState<'standard' | 'advanced'>('standard');
 
   useEffect(() => {
     fetchTutorProfile();
     fetchCurrentUser();
     fetchReviews();
     fetchPackages();
+    fetchPricingTiers();
   }, [id]);
 
   // Auto-open booking dialog when returning from login via redirect
@@ -197,6 +201,25 @@ const TutorProfile = () => {
     if (packagesData) {
       setPackages(packagesData);
     }
+  };
+
+  const fetchPricingTiers = async () => {
+    const { data: tiersData } = await supabase
+      .from("tutor_pricing_tiers")
+      .select("*")
+      .eq("tutor_id", id)
+      .order("tier_name");
+
+    if (tiersData) {
+      setPricingTiers(tiersData);
+    }
+  };
+
+  const getCurrentRate = () => {
+    if (pricingTiers.length === 0) return Number(tutor?.hourlyRate) || 0;
+    
+    const tier = pricingTiers.find(t => t.tier_name.toLowerCase() === selectedTier);
+    return tier ? Number(tier.online_hourly_rate) : Number(tutor?.hourlyRate) || 0;
   };
 
   const handleBookingTypeSelect = async (type: 'paid' | 'trial' | 'free') => {
@@ -384,7 +407,7 @@ const TutorProfile = () => {
               </div>
             </div>
 
-            <div className="p-6 flex flex-col gap-6 bg-muted/30">
+              <div className="p-6 flex flex-col gap-6 bg-muted/30">
               <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4 sm:gap-6">
                   <div className="flex items-center gap-2">
@@ -395,22 +418,63 @@ const TutorProfile = () => {
                   
                   <div className="h-8 w-px bg-border hidden sm:block" />
                   
-                  <div className="space-y-1">
-                    <div className="flex items-baseline gap-2">
-                      <div className="text-xl font-bold">
-                        KES {tutor.hourlyRate.toLocaleString()}
-                        <span className="text-sm font-normal text-muted-foreground">/hr</span>
+                  {pricingTiers.length > 0 ? (
+                    <div className="flex flex-col gap-3">
+                      <div className="flex gap-2">
+                        {pricingTiers.map(tier => {
+                          const tierName = tier.tier_name.toLowerCase();
+                          const isSelected = tierName === selectedTier;
+                          return (
+                            <button
+                              key={tier.id}
+                              onClick={() => setSelectedTier(tierName as 'standard' | 'advanced')}
+                              className={cn(
+                                "px-3 py-1.5 rounded-md text-sm font-medium transition-colors",
+                                isSelected 
+                                  ? "bg-primary text-primary-foreground" 
+                                  : "bg-background border border-border hover:bg-muted"
+                              )}
+                            >
+                              {tier.tier_name}
+                            </button>
+                          );
+                        })}
                       </div>
-                      <span className="text-xs text-muted-foreground">online</span>
-                    </div>
-                    <div className="flex items-baseline gap-2">
-                      <div className="text-lg font-semibold text-muted-foreground">
-                        KES {(tutor.hourlyRate * 1.5).toLocaleString()}
-                        <span className="text-xs font-normal">/hr</span>
+                      <div className="space-y-1">
+                        <div className="flex items-baseline gap-2">
+                          <div className="text-xl font-bold">
+                            KES {getCurrentRate().toLocaleString()}
+                            <span className="text-sm font-normal text-muted-foreground">/hr</span>
+                          </div>
+                          <span className="text-xs text-muted-foreground">online</span>
+                        </div>
+                        <div className="flex items-baseline gap-2">
+                          <div className="text-lg font-semibold text-muted-foreground">
+                            KES {(getCurrentRate() * 1.5).toLocaleString()}
+                            <span className="text-xs font-normal">/hr</span>
+                          </div>
+                          <span className="text-xs text-muted-foreground">in-person</span>
+                        </div>
                       </div>
-                      <span className="text-xs text-muted-foreground">in-person</span>
                     </div>
-                  </div>
+                  ) : (
+                    <div className="space-y-1">
+                      <div className="flex items-baseline gap-2">
+                        <div className="text-xl font-bold">
+                          KES {tutor.hourlyRate.toLocaleString()}
+                          <span className="text-sm font-normal text-muted-foreground">/hr</span>
+                        </div>
+                        <span className="text-xs text-muted-foreground">online</span>
+                      </div>
+                      <div className="flex items-baseline gap-2">
+                        <div className="text-lg font-semibold text-muted-foreground">
+                          KES {(tutor.hourlyRate * 1.5).toLocaleString()}
+                          <span className="text-xs font-normal">/hr</span>
+                        </div>
+                        <span className="text-xs text-muted-foreground">in-person</span>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
 
@@ -432,11 +496,11 @@ const TutorProfile = () => {
                     <div className="space-y-1 mb-3">
                       <div className="flex justify-between text-xs">
                         <span className="text-muted-foreground">Single (1hr):</span>
-                        <span className="font-medium">KES {tutor.hourlyRate.toLocaleString()}</span>
+                        <span className="font-medium">KES {getCurrentRate().toLocaleString()}</span>
                       </div>
                       <div className="flex justify-between text-xs">
                         <span className="text-muted-foreground">Double (2hr):</span>
-                        <span className="font-medium">KES {(tutor.hourlyRate * 2).toLocaleString()}</span>
+                        <span className="font-medium">KES {(getCurrentRate() * 2).toLocaleString()}</span>
                       </div>
                       <div className="pt-1 border-t border-border/50">
                         <p className="text-xs text-muted-foreground italic">

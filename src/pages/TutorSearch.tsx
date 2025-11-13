@@ -139,12 +139,39 @@ const TutorSearch = () => {
         (profiles || []).forEach((p: any) => profilesById.set(p.id, p));
       }
 
-      // 3) Merge and format
+      // 3) Fetch pricing tiers for all tutors to get their rate ranges
+      const tutorProfileIds = (tutorProfiles || []).map((tp: any) => tp.id);
+      const { data: pricingTiers } = await supabase
+        .from("tutor_pricing_tiers")
+        .select("*")
+        .in("tutor_id", tutorProfileIds);
+
+      const tiersByTutor = new Map<string, any[]>();
+      (pricingTiers || []).forEach((tier: any) => {
+        if (!tiersByTutor.has(tier.tutor_id)) {
+          tiersByTutor.set(tier.tutor_id, []);
+        }
+        tiersByTutor.get(tier.tutor_id)!.push(tier);
+      });
+
+      // 4) Merge and format
       const tutorImages = [tutor1, tutor2, tutor3, tutor4, tutor5, tutor6];
       const formattedTutors = (tutorProfiles || []).map((tp: any, index: number) => {
         const prof = profilesById.get(tp.user_id);
         const name = prof?.full_name || "Tutor";
-        const hourlyRate = Number(tp.hourly_rate) || 2500;
+        
+        // Get pricing tiers for this tutor
+        const tiers = tiersByTutor.get(tp.id) || [];
+        const standardTier = tiers.find(t => t.tier_name.toLowerCase() === 'standard');
+        const advancedTier = tiers.find(t => t.tier_name.toLowerCase() === 'advanced');
+        
+        // Use standard tier as base rate, fallback to legacy hourly_rate
+        const hourlyRate = standardTier 
+          ? Number(standardTier.online_hourly_rate) 
+          : Number(tp.hourly_rate) || 2500;
+        const hourlyRateMax = advancedTier 
+          ? Number(advancedTier.online_hourly_rate) 
+          : hourlyRate;
 
         // Check if this is Calvin
         const isCalvin = name === "Calvins Onuko";
@@ -166,6 +193,8 @@ const TutorSearch = () => {
           rating: Number(tp.rating) || 0,
           reviews: tp.total_reviews || 0,
           hourlyRate,
+          hourlyRateMax,
+          hasTiers: tiers.length > 0,
           gender: tp.gender || null,
           photo: name.split(' ').map((n: string) => n[0]).join('') || "T",
           photoUrl: (showPhoto && uploadedAvatar) ? uploadedAvatar : null, // Only show photo if allowed
@@ -216,7 +245,8 @@ const TutorSearch = () => {
     const matchesCurriculum = selectedCurriculum === "all" || tutor.curriculum.includes(selectedCurriculum);
     const matchesTeachingLevel = selectedTeachingLevel === "all" || tutor.teachingLevels?.includes(selectedTeachingLevel);
     const matchesGender = selectedGender === "all" || tutor.gender === selectedGender;
-    const matchesPrice = tutor.hourlyRate >= priceRange[0] && tutor.hourlyRate <= priceRange[1];
+    // Check if tutor's rate range overlaps with filter range
+    const matchesPrice = tutor.hourlyRate <= priceRange[1] && tutor.hourlyRateMax >= priceRange[0];
     const matchesRating = tutor.rating >= minRating;
 
     // Availability filter
@@ -516,20 +546,41 @@ const TutorSearch = () => {
 
                 {/* Pricing Section */}
                 <div className="space-y-2 mb-4">
-                  <div className="flex items-baseline justify-between">
-                    <span className="text-xs text-muted-foreground">Online</span>
-                    <span className="text-lg font-bold text-foreground">
-                      KES {tutor.hourlyRate.toLocaleString()}
-                      <span className="text-xs font-normal text-muted-foreground">/hr</span>
-                    </span>
-                  </div>
-                  <div className="flex items-baseline justify-between">
-                    <span className="text-xs text-muted-foreground">In-Person</span>
-                    <span className="text-sm font-semibold text-muted-foreground">
-                      KES {Math.round(tutor.hourlyRate * 1.3).toLocaleString()}
-                      <span className="text-xs font-normal">/hr</span>
-                    </span>
-                  </div>
+                  {tutor.hasTiers ? (
+                    <>
+                      <div className="flex items-baseline justify-between">
+                        <span className="text-xs text-muted-foreground">Standard Rate</span>
+                        <span className="text-base font-bold text-foreground">
+                          KES {tutor.hourlyRate.toLocaleString()}
+                          <span className="text-xs font-normal text-muted-foreground">/hr</span>
+                        </span>
+                      </div>
+                      <div className="flex items-baseline justify-between">
+                        <span className="text-xs text-muted-foreground">Advanced Rate</span>
+                        <span className="text-base font-semibold text-foreground">
+                          KES {tutor.hourlyRateMax.toLocaleString()}
+                          <span className="text-xs font-normal text-muted-foreground">/hr</span>
+                        </span>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="flex items-baseline justify-between">
+                        <span className="text-xs text-muted-foreground">Online</span>
+                        <span className="text-lg font-bold text-foreground">
+                          KES {tutor.hourlyRate.toLocaleString()}
+                          <span className="text-xs font-normal text-muted-foreground">/hr</span>
+                        </span>
+                      </div>
+                      <div className="flex items-baseline justify-between">
+                        <span className="text-xs text-muted-foreground">In-Person</span>
+                        <span className="text-sm font-semibold text-muted-foreground">
+                          KES {Math.round(tutor.hourlyRate * 1.5).toLocaleString()}
+                          <span className="text-xs font-normal">/hr</span>
+                        </span>
+                      </div>
+                    </>
+                  )}
                 </div>
 
                 {/* Action Button */}
