@@ -22,7 +22,8 @@ const handler = async (req: Request): Promise<Response> => {
     
     console.log("Sending profile live notification email to:", email);
 
-    const tutorHubUrl = `${Deno.env.get('VITE_SUPABASE_URL')?.replace('iccemuiqcdumgxiwxzdq.supabase.co', 'lanatutors.africa')}/tutor-dashboard`;
+    const tutorHubUrl = `https://lanatutors.africa/tutor-dashboard`;
+
 
     const response = await fetch("https://api.resend.com/emails", {
       method: "POST",
