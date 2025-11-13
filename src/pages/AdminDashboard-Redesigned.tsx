@@ -988,61 +988,100 @@ The Lana Team`;
   return (
     <div className="min-h-screen bg-[image:var(--gradient-page)]">
       <div className="max-w-7xl mx-auto px-6 py-12">
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
-          <p className="text-muted-foreground">Overview of your tutoring platform</p>
+        <div className="border-b pb-8 mb-8">
+          <h1 className="text-4xl font-bold tracking-tight mb-2">Dashboard</h1>
+          <p className="text-muted-foreground text-lg">Overview of your tutoring platform</p>
         </div>
 
-        <Tabs defaultValue="dashboard" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5 lg:w-auto">
-            <TabsTrigger value="dashboard">
-              Overview
-            </TabsTrigger>
-            <TabsTrigger value="applications" className="relative">
-              Applications
-              {pendingApplications.length > 0 && (
-                <Badge variant="destructive" className="ml-2">
-                  {pendingApplications.length}
-                </Badge>
-              )}
-            </TabsTrigger>
-            <TabsTrigger value="interviews" className="relative">
-              Interviews
-              {interviewRecords.filter(a => a.status === 'interview_scheduled').length > 0 && (
-                <Badge variant="secondary" className="ml-2">
-                  {interviewRecords.filter(a => a.status === 'interview_scheduled').length}
-                </Badge>
-              )}
-            </TabsTrigger>
-            <TabsTrigger value="profiles" className="relative">
-              Profiles
-              {pendingTutors.length > 0 && (
-                <Badge className="ml-2 bg-purple-600">{pendingTutors.length}</Badge>
-              )}
-            </TabsTrigger>
-            <TabsTrigger value="reviews" className="relative">
-              Reviews
-              {pendingReviews.length > 0 && (
-                <Badge className="ml-2 bg-green-600">{pendingReviews.length}</Badge>
-              )}
-            </TabsTrigger>
-            <TabsTrigger value="blog" className="relative">
-              Blog
-            </TabsTrigger>
-            <TabsTrigger value="consultations" className="relative">
-              Consultations
-              {consultationBookings.length > 0 && (
-                <Badge className="ml-2 bg-teal-600">{consultationBookings.length}</Badge>
-              )}
-            </TabsTrigger>
-            <TabsTrigger value="bookings" className="relative">
-              <BookMarked className="h-4 w-4 mr-2" />
-              Tutoring Bookings
-              {tutoringBookings.length > 0 && (
-                <Badge className="ml-2 bg-indigo-600">{tutoringBookings.length}</Badge>
-              )}
-            </TabsTrigger>
-          </TabsList>
+        <Tabs defaultValue="dashboard" className="space-y-8">
+          <div className="border-b -mx-6 px-6">
+            <TabsList className="h-auto p-0 bg-transparent w-full justify-start gap-6 flex-wrap border-0">
+              <TabsTrigger 
+                value="dashboard"
+                className="data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:bg-transparent rounded-none bg-transparent px-4 py-3 border-b-2 border-transparent"
+              >
+                Overview
+              </TabsTrigger>
+              <TabsTrigger 
+                value="applications" 
+                className="data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:bg-transparent rounded-none bg-transparent px-4 py-3 border-b-2 border-transparent"
+              >
+                <span className="flex items-center gap-2">
+                  Applications
+                  {pendingApplications.length > 0 && (
+                    <Badge variant="destructive" className="rounded-full h-5 min-w-5 px-1.5">
+                      {pendingApplications.length}
+                    </Badge>
+                  )}
+                </span>
+              </TabsTrigger>
+              <TabsTrigger 
+                value="interviews"
+                className="data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:bg-transparent rounded-none bg-transparent px-4 py-3 border-b-2 border-transparent"
+              >
+                <span className="flex items-center gap-2">
+                  Interviews
+                  {interviewRecords.length > 0 && (
+                    <Badge className="rounded-full h-5 min-w-5 px-1.5">
+                      {interviewRecords.length}
+                    </Badge>
+                  )}
+                </span>
+              </TabsTrigger>
+              <TabsTrigger 
+                value="profiles"
+                className="data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:bg-transparent rounded-none bg-transparent px-4 py-3 border-b-2 border-transparent"
+              >
+                <span className="flex items-center gap-2">
+                  Profiles
+                  {pendingTutors.length > 0 && (
+                    <Badge variant="secondary" className="rounded-full h-5 min-w-5 px-1.5">
+                      {pendingTutors.length}
+                    </Badge>
+                  )}
+                </span>
+              </TabsTrigger>
+              <TabsTrigger 
+                value="reviews"
+                className="data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:bg-transparent rounded-none bg-transparent px-4 py-3 border-b-2 border-transparent"
+              >
+                Reviews
+              </TabsTrigger>
+              <TabsTrigger 
+                value="blog"
+                className="data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:bg-transparent rounded-none bg-transparent px-4 py-3 border-b-2 border-transparent"
+              >
+                Blog
+              </TabsTrigger>
+              <TabsTrigger 
+                value="consultations"
+                className="data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:bg-transparent rounded-none bg-transparent px-4 py-3 border-b-2 border-transparent"
+              >
+                <span className="flex items-center gap-2">
+                  Consultations
+                  {consultationBookings.length > 0 && (
+                    <Badge className="rounded-full h-5 min-w-5 px-1.5 bg-teal-600">
+                      {consultationBookings.length}
+                    </Badge>
+                  )}
+                </span>
+              </TabsTrigger>
+              <TabsTrigger 
+                value="bookings"
+                className="data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:bg-transparent rounded-none bg-transparent px-4 py-3 border-b-2 border-transparent"
+              >
+                <span className="flex items-center gap-2">
+                  <BookMarked className="h-4 w-4" />
+                  Tutoring Bookings
+                  {tutoringBookings.length > 0 && (
+                    <Badge className="rounded-full h-5 min-w-5 px-1.5 bg-indigo-600">
+                      {tutoringBookings.length}
+                    </Badge>
+                  )}
+                </span>
+              </TabsTrigger>
+            </TabsList>
+          </div>
 
           {/* Dashboard Tab */}
           <TabsContent value="dashboard" className="space-y-6">

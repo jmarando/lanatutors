@@ -27,13 +27,13 @@ export default function Blog() {
   const fetchPosts = async () => {
     try {
       const { data, error } = await supabase
-        .from("blog_posts")
+        .from("blog_posts" as any)
         .select("id, title, slug, excerpt, author_name, featured_image_url, published_at")
         .eq("published", true)
         .order("published_at", { ascending: false });
 
       if (error) throw error;
-      setPosts(data || []);
+      setPosts(data as any || []);
     } catch (error) {
       console.error("Error fetching blog posts:", error);
     } finally {
