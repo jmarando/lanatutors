@@ -11,12 +11,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
-import { CheckCircle, XCircle, AlertCircle, Star, Calendar as CalendarIcon, Clock, Mail, Phone, User, BookOpen, FileText, Video, Edit, Save, X, MessageCircle, Send, TrendingUp, Users, DollarSign, Target, ExternalLink, LayoutDashboard, GraduationCap, UserCheck, BookMarked, Activity, ArrowUpRight, ArrowDownRight } from "lucide-react";
+import { CheckCircle, XCircle, AlertCircle, Calendar as CalendarIcon, Clock, Mail, Phone, User, BookOpen, FileText, Video, Edit, Save, X, MessageCircle, Send, TrendingUp, Users, DollarSign, BookMarked, Activity, ArrowUpRight, ArrowDownRight, GraduationCap, Star, ExternalLink } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { LineChart, Line, BarChart, Bar, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell } from "recharts";
+import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { formatConsultationDate, formatToEAT, formatFullDateTime } from "@/utils/dateUtils";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
@@ -987,18 +987,20 @@ The Lana Team`;
   return (
     <div className="min-h-screen bg-[image:var(--gradient-page)]">
       <div className="max-w-7xl mx-auto px-6 py-12">
-        <h1 className="text-4xl font-bold mb-8">Admin Dashboard</h1>
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold tracking-tight">Dashboard</h1>
+          <p className="text-muted-foreground">Overview of your tutoring platform</p>
+        </div>
 
         <Tabs defaultValue="dashboard" className="space-y-6">
-          <TabsList>
+          <TabsList className="grid w-full grid-cols-5 lg:w-auto">
             <TabsTrigger value="dashboard">
-              <LayoutDashboard className="h-4 w-4 mr-2" />
-              Dashboard
+              Overview
             </TabsTrigger>
             <TabsTrigger value="applications" className="relative">
               Applications
               {pendingApplications.length > 0 && (
-                <Badge className="ml-2 bg-orange-600">
+                <Badge variant="destructive" className="ml-2">
                   {pendingApplications.length}
                 </Badge>
               )}
@@ -1006,7 +1008,7 @@ The Lana Team`;
             <TabsTrigger value="interviews" className="relative">
               Interviews
               {interviewRecords.filter(a => a.status === 'interview_scheduled').length > 0 && (
-                <Badge className="ml-2 bg-blue-600">
+                <Badge variant="secondary" className="ml-2">
                   {interviewRecords.filter(a => a.status === 'interview_scheduled').length}
                 </Badge>
               )}
@@ -1113,7 +1115,7 @@ The Lana Team`;
                   <Card>
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                       <CardTitle className="text-sm font-medium">Conversion Rate</CardTitle>
-                      <Target className="h-4 w-4 text-muted-foreground" />
+                      <TrendingUp className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
                       <div className="text-2xl font-bold">{dashboardMetrics.conversionRate?.toFixed(1) || 0}%</div>
@@ -1178,13 +1180,13 @@ The Lana Team`;
                     </CardHeader>
                     <CardContent>
                       <ResponsiveContainer width="100%" height={250}>
-                        <AreaChart data={dashboardMetrics.revenueTrend || []}>
+                        <BarChart data={dashboardMetrics.revenueTrend || []}>
                           <CartesianGrid strokeDasharray="3 3" />
                           <XAxis dataKey="date" />
                           <YAxis />
                           <Tooltip />
-                          <Area type="monotone" dataKey="amount" stroke="hsl(var(--primary))" fill="hsl(var(--primary) / 0.2)" />
-                        </AreaChart>
+                          <Bar dataKey="amount" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                        </BarChart>
                       </ResponsiveContainer>
                     </CardContent>
                   </Card>
@@ -1811,7 +1813,7 @@ The Lana Team`;
                             onClick={() => handleMarkAsConverted(booking.id)}
                             className="bg-green-600 hover:bg-green-700"
                           >
-                            <Target className="h-4 w-4 mr-2" />
+                            <CheckCircle className="h-4 w-4 mr-2" />
                             Mark as Converted
                           </Button>
                         </div>
