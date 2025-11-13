@@ -434,90 +434,37 @@ const TutorProfile = () => {
                     <span className="text-sm text-muted-foreground">({tutor.reviews} reviews)</span>
                   </div>
                   
-                  <div className="h-8 w-px bg-border hidden sm:block" />
-                  
-                  {pricingTiers.length > 0 ? (
-                    <div className="flex flex-col gap-3">
-                      {/* Show context if user came from search */}
-                      {(() => {
-                        const params = new URLSearchParams(window.location.search);
-                        const curriculum = params.get('curriculum');
-                        const level = params.get('level');
-                        
-                        if (curriculum || level) {
-                          return (
-                            <div className="bg-primary/10 border border-primary/30 rounded-lg px-3 py-2 text-sm">
-                              <span className="font-medium text-primary">
-                                Showing prices for: {curriculum || ''} {level ? `- ${level}` : ''}
-                              </span>
-                            </div>
-                          );
-                        }
-                        return null;
-                      })()}
+                  {pricingTiers.length > 0 && (
+                    <>
+                      <div className="h-8 w-px bg-border hidden sm:block" />
                       
-                      <div className="flex items-center gap-3">
-                        <div className="flex gap-2">
-                          {pricingTiers.map(tier => {
-                            const tierName = tier.tier_name.toLowerCase();
-                            const isSelected = tierName === selectedTier;
-                            const displayName = tier.tier_name.charAt(0).toUpperCase() + tier.tier_name.slice(1);
-                            return (
-                              <button
-                                key={tier.id}
-                                onClick={() => setSelectedTier(tierName as 'standard' | 'advanced')}
-                                className={cn(
-                                  "px-4 py-2 rounded-lg text-base font-semibold transition-all",
-                                  isSelected 
-                                    ? "bg-primary text-primary-foreground shadow-md" 
-                                    : "bg-background border-2 border-border hover:border-primary/50"
-                                )}
-                              >
-                                {displayName}
-                              </button>
-                            );
-                          })}
-                        </div>
-                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground bg-muted/50 px-3 py-1.5 rounded-md border border-border/50">
-                          <span className="font-medium">
-                            {selectedTier === 'standard' ? '📚 CBC, 8-4-4' : '🎓 IGCSE, IB, A-Level'}
-                          </span>
-                        </div>
+                      {/* Curriculum Level Selector */}
+                      <div className="flex flex-wrap items-center gap-2">
+                        {pricingTiers.map(tier => {
+                          const tierName = tier.tier_name.toLowerCase();
+                          const isSelected = tierName === selectedTier;
+                          const isStandard = tierName === 'standard';
+                          
+                          return (
+                            <button
+                              key={tier.id}
+                              onClick={() => setSelectedTier(tierName as 'standard' | 'advanced')}
+                              className={cn(
+                                "px-3 py-1.5 rounded-md text-sm font-medium transition-all flex items-center gap-1.5",
+                                isSelected 
+                                  ? isStandard
+                                    ? "bg-blue-500/20 text-blue-700 dark:text-blue-300 border-2 border-blue-500/50" 
+                                    : "bg-purple-500/20 text-purple-700 dark:text-purple-300 border-2 border-purple-500/50"
+                                  : "bg-muted/50 text-muted-foreground border-2 border-border hover:border-primary/30"
+                              )}
+                            >
+                              <span>{isStandard ? '📚' : '🎓'}</span>
+                              <span>{isStandard ? 'CBC, 8-4-4' : 'IGCSE, IB, A-Level'}</span>
+                            </button>
+                          );
+                        })}
                       </div>
-                      <div className="space-y-1">
-                        <div className="flex items-baseline gap-2">
-                          <div className="text-xl font-bold">
-                            KES {getCurrentRate().toLocaleString()}
-                            <span className="text-sm font-normal text-muted-foreground">/hr</span>
-                          </div>
-                          <span className="text-xs text-muted-foreground">online</span>
-                        </div>
-                        <div className="flex items-baseline gap-2">
-                          <div className="text-lg font-semibold text-muted-foreground">
-                            KES {(getCurrentRate() * 1.5).toLocaleString()}
-                            <span className="text-xs font-normal">/hr</span>
-                          </div>
-                          <span className="text-xs text-muted-foreground">in-person</span>
-                        </div>
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="space-y-1">
-                      <div className="flex items-baseline gap-2">
-                        <div className="text-xl font-bold">
-                          KES {tutor.hourlyRate.toLocaleString()}
-                          <span className="text-sm font-normal text-muted-foreground">/hr</span>
-                        </div>
-                        <span className="text-xs text-muted-foreground">online</span>
-                      </div>
-                      <div className="flex items-baseline gap-2">
-                        <div className="text-lg font-semibold text-muted-foreground">
-                          KES {(tutor.hourlyRate * 1.5).toLocaleString()}
-                          <span className="text-xs font-normal">/hr</span>
-                        </div>
-                        <span className="text-xs text-muted-foreground">in-person</span>
-                      </div>
-                    </div>
+                    </>
                   )}
                 </div>
               </div>
