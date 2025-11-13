@@ -461,7 +461,6 @@ Yehtu Tutors`
   };
 
   const fetchPendingTutors = async () => {
-    // Fetch tutor profiles that are not verified
     const { data: tutorData, error } = await supabase
       .from("tutor_profiles")
       .select("*")
@@ -481,7 +480,7 @@ Yehtu Tutors`
             .from("profiles")
             .select("full_name, phone_number")
             .eq("id", tutor.user_id)
-            .single();
+            .maybeSingle();
           
           return { 
             ...tutor, 
