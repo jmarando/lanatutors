@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Clock, Trash2, Info } from "lucide-react";
+import { Clock, Trash2, Info, Sparkles, Loader2 } from "lucide-react";
 import { format } from "date-fns";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import type { Database } from "@/integrations/supabase/types";
@@ -20,6 +20,7 @@ export const TutorAvailabilityManager = () => {
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
   const [loading, setLoading] = useState(false);
+  const [generatingAvailability, setGeneratingAvailability] = useState(false);
   const { toast } = useToast();
 
   const fetchBlockedSlots = useCallback(async () => {
@@ -144,6 +145,40 @@ export const TutorAvailabilityManager = () => {
     }
   };
 
+  const handleGenerateAvailability = async () => {
+    setGeneratingAvailability(true);
+    
+    try {
+      const { error } = await supabase.functions.invoke('generate-weekly-availability', {
+        body: { weeksAhead: 4 }
+      });
+
+      if (error) {
+        console.error('Error generating availability:', error);
+        toast({
+          title: "Error",
+          description: "Failed to generate availability slots. Please try again.",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Availability Generated",
+          description: "Your availability for the next 4 weeks has been created (8 AM - 8 PM daily)",
+        });
+        fetchBlockedSlots();
+      }
+    } catch (error) {
+      console.error('Error:', error);
+      toast({
+        title: "Error",
+        description: "An unexpected error occurred",
+        variant: "destructive",
+      });
+    } finally {
+      setGeneratingAvailability(false);
+    }
+  };
+
   return (
     <Card>
       <CardHeader>
@@ -166,12 +201,41 @@ export const TutorAvailabilityManager = () => {
           </div>
 
           <div className="space-y-4">
+            {/* Generate Availability Button */}
+            <div>
+              <Label className="mb-2 block">Quick Setup</Label>
+              <Alert className="mb-3 bg-primary/10 border-primary/30">
+                <Sparkles className="w-4 h-4 text-primary" />
+                <AlertDescription>
+                  <strong>First time here?</strong> Generate your default availability (8 AM - 8 PM daily) for the next 4 weeks.
+                </AlertDescription>
+              </Alert>
+              <Button 
+                onClick={handleGenerateAvailability} 
+                disabled={generatingAvailability}
+                variant="default"
+                className="w-full"
+              >
+                {generatingAvailability ? (
+                  <>
+                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                    Generating...
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="w-4 h-4 mr-2" />
+                    Generate 4 Weeks of Availability
+                  </>
+                )}
+              </Button>
+            </div>
+
             <div>
               <Label className="mb-2 block">Block Unavailable Time</Label>
               <Alert className="mb-3">
                 <Info className="w-4 h-4" />
                 <AlertDescription>
-                  You're available 8 AM - 8 PM daily by default. Block times when you're unavailable.
+                  Block specific times when you're unavailable (meetings, personal time, etc.)
                 </AlertDescription>
               </Alert>
               <div className="grid grid-cols-2 gap-2 mb-3">
