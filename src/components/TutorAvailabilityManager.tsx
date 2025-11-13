@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -7,25 +7,22 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Ban, Trash2, Info } from "lucide-react";
+import { Clock, Trash2, Info } from "lucide-react";
 import { format } from "date-fns";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import type { Database } from "@/integrations/supabase/types";
+
+type TutorAvailability = Database["public"]["Tables"]["tutor_availability"]["Row"];
 
 export const TutorAvailabilityManager = () => {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
-  const [blockedSlots, setBlockedSlots] = useState<any[]>([]);
+  const [blockedSlots, setBlockedSlots] = useState<TutorAvailability[]>([]);
   const [startTime, setStartTime] = useState("");
   const [endTime, setEndTime] = useState("");
   const [loading, setLoading] = useState(false);
   const { toast } = useToast();
 
-  useEffect(() => {
-    if (selectedDate) {
-      fetchBlockedSlots();
-    }
-  }, [selectedDate]);
-
-  const fetchBlockedSlots = async () => {
+  const fetchBlockedSlots = useCallback(async () => {
     if (!selectedDate) return;
 
     const { data: { user } } = await supabase.auth.getUser();
@@ -40,7 +37,6 @@ export const TutorAvailabilityManager = () => {
       .from("tutor_availability")
       .select("*")
       .eq("tutor_id", user.id)
-      .eq("slot_type", "blocked")
       .gte("start_time", startOfDay.toISOString())
       .lte("start_time", endOfDay.toISOString())
       .order("start_time");
@@ -51,7 +47,11 @@ export const TutorAvailabilityManager = () => {
     }
 
     setBlockedSlots(data || []);
-  };
+  }, [selectedDate]);
+
+  useEffect(() => {
+    fetchBlockedSlots();
+  }, [fetchBlockedSlots]);
 
   const handleBlockTime = async () => {
     if (!selectedDate || !startTime || !endTime) {
@@ -93,7 +93,6 @@ export const TutorAvailabilityManager = () => {
         start_time: startDateTime.toISOString(),
         end_time: endDateTime.toISOString(),
         is_booked: false,
-        slot_type: "blocked",
       });
 
     if (error) {
@@ -115,7 +114,7 @@ export const TutorAvailabilityManager = () => {
     setLoading(false);
   };
 
-  const handleDeleteSlot = async (slotId: string, isBooked: boolean) => {
+  const handleDeleteSlot = async (slotId: string, isBooked: boolean | null) => {
     if (isBooked) {
       toast({
         title: "Cannot delete",
@@ -141,7 +140,7 @@ export const TutorAvailabilityManager = () => {
         title: "Slot deleted",
         description: "The time slot has been removed",
       });
-      fetchSlots();
+      fetchBlockedSlots();
     }
   };
 
@@ -168,7 +167,13 @@ export const TutorAvailabilityManager = () => {
 
           <div className="space-y-4">
             <div>
-              <Label className="mb-2 block">Add Time Slot</Label>
+              <Label className="mb-2 block">Block Unavailable Time</Label>
+              <Alert className="mb-3">
+                <Info className="w-4 h-4" />
+                <AlertDescription>
+                  You're available 8 AM - 8 PM daily by default. Block times when you're unavailable.
+                </AlertDescription>
+              </Alert>
               <div className="grid grid-cols-2 gap-2 mb-3">
                 <div>
                   <Label className="text-xs text-muted-foreground mb-1 block">Start Time</Label>
@@ -187,26 +192,26 @@ export const TutorAvailabilityManager = () => {
                   />
                 </div>
               </div>
-              <Button onClick={handleAddSlot} disabled={loading} className="w-full">
-                <Plus className="w-4 h-4 mr-2" />
-                Add Slot
+              <Button onClick={handleBlockTime} disabled={loading} className="w-full">
+                <Info className="w-4 h-4 mr-2" />
+                Block Time
               </Button>
             </div>
 
             <div>
               <Label className="mb-2 block">
-                Available Slots for {selectedDate ? format(selectedDate, "MMM d, yyyy") : "selected date"}
+                Blocked Times for {selectedDate ? format(selectedDate, "MMM d, yyyy") : "selected date"}
               </Label>
               <div className="space-y-2 max-h-96 overflow-y-auto">
-                {slots.length === 0 ? (
+                {blockedSlots.length === 0 ? (
                   <p className="text-sm text-muted-foreground text-center py-8">
-                    No slots for this date
+                    No blocked times for this date
                   </p>
                 ) : (
-                  slots.map((slot) => (
+                  blockedSlots.map((slot) => (
                     <div
                       key={slot.id}
-                      className="flex items-center justify-between p-3 border rounded-lg"
+                      className="flex items-center justify-between p-3 border rounded-lg bg-muted/50"
                     >
                       <div className="flex items-center gap-2">
                         <Clock className="w-4 h-4 text-muted-foreground" />
@@ -214,15 +219,12 @@ export const TutorAvailabilityManager = () => {
                           {format(new Date(slot.start_time), "h:mm a")} -{" "}
                           {format(new Date(slot.end_time), "h:mm a")}
                         </span>
-                        {slot.is_booked && (
-                          <Badge variant="default" className="text-xs">Booked</Badge>
-                        )}
+                        <Badge variant="secondary" className="text-xs">Blocked</Badge>
                       </div>
                       <Button
                         size="sm"
                         variant="ghost"
                         onClick={() => handleDeleteSlot(slot.id, slot.is_booked)}
-                        disabled={slot.is_booked}
                       >
                         <Trash2 className="w-4 h-4 text-destructive" />
                       </Button>
