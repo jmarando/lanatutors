@@ -584,7 +584,18 @@ const TutorSearch = () => {
                 </div>
 
                 {/* Action Button */}
-                <Button onClick={() => navigate(`/tutors/${tutor.id}`)} className="w-full" variant="default">
+                <Button 
+                  onClick={() => {
+                    // Pass search context to profile page
+                    const params = new URLSearchParams();
+                    if (selectedCurriculum !== 'all') params.set('curriculum', selectedCurriculum);
+                    if (selectedTeachingLevel !== 'all') params.set('level', selectedTeachingLevel);
+                    const queryString = params.toString();
+                    navigate(`/tutors/${tutor.id}${queryString ? `?${queryString}` : ''}`);
+                  }} 
+                  className="w-full" 
+                  variant="default"
+                >
                   View Profile
                 </Button>
               </CardContent>

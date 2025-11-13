@@ -46,6 +46,24 @@ const TutorProfile = () => {
     fetchPricingTiers();
   }, [id]);
 
+  // Auto-select tier based on search context
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const curriculum = params.get('curriculum');
+    
+    if (curriculum && pricingTiers.length > 0) {
+      // Advanced curricula: IGCSE, IB, A-Level
+      const advancedCurricula = ['IGCSE', 'IB', 'A-Level', 'Cambridge IGCSE', 'International Baccalaureate'];
+      const isAdvanced = advancedCurricula.some(c => curriculum.includes(c));
+      
+      if (isAdvanced) {
+        setSelectedTier('advanced');
+      } else {
+        setSelectedTier('standard');
+      }
+    }
+  }, [pricingTiers]);
+
   // Auto-open booking dialog when returning from login via redirect
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -420,6 +438,24 @@ const TutorProfile = () => {
                   
                   {pricingTiers.length > 0 ? (
                     <div className="flex flex-col gap-3">
+                      {/* Show context if user came from search */}
+                      {(() => {
+                        const params = new URLSearchParams(window.location.search);
+                        const curriculum = params.get('curriculum');
+                        const level = params.get('level');
+                        
+                        if (curriculum || level) {
+                          return (
+                            <div className="bg-primary/10 border border-primary/30 rounded-lg px-3 py-2 text-sm">
+                              <span className="font-medium text-primary">
+                                Showing prices for: {curriculum || ''} {level ? `- ${level}` : ''}
+                              </span>
+                            </div>
+                          );
+                        }
+                        return null;
+                      })()}
+                      
                       <div className="flex items-center gap-3">
                         <div className="flex gap-2">
                           {pricingTiers.map(tier => {
