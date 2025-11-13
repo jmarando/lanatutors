@@ -684,19 +684,31 @@ Yehtu Tutors`
       return;
     }
 
-    // Send rejection email if tutor is rejected
-    if (!approved && tutor) {
+    // Send approval or rejection email
+    if (tutor) {
       try {
-        await supabase.functions.invoke("send-tutor-rejection-email", {
-          body: {
-            tutorName: tutor.profiles?.full_name || "Tutor",
-            email: tutor.email,
-            rejectionReason: "After careful review, we are unable to proceed with your application at this time."
-          }
-        });
-        console.log("Rejection email sent");
+        if (approved) {
+          // Send approval email
+          await supabase.functions.invoke("send-tutor-approval-email", {
+            body: {
+              email: tutor.email,
+              fullName: tutor.profiles?.full_name || "Tutor"
+            }
+          });
+          console.log("Approval email sent to:", tutor.email);
+        } else {
+          // Send rejection email
+          await supabase.functions.invoke("send-tutor-rejection-email", {
+            body: {
+              tutorName: tutor.profiles?.full_name || "Tutor",
+              email: tutor.email,
+              rejectionReason: "After careful review, we are unable to proceed with your application at this time."
+            }
+          });
+          console.log("Rejection email sent");
+        }
       } catch (emailError) {
-        console.error("Failed to send rejection email:", emailError);
+        console.error("Failed to send email:", emailError);
         // Don't fail the whole operation if email fails
       }
     }
