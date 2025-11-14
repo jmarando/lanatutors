@@ -26,7 +26,7 @@ const StudentDashboard = lazy(() => import("./pages/NewStudentDashboard"));
 const TutorDashboard = lazy(() => import("./pages/TutorDashboard"));
 const AdminDashboardRedesigned = lazy(() => import("./pages/AdminDashboard-Redesigned"));
 const BookConsultation = lazy(() => import("./pages/BookConsultation"));
-const ExpertConsultation = lazy(() => import("./pages/ExpertConsultation"));
+
 const NotFound = lazy(() => import("./pages/NotFound"));
 const TestEmail = lazy(() => import("./pages/TestEmail"));
 const BookingConfirmed = lazy(() => import("./pages/BookingConfirmed"));
@@ -78,7 +78,6 @@ const App = () => {
                 <Route path="/tutor-onboarding-guide" element={<TutorOnboardingGuide />} />
                 <Route path="/admin" element={<AdminDashboardRedesigned />} />
                 <Route path="/book-consultation" element={<BookConsultation />} />
-                <Route path="/expert-consultation" element={<ExpertConsultation />} />
                 <Route path="/test-email" element={<TestEmail />} />
                 <Route path="/booking-confirmed" element={<BookingConfirmed />} />
                 <Route path="/consultation-confirmed" element={<ConsultationConfirmed />} />
