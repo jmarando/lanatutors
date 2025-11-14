@@ -588,7 +588,7 @@ const TutorProfile = () => {
                       size="sm" 
                       className="w-full"
                       variant="default"
-                      onClick={() => navigate('/expert-consultation')}
+                      onClick={() => navigate('/book-consultation')}
                     >
                       Book Free Consultation
                     </Button>

@@ -91,7 +91,7 @@ export const PackageSelector = ({ tutorId, onSelectPackage, selectedPackageId }:
     return (
       <div className="text-center py-8">
         <p className="text-muted-foreground mb-4">No packages available for this tutor yet.</p>
-        <Button variant="outline" onClick={() => window.location.href = '/expert-consultation'}>
+        <Button variant="outline" onClick={() => window.location.href = '/book-consultation'}>
           Talk to an Expert
         </Button>
       </div>
@@ -104,7 +104,7 @@ export const PackageSelector = ({ tutorId, onSelectPackage, selectedPackageId }:
         <h3 className="text-lg font-semibold">Available Packages</h3>
         <Button 
           variant="link" 
-          onClick={() => window.location.href = '/expert-consultation'}
+          onClick={() => window.location.href = '/book-consultation'}
           className="text-sm"
         >
           Need a custom package? Talk to an expert →
