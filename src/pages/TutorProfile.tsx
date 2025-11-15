@@ -741,8 +741,9 @@ const TutorProfile = () => {
                       <span className="flex items-center gap-2">
                         <BookOpen className="w-4 h-4" />
                         Book Double Session
+                        <Badge variant="secondary" className="text-[10px] ml-1">Save 5%</Badge>
                       </span>
-                      <span className="font-semibold">KES {(currentRate * 2).toLocaleString()}</span>
+                      <span className="font-semibold">KES {Math.round(currentRate * 2 * 0.95).toLocaleString()}</span>
                     </Button>
 
                     <Separator className="my-3" />
