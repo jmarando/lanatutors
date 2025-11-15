@@ -10,6 +10,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Award, Upload, ArrowLeft, ArrowRight, CheckCircle, MapPin, Star } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
@@ -1583,6 +1584,14 @@ TEFL/TESOL Certification" value={formData.qualifications} onChange={e => setForm
                     </div>
                   </div>
 
+                  <Alert>
+                    <AlertTitle>Important: Enter your own rates</AlertTitle>
+                    <AlertDescription>
+                      The numbers you may see (like 2,000 or 3,500) are examples only. Please enter your own hourly rates.
+                      Typical range: KES 2,000–6,000 per hour.
+                    </AlertDescription>
+                  </Alert>
+
                   {/* Tier Rate Inputs */}
                   <div className="space-y-4">
                     <div className="border rounded-lg p-4 space-y-3 bg-secondary/10">
@@ -1595,10 +1604,10 @@ TEFL/TESOL Certification" value={formData.qualifications} onChange={e => setForm
                         <Input 
                           id="standardRate" 
                           type="number" 
-                          min="1500" 
+                          min="2000" 
                           max="6000" 
                           step="100" 
-                          placeholder="2000" 
+                          placeholder="e.g., 2000 — enter your own rate" 
                           value={formData.standardRate} 
                           onChange={e => setFormData({
                             ...formData,
@@ -1606,6 +1615,12 @@ TEFL/TESOL Certification" value={formData.qualifications} onChange={e => setForm
                           })} 
                           required 
                         />
+                        <p className="text-xs text-muted-foreground">
+                          Guideline: KES 2,000–6,000 per hour. This is an example — please enter your own rate.
+                        </p>
+                        {formData.standardRate === "2000" && (
+                          <p className="text-xs text-destructive">2,000 is our example value. Make sure this reflects your own rate.</p>
+                        )}
                         {formData.standardRate && (
                           <div className="space-y-1">
                             <p className="text-xs text-muted-foreground">
@@ -1629,10 +1644,10 @@ TEFL/TESOL Certification" value={formData.qualifications} onChange={e => setForm
                         <Input 
                           id="advancedRate" 
                           type="number" 
-                          min="1500" 
+                          min="2000" 
                           max="6000" 
                           step="100" 
-                          placeholder="3500" 
+                          placeholder="e.g., 3500 — enter your own rate" 
                           value={formData.advancedRate} 
                           onChange={e => setFormData({
                             ...formData,
@@ -1640,6 +1655,12 @@ TEFL/TESOL Certification" value={formData.qualifications} onChange={e => setForm
                           })} 
                           required 
                         />
+                        <p className="text-xs text-muted-foreground">
+                          Guideline: KES 2,000–6,000 per hour. This is an example — please enter your own rate.
+                        </p>
+                        {formData.advancedRate === "3500" && (
+                          <p className="text-xs text-destructive">3,500 is our example value. Make sure this reflects your own rate.</p>
+                        )}
                         {formData.advancedRate && (
                           <div className="space-y-1">
                             <p className="text-xs text-muted-foreground">
