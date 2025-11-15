@@ -803,21 +803,42 @@ Yehtu Tutors`
 
   const fetchTutoringBookings = async () => {
     try {
-      const { data, error } = await supabase
+      const { data: bookingsData, error } = await supabase
         .from("bookings")
         .select(`
           *,
-          tutor_availability(start_time, end_time),
-          profiles!bookings_student_id_fkey(full_name, phone_number),
-          tutor_profiles!bookings_tutor_id_fkey(
-            id,
-            profiles!tutor_profiles_user_id_fkey(full_name)
-          )
+          tutor_availability(start_time, end_time)
         `)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      setTutoringBookings(data || []);
+
+      // Fetch student and tutor profiles separately
+      const bookingsWithProfiles = await Promise.all(
+        (bookingsData || []).map(async (booking) => {
+          const [studentRes, tutorRes] = await Promise.all([
+            supabase.from("profiles").select("full_name, phone_number").eq("id", booking.student_id).single(),
+            supabase.from("tutor_profiles").select("id, user_id").eq("id", booking.tutor_id).single()
+          ]);
+
+          let tutorProfile = null;
+          if (tutorRes.data) {
+            const tutorUserProfile = await supabase.from("profiles").select("full_name").eq("id", tutorRes.data.user_id).single();
+            tutorProfile = {
+              id: tutorRes.data.id,
+              profiles: tutorUserProfile.data
+            };
+          }
+
+          return {
+            ...booking,
+            profiles: studentRes.data,
+            tutor_profiles: tutorProfile
+          };
+        })
+      );
+
+      setTutoringBookings(bookingsWithProfiles || []);
     } catch (error: any) {
       console.error("Error fetching tutoring bookings:", error);
       toast.error("Failed to load tutoring bookings");
