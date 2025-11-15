@@ -31,26 +31,8 @@ const TutorSearch = () => {
   const [selectedSubject, setSelectedSubject] = useState("all");
   const [selectedCurriculum, setSelectedCurriculum] = useState("all");
   const [selectedTeachingLevel, setSelectedTeachingLevel] = useState("all");
-  const [selectedGender, setSelectedGender] = useState("all");
-  const [sortBy, setSortBy] = useState("rating");
-  const [smartMatchOpen, setSmartMatchOpen] = useState(false);
-  const [matchStep, setMatchStep] = useState(1);
-  const [matchLoading, setMatchLoading] = useState(false);
-  const [matchPreferences, setMatchPreferences] = useState({
-    curriculum: "",
-    gradeLevel: "",
-    subjects: [] as string[],
-    learningStyle: ""
-  });
-  const [priceRange, setPriceRange] = useState([2000, 6000]);
-  const [minRating, setMinRating] = useState(0);
   const [tutors, setTutors] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-
-  // New availability filters
-  const [selectedDate, setSelectedDate] = useState<Date>();
-  const [selectedTimeSlot, setSelectedTimeSlot] = useState("all");
-  const [availabilityMap, setAvailabilityMap] = useState<Map<string, boolean>>(new Map());
   useEffect(() => {
     fetchTutors();
   }, []);
