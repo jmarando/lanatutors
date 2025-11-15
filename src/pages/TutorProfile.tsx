@@ -139,7 +139,8 @@ const TutorProfile = () => {
     };
 
     const firstName = profile?.full_name?.split(" ")[0] || "Tutor";
-    const photoUrl = photoMapping[firstName] || tutor1;
+    // Use avatar_url from profile first, fallback to photoMapping
+    const photoUrl = profile?.avatar_url || photoMapping[firstName] || tutor1;
 
     setTutor({
       id: tutorProfile.id,
@@ -405,15 +406,17 @@ const TutorProfile = () => {
                   </div>
                 </div>
 
-                <div className="flex items-center gap-4 pt-6 border-t border-border/50">
-                  <div className="flex items-center gap-1">
-                    <Star className="w-5 h-5 fill-yellow-400 text-yellow-400" />
-                    <span className="font-semibold">{tutor.rating}</span>
-                    <span className="text-sm text-muted-foreground ml-1">
-                      ({tutor.reviews} {tutor.reviews === 1 ? 'review' : 'reviews'})
-                    </span>
+                {tutor.reviews > 0 && (
+                  <div className="flex items-center gap-4 pt-6 border-t border-border/50">
+                    <div className="flex items-center gap-1">
+                      <Star className="w-5 h-5 fill-yellow-400 text-yellow-400" />
+                      <span className="font-semibold">{tutor.rating}</span>
+                      <span className="text-sm text-muted-foreground ml-1">
+                        ({tutor.reviews} {tutor.reviews === 1 ? 'review' : 'reviews'})
+                      </span>
+                    </div>
                   </div>
-                </div>
+                )}
               </CardContent>
             </Card>
 
@@ -450,28 +453,21 @@ const TutorProfile = () => {
               </Card>
             )}
 
-            {/* Services Offered */}
-            {(tutor.servicesOffered.length > 0 || tutor.teachingMode.length > 0) && (
+            {/* Services Offered - Only show if has services */}
+            {tutor.servicesOffered && tutor.servicesOffered.length > 0 && (
               <Card className="border-border/50">
                 <CardContent className="p-6">
                   <div className="flex items-center gap-2 mb-4">
                     <Users className="w-5 h-5 text-primary" />
                     <h2 className="font-bold text-lg">Services Offered</h2>
                   </div>
-                  <div className="grid sm:grid-cols-2 gap-4">
-                    {tutor.servicesOffered.length > 0 && (
-                      <div>
-                        <h3 className="text-sm font-semibold mb-2">What I Offer:</h3>
-                        <div className="flex flex-wrap gap-2">
-                          {tutor.servicesOffered.map((service: string, idx: number) => (
-                            <Badge key={idx} variant="secondary" className="text-xs">
-                              <CheckCircle2 className="w-3 h-3 mr-1" />
-                              {service}
-                            </Badge>
-                          ))}
-                        </div>
-                      </div>
-                    )}
+                  <div className="flex flex-wrap gap-2">
+                    {tutor.servicesOffered.map((service: string, idx: number) => (
+                      <Badge key={idx} variant="secondary" className="text-xs">
+                        <CheckCircle2 className="w-3 h-3 mr-1" />
+                        {service}
+                      </Badge>
+                    ))}
                   </div>
                 </CardContent>
               </Card>
@@ -692,18 +688,30 @@ const TutorProfile = () => {
                 </CardContent>
               </Card>
 
-              {/* Package Offers */}
+              {/* Package Offers - Make More Prominent */}
               {packages.length > 0 && (
-                <Card className="border-border/50">
+                <Card className="border-primary/30 bg-gradient-to-br from-primary/5 to-secondary/5">
                   <CardContent className="p-6">
-                    <div className="flex items-center gap-2 mb-4">
-                      <Sparkles className="w-5 h-5 text-primary" />
-                      <h3 className="font-semibold">Save with Packages</h3>
+                    <div className="text-center mb-6">
+                      <div className="inline-flex items-center gap-2 bg-primary/10 px-4 py-2 rounded-full mb-3">
+                        <Sparkles className="w-5 h-5 text-primary" />
+                        <h3 className="font-bold text-lg">Save with Packages</h3>
+                      </div>
+                      <p className="text-sm text-muted-foreground">
+                        Need a custom package? 
+                        <a href="/book-consultation" className="text-primary hover:underline ml-1">
+                          Talk to an expert →
+                        </a>
+                      </p>
                     </div>
-                    <PackageSelector
-                      tutorId={tutor.id}
-                      onSelectPackage={handlePackageSelect}
-                    />
+                    
+                    <div className="space-y-4">
+                      <div className="text-sm font-medium mb-3">Available Packages</div>
+                      <PackageSelector
+                        tutorId={tutor.id}
+                        onSelectPackage={handlePackageSelect}
+                      />
+                    </div>
                   </CardContent>
                 </Card>
               )}
