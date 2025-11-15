@@ -234,123 +234,7 @@ const TutorSearch = () => {
             </SelectContent>
           </Select>
 
-          <Select value={sortBy} onValueChange={setSortBy}>
-            <SelectTrigger className="w-48 h-12">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="rating">Sort by Rating</SelectItem>
-              <SelectItem value="reviews">Most Reviews</SelectItem>
-              <SelectItem value="price-low">Price: Low to High</SelectItem>
-              <SelectItem value="price-high">Price: High to Low</SelectItem>
-            </SelectContent>
-          </Select>
 
-          {/* Advanced Filters Sheet */}
-          <Sheet>
-            <SheetTrigger asChild>
-              <Button variant="outline" className="h-12">
-                <SlidersHorizontal className="w-4 h-4 mr-2" />
-                Filters
-              </Button>
-            </SheetTrigger>
-            <SheetContent>
-              <SheetHeader>
-                <SheetTitle>Advanced Filters</SheetTitle>
-                <SheetDescription>
-                  Refine your tutor search with advanced filters
-                </SheetDescription>
-              </SheetHeader>
-              <div className="space-y-6 mt-6">
-                {/* Price Range */}
-                <div>
-                  <Label className="mb-3 block">
-                    Hourly Rate: KES {priceRange[0]} - KES {priceRange[1]}
-                  </Label>
-                  <Slider value={priceRange} onValueChange={setPriceRange} max={6000} min={2000} step={100} className="mb-2" />
-                  <div className="flex justify-between text-xs text-muted-foreground">
-                    <span>KES 2,000</span>
-                    <span>KES 6,000</span>
-                  </div>
-                </div>
-
-                {/* Minimum Rating */}
-                <div>
-                  <Label className="mb-3 block">Minimum Rating: {minRating}★</Label>
-                  <Slider value={[minRating]} onValueChange={val => setMinRating(val[0])} max={5} min={0} step={0.5} className="mb-2" />
-                  <div className="flex justify-between text-xs text-muted-foreground">
-                    <span>0★</span>
-                    <span>5★</span>
-                  </div>
-                </div>
-
-                {/* Date Filter */}
-                <div>
-                  <Label className="mb-3 block">Filter by Availability</Label>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button variant="outline" className={cn("w-full justify-start text-left font-normal", !selectedDate && "text-muted-foreground")}>
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {selectedDate ? format(selectedDate, "PPP") : "Select date"}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar mode="single" selected={selectedDate} onSelect={setSelectedDate} disabled={date => date < new Date(new Date().setHours(0, 0, 0, 0))} initialFocus />
-                      {selectedDate && <div className="p-3 border-t">
-                          <Button variant="ghost" size="sm" className="w-full" onClick={() => setSelectedDate(undefined)}>
-                            Clear Date
-                          </Button>
-                        </div>}
-                    </PopoverContent>
-                  </Popover>
-                </div>
-
-                {/* Time Slot */}
-                <div>
-                  <Label className="mb-3 block">Time Slot</Label>
-                  <Select value={selectedTimeSlot} onValueChange={setSelectedTimeSlot}>
-                    <SelectTrigger className="w-full">
-                      <Clock className="mr-2 h-4 w-4" />
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {timeSlots.map(slot => <SelectItem key={slot.value} value={slot.value}>
-                          {slot.label}
-                        </SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Gender Filter */}
-                <div>
-                  <Label className="mb-3 block">Tutor Gender Preference</Label>
-                  <Select value={selectedGender} onValueChange={setSelectedGender}>
-                    <SelectTrigger className="w-full">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">Any Gender</SelectItem>
-                      <SelectItem value="male">Male</SelectItem>
-                      <SelectItem value="female">Female</SelectItem>
-                      <SelectItem value="other">Other</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                <Button variant="outline" className="w-full" onClick={() => {
-                setPriceRange([2000, 6000]);
-                setMinRating(0);
-                setSelectedDate(undefined);
-                setSelectedTimeSlot("all");
-                setSelectedTeachingLevel("all");
-                setSelectedGender("all");
-                setAvailabilityMap(new Map());
-              }}>
-                  Reset All Filters
-                </Button>
-              </div>
-            </SheetContent>
-          </Sheet>
         </div>
 
         {/* Results Count */}
@@ -358,360 +242,82 @@ const TutorSearch = () => {
           <div className="flex items-center justify-between flex-wrap gap-2">
             <p className="text-sm text-muted-foreground">
               Showing {filteredTutors.length} of {tutors.length} tutors
-              {selectedDate && selectedTimeSlot !== "all" && <span className="ml-2 text-primary">
-                  • Available on {format(selectedDate, "MMM d")} ({timeSlots.find(t => t.value === selectedTimeSlot)?.label.split(' ')[0]})
-                </span>}
             </p>
-            {(selectedDate || selectedTimeSlot !== "all" || selectedSubject !== "all" || selectedCurriculum !== "all" || selectedTeachingLevel !== "all" || selectedGender !== "all" || minRating > 0 || priceRange[0] !== 2000 || priceRange[1] !== 6000) && <Button variant="ghost" size="sm" onClick={() => {
-            setSelectedDate(undefined);
-            setSelectedTimeSlot("all");
-            setSelectedSubject("all");
-            setSelectedCurriculum("all");
-            setSelectedTeachingLevel("all");
-            setSelectedGender("all");
-            setMinRating(0);
-            setPriceRange([2000, 6000]);
-            setAvailabilityMap(new Map());
-          }}>
-                Clear All Filters
-              </Button>}
+            {(selectedSubject !== "all" || selectedCurriculum !== "all" || selectedTeachingLevel !== "all" || searchQuery) && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => {
+                  setSearchQuery("");
+                  setSelectedSubject("all");
+                  setSelectedCurriculum("all");
+                  setSelectedTeachingLevel("all");
+                }}
+              >
+                Clear Filters
+              </Button>
+            )}
           </div>
         </div>
-
-        {/* Tutors Grid */}
-        {filteredTutors.length === 0 ? <div className="text-center py-16">
+        {filteredTutors.length === 0 ? (
+          <div className="text-center py-16">
             <p className="text-xl font-semibold mb-2">No tutors found</p>
-            <p className="text-muted-foreground mb-6">
-              Try adjusting your filters or search criteria
-            </p>
-            <Button variant="outline" onClick={() => {
-          setSearchQuery("");
-          setSelectedDate(undefined);
-          setSelectedTimeSlot("all");
-          setSelectedSubject("all");
-          setSelectedCurriculum("all");
-          setMinRating(0);
-          setPriceRange([2000, 6000]);
-          setAvailabilityMap(new Map());
-        }}>
-              Reset All Filters
+            <p className="text-muted-foreground mb-6">Try adjusting your filters or search criteria</p>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setSearchQuery("");
+                setSelectedSubject("all");
+                setSelectedCurriculum("all");
+                setSelectedTeachingLevel("all");
+              }}
+            >
+              Reset Filters
             </Button>
-          </div> : <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto">
-          {filteredTutors.map(tutor => <Card key={tutor.id} className="overflow-hidden hover:shadow-lg transition-all duration-300 border-border/50 bg-card">
-              <CardContent className="p-6">
-                {/* Avatar and Name Section */}
-                <div className="flex items-start gap-4 mb-4">
-                  <Avatar className="w-20 h-20 shrink-0 ring-2 ring-border/50">
-                    <AvatarImage src={tutor.photoUrl} alt={tutor.name} />
-                    <AvatarFallback className="text-lg bg-primary/10 text-primary font-semibold">
-                      {tutor.photo}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="text-xl font-bold leading-tight mb-2">{tutor.name}</h3>
-                    <p className="text-sm text-muted-foreground mb-1 leading-snug">
-                      {tutor.subjects.slice(0, 3).join(", ")}{tutor.subjects.length > 3 ? "..." : ""}
-                    </p>
-                    {tutor.displayInstitution ? <p className="text-xs text-muted-foreground/80 flex items-center gap-1">
-                        <MapPin className="w-3 h-3" />
-                        {tutor.school}
-                      </p> : <p className="text-xs text-muted-foreground/80 flex items-center gap-1">
-                        <Award className="w-3 h-3" />
-                        {tutor.experienceYears}+ years experience
-                      </p>}
-                  </div>
-                </div>
-
-                {/* Stats Section */}
-                <div className="flex items-center justify-between py-3 mb-4 border-y border-border/50">
-                  <div className="flex items-center gap-1.5">
-                    <Star className="w-4 h-4 shrink-0 fill-yellow-500 text-yellow-500" />
-                    <span className="font-semibold text-sm">{tutor.rating.toFixed(1)}</span>
-                    <span className="text-xs text-muted-foreground">({tutor.reviews})</span>
-                  </div>
-                  
-                  <div className="text-xs text-muted-foreground font-medium">
-                    {tutor.curriculum.join(" • ")}
-                  </div>
-                </div>
-
-                {/* Pricing Section */}
-                <div className="space-y-2 mb-4">
-                  {tutor.hasTiers ? (
-                    <>
-                      <div className="flex items-baseline justify-between">
-                        <span className="text-xs text-muted-foreground">Standard Rate</span>
-                        <span className="text-base font-bold text-foreground">
-                          KES {tutor.hourlyRate.toLocaleString()}
-                          <span className="text-xs font-normal text-muted-foreground">/hr</span>
-                        </span>
-                      </div>
-                      <div className="flex items-baseline justify-between">
-                        <span className="text-xs text-muted-foreground">Advanced Rate</span>
-                        <span className="text-base font-semibold text-foreground">
-                          KES {tutor.hourlyRateMax.toLocaleString()}
-                          <span className="text-xs font-normal text-muted-foreground">/hr</span>
-                        </span>
-                      </div>
-                    </>
-                  ) : (
-                    <>
-                      <div className="flex items-baseline justify-between">
-                        <span className="text-xs text-muted-foreground">Online</span>
-                        <span className="text-lg font-bold text-foreground">
-                          KES {tutor.hourlyRate.toLocaleString()}
-                          <span className="text-xs font-normal text-muted-foreground">/hr</span>
-                        </span>
-                      </div>
-                      <div className="flex items-baseline justify-between">
-                        <span className="text-xs text-muted-foreground">In-Person</span>
-                        <span className="text-sm font-semibold text-muted-foreground">
-                          KES {Math.round(tutor.hourlyRate * 1.5).toLocaleString()}
-                          <span className="text-xs font-normal">/hr</span>
-                        </span>
-                      </div>
-                    </>
-                  )}
-                </div>
-
-                {/* Action Button */}
-                <Button 
-                  onClick={() => {
-                    // Pass search context to profile page
-                    const params = new URLSearchParams();
-                    if (selectedCurriculum !== 'all') params.set('curriculum', selectedCurriculum);
-                    if (selectedTeachingLevel !== 'all') params.set('level', selectedTeachingLevel);
-                    const queryString = params.toString();
-                    navigate(`/tutors/${tutor.id}${queryString ? `?${queryString}` : ''}`);
-                  }} 
-                  className="w-full" 
-                  variant="default"
-                >
-                  View Profile
-                </Button>
-              </CardContent>
-            </Card>)}
-        </div>}
-      </div>
-
-      {/* Smart Match Interactive Sheet */}
-      <Sheet open={smartMatchOpen} onOpenChange={setSmartMatchOpen}>
-        <SheetContent side="right" className="w-full sm:max-w-lg overflow-y-auto">
-          <SheetHeader>
-            <SheetTitle className="flex items-center gap-2">
-              <Sparkles className="w-5 h-5 text-primary" />
-              Smart Tutor Match
-            </SheetTitle>
-            <SheetDescription>
-              Answer a few quick questions to find your perfect tutor
-            </SheetDescription>
-          </SheetHeader>
-
-          <div className="mt-6 space-y-6">
-            {/* Progress Indicator */}
-            <div className="flex gap-2">
-              {[1, 2, 3, 4].map((step) => (
-                <div
-                  key={step}
-                  className={`h-1.5 flex-1 rounded-full transition-colors ${
-                    step <= matchStep ? "bg-primary" : "bg-muted"
-                  }`}
-                />
-              ))}
-            </div>
-
-            {/* Step 1: Curriculum */}
-            {matchStep === 1 && (
-              <div className="space-y-4 animate-in fade-in slide-in-from-right-5">
-                <div>
-                  <h3 className="font-semibold mb-1">What curriculum do you follow?</h3>
-                  <p className="text-sm text-muted-foreground">This helps us match you with the right tutors</p>
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  {["CBC", "IGCSE", "8-4-4", "IB"].map((curr) => (
-                    <Button
-                      key={curr}
-                      variant={matchPreferences.curriculum === curr ? "default" : "outline"}
-                      className="h-20 text-base"
-                      onClick={() => {
-                        setMatchPreferences({ ...matchPreferences, curriculum: curr });
-                        setTimeout(() => setMatchStep(2), 200);
-                      }}
-                    >
-                      {curr}
-                    </Button>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {/* Step 2: Grade Level */}
-            {matchStep === 2 && (
-              <div className="space-y-4 animate-in fade-in slide-in-from-right-5">
-                <div>
-                  <h3 className="font-semibold mb-1">What grade are you in?</h3>
-                  <p className="text-sm text-muted-foreground">Select your current grade level</p>
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  {matchPreferences.curriculum === "CBC" && 
-                    ["Grade 4", "Grade 5", "Grade 6", "Grade 7", "Grade 8", "Grade 9"].map((grade) => (
-                      <Button
-                        key={grade}
-                        variant={matchPreferences.gradeLevel === grade ? "default" : "outline"}
-                        onClick={() => {
-                          setMatchPreferences({ ...matchPreferences, gradeLevel: grade });
-                          setTimeout(() => setMatchStep(3), 200);
-                        }}
-                      >
-                        {grade}
-                      </Button>
-                    ))
-                  }
-                  {matchPreferences.curriculum === "IGCSE" && 
-                    ["Year 7", "Year 8", "Year 9", "Year 10", "Year 11"].map((grade) => (
-                      <Button
-                        key={grade}
-                        variant={matchPreferences.gradeLevel === grade ? "default" : "outline"}
-                        onClick={() => {
-                          setMatchPreferences({ ...matchPreferences, gradeLevel: grade });
-                          setTimeout(() => setMatchStep(3), 200);
-                        }}
-                      >
-                        {grade}
-                      </Button>
-                    ))
-                  }
-                  {(matchPreferences.curriculum === "8-4-4" || matchPreferences.curriculum === "IB") && 
-                    ["Form 1", "Form 2", "Form 3", "Form 4"].map((grade) => (
-                      <Button
-                        key={grade}
-                        variant={matchPreferences.gradeLevel === grade ? "default" : "outline"}
-                        onClick={() => {
-                          setMatchPreferences({ ...matchPreferences, gradeLevel: grade });
-                          setTimeout(() => setMatchStep(3), 200);
-                        }}
-                      >
-                        {grade}
-                      </Button>
-                    ))
-                  }
-                </div>
-                <Button variant="ghost" onClick={() => setMatchStep(1)}>← Back</Button>
-              </div>
-            )}
-
-            {/* Step 3: Subjects */}
-            {matchStep === 3 && (
-              <div className="space-y-4 animate-in fade-in slide-in-from-right-5">
-                <div>
-                  <h3 className="font-semibold mb-1">Which subjects need help?</h3>
-                  <p className="text-sm text-muted-foreground">Select all that apply</p>
-                </div>
-                <div className="grid grid-cols-2 gap-3">
-                  {["Mathematics", "English", "Physics", "Chemistry", "Biology", "Kiswahili", "History", "Geography"].map((subject) => (
-                    <Button
-                      key={subject}
-                      variant={matchPreferences.subjects.includes(subject) ? "default" : "outline"}
-                      className="h-auto py-3 justify-start"
-                      onClick={() => {
-                        const newSubjects = matchPreferences.subjects.includes(subject)
-                          ? matchPreferences.subjects.filter(s => s !== subject)
-                          : [...matchPreferences.subjects, subject];
-                        setMatchPreferences({ ...matchPreferences, subjects: newSubjects });
-                      }}
-                    >
-                      <div className="flex items-center gap-2">
-                        {matchPreferences.subjects.includes(subject) && <CheckCircle className="w-4 h-4 flex-shrink-0" />}
-                        <span className="text-sm">{subject}</span>
-                      </div>
-                    </Button>
-                  ))}
-                </div>
-                <div className="flex gap-2 pt-4">
-                  <Button variant="ghost" onClick={() => setMatchStep(2)}>← Back</Button>
-                  <Button 
-                    className="flex-1" 
-                    onClick={() => setMatchStep(4)}
-                    disabled={matchPreferences.subjects.length === 0}
-                  >
-                    Continue
-                  </Button>
-                </div>
-              </div>
-            )}
-
-            {/* Step 4: Learning Style & Apply */}
-            {matchStep === 4 && (
-              <div className="space-y-4 animate-in fade-in slide-in-from-right-5">
-                <div>
-                  <h3 className="font-semibold mb-1">How do you learn best?</h3>
-                  <p className="text-sm text-muted-foreground">This helps personalize your matches</p>
-                </div>
-                <div className="space-y-3">
-                  {[
-                    { value: "visual", label: "Visual", desc: "Charts, diagrams, videos" },
-                    { value: "practical", label: "Hands-on", desc: "Practice problems, experiments" },
-                    { value: "discussion", label: "Discussion", desc: "Talking through concepts" },
-                    { value: "structured", label: "Structured", desc: "Step-by-step guidance" }
-                  ].map((style) => (
-                    <Button
-                      key={style.value}
-                      variant={matchPreferences.learningStyle === style.value ? "default" : "outline"}
-                      className="w-full h-auto py-4 justify-start"
-                      onClick={async () => {
-                        setMatchPreferences({ ...matchPreferences, learningStyle: style.value });
-                        setMatchLoading(true);
-                        
-                        try {
-                          // Apply filters immediately without AI call for now
-                          setSelectedCurriculum(matchPreferences.curriculum);
-                          
-                          // Filter to first selected subject
-                          if (matchPreferences.subjects.length > 0) {
-                            setSelectedSubject(matchPreferences.subjects[0]);
-                          }
-
-                          toast.success(`Showing tutors for ${matchPreferences.curriculum} - ${matchPreferences.subjects.join(", ")}`);
-                          setSmartMatchOpen(false);
-                          
-                          // Reset for next time
-                          setTimeout(() => {
-                            setMatchStep(1);
-                            setMatchPreferences({
-                              curriculum: "",
-                              gradeLevel: "",
-                              subjects: [],
-                              learningStyle: ""
-                            });
-                          }, 500);
-                        } catch (error) {
-                          console.error("Smart match error:", error);
-                          toast.error("Something went wrong. Please try manual filters.");
-                        } finally {
-                          setMatchLoading(false);
-                        }
-                      }}
-                      disabled={matchLoading}
-                    >
-                      <div className="text-left flex-1">
-                        <div className="font-semibold flex items-center gap-2">
-                          {matchPreferences.learningStyle === style.value && <CheckCircle className="w-4 h-4" />}
-                          {style.label}
-                        </div>
-                        <div className="text-xs text-muted-foreground mt-0.5">{style.desc}</div>
-                      </div>
-                      {matchLoading && matchPreferences.learningStyle === style.value && (
-                        <Loader2 className="w-4 h-4 ml-2 animate-spin flex-shrink-0" />
-                      )}
-                    </Button>
-                  ))}
-                </div>
-                <Button variant="ghost" onClick={() => setMatchStep(3)}>← Back</Button>
-              </div>
-            )}
           </div>
-        </SheetContent>
-      </Sheet>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto">
+            {filteredTutors.map((tutor) => (
+              <Card key={tutor.id} className="overflow-hidden border-border/50 bg-card">
+                <CardContent className="p-6">
+                  <div className="flex items-start gap-4 mb-4">
+                    <Avatar className="w-16 h-16">
+                      <AvatarImage src={tutor.photoUrl || undefined} alt={tutor.name} />
+                      <AvatarFallback>{tutor.photo}</AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between">
+                        <h3 className="font-semibold text-lg">{tutor.name}</h3>
+                        <div className="flex items-center gap-1 text-primary">
+                          <Star className="w-4 h-4 fill-primary" />
+                          <span className="text-sm">{(tutor.rating || 0).toFixed(1)}</span>
+                        </div>
+                      </div>
+                      <p className="text-sm text-muted-foreground">{tutor.school}</p>
+                      <p className="mt-2 text-xs text-muted-foreground">
+                        Subjects: {tutor.subjects.slice(0, 3).join(", ")}
+                        {tutor.subjects.length > 3 ? "…" : ""}
+                      </p>
+                    </div>
+                  </div>
+                  <Button
+                    onClick={() => {
+                      const params = new URLSearchParams();
+                      if (selectedCurriculum !== "all") params.set("curriculum", selectedCurriculum);
+                      if (selectedTeachingLevel !== "all") params.set("level", selectedTeachingLevel);
+                      const qs = params.toString();
+                      navigate(`/tutors/${tutor.id}${qs ? `?${qs}` : ""}`);
+                    }}
+                    className="w-full"
+                  >
+                    View Profile
+                  </Button>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        )}
+      </div>
     </div>;
 };
 export default TutorSearch;
