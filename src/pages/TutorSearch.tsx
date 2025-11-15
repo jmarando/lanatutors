@@ -24,7 +24,7 @@ import tutor4 from "@/assets/tutor-4.jpg";
 import tutor5 from "@/assets/tutor-5.jpg";
 import tutor6 from "@/assets/tutor-6.jpg";
 import calvinProfilePhoto from "@/assets/calvin-profile.png";
-import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 const TutorSearch = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
