@@ -1897,6 +1897,37 @@ TEFL/TESOL Certification" value={formData.qualifications} onChange={e => setForm
 
 
 
+              {/* Validation Summary for Step 4 */}
+              {step === 4 && (!formData.standardRate || !formData.advancedRate) && (
+                <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg p-4 mb-4">
+                  <div className="flex items-start gap-3">
+                    <div className="mt-0.5">
+                      <svg className="w-5 h-5 text-amber-600 dark:text-amber-500" fill="currentColor" viewBox="0 0 20 20">
+                        <path fillRule="evenodd" d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                    <div className="flex-1">
+                      <h4 className="font-semibold text-amber-900 dark:text-amber-200 mb-2">Complete Required Fields</h4>
+                      <p className="text-sm text-amber-800 dark:text-amber-300 mb-2">Please complete the following to submit your profile:</p>
+                      <ul className="space-y-1 text-sm text-amber-800 dark:text-amber-300">
+                        {!formData.standardRate && (
+                          <li className="flex items-center gap-2">
+                            <span className="w-1.5 h-1.5 bg-amber-600 dark:bg-amber-500 rounded-full"></span>
+                            <span><strong>Standard Rate:</strong> Go to Step 3 (Pricing) to set your hourly rate</span>
+                          </li>
+                        )}
+                        {!formData.advancedRate && (
+                          <li className="flex items-center gap-2">
+                            <span className="w-1.5 h-1.5 bg-amber-600 dark:bg-amber-500 rounded-full"></span>
+                            <span><strong>Advanced Rate:</strong> Go to Step 3 (Pricing) to set your advanced rate</span>
+                          </li>
+                        )}
+                      </ul>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               <div className="flex justify-between gap-4 pt-4">
                 {step > 1 && <Button type="button" variant="outline" onClick={() => setStep(step - 1)}>
                     <ArrowLeft className="mr-2 h-4 w-4" />
@@ -1911,18 +1942,26 @@ TEFL/TESOL Certification" value={formData.qualifications} onChange={e => setForm
                 }} className="ml-auto">
                     Continue
                     <ArrowRight className="ml-2 h-4 w-4" />
-                  </Button> : <Button
-                    type="button" 
-                    onClick={(e) => {
-                      e.preventDefault();
-                      e.stopPropagation();
-                      handleSubmit(e as any);
-                    }} 
-                    disabled={isLoading || !formData.standardRate || !formData.advancedRate} 
-                    className="ml-auto"
-                  >
-                    {isLoading ? "Submitting..." : "Submit Profile"}
-                  </Button>}
+                  </Button> : (
+                    <div className="ml-auto flex flex-col items-end gap-2">
+                      {(!formData.standardRate || !formData.advancedRate) && (
+                        <p className="text-sm text-muted-foreground">
+                          Complete all required fields to enable submission
+                        </p>
+                      )}
+                      <Button
+                        type="button" 
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          handleSubmit(e as any);
+                        }} 
+                        disabled={isLoading || !formData.standardRate || !formData.advancedRate}
+                      >
+                        {isLoading ? "Submitting..." : "Submit Profile"}
+                      </Button>
+                    </div>
+                  )}
               </div>
             </form>
               </CardContent>
