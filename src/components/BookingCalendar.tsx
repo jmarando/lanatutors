@@ -6,6 +6,7 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { format, isSameDay } from "date-fns";
@@ -740,9 +741,12 @@ export const BookingCalendar = ({
                       onClick={() => !paymentInitiated && setSessionDuration(2)}
                       disabled={paymentInitiated}
                     >
-                      <div className="font-semibold mb-1">Double Session (2 hours)</div>
+                      <div className="font-semibold mb-1 flex items-center gap-2">
+                        Double Session (2 hours)
+                        <Badge variant="secondary" className="text-xs">Save 5%</Badge>
+                      </div>
                       <div className="text-sm text-muted-foreground">
-                        KES {selectedClassType === 'online' ? hourlyRate * 2 : (hourlyRate * 1.5 * 2).toFixed(0)}
+                        KES {selectedClassType === 'online' ? (hourlyRate * 2 * 0.95).toFixed(0) : (hourlyRate * 1.5 * 2 * 0.95).toFixed(0)}
                       </div>
                     </button>
                   </div>
@@ -791,7 +795,9 @@ export const BookingCalendar = ({
                   {selectedSlot && (() => {
                     const slotDuration = (new Date(selectedSlot.end_time).getTime() - new Date(selectedSlot.start_time).getTime()) / (1000 * 60 * 60);
                     const duration = slotDuration * sessionDuration;
-                    const rate = selectedClassType === 'in-person' ? hourlyRate * 1.5 : hourlyRate;
+                    const baseRate = selectedClassType === 'in-person' ? hourlyRate * 1.5 : hourlyRate;
+                    // Apply 5% discount for double lessons (2 hours)
+                    const rate = sessionDuration === 2 ? baseRate * 0.95 : baseRate;
                     const total = duration * rate;
                     const deposit = total * 0.3;
                     const balance = total - deposit;
