@@ -13,6 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { SEO } from "@/components/SEO";
 import { BookingCalendar } from "@/components/BookingCalendar";
 import { PackageSelector } from "@/components/PackageSelector";
+import { HolidayPackageBanner } from "@/components/HolidayPackageBanner";
 import { cn } from "@/lib/utils";
 
 import tutor1 from "@/assets/tutor-1.jpg";
@@ -37,6 +38,7 @@ const TutorProfile = () => {
   const [packages, setPackages] = useState<any[]>([]);
   const [pricingTiers, setPricingTiers] = useState<any[]>([]);
   const [selectedTier, setSelectedTier] = useState<'standard' | 'advanced'>('standard');
+  const [showHolidayBanner, setShowHolidayBanner] = useState(false);
 
   useEffect(() => {
     fetchTutorProfile();
@@ -44,6 +46,7 @@ const TutorProfile = () => {
     fetchReviews();
     fetchPackages();
     fetchPricingTiers();
+    checkHolidayPackageAvailability();
   }, [id]);
 
   // Auto-select tier based on search context
@@ -217,6 +220,19 @@ const TutorProfile = () => {
     if (tiersData) {
       setPricingTiers(tiersData);
     }
+  };
+
+  const checkHolidayPackageAvailability = async () => {
+    // Check if we're in December holiday period and if there are holiday packages
+    const now = new Date();
+    const { data: holidayPackages } = await supabase
+      .from("holiday_packages")
+      .select("*")
+      .eq("is_active", true)
+      .lte("starts_at", now.toISOString())
+      .gte("ends_at", now.toISOString());
+    
+    setShowHolidayBanner(holidayPackages && holidayPackages.length > 0);
   };
 
   const getCurrentRate = () => {
@@ -419,6 +435,13 @@ const TutorProfile = () => {
                 )}
               </CardContent>
             </Card>
+
+            {/* Holiday Package Banner */}
+            {showHolidayBanner && (
+              <HolidayPackageBanner 
+                onViewPackages={() => navigate('/holiday-packages')}
+              />
+            )}
 
             {/* About Me */}
             {tutor.bio && (
