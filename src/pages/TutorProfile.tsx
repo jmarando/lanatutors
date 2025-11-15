@@ -661,30 +661,6 @@ const TutorProfile = () => {
                       </div>
                     </Button>
                   </div>
-
-                  <Separator className="my-6" />
-
-                  <div className="space-y-2">
-                    <h4 className="font-semibold text-sm mb-3">What's Included</h4>
-                    <div className="space-y-2 text-xs text-muted-foreground">
-                      <div className="flex items-start gap-2">
-                        <CheckCircle2 className="w-4 h-4 text-primary shrink-0 mt-0.5" />
-                        <span>Personalized 1-on-1 instruction</span>
-                      </div>
-                      <div className="flex items-start gap-2">
-                        <CheckCircle2 className="w-4 h-4 text-primary shrink-0 mt-0.5" />
-                        <span>Custom learning materials</span>
-                      </div>
-                      <div className="flex items-start gap-2">
-                        <CheckCircle2 className="w-4 h-4 text-primary shrink-0 mt-0.5" />
-                        <span>Progress tracking & feedback</span>
-                      </div>
-                      <div className="flex items-start gap-2">
-                        <CheckCircle2 className="w-4 h-4 text-primary shrink-0 mt-0.5" />
-                        <span>Flexible rescheduling</span>
-                      </div>
-                    </div>
-                  </div>
                 </CardContent>
               </Card>
 
@@ -715,6 +691,31 @@ const TutorProfile = () => {
                   </CardContent>
                 </Card>
               )}
+
+              {/* What's Included - Moved to Bottom */}
+              <Card className="border-border/50">
+                <CardContent className="p-5">
+                  <h4 className="font-semibold text-sm mb-3">What's Included</h4>
+                  <div className="space-y-2 text-xs text-muted-foreground">
+                    <div className="flex items-start gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+                      <span>Personalized 1-on-1 instruction</span>
+                    </div>
+                    <div className="flex items-start gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+                      <span>Custom learning materials</span>
+                    </div>
+                    <div className="flex items-start gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+                      <span>Progress tracking & feedback</span>
+                    </div>
+                    <div className="flex items-start gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+                      <span>Flexible rescheduling</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
           </div>
         </div>
