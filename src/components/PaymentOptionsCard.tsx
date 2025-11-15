@@ -230,20 +230,20 @@ export const PaymentOptionsCard = ({
                         </p>
                         <div className="flex items-center gap-3 mt-2 text-xs">
                           <span className="text-muted-foreground">
-                            {pkg.session_count} sessions
+                            Per session: KES {(pkg.total_price / pkg.session_count).toLocaleString()}
                           </span>
                           <span className="text-green-600 dark:text-green-400 font-medium">
-                            Save KES {savings.toFixed(0)}
+                            Save KES {savings.toLocaleString()}
                           </span>
-                          <span className="text-muted-foreground">
-                            Valid {pkg.validity_days} days
-                          </span>
+                        </div>
+                        <div className="text-xs text-muted-foreground mt-1">
+                          {pkg.session_count} sessions • Valid {pkg.validity_days} days
                         </div>
                       </div>
                     </div>
                     <div className="text-right">
-                      <div className="font-bold text-lg">KES {pkg.total_price.toFixed(0)}</div>
-                      <div className="text-xs text-muted-foreground line-through">KES {regularPrice.toFixed(0)}</div>
+                      <div className="text-xs text-muted-foreground line-through">KES {regularPrice.toLocaleString()}</div>
+                      <div className="font-bold text-lg">KES {pkg.total_price.toLocaleString()}</div>
                     </div>
                   </div>
                 </CardContent>
