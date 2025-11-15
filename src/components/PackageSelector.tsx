@@ -43,10 +43,12 @@ export const PackageSelector = ({ tutorId, onSelectPackage, selectedPackageId }:
         .eq("is_active", true)
         .order("is_featured", { ascending: false })
         .order("session_count")
-        .limit(4);
+        .limit(10);
 
       if (error) throw error;
-      setPackages(data || []);
+      // Filter to only show packages with 5+ sessions (excludes single and double sessions)
+      const filteredPackages = (data || []).filter(pkg => pkg.session_count >= 5);
+      setPackages(filteredPackages);
     } catch (error) {
       console.error("Error fetching packages:", error);
       toast.error("Failed to load packages");
