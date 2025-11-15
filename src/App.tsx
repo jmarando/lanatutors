@@ -8,7 +8,7 @@ import Navigation from "./components/Navigation";
 import { AuthProvider } from "@/contexts/AuthContext";
 
 // Lazy load pages for code splitting
-const Home = lazy(() => import("./pages/Index"));
+const Home = lazy(() => import("./pages/Home"));
 const HowItWorks = lazy(() => import("./pages/HowItWorks"));
 const AboutUs = lazy(() => import("./pages/AboutUs"));
 const Blog = lazy(() => import("./pages/Blog"));
