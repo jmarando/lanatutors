@@ -37,6 +37,7 @@ const SetupCentralCalendar = lazy(() => import("./pages/SetupCentralCalendar"));
 const PaymentCallback = lazy(() => import("./pages/PaymentCallback"));
 const TutorAvailability = lazy(() => import("./pages/TutorAvailability"));
 const TutorOnboardingGuide = lazy(() => import("./pages/TutorOnboardingGuide"));
+const TutorGuidePrintable = lazy(() => import("./pages/TutorGuidePrintable"));
 
 const queryClient = new QueryClient();
 
@@ -76,6 +77,7 @@ const App = () => {
                 <Route path="/tutor-profile-setup" element={<TutorProfileSetup />} />
                 <Route path="/tutor-profile-submitted" element={<TutorProfileSubmitted />} />
                 <Route path="/tutor-onboarding-guide" element={<TutorOnboardingGuide />} />
+                <Route path="/tutor-guide-printable" element={<TutorGuidePrintable />} />
                 <Route path="/admin" element={<AdminDashboardRedesigned />} />
                 <Route path="/book-consultation" element={<BookConsultation />} />
                 <Route path="/test-email" element={<TestEmail />} />
