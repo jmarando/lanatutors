@@ -335,6 +335,45 @@ export type Database = {
         }
         Relationships: []
       }
+      holiday_packages: {
+        Row: {
+          candidate_levels: string[]
+          created_at: string | null
+          curriculum: string
+          ends_at: string
+          holiday_period: string
+          id: string
+          is_active: boolean | null
+          starts_at: string
+          updated_at: string | null
+          year: number
+        }
+        Insert: {
+          candidate_levels: string[]
+          created_at?: string | null
+          curriculum: string
+          ends_at: string
+          holiday_period: string
+          id?: string
+          is_active?: boolean | null
+          starts_at: string
+          updated_at?: string | null
+          year: number
+        }
+        Update: {
+          candidate_levels?: string[]
+          created_at?: string | null
+          curriculum?: string
+          ends_at?: string
+          holiday_period?: string
+          id?: string
+          is_active?: boolean | null
+          starts_at?: string
+          updated_at?: string | null
+          year?: number
+        }
+        Relationships: []
+      }
       package_offers: {
         Row: {
           created_at: string | null
@@ -1096,6 +1135,7 @@ export type Database = {
         | "multi_child"
         | "exam_prep"
         | "custom"
+        | "holiday_revision"
       payment_status: "pending" | "completed" | "failed" | "cancelled"
       subscription_status: "active" | "expired" | "cancelled"
     }
@@ -1232,6 +1272,7 @@ export const Constants = {
         "multi_child",
         "exam_prep",
         "custom",
+        "holiday_revision",
       ],
       payment_status: ["pending", "completed", "failed", "cancelled"],
       subscription_status: ["active", "expired", "cancelled"],
