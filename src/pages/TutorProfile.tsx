@@ -6,7 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Star, GraduationCap, Clock, BookOpen, Award, MapPin, Users, CheckCircle2, Heart, Sparkles, Video, Calendar, ArrowLeft } from "lucide-react";
+import { Star, GraduationCap, Clock, BookOpen, Award, MapPin, Users, CheckCircle2, Heart, Sparkles, Video, Calendar, ArrowLeft, School, Building2, Home } from "lucide-react";
 import { toast } from "sonner";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -525,30 +525,68 @@ const TutorProfile = () => {
                 {tutor.teachingExperience && tutor.teachingExperience.length > 0 && (
                   <div>
                     <h3 className="font-semibold text-sm mb-4">Professional Teaching Positions</h3>
-                    <div className="space-y-4">
-                      {tutor.teachingExperience.map((exp: any, idx: number) => (
-                        <div key={idx} className="flex gap-4">
-                          <div className="flex flex-col items-center">
-                            <div className="w-3 h-3 rounded-full bg-primary shrink-0" />
-                            {idx < tutor.teachingExperience.length - 1 && (
-                              <div className="w-px h-full bg-border mt-1" />
-                            )}
-                          </div>
-                          <div className="flex-1 pb-4">
-                            <div className="flex items-start justify-between gap-4 mb-1">
-                              <h4 className="font-semibold text-sm">{exp.institution}</h4>
-                              <Badge variant="outline" className="text-xs shrink-0">
-                                {exp.years} {exp.years === 1 ? 'year' : 'years'}
-                              </Badge>
+                    <div className="space-y-6 relative">
+                      {/* Vertical timeline line */}
+                      <div className="absolute left-[19px] top-6 bottom-6 w-0.5 bg-gradient-to-b from-primary via-primary/50 to-border" />
+                      
+                      {tutor.teachingExperience.map((exp: any, idx: number) => {
+                        // Determine institution type icon
+                        const institutionType = exp.type?.toLowerCase() || 'school';
+                        const InstitutionIcon = 
+                          institutionType === 'tutoring center' || institutionType === 'tutoring' ? Building2 :
+                          institutionType === 'private' || institutionType === 'home' ? Home :
+                          School;
+                        
+                        return (
+                          <div key={idx} className="flex gap-4 relative">
+                            {/* Timeline node with icon */}
+                            <div className="relative z-10 shrink-0">
+                              <div className="w-10 h-10 rounded-full bg-primary/10 border-2 border-primary flex items-center justify-center">
+                                <InstitutionIcon className="w-5 h-5 text-primary" />
+                              </div>
                             </div>
-                            {exp.subjects && (
-                              <p className="text-sm text-muted-foreground mt-1">
-                                {exp.subjects}
-                              </p>
-                            )}
+                            
+                            {/* Content card */}
+                            <div className="flex-1 pb-2">
+                              <Card className="border-border/50 hover:border-primary/30 transition-colors">
+                                <CardContent className="p-4">
+                                  <div className="flex items-start justify-between gap-4 mb-2">
+                                    <div className="flex-1">
+                                      <h4 className="font-semibold text-base">{exp.institution}</h4>
+                                      {exp.type && (
+                                        <Badge variant="outline" className="text-[10px] mt-1">
+                                          {exp.type}
+                                        </Badge>
+                                      )}
+                                    </div>
+                                    <div className="flex items-center gap-2 bg-primary/10 px-3 py-1 rounded-full shrink-0">
+                                      <Clock className="w-3 h-3 text-primary" />
+                                      <span className="text-xs font-semibold text-primary">
+                                        {exp.years} {exp.years === 1 ? 'year' : 'years'}
+                                      </span>
+                                    </div>
+                                  </div>
+                                  
+                                  {exp.subjects && (
+                                    <div className="flex items-start gap-2 mt-3">
+                                      <BookOpen className="w-4 h-4 text-muted-foreground mt-0.5 shrink-0" />
+                                      <p className="text-sm text-muted-foreground">
+                                        {exp.subjects}
+                                      </p>
+                                    </div>
+                                  )}
+                                  
+                                  {exp.description && (
+                                    <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
+                                      {exp.description}
+                                    </p>
+                                  )}
+                                </CardContent>
+                              </Card>
+                            </div>
                           </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   </div>
                 )}
