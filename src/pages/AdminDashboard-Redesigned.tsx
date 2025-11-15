@@ -53,6 +53,7 @@ const AdminDashboard = () => {
   });
   const [fixingPrices, setFixingPrices] = useState(false);
   const [priceStats, setPriceStats] = useState<{ total: number; needsFix: number } | null>(null);
+  const [processingTutorId, setProcessingTutorId] = useState<string | null>(null);
 
   // Message templates for customer journey
   const messageTemplates = {
@@ -722,49 +723,54 @@ Yehtu Tutors`
   };
 
   const handleTutorApproval = async (tutorId: string, approved: boolean) => {
-    const tutor = pendingTutors.find(t => t.id === tutorId);
-    
-    const { error } = await supabase
-      .from("tutor_profiles")
-      .update({ verified: approved })
-      .eq("id", tutorId);
+    setProcessingTutorId(tutorId);
+    try {
+      const tutor = pendingTutors.find(t => t.id === tutorId);
+      
+      const { error } = await supabase
+        .from("tutor_profiles")
+        .update({ verified: approved })
+        .eq("id", tutorId);
 
-    if (error) {
-      toast.error("Failed to update tutor status");
-      return;
-    }
-
-    // Send approval or rejection email
-    if (tutor) {
-      try {
-        if (approved) {
-          // Send profile live notification email
-          await supabase.functions.invoke("send-profile-live-email", {
-            body: {
-              email: tutor.email,
-              fullName: tutor.profiles?.full_name || "Tutor"
-            }
-          });
-          console.log("Profile live email sent to:", tutor.email);
-        } else {
-          // Send rejection email
-          await supabase.functions.invoke("send-tutor-rejection-email", {
-            body: {
-              tutorName: tutor.profiles?.full_name || "Tutor",
-              email: tutor.email,
-              rejectionReason: "After careful review, we are unable to proceed with your application at this time."
-            }
-          });
-          console.log("Rejection email sent");
-        }
-      } catch (emailError) {
-        console.error("Failed to send email:", emailError);
-        // Don't fail the whole operation if email fails
+      if (error) {
+        toast.error("Failed to update tutor status");
+        return;
       }
-    }
 
-    toast.success(approved ? "Tutor approved!" : "Tutor rejected");
-    fetchPendingTutors();
+      // Send approval or rejection email
+      if (tutor) {
+        try {
+          if (approved) {
+            // Send profile live notification email
+            await supabase.functions.invoke("send-profile-live-email", {
+              body: {
+                email: tutor.email,
+                fullName: tutor.profiles?.full_name || "Tutor"
+              }
+            });
+            console.log("Profile live email sent to:", tutor.email);
+          } else {
+            // Send rejection email
+            await supabase.functions.invoke("send-tutor-rejection-email", {
+              body: {
+                tutorName: tutor.profiles?.full_name || "Tutor",
+                email: tutor.email,
+                rejectionReason: "After careful review, we are unable to proceed with your application at this time."
+              }
+            });
+            console.log("Rejection email sent");
+          }
+        } catch (emailError) {
+          console.error("Failed to send email:", emailError);
+          // Don't fail the whole operation if email fails
+        }
+      }
+
+      toast.success(approved ? "Tutor approved!" : "Tutor rejected");
+      await fetchPendingTutors();
+    } finally {
+      setProcessingTutorId(null);
+    }
   };
 
   const handleReviewModeration = async (reviewId: string, approved: boolean, notes?: string) => {
@@ -1518,16 +1524,18 @@ The Lana Team`;
                         <Button
                           onClick={() => handleTutorApproval(tutor.id, true)}
                           className="bg-green-600 hover:bg-green-700"
+                          disabled={processingTutorId === tutor.id}
                         >
                           <CheckCircle className="w-4 h-4 mr-2" />
-                          Approve
+                          {processingTutorId === tutor.id ? "Processing..." : "Approve"}
                         </Button>
                         <Button
                           onClick={() => handleTutorApproval(tutor.id, false)}
                           variant="destructive"
+                          disabled={processingTutorId === tutor.id}
                         >
                           <XCircle className="w-4 h-4 mr-2" />
-                          Reject
+                          {processingTutorId === tutor.id ? "Processing..." : "Reject"}
                         </Button>
                       </div>
                     </div>
