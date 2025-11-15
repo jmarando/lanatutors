@@ -161,6 +161,8 @@ const TutorProfile = () => {
       school: tutorProfile.current_institution || "Not specified",
       curriculum: tutorProfile.curriculum || [],
       teachingMode: tutorProfile.teaching_mode || [],
+      teachingLevels: tutorProfile.teaching_levels || [],
+      teachingLocation: tutorProfile.teaching_location || "",
       servicesOffered: tutorProfile.services_offered || [],
       whyStudentsLove: tutorProfile.why_students_love || [],
       teachingExperience: tutorProfile.teaching_experience || [],
@@ -552,6 +554,44 @@ const TutorProfile = () => {
                 )}
               </CardContent>
             </Card>
+
+            {/* Teaching Levels */}
+            {tutor.teachingLevels && tutor.teachingLevels.length > 0 && (
+              <Card className="border-border/50">
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-2 mb-4">
+                    <GraduationCap className="w-5 h-5 text-primary" />
+                    <h2 className="font-bold text-lg">Teaching Levels</h2>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {tutor.teachingLevels.map((level: string, idx: number) => (
+                      <Badge key={idx} variant="outline" className="text-xs">
+                        {level}
+                      </Badge>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Available Locations */}
+            {tutor.teachingLocation && tutor.teachingLocation.trim() && (
+              <Card className="border-border/50">
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-2 mb-4">
+                    <MapPin className="w-5 h-5 text-primary" />
+                    <h2 className="font-bold text-lg">Available Locations</h2>
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {tutor.teachingLocation.split(',').filter((loc: string) => loc.trim()).map((location: string, idx: number) => (
+                      <Badge key={idx} variant="secondary" className="text-xs">
+                        {location.trim()}
+                      </Badge>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
 
             {/* Reviews */}
             {reviews.length > 0 && (
