@@ -6,7 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Star, GraduationCap, Clock, BookOpen, Award, MapPin, Users, CheckCircle2, Heart, Sparkles, Video, Calendar } from "lucide-react";
+import { Star, GraduationCap, Clock, BookOpen, Award, MapPin, Users, CheckCircle2, Heart, Sparkles, Video, Calendar, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -334,6 +334,14 @@ const TutorProfile = () => {
       />
       
       <div className="max-w-7xl mx-auto px-6 py-12">
+        <Button
+          variant="ghost"
+          onClick={() => navigate('/tutors')}
+          className="mb-6 hover:bg-accent"
+        >
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Back to All Tutors
+        </Button>
         <div className="grid lg:grid-cols-3 gap-8">
           {/* LEFT COLUMN - Tutor Information (2/3 width) */}
           <div className="lg:col-span-2 space-y-6">
