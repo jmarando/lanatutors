@@ -51,6 +51,8 @@ const AdminDashboard = () => {
     nextAction: "",
     nextActionDate: "",
   });
+  const [fixingPrices, setFixingPrices] = useState(false);
+  const [priceStats, setPriceStats] = useState<{ total: number; needsFix: number } | null>(null);
 
   // Message templates for customer journey
   const messageTemplates = {
@@ -316,7 +318,58 @@ Yehtu Tutors`
     fetchPendingReviews();
     fetchConsultationBookings();
     fetchTutoringBookings();
+    fetchPriceStats();
     setLoading(false);
+  };
+
+  const fetchPriceStats = async () => {
+    const { data: packages, error } = await supabase
+      .from('package_offers')
+      .select('id, total_price');
+    
+    if (!error && packages) {
+      const needsFix = packages.filter(pkg => pkg.total_price < 100).length;
+      setPriceStats({ total: packages.length, needsFix });
+    }
+  };
+
+  const handleBulkPriceFix = async () => {
+    if (!confirm('This will multiply all package prices under 100 by 1000. Continue?')) {
+      return;
+    }
+
+    setFixingPrices(true);
+    try {
+      const { data: packagesToFix, error: fetchError } = await supabase
+        .from('package_offers')
+        .select('id, total_price')
+        .lt('total_price', 100);
+
+      if (fetchError) throw fetchError;
+
+      if (!packagesToFix || packagesToFix.length === 0) {
+        toast.info('No packages found with prices under 100');
+        setFixingPrices(false);
+        return;
+      }
+
+      let fixed = 0;
+      for (const pkg of packagesToFix) {
+        const { error: updateError } = await supabase
+          .from('package_offers')
+          .update({ total_price: pkg.total_price * 1000 })
+          .eq('id', pkg.id);
+
+        if (!updateError) fixed++;
+      }
+
+      toast.success(`Fixed ${fixed} package prices`);
+      await fetchPriceStats();
+    } catch (error: any) {
+      toast.error('Failed to fix prices: ' + error.message);
+    } finally {
+      setFixingPrices(false);
+    }
   };
 
   const fetchDashboardMetrics = async () => {
@@ -1080,6 +1133,19 @@ The Lana Team`;
                   )}
                 </span>
               </TabsTrigger>
+              <TabsTrigger 
+                value="tools"
+                className="data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:bg-transparent rounded-none bg-transparent px-4 py-3 border-b-2 border-transparent"
+              >
+                <span className="flex items-center gap-2">
+                  Data Tools
+                  {priceStats && priceStats.needsFix > 0 && (
+                    <Badge className="rounded-full h-5 min-w-5 px-1.5 bg-amber-600">
+                      {priceStats.needsFix}
+                    </Badge>
+                  )}
+                </span>
+              </TabsTrigger>
             </TabsList>
           </div>
 
@@ -1581,6 +1647,52 @@ The Lana Team`;
           <TabsContent value="blog" className="space-y-4">
             <BlogManagement />
           </TabsContent>
+
+          <TabsContent value="tools" className="space-y-4">
+            <div className="max-w-2xl">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Package Price Fix Tool</CardTitle>
+                  <CardDescription>
+                    Fix package prices that were incorrectly stored in hundreds instead of full amounts
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4">
+                  {priceStats && (
+                    <div className="bg-muted p-4 rounded-lg space-y-2">
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-muted-foreground">Total Packages:</span>
+                        <span className="font-medium">{priceStats.total}</span>
+                      </div>
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-muted-foreground">Need Price Fix:</span>
+                        <span className="font-bold text-amber-600">{priceStats.needsFix}</span>
+                      </div>
+                    </div>
+                  )}
+                  
+                  <div className="space-y-2">
+                    <p className="text-sm text-muted-foreground">
+                      This will multiply all package prices under 100 by 1000 to correct currency values.
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                      Example: 9 → 9,000 KES
+                    </p>
+                  </div>
+
+                  <Button 
+                    onClick={handleBulkPriceFix} 
+                    disabled={fixingPrices || (priceStats && priceStats.needsFix === 0)}
+                    className="w-full"
+                    variant={priceStats && priceStats.needsFix > 0 ? "default" : "outline"}
+                  >
+                    {fixingPrices ? "Fixing Prices..." : `Fix ${priceStats?.needsFix || 0} Package Prices`}
+                  </Button>
+                </CardContent>
+              </Card>
+            </div>
+          </TabsContent>
+
 
           <TabsContent value="consultations" className="space-y-4">
             {/* Conversion Metrics Dashboard */}
