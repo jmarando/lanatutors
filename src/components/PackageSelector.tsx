@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
-import { Sparkles, Users, BookOpen, Award, Check } from "lucide-react";
+import { Sparkles, Users, BookOpen, Award, Check, Gift } from "lucide-react";
 import { toast } from "sonner";
 
 interface PackageOffer {
@@ -63,6 +63,8 @@ export const PackageSelector = ({ tutorId, onSelectPackage, selectedPackageId }:
         return <Users className="w-5 h-5" />;
       case 'exam_prep':
         return <Award className="w-5 h-5" />;
+      case 'holiday_revision':
+        return <Sparkles className="w-5 h-5 text-primary animate-pulse" />;
       default:
         return <Sparkles className="w-5 h-5" />;
     }
@@ -76,6 +78,8 @@ export const PackageSelector = ({ tutorId, onSelectPackage, selectedPackageId }:
         return 'Family Package';
       case 'exam_prep':
         return 'Exam Prep';
+      case 'holiday_revision':
+        return 'Holiday Revision Special';
       case 'single_subject':
         return 'Single Subject';
       default:
@@ -124,10 +128,18 @@ export const PackageSelector = ({ tutorId, onSelectPackage, selectedPackageId }:
                 selectedPackageId === pkg.id
                   ? 'border-primary border-2 shadow-lg'
                   : 'hover:border-primary/50'
-              } ${pkg.is_featured ? 'ring-2 ring-primary/20' : ''}`}
+              } ${pkg.package_type === 'holiday_revision' ? 'border-primary/30 bg-gradient-to-br from-primary/5 to-background' : pkg.is_featured ? 'ring-2 ring-primary/20' : ''}`}
               onClick={() => onSelectPackage(pkg)}
             >
-              {pkg.is_featured && (
+              {pkg.package_type === 'holiday_revision' && (
+                <div className="absolute -top-3 left-4">
+                  <Badge className="bg-gradient-to-r from-primary to-primary/80">
+                    <Gift className="w-3 h-3 mr-1" />
+                    December Special
+                  </Badge>
+                </div>
+              )}
+              {pkg.is_featured && pkg.package_type !== 'holiday_revision' && (
                 <div className="absolute -top-3 left-4">
                   <Badge className="bg-primary">Popular</Badge>
                 </div>
