@@ -33,72 +33,10 @@ const TutorSearch = () => {
   const [selectedTeachingLevel, setSelectedTeachingLevel] = useState("all");
   const [tutors, setTutors] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  
   useEffect(() => {
     fetchTutors();
   }, []);
-  useEffect(() => {
-    if (selectedDate && selectedTimeSlot !== "all") {
-      fetchAvailability();
-    }
-  }, [selectedDate, selectedTimeSlot, tutors]);
-  const fetchAvailability = async () => {
-    if (!selectedDate || selectedTimeSlot === "all") return;
-    try {
-      // Parse time slot (e.g., "morning" -> 6-12)
-      const timeRanges: Record<string, {
-        start: number;
-        end: number;
-      }> = {
-        morning: {
-          start: 6,
-          end: 12
-        },
-        afternoon: {
-          start: 12,
-          end: 17
-        },
-        evening: {
-          start: 17,
-          end: 21
-        }
-      };
-      const range = timeRanges[selectedTimeSlot];
-      if (!range) return;
-      const startDate = new Date(selectedDate);
-      startDate.setHours(range.start, 0, 0, 0);
-      const endDate = new Date(selectedDate);
-      endDate.setHours(range.end, 0, 0, 0);
-
-      // Fetch availability for all tutors for the selected date/time
-      const {
-        data: availability
-      } = await supabase.from("tutor_availability").select("tutor_id").gte("start_time", startDate.toISOString()).lte("start_time", endDate.toISOString()).eq("is_booked", false);
-
-      // Create a map of tutor_id -> has availability
-      const newMap = new Map<string, boolean>();
-
-      // Get tutor_id to profile_id mapping
-      tutors.forEach(tutor => {
-        const hasSlots = availability?.some(slot => tutors.find(t => t.id === slot.tutor_id)) || false;
-        newMap.set(tutor.id, hasSlots);
-      });
-
-      // Actually check properly by fetching tutor profiles
-      const {
-        data: tutorProfiles
-      } = await supabase.from("tutor_profiles").select("id, user_id").in("id", tutors.map(t => t.id));
-      const tutorIdMap = new Map(tutorProfiles?.map(tp => [tp.id, tp.user_id]) || []);
-      availability?.forEach(slot => {
-        const tutorProfileId = tutors.find(t => tutorIdMap.get(t.id) === slot.tutor_id)?.id;
-        if (tutorProfileId) {
-          newMap.set(tutorProfileId, true);
-        }
-      });
-      setAvailabilityMap(newMap);
-    } catch (error) {
-      console.error("Error fetching availability:", error);
-    }
-  };
   const fetchTutors = async () => {
     setLoading(true);
     try {
