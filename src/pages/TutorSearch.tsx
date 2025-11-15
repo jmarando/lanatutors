@@ -159,25 +159,17 @@ const TutorSearch = () => {
     value: "evening",
     label: "Evening (5 PM - 9 PM)"
   }];
-  const filteredTutors = tutors.filter(tutor => {
-    const matchesSearch = tutor.name.toLowerCase().includes(searchQuery.toLowerCase()) || tutor.subjects.some(s => s.toLowerCase().includes(searchQuery.toLowerCase())) || tutor.school.toLowerCase().includes(searchQuery.toLowerCase());
+  const filteredTutors = tutors.filter((tutor) => {
+    const q = searchQuery.toLowerCase();
+    const matchesSearch =
+      tutor.name.toLowerCase().includes(q) ||
+      tutor.subjects.some((s: string) => s.toLowerCase().includes(q)) ||
+      (tutor.school || "").toLowerCase().includes(q);
     const matchesSubject = selectedSubject === "all" || tutor.subjects.includes(selectedSubject);
     const matchesCurriculum = selectedCurriculum === "all" || tutor.curriculum.includes(selectedCurriculum);
-    const matchesTeachingLevel = selectedTeachingLevel === "all" || tutor.teachingLevels?.includes(selectedTeachingLevel);
-    const matchesGender = selectedGender === "all" || tutor.gender === selectedGender;
-    // Check if tutor's rate range overlaps with filter range
-    const matchesPrice = tutor.hourlyRate <= priceRange[1] && tutor.hourlyRateMax >= priceRange[0];
-    const matchesRating = tutor.rating >= minRating;
-
-    // Availability filter
-    const matchesAvailability = !selectedDate || selectedTimeSlot === "all" || availabilityMap.get(tutor.id) === true;
-    return matchesSearch && matchesSubject && matchesCurriculum && matchesTeachingLevel && matchesGender && matchesPrice && matchesRating && matchesAvailability;
-  }).sort((a, b) => {
-    if (sortBy === "rating") return b.rating - a.rating;
-    if (sortBy === "price-low") return a.hourlyRate - b.hourlyRate;
-    if (sortBy === "price-high") return b.hourlyRate - a.hourlyRate;
-    if (sortBy === "reviews") return b.reviews - a.reviews;
-    return 0;
+    const matchesTeachingLevel =
+      selectedTeachingLevel === "all" || tutor.teachingLevels?.includes(selectedTeachingLevel);
+    return matchesSearch && matchesSubject && matchesCurriculum && matchesTeachingLevel;
   });
   if (loading) {
     return <div className="min-h-screen bg-secondary/20 flex items-center justify-center">
@@ -194,27 +186,6 @@ const TutorSearch = () => {
             <h1 className="text-5xl font-bold mb-3">Find Your Tutor</h1>
           </div>
 
-          {/* Smart Tutor Match CTA */}
-          <Card className="max-w-4xl mx-auto mb-8 border-2 border-primary/30 bg-gradient-to-br from-primary/5 to-primary/10">
-            <CardContent className="p-6">
-              <div className="flex items-start gap-4">
-                <div className="p-3 bg-primary rounded-lg">
-                  <Sparkles className="w-6 h-6 text-primary-foreground" />
-                </div>
-                <div className="flex-1">
-                  <h3 className="font-semibold text-lg mb-1">Not sure where to start?</h3>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    Let our AI analyze your learning needs and instantly match you with the perfect tutor based on your curriculum, subjects, and learning style.
-                  </p>
-                  <Button onClick={() => setSmartMatchOpen(true)} className="group">
-                    <Sparkles className="w-4 h-4 mr-2" />
-                    Try Smart Tutor Match
-                    <ArrowRight className="w-4 h-4 ml-2 group-hover:translate-x-1 transition-transform" />
-                  </Button>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
         </div>
 
         {/* Filters */}
