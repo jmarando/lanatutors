@@ -103,19 +103,8 @@ export const PackageSelector = ({ tutorId, onSelectPackage, selectedPackageId }:
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between mb-4">
-        <h3 className="text-lg font-semibold">Available Packages</h3>
-        <Button 
-          variant="link" 
-          onClick={() => window.location.href = '/book-consultation'}
-          className="text-sm"
-        >
-          Need a custom package? Talk to an expert →
-        </Button>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+    <div className="space-y-3">
+      <div className="grid gap-3">
         {packages.map((pkg) => {
           const pricePerSession = pkg.total_price / pkg.session_count;
           const originalPrice = pricePerSession / (1 - pkg.discount_percentage / 100) * pkg.session_count;
@@ -132,95 +121,78 @@ export const PackageSelector = ({ tutorId, onSelectPackage, selectedPackageId }:
               onClick={() => onSelectPackage(pkg)}
             >
               {pkg.package_type === 'holiday_revision' && (
-                <div className="absolute -top-3 left-4">
-                  <Badge className="bg-gradient-to-r from-primary to-primary/80">
+                <div className="absolute -top-2 right-3">
+                  <Badge className="bg-gradient-to-r from-primary to-primary/80 text-xs">
                     <Gift className="w-3 h-3 mr-1" />
-                    December Special
+                    Holiday Special
                   </Badge>
                 </div>
               )}
               {pkg.is_featured && pkg.package_type !== 'holiday_revision' && (
-                <div className="absolute -top-3 left-4">
-                  <Badge className="bg-primary">Popular</Badge>
+                <div className="absolute -top-2 right-3">
+                  <Badge className="bg-primary text-xs">Popular</Badge>
                 </div>
               )}
               
-              <CardHeader>
-                <div className="flex items-start justify-between">
+              <CardContent className="p-4">
+                <div className="flex items-start justify-between mb-3">
                   <div className="flex items-center gap-2">
                     {getPackageIcon(pkg.package_type)}
-                    <CardTitle className="text-lg">{pkg.name}</CardTitle>
+                    <h4 className="font-bold text-base">{pkg.name}</h4>
                   </div>
                   {selectedPackageId === pkg.id && (
-                    <Check className="w-5 h-5 text-primary" />
+                    <Check className="w-5 h-5 text-primary shrink-0" />
                   )}
                 </div>
-                <div className="flex items-center gap-2 mt-1">
+
+                <div className="flex items-center gap-2 mb-3">
                   <Badge variant="secondary" className="text-xs">
                     {getPackageTypeLabel(pkg.package_type)}
                   </Badge>
-                  <Badge variant="outline" className="text-xs text-green-600 border-green-600">
+                  <Badge variant="outline" className="text-xs bg-green-50 text-green-700 border-green-200">
                     Save {pkg.discount_percentage}%
                   </Badge>
                 </div>
-              </CardHeader>
 
-              <CardContent className="space-y-4">
-                <CardDescription>{pkg.description}</CardDescription>
+                <p className="text-sm text-muted-foreground mb-4">{pkg.description}</p>
 
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Sessions:</span>
-                    <span className="font-medium">{pkg.session_count}</span>
+                <div className="grid grid-cols-2 gap-3 mb-4 text-sm">
+                  <div className="bg-muted/30 rounded-lg p-2">
+                    <div className="text-xs text-muted-foreground mb-1">Sessions</div>
+                    <div className="font-bold">{pkg.session_count}</div>
                   </div>
                   
-                  {pkg.subjects && pkg.subjects.length > 0 && (
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Subjects:</span>
-                      <span className="font-medium">{pkg.subjects.join(", ")}</span>
-                    </div>
-                  )}
-                  
-                  {pkg.max_students > 1 && (
-                    <div className="flex justify-between">
-                      <span className="text-muted-foreground">Max Students:</span>
-                      <span className="font-medium">{pkg.max_students}</span>
-                    </div>
-                  )}
-
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Valid for:</span>
-                    <span className="font-medium">{pkg.validity_days} days</span>
-                  </div>
-
-                  <div className="flex justify-between items-baseline pt-2 border-t">
-                    <span className="text-muted-foreground">Per session:</span>
-                    <span className="font-medium">KES {Math.round(pricePerSession).toLocaleString()}</span>
+                  <div className="bg-muted/30 rounded-lg p-2">
+                    <div className="text-xs text-muted-foreground mb-1">Valid for</div>
+                    <div className="font-bold">{pkg.validity_days} days</div>
                   </div>
                 </div>
 
-                <div className="pt-4 border-t">
+                {pkg.subjects && pkg.subjects.length > 0 && (
+                  <div className="mb-3">
+                    <div className="text-xs text-muted-foreground mb-1">Subjects</div>
+                    <div className="text-sm font-medium">{pkg.subjects.join(", ")}</div>
+                  </div>
+                )}
+
+                <div className="pt-3 border-t border-border/50">
                   <div className="flex items-baseline justify-between">
                     <div>
-                      <p className="text-xs text-muted-foreground line-through">
-                        KES {Math.round(originalPrice).toLocaleString()}
-                      </p>
-                      <p className="text-2xl font-bold text-primary">
-                        KES {Math.round(pkg.total_price).toLocaleString()}
-                      </p>
+                      <div className="text-xs text-muted-foreground">Per session:</div>
+                      <div className="font-bold text-lg">
+                        KES {Math.round(pricePerSession).toLocaleString()}
+                      </div>
                     </div>
-                    <p className="text-sm text-green-600 font-medium">
-                      Save KES {Math.round(savings).toLocaleString()}
-                    </p>
+                    <div className="text-right">
+                      <div className="text-xs text-muted-foreground line-through">
+                        KES {Math.round(originalPrice).toLocaleString()}
+                      </div>
+                      <div className="font-bold text-xl text-primary">
+                        KES {Math.round(pkg.total_price).toLocaleString()}
+                      </div>
+                    </div>
                   </div>
                 </div>
-
-                <Button 
-                  className="w-full" 
-                  variant={selectedPackageId === pkg.id ? "default" : "outline"}
-                >
-                  {selectedPackageId === pkg.id ? "Selected" : "Select Package"}
-                </Button>
               </CardContent>
             </Card>
           );
