@@ -158,6 +158,7 @@ const TutorProfile = () => {
       rating: tutorProfile.rating || 0,
       reviews: tutorProfile.total_reviews || 0,
       education: tutorProfile.qualifications || [],
+      graduationYear: tutorProfile.graduation_year,
       school: tutorProfile.current_institution || "Not specified",
       curriculum: tutorProfile.curriculum || [],
       teachingMode: tutorProfile.teaching_mode || [],
@@ -454,6 +455,36 @@ const TutorProfile = () => {
                     <h2 className="font-bold text-lg">About Me</h2>
                   </div>
                   <p className="text-muted-foreground leading-relaxed">{tutor.bio}</p>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Education & Qualifications */}
+            {tutor.education && tutor.education.length > 0 && (
+              <Card className="border-border/50">
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-2 mb-4">
+                    <GraduationCap className="w-5 h-5 text-primary" />
+                    <h2 className="font-bold text-lg">Education & Qualifications</h2>
+                  </div>
+                  <div className="space-y-3">
+                    {tutor.education.map((qual: string, index: number) => (
+                      <div key={index} className="flex items-start gap-3 p-3 rounded-lg bg-muted/30">
+                        <CheckCircle2 className="w-5 h-5 text-primary shrink-0 mt-0.5" />
+                        <div className="flex-1">
+                          <p className="text-sm font-medium">{qual}</p>
+                        </div>
+                      </div>
+                    ))}
+                    {tutor.graduationYear && tutor.graduationYear > 1900 && (
+                      <div className="flex items-center gap-2 mt-4 pt-4 border-t border-border/50">
+                        <Calendar className="w-4 h-4 text-muted-foreground" />
+                        <span className="text-sm text-muted-foreground">
+                          Graduated: {tutor.graduationYear}
+                        </span>
+                      </div>
+                    )}
+                  </div>
                 </CardContent>
               </Card>
             )}
