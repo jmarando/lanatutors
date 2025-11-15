@@ -29,7 +29,7 @@ const TutorProfile = () => {
   const [isBookingOpen, setIsBookingOpen] = useState(false);
   const [isPackagePurchaseOpen, setIsPackagePurchaseOpen] = useState(false);
   const [selectedPackage, setSelectedPackage] = useState<any>(null);
-  const [bookingType, setBookingType] = useState<'paid' | 'trial' | 'free'>('paid');
+  const [bookingType, setBookingType] = useState<'paid' | 'trial' | 'free' | 'single' | 'double'>('paid');
   const [tutor, setTutor] = useState<any>(null);
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -67,7 +67,7 @@ const TutorProfile = () => {
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.get('openBooking') === '1') {
-      const type = (params.get('bookingType') as 'paid' | 'trial' | 'free') || 'paid';
+      const type = (params.get('bookingType') as 'paid' | 'trial' | 'free' | 'single' | 'double') || 'paid';
       setBookingType(type);
       setIsBookingOpen(true);
     }
@@ -226,7 +226,7 @@ const TutorProfile = () => {
     return tier ? Number(tier.online_hourly_rate) : Number(tutor?.hourlyRate) || 0;
   };
 
-  const handleBookingTypeSelect = async (type: 'paid' | 'trial' | 'free') => {
+  const handleBookingTypeSelect = async (type: 'paid' | 'trial' | 'free' | 'single' | 'double') => {
     if (type === 'free') {
       navigate('/book-consultation');
       return;
@@ -617,49 +617,52 @@ const TutorProfile = () => {
                     </div>
                   )}
 
-                  <div className="bg-primary/10 rounded-lg p-4 mb-6 text-center">
-                    <p className="text-sm text-muted-foreground mb-1">Starting from</p>
-                    <p className="text-3xl font-bold text-primary">
-                      KES {currentRate.toLocaleString()}
-                    </p>
-                    <p className="text-xs text-muted-foreground">per hour (online)</p>
-                  </div>
-
+                  {/* Booking Options */}
                   <div className="space-y-3">
-                    <Button
-                      onClick={() => handleBookingTypeSelect('paid')}
-                      className="w-full h-auto py-4"
+                    <Button 
+                      className="w-full justify-between group hover:shadow-md transition-all"
                       size="lg"
+                      onClick={() => handleBookingTypeSelect('single')}
                     >
-                      <div className="text-left w-full">
-                        <div className="font-semibold mb-1">Book Paid Session</div>
-                        <div className="text-xs opacity-90">Single or double lesson</div>
-                      </div>
+                      <span className="flex items-center gap-2">
+                        <BookOpen className="w-4 h-4" />
+                        Book Single Session
+                      </span>
+                      <span className="font-bold">KES {currentRate.toLocaleString()}</span>
                     </Button>
 
-                    <Button
-                      onClick={() => handleBookingTypeSelect('trial')}
-                      variant="outline"
-                      className="w-full h-auto py-4"
+                    <Button 
+                      variant="outline" 
+                      className="w-full justify-between group hover:bg-accent/50 transition-all"
                       size="lg"
+                      onClick={() => handleBookingTypeSelect('double')}
                     >
-                      <div className="text-left w-full">
-                        <div className="font-semibold mb-1">Book Trial Session</div>
-                        <div className="text-xs text-muted-foreground">30 mins • Free</div>
-                      </div>
+                      <span className="flex items-center gap-2">
+                        <BookOpen className="w-4 h-4" />
+                        Book Double Session
+                      </span>
+                      <span className="font-semibold">KES {(currentRate * 2).toLocaleString()}</span>
                     </Button>
 
-                    <Button
-                      onClick={() => handleBookingTypeSelect('free')}
-                      variant="secondary"
-                      className="w-full h-auto py-4"
-                      size="lg"
-                    >
-                      <div className="text-left w-full">
-                        <div className="font-semibold mb-1">Free Consultation</div>
-                        <div className="text-xs text-muted-foreground">Get expert advice</div>
-                      </div>
-                    </Button>
+                    <Separator className="my-3" />
+
+                    <div className="text-center">
+                      <p className="text-xs text-muted-foreground mb-3">Not sure yet?</p>
+                      <Button 
+                        variant="secondary"
+                        className="w-full bg-gradient-to-r from-secondary to-secondary/80 hover:from-secondary/90 hover:to-secondary/70"
+                        size="lg"
+                        onClick={() => handleBookingTypeSelect('free')}
+                      >
+                        <div className="flex flex-col items-center gap-1 py-1">
+                          <div className="flex items-center gap-2">
+                            <Video className="w-4 h-4" />
+                            <span>Free Consultation</span>
+                          </div>
+                          <span className="text-[10px] opacity-80">15-minute video call</span>
+                        </div>
+                      </Button>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
