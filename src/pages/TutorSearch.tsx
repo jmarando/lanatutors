@@ -191,12 +191,26 @@ const TutorSearch = () => {
         selectedSubject.toLowerCase().includes(s.toLowerCase())
       );
 
-    const matchesCurriculum = selectedCurriculum === "all" || tutor.curriculum.includes(selectedCurriculum);
+    const matchesCurriculum =
+      selectedCurriculum === "all" ||
+      (tutor.curriculum?.includes(selectedCurriculum)) ||
+      (tutor.teachingLevels?.some((lvl: string) =>
+        lvl.toLowerCase().includes(selectedCurriculum.toLowerCase())
+      ));
 
+    const selectedBroad = mapLevelToBroad(selectedCurriculum, selectedTeachingLevel).toLowerCase();
     const matchesTeachingLevel =
       selectedTeachingLevel === "all" ||
-      (tutor.teachingLevels?.includes(selectedTeachingLevel) ||
-        tutor.teachingLevels?.includes(mapLevelToBroad(selectedCurriculum, selectedTeachingLevel)));
+      (tutor.teachingLevels?.some((lvl: string) => {
+        const l = lvl.toLowerCase();
+        return (
+          l === selectedTeachingLevel.toLowerCase() ||
+          l.includes(selectedTeachingLevel.toLowerCase()) ||
+          (selectedCurriculum !== "all" && l.includes(`${selectedCurriculum.toLowerCase()} - ${selectedTeachingLevel.toLowerCase()}`)) ||
+          mapLevelToBroad(selectedCurriculum, lvl).toLowerCase() === selectedBroad
+        );
+      }) ?? false);
+
 
     return matchesSearch && matchesSubject && matchesCurriculum && matchesTeachingLevel;
   });
