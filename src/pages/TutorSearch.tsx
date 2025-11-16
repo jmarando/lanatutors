@@ -33,7 +33,9 @@ const TutorSearch = () => {
   const [selectedTeachingLevel, setSelectedTeachingLevel] = useState("all");
   const [tutors, setTutors] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  
+  // Safety: ensure any legacy references to `sortBy` won't crash the page
+  const [sortBy, setSortBy] = useState<string>("relevance");
+
   useEffect(() => {
     fetchTutors();
   }, []);
