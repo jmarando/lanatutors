@@ -752,31 +752,35 @@ const TutorProfile = () => {
                   {/* Booking Options */}
                   <div className="space-y-3">
                     <Button 
-                      className="w-full justify-between group hover:shadow-md transition-all"
+                      className="w-full group hover:shadow-md transition-all"
                       size="lg"
                       onClick={() => handleBookingTypeSelect('single')}
                     >
-                      <span className="flex items-center gap-2">
-                        <BookOpen className="w-4 h-4" />
-                        Book Single Session
-                      </span>
-                      <span className="font-bold">KES {currentRate.toLocaleString()}</span>
+                      <div className="flex items-center justify-between w-full">
+                        <span className="flex items-center gap-2">
+                          <BookOpen className="w-4 h-4" />
+                          Single Session
+                        </span>
+                        <span className="font-bold ml-2">KES {currentRate.toLocaleString()}</span>
+                      </div>
                     </Button>
 
                     <Button 
                       variant="outline" 
-                      className="w-full justify-between group hover:bg-accent/50 transition-all h-auto py-3"
+                      className="w-full group hover:bg-accent/50 transition-all h-auto py-3"
                       size="lg"
                       onClick={() => handleBookingTypeSelect('double')}
                     >
-                      <div className="flex flex-col items-start gap-1">
-                        <span className="flex items-center gap-2">
-                          <BookOpen className="w-4 h-4" />
-                          Book Double Session
-                        </span>
-                        <Badge variant="secondary" className="text-[10px]">Save 5%</Badge>
+                      <div className="flex items-center justify-between w-full">
+                        <div className="flex flex-col items-start gap-1">
+                          <span className="flex items-center gap-2">
+                            <BookOpen className="w-4 h-4" />
+                            Double Session
+                          </span>
+                          <Badge variant="secondary" className="text-[10px]">Save 5%</Badge>
+                        </div>
+                        <span className="font-semibold ml-2">KES {Math.round(currentRate * 2 * 0.95).toLocaleString()}</span>
                       </div>
-                      <span className="font-semibold">KES {Math.round(currentRate * 2 * 0.95).toLocaleString()}</span>
                     </Button>
 
                     <Separator className="my-3" />
