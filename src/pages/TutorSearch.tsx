@@ -14,7 +14,7 @@ import { Search, Star, SlidersHorizontal, Calendar as CalendarIcon, Clock, MapPi
 import { SEO } from "@/components/SEO";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { getCurriculums, getAllSubjects } from "@/utils/curriculumData";
+import { CURRICULUM_DATA, getCurriculums, getAllSubjects, getLevelsForCurriculum, getSubjectsForCurriculumLevel } from "@/utils/curriculumData";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import tutor1 from "@/assets/tutor-1.jpg";
@@ -140,37 +140,64 @@ const TutorSearch = () => {
     }
   };
   const curriculums = ["all", ...getCurriculums()];
-  const allSubjects = ["all", ...getAllSubjects()];
-  const teachingLevels = [
-    "all",
-    "Early Years",
-    "Primary",
-    "Middle School/Junior Secondary",
-    "Secondary/A-Level"
-  ];
-  const timeSlots = [{
-    value: "all",
-    label: "Any Time"
-  }, {
-    value: "morning",
-    label: "Morning (6 AM - 12 PM)"
-  }, {
-    value: "afternoon",
-    label: "Afternoon (12 PM - 5 PM)"
-  }, {
-    value: "evening",
-    label: "Evening (5 PM - 9 PM)"
-  }];
+
+  // Dynamic level options based on selected curriculum
+  const levelOptions = selectedCurriculum !== "all" ? getLevelsForCurriculum(selectedCurriculum) : [];
+  const visibleLevelOptions = selectedCurriculum === "all"
+    ? [
+        { value: "Early Years", label: "Early Years" },
+        { value: "Primary", label: "Primary" },
+        { value: "Middle School/Junior Secondary", label: "Middle School/Junior Secondary" },
+        { value: "Secondary/A-Level", label: "Secondary/A-Level" },
+      ]
+    : levelOptions;
+
+  // Subjects derived from curriculum + level (fallback to all subjects so it's not restrictive)
+  const subjectOptions: string[] = (() => {
+    if (selectedCurriculum !== "all" && selectedTeachingLevel !== "all") {
+      return getSubjectsForCurriculumLevel(selectedCurriculum, selectedTeachingLevel) || [];
+    }
+    if (selectedCurriculum !== "all") {
+      const levels = CURRICULUM_DATA[selectedCurriculum] || [];
+      const set = new Set<string>();
+      levels.forEach(l => l.subjects.forEach(s => set.add(s)));
+      return Array.from(set).sort();
+    }
+    return getAllSubjects();
+  })();
+  const subjectChoices = ["all", ...subjectOptions];
+
+  // Map detailed level names to broad categories used in tutor profiles to avoid over-filtering
+  const mapLevelToBroad = (curriculum: string, level: string) => {
+    const l = level.toLowerCase();
+    if (/form\s*[1-4]|igcse|a-?levels?|high\s*school|diploma|dp/.test(l)) return "Secondary/A-Level";
+    if (/junior|key\s*stage\s*3|middle\s*school|myp/.test(l)) return "Middle School/Junior Secondary";
+    if (/early\s*years|pre-?primary|pp1|pp2/.test(l)) return "Early Years";
+    if (/lower\s*primary|upper\s*primary|elementary|key\s*stage\s*[12]|pyp|grade\s*[1-6]/.test(l)) return "Primary";
+    return level; // fallback to exact
+  };
+
   const filteredTutors = tutors.filter((tutor) => {
     const q = searchQuery.toLowerCase();
     const matchesSearch =
       tutor.name.toLowerCase().includes(q) ||
       tutor.subjects.some((s: string) => s.toLowerCase().includes(q)) ||
       (tutor.school || "").toLowerCase().includes(q);
-    const matchesSubject = selectedSubject === "all" || tutor.subjects.includes(selectedSubject);
+
+    const matchesSubject =
+      selectedSubject === "all" ||
+      tutor.subjects.some((s: string) =>
+        s.toLowerCase().includes(selectedSubject.toLowerCase()) ||
+        selectedSubject.toLowerCase().includes(s.toLowerCase())
+      );
+
     const matchesCurriculum = selectedCurriculum === "all" || tutor.curriculum.includes(selectedCurriculum);
+
     const matchesTeachingLevel =
-      selectedTeachingLevel === "all" || tutor.teachingLevels?.includes(selectedTeachingLevel);
+      selectedTeachingLevel === "all" ||
+      (tutor.teachingLevels?.includes(selectedTeachingLevel) ||
+        tutor.teachingLevels?.includes(mapLevelToBroad(selectedCurriculum, selectedTeachingLevel)));
+
     return matchesSearch && matchesSubject && matchesCurriculum && matchesTeachingLevel;
   });
   if (loading) {
@@ -199,10 +226,9 @@ const TutorSearch = () => {
           
           <Select value={selectedCurriculum} onValueChange={value => {
           setSelectedCurriculum(value);
-          // Reset subject when curriculum changes
-          if (value !== "all") {
-            setSelectedSubject("all");
-          }
+          // Reset level and subject when curriculum changes
+          setSelectedTeachingLevel("all");
+          setSelectedSubject("all");
         }}>
             <SelectTrigger className="w-48 h-12 bg-background z-50">
               <SelectValue placeholder="All Curricula" />
@@ -214,14 +240,17 @@ const TutorSearch = () => {
             </SelectContent>
           </Select>
 
-          <Select value={selectedTeachingLevel} onValueChange={setSelectedTeachingLevel}>
+          <Select value={selectedTeachingLevel} onValueChange={(val) => { setSelectedTeachingLevel(val); setSelectedSubject("all"); }}>
             <SelectTrigger className="w-48 h-12 bg-background z-50">
               <SelectValue placeholder="All Levels" />
             </SelectTrigger>
             <SelectContent className="bg-background z-50">
-              {teachingLevels.map(level => <SelectItem key={level} value={level}>
-                  {level === "all" ? "All Levels" : level}
-                </SelectItem>)}
+              <SelectItem value="all">All Levels</SelectItem>
+              {visibleLevelOptions.map((opt) => (
+                <SelectItem key={opt.value} value={opt.value}>
+                  {opt.label}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
 
@@ -230,9 +259,11 @@ const TutorSearch = () => {
               <SelectValue placeholder="All Subjects" />
             </SelectTrigger>
             <SelectContent className="bg-background z-50 max-h-[300px]">
-              {allSubjects.map(subject => <SelectItem key={subject} value={subject}>
+              {subjectChoices.map(subject => (
+                <SelectItem key={subject} value={subject}>
                   {subject === "all" ? "All Subjects" : subject}
-                </SelectItem>)}
+                </SelectItem>
+              ))}
             </SelectContent>
           </Select>
 
