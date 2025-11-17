@@ -88,13 +88,27 @@ export const BookingCalendar = ({
   const [paymentInitiated, setPaymentInitiated] = useState(false);
   const { toast } = useToast();
   const navigate = useNavigate();
+  const [tutorUserId, setTutorUserId] = useState<string | null>(null);
 
   useEffect(() => {
-    if (selectedDate) {
+    // Resolve the tutor's auth user_id from the tutor profile id
+    (async () => {
+      const { data } = await supabase
+        .from('tutor_profiles')
+        .select('user_id')
+        .eq('id', tutorId)
+        .eq('verified', true)
+        .maybeSingle();
+      setTutorUserId(data?.user_id ?? null);
+    })();
+  }, [tutorId]);
+
+  useEffect(() => {
+    if (selectedDate && tutorUserId) {
       fetchAvailableSlots();
       fetchMonthSlots();
     }
-  }, [selectedDate, tutorId]);
+  }, [selectedDate, tutorId, tutorUserId]);
 
   useEffect(() => {
     fetchPackageOffers();
@@ -140,7 +154,7 @@ export const BookingCalendar = ({
     const { data, error } = await supabase
       .from("tutor_availability")
       .select("*")
-      .eq("tutor_id", tutorId)
+      .eq("tutor_id", tutorUserId as string)
       .eq("is_booked", false)
       .or("slot_type.is.null,slot_type.eq.available")
       .gte("start_time", startOfDay.toISOString())
@@ -166,7 +180,7 @@ export const BookingCalendar = ({
     const { data, error } = await supabase
       .from("tutor_availability")
       .select("*")
-      .eq("tutor_id", tutorId)
+      .eq("tutor_id", tutorUserId as string)
       .gte("start_time", monthStart.toISOString())
       .lte("start_time", monthEnd.toISOString());
 
