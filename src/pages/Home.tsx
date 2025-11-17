@@ -32,7 +32,10 @@ interface FeaturedTutor {
   reviews: number;
   hourlyRate: number;
   photo: string;
+  photoUrl: string | null;
   profileSlug: string | null;
+  bio: string | null;
+  experienceYears: number;
 }
 
 const Home = () => {
@@ -140,7 +143,7 @@ const Home = () => {
           hourly_rate,
           profile_slug,
           bio,
-          qualifications
+          experience_years
         `)
         .eq("verified", true)
         .not("bio", "is", null)
@@ -157,11 +160,11 @@ const Home = () => {
 
       if (!tutorProfiles || tutorProfiles.length === 0) return;
 
-      // Fetch names from profiles table
+      // Fetch names and avatars from profiles table
       const userIds = tutorProfiles.map(t => t.user_id);
       const { data: profiles } = await supabase
         .from("profiles")
-        .select("id, full_name")
+        .select("id, full_name, avatar_url")
         .in("id", userIds);
 
       const tutorsWithNames: FeaturedTutor[] = tutorProfiles.map(tutor => {
@@ -183,7 +186,10 @@ const Home = () => {
           reviews: tutor.total_reviews || 0,
           hourlyRate: tutor.hourly_rate || 0,
           photo: initials,
-          profileSlug: tutor.profile_slug
+          photoUrl: profile?.avatar_url || null,
+          profileSlug: tutor.profile_slug,
+          bio: tutor.bio,
+          experienceYears: tutor.experience_years || 0
         };
       });
 
@@ -441,24 +447,35 @@ const Home = () => {
               <Card key={tutor.id} className="card-hover cursor-pointer">
                 <CardContent className="p-6">
                   <div className="flex flex-col items-center text-center mb-4">
-                    <Avatar className="w-16 h-16 mb-3">
-                      <AvatarFallback className="text-xl bg-primary/10 text-primary">
+                    <Avatar className="w-20 h-20 mb-3 border-2 border-black ring-2 ring-black/10">
+                      <AvatarImage src={tutor.photoUrl || undefined} alt={tutor.name} />
+                      <AvatarFallback className="text-xl bg-muted text-foreground font-semibold">
                         {tutor.photo}
                       </AvatarFallback>
                     </Avatar>
                     <h3 className="text-lg font-bold mb-1">{tutor.name}</h3>
                     <Badge variant="secondary" className="mb-2 text-xs">{tutor.subjects}</Badge>
-                    <p className="text-xs text-muted-foreground mb-2">{tutor.school}</p>
+                    {tutor.school && (
+                      <p className="text-xs text-muted-foreground mb-2">{tutor.school}</p>
+                    )}
+                    {tutor.bio && (
+                      <p className="text-sm text-muted-foreground mb-3 line-clamp-2">
+                        {tutor.bio}
+                      </p>
+                    )}
                     <div className="flex items-center gap-1 mb-2">
                       <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
                       <span className="font-semibold text-sm">{tutor.rating.toFixed(1)}</span>
                       <span className="text-xs text-muted-foreground">({tutor.reviews})</span>
                     </div>
+                    <div className="text-sm text-muted-foreground mb-2">
+                      {tutor.experienceYears}+ years experience
+                    </div>
                     <div className="text-xl font-bold text-primary mb-3">
                       KES {tutor.hourlyRate.toLocaleString()}/hr
                     </div>
                   </div>
-                  <Link to={tutor.profileSlug ? `/tutor/${tutor.profileSlug}` : `/tutor-profile/${tutor.id}`}>
+                  <Link to={`/tutor-profile/${tutor.id}`}>
                     <Button className="w-full" variant="outline" size="sm">View Profile</Button>
                   </Link>
                 </CardContent>
