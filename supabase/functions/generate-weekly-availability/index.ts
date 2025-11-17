@@ -89,7 +89,7 @@ serve(async (req) => {
             const slotEndUTC = fromZonedTime(slotEnd, timezone);
             
             slots.push({
-              tutor_id: user.id,
+              tutor_id: tutorProfile.id, // Use tutor_profiles.id instead of user.id
               start_time: slotStartUTC.toISOString(),
               end_time: slotEndUTC.toISOString(),
               is_booked: false,
@@ -106,7 +106,7 @@ serve(async (req) => {
     const { data: existingSlots, error: fetchError } = await supabaseClient
       .from('tutor_availability')
       .select('start_time, end_time')
-      .eq('tutor_id', user.id)
+      .eq('tutor_id', tutorProfile.id) // Use tutor_profiles.id
       .gte('start_time', now.toISOString());
 
     if (fetchError) {
