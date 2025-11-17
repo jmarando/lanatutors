@@ -26,23 +26,33 @@ serve(async (req) => {
       if (!code || !state) {
         throw new Error('Missing code or state parameter');
       }
-
+      
+      console.log('OAuth callback - state parameter:', state);
+      
       // Parse state to determine type and extract data
       const isCentral = state === 'central-calendar' || state.startsWith('central-calendar:');
       let tutorId = null;
       let appOriginFromState = null;
       
       if (isCentral && state.includes(':')) {
-        appOriginFromState = state.split(':')[1];
+        appOriginFromState = state.substring('central-calendar:'.length);
       } else if (state.startsWith('tutor:')) {
         // New format: tutor:tutorId:appOrigin
-        const parts = state.split(':');
-        tutorId = parts[1];
-        appOriginFromState = parts.length > 2 ? parts.slice(2).join(':') : null;
+        const firstColonIndex = state.indexOf(':');
+        const secondColonIndex = state.indexOf(':', firstColonIndex + 1);
+        
+        if (secondColonIndex !== -1) {
+          tutorId = state.substring(firstColonIndex + 1, secondColonIndex);
+          appOriginFromState = state.substring(secondColonIndex + 1);
+        } else {
+          tutorId = state.substring(firstColonIndex + 1);
+        }
       } else {
         // Legacy format: just tutorId
         tutorId = state;
       }
+      
+      console.log('Parsed - tutorId:', tutorId, 'appOriginFromState:', appOriginFromState);
 
       // Exchange code for tokens
       const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
