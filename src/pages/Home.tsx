@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -18,10 +19,24 @@ import {
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { SEO } from "@/components/SEO";
+import { supabase } from "@/integrations/supabase/client";
 import heroVideo from "@/assets/hero-video.mp4";
 import heroImage from "@/assets/hero-image.jpg";
 
+interface FeaturedTutor {
+  id: string;
+  name: string;
+  subjects: string;
+  school: string | null;
+  rating: number;
+  reviews: number;
+  hourlyRate: number;
+  photo: string;
+  profileSlug: string | null;
+}
+
 const Home = () => {
+  const [featuredTutors, setFeaturedTutors] = useState<FeaturedTutor[]>([]);
   const organizationSchema = {
     "@context": "https://schema.org",
     "@type": "EducationalOrganization",
@@ -111,38 +126,72 @@ const Home = () => {
     }
   ];
 
-  const featuredTutors = [
-    {
-      id: 1,
-      name: "Ms. Aisha Hassan",
-      subjects: "Math, Physics, Chemistry",
-      school: "Alliance High School",
-      rating: 4.9,
-      reviews: 127,
-      hourlyRate: 2200,
-      photo: "AH"
-    },
-    {
-      id: 2,
-      name: "Mr. David Kamau",
-      subjects: "English, Literature",
-      school: "Starehe Boys Centre",
-      rating: 4.8,
-      reviews: 94,
-      hourlyRate: 2000,
-      photo: "DK"
-    },
-    {
-      id: 3,
-      name: "Ms. Grace Wanjiru",
-      subjects: "Biology, Chemistry",
-      school: "Kenya High School",
-      rating: 5.0,
-      reviews: 156,
-      hourlyRate: 2400,
-      photo: "GW"
-    }
-  ];
+  useEffect(() => {
+    const fetchFeaturedTutors = async () => {
+      const { data: tutorProfiles, error } = await supabase
+        .from("tutor_profiles")
+        .select(`
+          id,
+          user_id,
+          subjects,
+          current_institution,
+          rating,
+          total_reviews,
+          hourly_rate,
+          profile_slug,
+          bio,
+          qualifications
+        `)
+        .eq("verified", true)
+        .not("bio", "is", null)
+        .not("current_institution", "is", null)
+        .not("hourly_rate", "is", null)
+        .order("rating", { ascending: false })
+        .order("total_reviews", { ascending: false })
+        .limit(3);
+
+      if (error) {
+        console.error("Error fetching tutors:", error);
+        return;
+      }
+
+      if (!tutorProfiles || tutorProfiles.length === 0) return;
+
+      // Fetch names from profiles table
+      const userIds = tutorProfiles.map(t => t.user_id);
+      const { data: profiles } = await supabase
+        .from("profiles")
+        .select("id, full_name")
+        .in("id", userIds);
+
+      const tutorsWithNames: FeaturedTutor[] = tutorProfiles.map(tutor => {
+        const profile = profiles?.find(p => p.id === tutor.user_id);
+        const fullName = profile?.full_name || "Tutor";
+        const initials = fullName
+          .split(" ")
+          .map(n => n[0])
+          .join("")
+          .toUpperCase()
+          .slice(0, 2);
+
+        return {
+          id: tutor.id,
+          name: fullName,
+          subjects: tutor.subjects?.slice(0, 3).join(", ") || "Various Subjects",
+          school: tutor.current_institution,
+          rating: tutor.rating || 0,
+          reviews: tutor.total_reviews || 0,
+          hourlyRate: tutor.hourly_rate || 0,
+          photo: initials,
+          profileSlug: tutor.profile_slug
+        };
+      });
+
+      setFeaturedTutors(tutorsWithNames);
+    };
+
+    fetchFeaturedTutors();
+  }, []);
 
   return (
     <div className="min-h-screen bg-[image:var(--gradient-page)]">
@@ -409,7 +458,7 @@ const Home = () => {
                       KES {tutor.hourlyRate.toLocaleString()}/hr
                     </div>
                   </div>
-                  <Link to={`/tutor-profile/${tutor.id}`}>
+                  <Link to={tutor.profileSlug ? `/tutor/${tutor.profileSlug}` : `/tutor-profile/${tutor.id}`}>
                     <Button className="w-full" variant="outline" size="sm">View Profile</Button>
                   </Link>
                 </CardContent>
