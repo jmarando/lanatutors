@@ -27,6 +27,15 @@ import { z } from "zod";
 const emailSchema = z.string().email({ message: "Please enter a valid email address" });
 const TEACHING_MODES = ["Online", "In-Person"];
 
+// Robust numeric parser: strips commas/spaces and returns 0 for invalid
+const toNumber = (v: unknown): number => {
+  if (typeof v === 'number') return v;
+  if (v == null) return 0;
+  const cleaned = String(v).replace(/[^0-9.]/g, '');
+  const n = parseFloat(cleaned);
+  return isNaN(n) ? 0 : n;
+};
+
 const TutorProfileSetup = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -768,7 +777,7 @@ const TutorProfileSetup = () => {
             curriculum: finalCurriculum,
             teaching_mode: formData.teachingMode,
             teaching_levels: teachingLevels,
-            hourly_rate: parseFloat(formData.standardRate || formData.hourlyRate), // Use standard rate as base
+            hourly_rate: toNumber(formData.standardRate || formData.hourlyRate), // Use standard rate as base
             experience_years: parseInt(formData.experienceYears),
             current_institution: formData.currentInstitution,
             display_institution: formData.showCurrentInstitution,
@@ -799,7 +808,7 @@ const TutorProfileSetup = () => {
           curriculum: finalCurriculum,
           teaching_mode: formData.teachingMode,
           teaching_levels: teachingLevels,
-          hourly_rate: parseFloat(formData.standardRate || formData.hourlyRate), // Use standard rate as base
+          hourly_rate: toNumber(formData.standardRate || formData.hourlyRate), // Use standard rate as base
           experience_years: parseInt(formData.experienceYears),
           current_institution: formData.currentInstitution,
           display_institution: formData.showCurrentInstitution,
@@ -829,8 +838,8 @@ const TutorProfileSetup = () => {
       }
 
       // Create pricing tiers
-      const standardRate = parseFloat(formData.standardRate);
-      const advancedRate = parseFloat(formData.advancedRate);
+      const standardRate = toNumber(formData.standardRate);
+      const advancedRate = toNumber(formData.advancedRate);
 
       const { data: tiers, error: tiersError } = await supabase
         .from("tutor_pricing_tiers")
@@ -883,12 +892,12 @@ const TutorProfileSetup = () => {
       // Create package offers with auto-calculated prices based on selected discounts
       if (tutorProfile) {
         const packages = [];
-        const hourlyRate = parseFloat(formData.hourlyRate);
+        const baseRate = toNumber(formData.standardRate || formData.hourlyRate);
         const MIN_PRICE_PER_SESSION = 500; // KES 500 minimum per session
 
         // 5-session bundle with custom discount
-        const discount5 = parseFloat(formData.package5Discount) / 100;
-        const price5 = Math.round(hourlyRate * 5 * (1 - discount5));
+        const discount5 = toNumber(formData.package5Discount) / 100;
+        const price5 = Math.round(baseRate * 5 * (1 - discount5));
         const pricePerSession5 = price5 / 5;
         
         if (pricePerSession5 < MIN_PRICE_PER_SESSION) {
@@ -907,7 +916,7 @@ const TutorProfileSetup = () => {
           description: "Perfect for consistent weekly learning",
           session_count: 5,
           total_price: price5,
-          discount_percentage: parseFloat(formData.package5Discount),
+          discount_percentage: toNumber(formData.package5Discount),
           validity_days: 90,
           is_active: true,
           package_type: 'single_subject',
@@ -915,8 +924,8 @@ const TutorProfileSetup = () => {
         });
 
         // 10-session bundle with custom discount
-        const discount10 = parseFloat(formData.package10Discount) / 100;
-        const price10 = Math.round(hourlyRate * 10 * (1 - discount10));
+        const discount10 = toNumber(formData.package10Discount) / 100;
+        const price10 = Math.round(baseRate * 10 * (1 - discount10));
         const pricePerSession10 = price10 / 10;
         
         if (pricePerSession10 < MIN_PRICE_PER_SESSION) {
@@ -935,7 +944,7 @@ const TutorProfileSetup = () => {
           description: "Best value for comprehensive mastery",
           session_count: 10,
           total_price: price10,
-          discount_percentage: parseFloat(formData.package10Discount),
+          discount_percentage: toNumber(formData.package10Discount),
           validity_days: 90,
           is_active: true,
           package_type: 'single_subject',
@@ -944,8 +953,8 @@ const TutorProfileSetup = () => {
         });
 
         // Double session bundle (2 hours) with custom discount
-        const discountDouble = parseFloat(formData.doubleSessionDiscount) / 100;
-        const priceDouble = Math.round(hourlyRate * 2 * (1 - discountDouble));
+        const discountDouble = toNumber(formData.doubleSessionDiscount) / 100;
+        const priceDouble = Math.round(baseRate * 2 * (1 - discountDouble));
         const pricePerSessionDouble = priceDouble / 1; // 1 session of 2 hours
         
         if (pricePerSessionDouble < MIN_PRICE_PER_SESSION) {
@@ -964,7 +973,7 @@ const TutorProfileSetup = () => {
           description: "2-hour intensive session",
           session_count: 1,
           total_price: priceDouble,
-          discount_percentage: parseFloat(formData.doubleSessionDiscount),
+          discount_percentage: toNumber(formData.doubleSessionDiscount),
           validity_days: 30,
           is_active: true,
           package_type: 'single_subject',
