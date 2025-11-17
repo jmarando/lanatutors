@@ -68,6 +68,7 @@ const App = () => {
                 <Route path="/for-tutors" element={<ForTutors />} />
                 <Route path="/tutors" element={<TutorSearch />} />
                 <Route path="/tutors/:id" element={<TutorProfile />} />
+                <Route path="/tutor-profile/:id" element={<TutorProfile />} />
                 <Route path="/:id" element={<TutorProfile />} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/reset-password" element={<ResetPassword />} />
