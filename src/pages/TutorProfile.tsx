@@ -643,17 +643,21 @@ const TutorProfile = () => {
               </Card>
             )}
 
-            {/* Available Locations */}
+            {/* Teaching Locations for Physical Lessons */}
             {tutor.teachingLocation && tutor.teachingLocation.trim() && (
               <Card className="border-border/50">
                 <CardContent className="p-6">
                   <div className="flex items-center gap-2 mb-4">
                     <MapPin className="w-5 h-5 text-primary" />
-                    <h2 className="font-bold text-lg">Available Locations</h2>
+                    <h2 className="font-bold text-lg">Teaching Locations (Physical Lessons)</h2>
                   </div>
+                  <p className="text-sm text-muted-foreground mb-3">
+                    Available areas for in-person tutoring sessions
+                  </p>
                   <div className="flex flex-wrap gap-2">
                     {tutor.teachingLocation.split(',').filter((loc: string) => loc.trim()).map((location: string, idx: number) => (
-                      <Badge key={idx} variant="secondary" className="text-xs">
+                      <Badge key={idx} variant="secondary" className="text-sm px-3 py-1">
+                        <MapPin className="w-3 h-3 mr-1" />
                         {location.trim()}
                       </Badge>
                     ))}
