@@ -7,8 +7,10 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
 import { toast } from "sonner";
-import { Loader2 } from "lucide-react";
+import { Loader2, Upload, X } from "lucide-react";
 
 const TutorProfileEdit = () => {
   const navigate = useNavigate();
@@ -16,14 +18,24 @@ const TutorProfileEdit = () => {
   const [saving, setSaving] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
   const [tutorId, setTutorId] = useState<string | null>(null);
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
   
   const [formData, setFormData] = useState({
     bio: "",
     experienceYears: "",
     currentInstitution: "",
+    displayInstitution: true,
     qualifications: "",
     standardRate: "",
     advancedRate: "",
+    teachingMode: [] as string[],
+    gender: "",
+    servicesOffered: [] as string[],
+    specializations: "",
+    teachingLocation: "",
+    whyStudentsLove: "",
+    avatarUrl: "",
   });
 
   useEffect(() => {
@@ -59,10 +71,18 @@ const TutorProfileEdit = () => {
       const standardTier = pricingTiers?.find(t => t.tier_name === "Standard");
       const advancedTier = pricingTiers?.find(t => t.tier_name === "Advanced");
 
+      // Load user profile for avatar
+      const { data: userProfile } = await supabase
+        .from("profiles")
+        .select("avatar_url")
+        .eq("id", session.user.id)
+        .single();
+
       setFormData({
         bio: tutorProfile.bio || "",
         experienceYears: tutorProfile.experience_years?.toString() || "",
         currentInstitution: tutorProfile.current_institution || "",
+        displayInstitution: tutorProfile.display_institution ?? true,
         qualifications: Array.isArray(tutorProfile.qualifications) 
           ? tutorProfile.qualifications.join('\n')
           : "",
@@ -72,7 +92,20 @@ const TutorProfileEdit = () => {
         advancedRate: advancedTier?.online_hourly_rate 
           ? Math.round(Number(advancedTier.online_hourly_rate)).toString()
           : "",
+        teachingMode: tutorProfile.teaching_mode || [],
+        gender: tutorProfile.gender || "",
+        servicesOffered: tutorProfile.services_offered || [],
+        specializations: tutorProfile.specializations || "",
+        teachingLocation: tutorProfile.teaching_location || "",
+        whyStudentsLove: Array.isArray(tutorProfile.why_students_love)
+          ? tutorProfile.why_students_love.join('\n')
+          : "",
+        avatarUrl: userProfile?.avatar_url || "",
       });
+
+      if (userProfile?.avatar_url) {
+        setPhotoPreview(userProfile.avatar_url);
+      }
 
       setLoading(false);
     };
@@ -85,11 +118,66 @@ const TutorProfileEdit = () => {
     return cleaned ? parseInt(cleaned, 10) : 0;
   };
 
+  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setPhotoFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setPhotoPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleToggleTeachingMode = (mode: string) => {
+    setFormData(prev => ({
+      ...prev,
+      teachingMode: prev.teachingMode.includes(mode)
+        ? prev.teachingMode.filter(m => m !== mode)
+        : [...prev.teachingMode, mode]
+    }));
+  };
+
+  const handleToggleService = (service: string) => {
+    setFormData(prev => ({
+      ...prev,
+      servicesOffered: prev.servicesOffered.includes(service)
+        ? prev.servicesOffered.filter(s => s !== service)
+        : [...prev.servicesOffered, service]
+    }));
+  };
+
   const handleSave = async () => {
     if (!tutorId || !userId) return;
 
     setSaving(true);
     try {
+      let avatarUrl = formData.avatarUrl;
+
+      // Upload new photo if selected
+      if (photoFile) {
+        const fileExt = photoFile.name.split('.').pop();
+        const fileName = `${userId}-${Date.now()}.${fileExt}`;
+        const { error: uploadError, data } = await supabase.storage
+          .from('avatars')
+          .upload(fileName, photoFile, { upsert: true });
+
+        if (uploadError) throw uploadError;
+
+        const { data: { publicUrl } } = supabase.storage
+          .from('avatars')
+          .getPublicUrl(fileName);
+
+        avatarUrl = publicUrl;
+
+        // Update profile avatar
+        await supabase
+          .from("profiles")
+          .update({ avatar_url: avatarUrl })
+          .eq("id", userId);
+      }
+
       // Update tutor profile
       const { error: profileError } = await supabase
         .from("tutor_profiles")
@@ -97,10 +185,20 @@ const TutorProfileEdit = () => {
           bio: formData.bio,
           experience_years: toNumber(formData.experienceYears),
           current_institution: formData.currentInstitution,
+          display_institution: formData.displayInstitution,
           qualifications: formData.qualifications
             .split('\n')
             .map(q => q.trim())
             .filter(q => q.length > 0),
+          teaching_mode: formData.teachingMode,
+          gender: formData.gender,
+          services_offered: formData.servicesOffered,
+          specializations: formData.specializations,
+          teaching_location: formData.teachingLocation,
+          why_students_love: formData.whyStudentsLove
+            .split('\n')
+            .map(w => w.trim())
+            .filter(w => w.length > 0),
           updated_at: new Date().toISOString(),
         })
         .eq("id", tutorId);
@@ -163,7 +261,7 @@ const TutorProfileEdit = () => {
   }
 
   return (
-    <div className="container max-w-4xl mx-auto py-8 px-4">
+    <div className="container max-w-5xl mx-auto py-8 px-4">
       <div className="mb-6">
         <h1 className="text-3xl font-bold">Edit Your Profile</h1>
         <p className="text-muted-foreground mt-2">
@@ -171,14 +269,16 @@ const TutorProfileEdit = () => {
         </p>
       </div>
 
-      <Tabs defaultValue="bio" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-3">
-          <TabsTrigger value="bio">About</TabsTrigger>
+      <Tabs defaultValue="about" className="space-y-6">
+        <TabsList className="grid w-full grid-cols-5">
+          <TabsTrigger value="about">About</TabsTrigger>
           <TabsTrigger value="rates">Rates</TabsTrigger>
           <TabsTrigger value="qualifications">Qualifications</TabsTrigger>
+          <TabsTrigger value="preferences">Preferences</TabsTrigger>
+          <TabsTrigger value="photo">Photo</TabsTrigger>
         </TabsList>
 
-        <TabsContent value="bio">
+        <TabsContent value="about">
           <Card>
             <CardHeader>
               <CardTitle>Professional Bio</CardTitle>
@@ -188,7 +288,7 @@ const TutorProfileEdit = () => {
             </CardHeader>
             <CardContent className="space-y-4">
               <div>
-                <Label htmlFor="bio">Bio</Label>
+                <Label htmlFor="bio">Bio *</Label>
                 <Textarea
                   id="bio"
                   value={formData.bio}
@@ -198,24 +298,67 @@ const TutorProfileEdit = () => {
                 />
               </div>
 
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label htmlFor="institution">Current Institution</Label>
+                  <Input
+                    id="institution"
+                    value={formData.currentInstitution}
+                    onChange={(e) => setFormData(prev => ({ ...prev, currentInstitution: e.target.value }))}
+                    placeholder="e.g., University of Nairobi"
+                  />
+                </div>
+
+                <div>
+                  <Label htmlFor="experience">Years of Experience *</Label>
+                  <Input
+                    id="experience"
+                    type="number"
+                    value={formData.experienceYears}
+                    onChange={(e) => setFormData(prev => ({ ...prev, experienceYears: e.target.value }))}
+                    placeholder="e.g., 5"
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center space-x-2">
+                <Switch
+                  id="displayInstitution"
+                  checked={formData.displayInstitution}
+                  onCheckedChange={(checked) => setFormData(prev => ({ ...prev, displayInstitution: checked }))}
+                />
+                <Label htmlFor="displayInstitution">Display current institution on profile</Label>
+              </div>
+
               <div>
-                <Label htmlFor="institution">Current Institution</Label>
+                <Label htmlFor="gender">Gender</Label>
                 <Input
-                  id="institution"
-                  value={formData.currentInstitution}
-                  onChange={(e) => setFormData(prev => ({ ...prev, currentInstitution: e.target.value }))}
-                  placeholder="e.g., University of Nairobi"
+                  id="gender"
+                  value={formData.gender}
+                  onChange={(e) => setFormData(prev => ({ ...prev, gender: e.target.value }))}
+                  placeholder="e.g., Male, Female, Other"
                 />
               </div>
 
               <div>
-                <Label htmlFor="experience">Years of Experience</Label>
-                <Input
-                  id="experience"
-                  type="number"
-                  value={formData.experienceYears}
-                  onChange={(e) => setFormData(prev => ({ ...prev, experienceYears: e.target.value }))}
-                  placeholder="e.g., 5"
+                <Label htmlFor="specializations">Specializations</Label>
+                <Textarea
+                  id="specializations"
+                  value={formData.specializations}
+                  onChange={(e) => setFormData(prev => ({ ...prev, specializations: e.target.value }))}
+                  rows={3}
+                  placeholder="e.g., Exam preparation, Special needs education, Advanced Mathematics"
+                />
+              </div>
+
+              <div>
+                <Label>Why Students Love Learning With You</Label>
+                <p className="text-sm text-muted-foreground mb-2">One reason per line (up to 3)</p>
+                <Textarea
+                  value={formData.whyStudentsLove}
+                  onChange={(e) => setFormData(prev => ({ ...prev, whyStudentsLove: e.target.value }))}
+                  rows={4}
+                  placeholder="Patient and encouraging teaching style&#10;Real-world examples that make concepts clear&#10;Flexible scheduling to fit student needs"
                 />
               </div>
             </CardContent>
@@ -291,6 +434,111 @@ const TutorProfileEdit = () => {
                 rows={8}
                 placeholder="Bachelor of Education, Kenyatta University&#10;IGCSE Teacher Training Certificate&#10;TSC Registered Teacher"
               />
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="preferences">
+          <Card>
+            <CardHeader>
+              <CardTitle>Teaching Preferences</CardTitle>
+              <CardDescription>
+                Configure your teaching modes, location, and services
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div>
+                <Label className="mb-3 block">Teaching Modes *</Label>
+                <div className="space-y-2">
+                  {["Online", "Physical"].map(mode => (
+                    <div key={mode} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`mode-${mode}`}
+                        checked={formData.teachingMode.includes(mode)}
+                        onCheckedChange={() => handleToggleTeachingMode(mode)}
+                      />
+                      <Label htmlFor={`mode-${mode}`} className="font-normal cursor-pointer">
+                        {mode}
+                      </Label>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <div>
+                <Label htmlFor="teachingLocation">Teaching Location (for physical sessions)</Label>
+                <Input
+                  id="teachingLocation"
+                  value={formData.teachingLocation}
+                  onChange={(e) => setFormData(prev => ({ ...prev, teachingLocation: e.target.value }))}
+                  placeholder="e.g., Westlands, Nairobi or Student's home"
+                />
+              </div>
+
+              <div>
+                <Label className="mb-3 block">Services Offered</Label>
+                <div className="space-y-2">
+                  {["One-on-One Tutoring", "Group Sessions", "Exam Preparation", "Homework Help", "Assignment Support"].map(service => (
+                    <div key={service} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`service-${service}`}
+                        checked={formData.servicesOffered.includes(service)}
+                        onCheckedChange={() => handleToggleService(service)}
+                      />
+                      <Label htmlFor={`service-${service}`} className="font-normal cursor-pointer">
+                        {service}
+                      </Label>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="photo">
+          <Card>
+            <CardHeader>
+              <CardTitle>Profile Photo</CardTitle>
+              <CardDescription>
+                Upload a professional photo to help students connect with you
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              {photoPreview && (
+                <div className="relative w-32 h-32">
+                  <img
+                    src={photoPreview}
+                    alt="Profile preview"
+                    className="w-full h-full object-cover rounded-full"
+                  />
+                  <button
+                    onClick={() => {
+                      setPhotoFile(null);
+                      setPhotoPreview(null);
+                    }}
+                    className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full p-1 hover:bg-destructive/90"
+                  >
+                    <X className="h-4 w-4" />
+                  </button>
+                </div>
+              )}
+
+              <div>
+                <Label htmlFor="photo">Upload New Photo</Label>
+                <div className="mt-2">
+                  <Input
+                    id="photo"
+                    type="file"
+                    accept="image/*"
+                    onChange={handlePhotoChange}
+                    className="cursor-pointer"
+                  />
+                </div>
+                <p className="text-sm text-muted-foreground mt-2">
+                  Recommended: Square image, minimum 400x400px
+                </p>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>

@@ -187,7 +187,7 @@ const TutorDashboard = () => {
             <Button variant="ghost" onClick={() => navigate("/tutor-onboarding-guide")}>
               Onboarding Guide
             </Button>
-            <Button variant="ghost" onClick={() => navigate("/tutor-profile-setup")}>
+            <Button variant="ghost" onClick={() => navigate("/tutor-profile-edit")}>
               Edit Profile
             </Button>
             <Button variant="ghost" onClick={() => navigate("/tutor/availability")}>
