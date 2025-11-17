@@ -149,8 +149,10 @@ const Home = () => {
         .not("bio", "is", null)
         .not("current_institution", "is", null)
         .not("hourly_rate", "is", null)
+        .neq("user_id", "9de6bfdd-4282-4ce0-9c2a-661feae63970") // Exclude Kefa
+        .gte("experience_years", 5) // At least 5 years experience
+        .order("experience_years", { ascending: false })
         .order("rating", { ascending: false })
-        .order("total_reviews", { ascending: false })
         .limit(3);
 
       if (error) {
