@@ -2155,14 +2155,14 @@ TEFL/TESOL Certification" value={formData.qualifications} onChange={e => setForm
                           <span className="font-semibold text-sm">New</span>
                         </div>
                         <div className="text-right">
-                          {formData.hourlyRate && <>
+                          {formData.standardRate && <>
                               <div className="font-bold text-lg">
-                                KES {Number(formData.hourlyRate).toLocaleString()}
+                                KES {Number(formData.standardRate).toLocaleString()}
                                 <span className="text-sm font-normal text-muted-foreground">/hr</span>
                               </div>
                               <span className="text-xs text-muted-foreground">online</span>
                             </>}
-                          {!formData.hourlyRate && <span className="text-sm text-muted-foreground">Set rate in Step 4</span>}
+                          {!formData.standardRate && <span className="text-sm text-muted-foreground">Set rate in Step 3</span>}
                         </div>
                       </div>
                     </CardContent>
