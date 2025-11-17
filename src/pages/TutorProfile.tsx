@@ -131,24 +131,13 @@ const TutorProfile = () => {
       .eq("id", tutorProfile.user_id)
       .single();
 
-    const photoMapping: { [key: string]: string } = {
-      "Lana": tutor1,
-      "James": tutor2,
-      "Sarah": tutor3,
-      "Michael": tutor4,
-      "Emily": tutor5,
-      "David": tutor6,
-      "Calvin": calvinProfilePhoto,
-    };
-
-    const firstName = profile?.full_name?.split(" ")[0] || "Tutor";
-    // Use avatar_url from profile first, fallback to photoMapping
-    const photoUrl = profile?.avatar_url || photoMapping[firstName] || tutor1;
+    // Only use real uploaded avatar, no AI fallback photos
+    const photoUrl = profile?.avatar_url || null;
 
     setTutor({
       id: tutorProfile.id,
       name: profile?.full_name || "Tutor",
-      photo: profile?.full_name?.split(" ").map((n: string) => n[0]).join("") || "T",
+      photo: profile?.full_name?.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2) || "T",
       photoUrl,
       email: tutorProfile.email,
       subjects: tutorProfile.subjects || [],
