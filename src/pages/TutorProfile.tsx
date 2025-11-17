@@ -365,9 +365,9 @@ const TutorProfile = () => {
             <Card className="border-border/50">
               <CardContent className="p-8">
                 <div className="flex flex-col sm:flex-row gap-6 items-start mb-6">
-                  <Avatar className="w-28 h-28 shrink-0 border-4 border-primary/20">
+                  <Avatar className="w-28 h-28 shrink-0 border-[3px] border-black ring-4 ring-black/10">
                     <AvatarImage src={tutor.photoUrl} alt={tutor.name} />
-                    <AvatarFallback className="text-2xl bg-primary text-primary-foreground font-semibold">
+                    <AvatarFallback className="text-2xl bg-muted text-foreground font-semibold">
                       {tutor.photo}
                     </AvatarFallback>
                   </Avatar>

@@ -315,9 +315,9 @@ const TutorSearch = () => {
               <Card key={tutor.id} className="overflow-hidden border-border/50 bg-card">
                 <CardContent className="p-6">
                   <div className="flex items-start gap-4 mb-4">
-                    <Avatar className="w-16 h-16">
+                    <Avatar className="w-16 h-16 border-2 border-black ring-2 ring-black/10">
                       <AvatarImage src={tutor.photoUrl || undefined} alt={tutor.name} />
-                      <AvatarFallback>{tutor.photo}</AvatarFallback>
+                      <AvatarFallback className="bg-muted text-foreground font-semibold">{tutor.photo}</AvatarFallback>
                     </Avatar>
                     <div className="flex-1">
                       <div className="flex items-center justify-between">
