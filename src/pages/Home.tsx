@@ -52,7 +52,7 @@ const Home = () => {
   const stats = [
     { icon: Users, value: "50+", label: "Verified Tutors" },
     { icon: GraduationCap, value: "500+", label: "Happy Students" },
-    { icon: Award, value: "All Curricula", label: "CBC, IGCSE & 8-4-4" }
+    { icon: Award, value: "All Curricula", label: "CBC, IGCSE, American & 8-4-4" }
   ];
 
   const steps = [
@@ -148,7 +148,7 @@ const Home = () => {
     <div className="min-h-screen bg-[image:var(--gradient-page)]">
       <SEO 
         title="Your Trusted Tutoring Partner"
-        description="Connect with verified teachers from top Kenyan schools for safe, convenient one-on-one tutoring. Master KCSE, KCPE, and CBC curriculum from home with Lana Tutors."
+        description="Connect with verified teachers from top Kenyan schools for safe, convenient one-on-one tutoring. Master KCSE, KCPE, CBC, IGCSE, and American curriculum from home with Lana Tutors."
         structuredData={organizationSchema}
       />
       
@@ -173,7 +173,7 @@ const Home = () => {
                 <span className="block whitespace-nowrap text-primary">Safe. Verified. Trusted.</span>
               </h1>
               <p className="text-lg text-muted-foreground mb-8 leading-relaxed">
-                Learn from verified tutors from Kenya's top schools. Choose between online or in-person sessions. Rigorously vetted educators. Seamless payments via M-Pesa or Card. All CBC and IGCSE subjects covered.
+                Learn from verified tutors from Kenya's top schools. Choose between online or in-person sessions. Rigorously vetted educators. Seamless payments via M-Pesa or Card. All CBC, IGCSE, American, and 8-4-4 subjects covered.
               </p>
               <div className="flex flex-wrap gap-4">
                 <Link to="/book-consultation">

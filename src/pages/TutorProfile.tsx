@@ -728,7 +728,7 @@ const TutorProfile = () => {
                         >
                           <div className="font-semibold text-sm">Standard</div>
                           <div className="text-xs text-muted-foreground">
-                            8-4-4, CBC, etc.
+                            8-4-4, CBC, American, etc.
                           </div>
                         </button>
                         <button

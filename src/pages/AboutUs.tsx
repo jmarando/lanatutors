@@ -44,7 +44,7 @@ const AboutUs = () => {
   const stats = [
     { icon: Users, value: "50+", label: "Verified Tutors", sublabel: "From Kenya's top schools" },
     { icon: GraduationCap, value: "500+", label: "Happy Students", sublabel: "Across all counties" },
-    { icon: Award, value: "All Curricula", label: "CBC, IGCSE & 8-4-4", sublabel: "Comprehensive coverage" }
+    { icon: Award, value: "All Curricula", label: "CBC, IGCSE, American & 8-4-4", sublabel: "Comprehensive coverage" }
   ];
 
   const story = {

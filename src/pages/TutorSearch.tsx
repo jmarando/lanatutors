@@ -220,7 +220,7 @@ const TutorSearch = () => {
       </div>;
   }
   return <div className="min-h-screen bg-[image:var(--gradient-page)]">
-      <SEO title="Find Verified Tutors in Kenya" description="Browse 500+ verified tutors from top Kenyan schools. Filter by subject, curriculum (CBC, IGCSE), rating, and price. Book online or in-person tutoring sessions." keywords="find tutors Kenya, hire tutor Nairobi, CBC tutors, IGCSE tutors, verified teachers Kenya" />
+      <SEO title="Find Verified Tutors in Kenya" description="Browse 500+ verified tutors from top Kenyan schools. Filter by subject, curriculum (CBC, IGCSE, American), rating, and price. Book online or in-person tutoring sessions." keywords="find tutors Kenya, hire tutor Nairobi, CBC tutors, IGCSE tutors, American curriculum tutors, verified teachers Kenya" />
       
       <div className="max-w-7xl mx-auto px-6 py-12">
         {/* Header */}
