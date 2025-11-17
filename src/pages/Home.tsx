@@ -477,7 +477,7 @@ const Home = () => {
                       KES {tutor.hourlyRate.toLocaleString()}/hr
                     </div>
                   </div>
-                  <Link to={`/tutor-profile/${tutor.id}`}>
+                  <Link to={`/tutors/${tutor.profileSlug || tutor.id}`}>
                     <Button className="w-full" variant="outline" size="sm">View Profile</Button>
                   </Link>
                 </CardContent>

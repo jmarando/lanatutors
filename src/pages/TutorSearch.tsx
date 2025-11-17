@@ -46,7 +46,7 @@ const TutorSearch = () => {
       const {
         data: tutorProfiles,
         error: tutorError
-      } = await supabase.from("tutor_profiles").select("*").eq("verified", true);
+      } = await supabase.from("tutor_profiles").select("*, profile_slug").eq("verified", true);
       if (tutorError) throw tutorError;
       const profilesById = new Map<string, any>();
 
@@ -103,6 +103,7 @@ const TutorSearch = () => {
           name,
           photo: name.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2),
           photoUrl: uploadedAvatar || null, // Only use real avatar, no fallback
+          profileSlug: tp.profile_slug, // Add profile slug
           subjects: tp.subjects || [],
           curriculum: tp.curriculum || [],
           teachingLevels: tp.teaching_levels || [],
@@ -340,7 +341,9 @@ const TutorSearch = () => {
                       if (selectedCurriculum !== "all") params.set("curriculum", selectedCurriculum);
                       if (selectedTeachingLevel !== "all") params.set("level", selectedTeachingLevel);
                       const qs = params.toString();
-                      navigate(`/tutors/${tutor.id}${qs ? `?${qs}` : ""}`);
+                      // Use slug if available, otherwise fall back to ID
+                      const profilePath = tutor.profileSlug || tutor.id;
+                      navigate(`/tutors/${profilePath}${qs ? `?${qs}` : ""}`);
                     }}
                     className="w-full"
                   >
