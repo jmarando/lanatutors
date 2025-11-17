@@ -32,6 +32,7 @@ const NotFound = lazy(() => import("./pages/NotFound"));
 const TestEmail = lazy(() => import("./pages/TestEmail"));
 const BookingConfirmed = lazy(() => import("./pages/BookingConfirmed"));
 const TutorProfileSetup = lazy(() => import("./pages/TutorProfileSetup"));
+const TutorProfileEdit = lazy(() => import("./pages/TutorProfileEdit"));
 const TutorProfileSubmitted = lazy(() => import("./pages/TutorProfileSubmitted"));
 const ConsultationConfirmed = lazy(() => import("./pages/ConsultationConfirmed"));
 const SetupCentralCalendar = lazy(() => import("./pages/SetupCentralCalendar"));
@@ -75,7 +76,8 @@ const App = () => {
                 <Route path="/student/dashboard" element={<StudentDashboard />} />
                 <Route path="/tutor/dashboard" element={<TutorDashboard />} />
                 <Route path="/tutor/availability" element={<TutorAvailability />} />
-                <Route path="/tutor-profile-setup" element={<TutorProfileSetup />} />
+            <Route path="/tutor-profile-setup" element={<TutorProfileSetup />} />
+            <Route path="/tutor-profile-edit" element={<TutorProfileEdit />} />
                 <Route path="/tutor-profile-submitted" element={<TutorProfileSubmitted />} />
                 <Route path="/tutor-onboarding-guide" element={<TutorOnboardingGuide />} />
                 <Route path="/tutor-guide-printable" element={<TutorGuidePrintable />} />
