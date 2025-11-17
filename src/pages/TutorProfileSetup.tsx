@@ -1723,10 +1723,13 @@ TEFL/TESOL Certification" value={formData.qualifications} onChange={e => setForm
                           step="100" 
                           placeholder="e.g., 2000 — enter your own rate" 
                           value={formData.standardRate} 
-                          onChange={e => setFormData({
-                            ...formData,
-                            standardRate: e.target.value
-                          })} 
+                          onChange={e => {
+                            const cleaned = e.target.value.replace(/[^0-9.]/g, "");
+                            setFormData({
+                              ...formData,
+                              standardRate: cleaned
+                            });
+                          }} 
                           required 
                         />
                         <p className="text-xs text-muted-foreground">
@@ -1763,10 +1766,13 @@ TEFL/TESOL Certification" value={formData.qualifications} onChange={e => setForm
                           step="100" 
                           placeholder="e.g., 3500 — enter your own rate" 
                           value={formData.advancedRate} 
-                          onChange={e => setFormData({
-                            ...formData,
-                            advancedRate: e.target.value
-                          })} 
+                          onChange={e => {
+                            const cleaned = e.target.value.replace(/[^0-9.]/g, "");
+                            setFormData({
+                              ...formData,
+                              advancedRate: cleaned
+                            });
+                          }} 
                           required 
                         />
                         <p className="text-xs text-muted-foreground">
@@ -2157,7 +2163,7 @@ TEFL/TESOL Certification" value={formData.qualifications} onChange={e => setForm
                         <div className="text-right">
                           {formData.standardRate && <>
                               <div className="font-bold text-lg">
-                                KES {Number(formData.standardRate).toLocaleString()}
+                                KES {Math.round(parseFloat(formData.standardRate)).toLocaleString()}
                                 <span className="text-sm font-normal text-muted-foreground">/hr</span>
                               </div>
                               <span className="text-xs text-muted-foreground">online</span>
