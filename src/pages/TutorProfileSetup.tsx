@@ -1402,96 +1402,13 @@ const TutorProfileSetup = () => {
                   <Separator />
 
                   <div className="space-y-4">
-                    <h4 className="font-semibold">Education History</h4>
-                    <p className="text-sm text-muted-foreground">Add your educational qualifications</p>
-                    
-                    {formData.educationHistory.map((edu, index) => <Card key={index} className="p-4">
-                        <div className="grid gap-3">
-                          <div className="grid grid-cols-2 gap-3">
-                            <div className="space-y-2">
-                              <Label>Institution *</Label>
-                              <Input value={edu.institution} onChange={e => {
-                            const newHistory = [...formData.educationHistory];
-                            newHistory[index].institution = e.target.value;
-                            setFormData({
-                              ...formData,
-                              educationHistory: newHistory
-                            });
-                          }} placeholder="e.g., University of Nairobi" />
-                            </div>
-                            <div className="space-y-2">
-                              <Label>Qualification/Degree *</Label>
-                              <Input value={edu.degree} onChange={e => {
-                            const newHistory = [...formData.educationHistory];
-                            newHistory[index].degree = e.target.value;
-                            setFormData({
-                              ...formData,
-                              educationHistory: newHistory
-                            });
-                          }} placeholder="e.g., Bachelor's, Master's, Diploma" />
-                            </div>
-                          </div>
-                          <div className="grid grid-cols-2 gap-3">
-                            <div className="space-y-2">
-                              <Label>Subject Specialization *</Label>
-                              <Input value={edu.field} onChange={e => {
-                            const newHistory = [...formData.educationHistory];
-                            newHistory[index].field = e.target.value;
-                            setFormData({
-                              ...formData,
-                              educationHistory: newHistory
-                            });
-                          }} placeholder="e.g., Mathematics, English" />
-                            </div>
-                            <div className="space-y-2">
-                              <Label>Graduation Year *</Label>
-                              <Input type="number" value={edu.graduationYear} onChange={e => {
-                            const newHistory = [...formData.educationHistory];
-                            newHistory[index].graduationYear = e.target.value;
-                            setFormData({
-                              ...formData,
-                              educationHistory: newHistory
-                            });
-                          }} placeholder="e.g., 2020" min="1950" max={new Date().getFullYear() + 10} />
-                            </div>
-                          </div>
-                          {formData.educationHistory.length > 1 && <Button type="button" variant="ghost" size="sm" onClick={() => {
-                        const newHistory = formData.educationHistory.filter((_, i) => i !== index);
-                        setFormData({
-                          ...formData,
-                          educationHistory: newHistory
-                        });
-                      }} className="text-destructive hover:text-destructive">
-                              Remove
-                            </Button>}
-                        </div>
-                      </Card>)}
-                    
-                    <Button type="button" variant="outline" onClick={() => {
-                    setFormData({
-                      ...formData,
-                      educationHistory: [...formData.educationHistory, {
-                        institution: "",
-                        degree: "",
-                        field: "",
-                        graduationYear: ""
-                      }]
-                    });
-                  }}>
-                      + Add {formData.educationHistory.length > 0 ? "Another Degree" : "Education"}
-                    </Button>
-                  </div>
-
-                  <Separator />
-
-                  <div className="space-y-4">
                     <h4 className="font-semibold">Teaching Experience History</h4>
                     <p className="text-sm text-muted-foreground">Add your teaching positions</p>
                     
                     {formData.teachingHistory.map((exp, index) => <Card key={index} className="p-4">
                         <div className="grid gap-3">
                           <div className="space-y-2">
-                            <Label>Institution *</Label>
+                            <Label>Institution/School *</Label>
                             <Input value={exp.institution} onChange={e => {
                           const newHistory = [...formData.teachingHistory];
                           newHistory[index].institution = e.target.value;
@@ -1548,6 +1465,89 @@ const TutorProfileSetup = () => {
                     });
                   }}>
                       + Add {formData.teachingHistory.length > 0 ? "Another Position" : "Teaching Experience"}
+                    </Button>
+                  </div>
+
+                  <Separator />
+
+                  <div className="space-y-4">
+                    <h4 className="font-semibold">Education History</h4>
+                    <p className="text-sm text-muted-foreground">Add your educational qualifications</p>
+                    
+                    {formData.educationHistory.map((edu, index) => <Card key={index} className="p-4">
+                        <div className="grid gap-3">
+                          <div className="grid grid-cols-2 gap-3">
+                            <div className="space-y-2">
+                              <Label>Institution *</Label>
+                              <Input value={edu.institution} onChange={e => {
+                            const newHistory = [...formData.educationHistory];
+                            newHistory[index].institution = e.target.value;
+                            setFormData({
+                              ...formData,
+                              educationHistory: newHistory
+                            });
+                          }} placeholder="e.g., University of Nairobi" />
+                            </div>
+                            <div className="space-y-2">
+                              <Label>Degree *</Label>
+                              <Input value={edu.degree} onChange={e => {
+                            const newHistory = [...formData.educationHistory];
+                            newHistory[index].degree = e.target.value;
+                            setFormData({
+                              ...formData,
+                              educationHistory: newHistory
+                            });
+                          }} placeholder="e.g., Bachelor of Education (Science)" />
+                            </div>
+                          </div>
+                          <div className="grid grid-cols-2 gap-3">
+                            <div className="space-y-2">
+                              <Label>Field of Study *</Label>
+                              <Input value={edu.field} onChange={e => {
+                            const newHistory = [...formData.educationHistory];
+                            newHistory[index].field = e.target.value;
+                            setFormData({
+                              ...formData,
+                              educationHistory: newHistory
+                            });
+                          }} placeholder="e.g., Mathematics" />
+                            </div>
+                            <div className="space-y-2">
+                              <Label>Graduation Year *</Label>
+                              <Input type="number" value={edu.graduationYear} onChange={e => {
+                            const newHistory = [...formData.educationHistory];
+                            newHistory[index].graduationYear = e.target.value;
+                            setFormData({
+                              ...formData,
+                              educationHistory: newHistory
+                            });
+                          }} placeholder="e.g., 2018" min="1950" max={new Date().getFullYear()} />
+                            </div>
+                          </div>
+                          {formData.educationHistory.length > 1 && <Button type="button" variant="ghost" size="sm" onClick={() => {
+                        const newHistory = formData.educationHistory.filter((_, i) => i !== index);
+                        setFormData({
+                          ...formData,
+                          educationHistory: newHistory
+                        });
+                      }} className="text-destructive hover:text-destructive">
+                              Remove
+                            </Button>}
+                        </div>
+                      </Card>)}
+                    
+                    <Button type="button" variant="outline" onClick={() => {
+                    setFormData({
+                      ...formData,
+                      educationHistory: [...formData.educationHistory, {
+                        degree: "",
+                        institution: "",
+                        graduationYear: "",
+                        field: ""
+                      }]
+                    });
+                  }}>
+                      + Add Education
                     </Button>
                   </div>
 
