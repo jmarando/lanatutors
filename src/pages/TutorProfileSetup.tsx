@@ -884,10 +884,23 @@ const TutorProfileSetup = () => {
       if (tutorProfile) {
         const packages = [];
         const hourlyRate = parseFloat(formData.hourlyRate);
+        const MIN_PRICE_PER_SESSION = 500; // KES 500 minimum per session
 
         // 5-session bundle with custom discount
         const discount5 = parseFloat(formData.package5Discount) / 100;
         const price5 = Math.round(hourlyRate * 5 * (1 - discount5));
+        const pricePerSession5 = price5 / 5;
+        
+        if (pricePerSession5 < MIN_PRICE_PER_SESSION) {
+          toast({
+            title: "Invalid Package Pricing",
+            description: `5-Session Bundle price is too low (KES ${pricePerSession5.toFixed(2)} per session). Minimum is KES ${MIN_PRICE_PER_SESSION} per session.`,
+            variant: "destructive",
+          });
+          setIsLoading(false);
+          return;
+        }
+        
         packages.push({
           tutor_id: tutorProfile.id,
           name: "5-Session Bundle",
@@ -904,6 +917,18 @@ const TutorProfileSetup = () => {
         // 10-session bundle with custom discount
         const discount10 = parseFloat(formData.package10Discount) / 100;
         const price10 = Math.round(hourlyRate * 10 * (1 - discount10));
+        const pricePerSession10 = price10 / 10;
+        
+        if (pricePerSession10 < MIN_PRICE_PER_SESSION) {
+          toast({
+            title: "Invalid Package Pricing",
+            description: `10-Session Bundle price is too low (KES ${pricePerSession10.toFixed(2)} per session). Minimum is KES ${MIN_PRICE_PER_SESSION} per session.`,
+            variant: "destructive",
+          });
+          setIsLoading(false);
+          return;
+        }
+        
         packages.push({
           tutor_id: tutorProfile.id,
           name: "10-Session Bundle",
@@ -921,6 +946,18 @@ const TutorProfileSetup = () => {
         // Double session bundle (2 hours) with custom discount
         const discountDouble = parseFloat(formData.doubleSessionDiscount) / 100;
         const priceDouble = Math.round(hourlyRate * 2 * (1 - discountDouble));
+        const pricePerSessionDouble = priceDouble / 1; // 1 session of 2 hours
+        
+        if (pricePerSessionDouble < MIN_PRICE_PER_SESSION) {
+          toast({
+            title: "Invalid Package Pricing",
+            description: `Double Session price is too low (KES ${pricePerSessionDouble.toFixed(2)} per session). Minimum is KES ${MIN_PRICE_PER_SESSION} per session.`,
+            variant: "destructive",
+          });
+          setIsLoading(false);
+          return;
+        }
+        
         packages.push({
           tutor_id: tutorProfile.id,
           name: "Double Session",
