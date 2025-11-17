@@ -93,7 +93,7 @@ const ForStudents = () => {
     {
       icon: GraduationCap,
       title: "All Subjects Covered",
-      description: "CBC, IGCSE, KCSE, KCPE - we have expert tutors for Mathematics, Sciences, Languages, and all core subjects.",
+      description: "CBC, IGCSE, American, KCSE, KCPE - we have expert tutors for Mathematics, Sciences, Languages, and all core subjects.",
     },
   ];
 
@@ -156,7 +156,7 @@ const ForStudents = () => {
     <div className="min-h-screen bg-[image:var(--gradient-page)]">
       <SEO 
         title="For Students - Quality Online Tutoring in Kenya"
-        description="Connect with verified tutors from top Kenyan schools. Get personalized 1-on-1 tutoring for KCSE, KCPE, CBC, and IGCSE. Flexible online and in-person sessions."
+        description="Connect with verified tutors from top Kenyan schools. Get personalized 1-on-1 tutoring for KCSE, KCPE, CBC, IGCSE, and American curriculum. Flexible online and in-person sessions."
       />
       
       {/* Hero Section */}
@@ -211,7 +211,7 @@ const ForStudents = () => {
             </div>
             <div className="space-y-2">
               <div className="text-3xl font-bold text-primary">All Curricula</div>
-              <div className="text-sm text-muted-foreground">CBC, IGCSE & 8-4-4</div>
+              <div className="text-sm text-muted-foreground">CBC, IGCSE, American & 8-4-4</div>
             </div>
           </div>
         </div>
