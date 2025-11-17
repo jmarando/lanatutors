@@ -24,7 +24,10 @@ export const GoogleCalendarConnect = ({
       setLoading(true);
 
       const { data, error } = await supabase.functions.invoke('google-calendar-oauth', {
-        body: { tutorId }
+        body: { 
+          tutorId,
+          appOrigin: window.location.origin
+        }
       });
 
       if (error) throw error;

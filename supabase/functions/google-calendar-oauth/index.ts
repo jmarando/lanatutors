@@ -27,10 +27,22 @@ serve(async (req) => {
         throw new Error('Missing code or state parameter');
       }
 
-      // Parse state to check if it's central calendar
+      // Parse state to determine type and extract data
       const isCentral = state === 'central-calendar' || state.startsWith('central-calendar:');
-      const tutorId = isCentral ? null : state;
-      const appOriginFromState = isCentral && state.includes(':') ? state.split(':')[1] : null;
+      let tutorId = null;
+      let appOriginFromState = null;
+      
+      if (isCentral && state.includes(':')) {
+        appOriginFromState = state.split(':')[1];
+      } else if (state.startsWith('tutor:')) {
+        // New format: tutor:tutorId:appOrigin
+        const parts = state.split(':');
+        tutorId = parts[1];
+        appOriginFromState = parts.length > 2 ? parts.slice(2).join(':') : null;
+      } else {
+        // Legacy format: just tutorId
+        tutorId = state;
+      }
 
       // Exchange code for tokens
       const tokenResponse = await fetch('https://oauth2.googleapis.com/token', {
@@ -126,19 +138,33 @@ serve(async (req) => {
           throw updateError;
         }
 
+        console.log('Successfully updated tutor calendar tokens, redirecting to:', `${redirectOrigin}/tutor/dashboard`);
+
+        // If redirect origin is Google's domain (no app origin), show a success page instead of bad redirect
+        if (redirectOrigin.includes('accounts.google.com')) {
+          const html = `<!doctype html><html><head><meta charset="utf-8"><title>Calendar Connected</title></head><body style="font-family:system-ui;padding:24px;">
+            <h1>Calendar connected successfully!</h1>
+            <p>You can close this tab and return to your dashboard. The connection was successful.</p>
+            <script>try{window.close()}catch(e){}</script>
+            </body></html>`;
+          return new Response(html, {
+            headers: { ...corsHeaders, 'Content-Type': 'text/html' },
+          });
+        }
+
         // Redirect back to tutor dashboard with success
         return new Response(null, {
           status: 302,
           headers: {
             ...corsHeaders,
-            'Location': `${fallbackOrigin}/tutor/dashboard?calendar_connected=true`,
+            'Location': `${redirectOrigin}/tutor/dashboard?calendar_connected=true`,
           },
         });
       }
     }
 
     // Handle OAuth initiation
-    const { tutorId } = await req.json();
+    const { tutorId, appOrigin: requestedOrigin } = await req.json();
     
     if (!tutorId) {
       throw new Error('Tutor ID is required');
@@ -146,6 +172,7 @@ serve(async (req) => {
 
     const googleClientId = Deno.env.get('GOOGLE_CLIENT_ID');
     const redirectUri = `${supabaseUrl}/functions/v1/google-calendar-oauth/callback`;
+    const appOrigin = requestedOrigin || Deno.env.get('APP_ORIGIN') || '';
 
     const authUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth');
     authUrl.searchParams.set('client_id', googleClientId!);
@@ -154,7 +181,8 @@ serve(async (req) => {
     authUrl.searchParams.set('scope', 'https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/calendar.events');
     authUrl.searchParams.set('access_type', 'offline');
     authUrl.searchParams.set('prompt', 'consent');
-    authUrl.searchParams.set('state', tutorId);
+    // Encode both tutorId and app origin in state
+    authUrl.searchParams.set('state', `tutor:${tutorId}:${appOrigin}`);
 
     return new Response(
       JSON.stringify({ authUrl: authUrl.toString() }),
