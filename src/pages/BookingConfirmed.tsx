@@ -7,7 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { format } from "date-fns";
-import { CheckCircle2, Calendar, Clock, User, BookOpen, MapPin, Video, Mail, ArrowRight } from "lucide-react";
+import { CheckCircle2, Calendar, Clock, User, BookOpen, MapPin, Video, Mail, ArrowRight, Home } from "lucide-react";
 import Navigation from "@/components/Navigation";
 
 interface BookingDetails {
@@ -333,13 +333,17 @@ const BookingConfirmed = () => {
                 </li>
               </ol>
 
-              <div className="flex gap-4 mt-6">
+              <div className="flex flex-col sm:flex-row gap-4 mt-6">
                 <Button onClick={() => navigate("/student/dashboard")} className="flex-1">
                   Go to Dashboard
                   <ArrowRight className="ml-2 w-4 h-4" />
                 </Button>
                 <Button onClick={() => navigate("/tutors")} variant="outline" className="flex-1">
                   Book Another Session
+                </Button>
+                <Button onClick={() => navigate("/")} variant="ghost">
+                  <Home className="mr-2 h-4 w-4" />
+                  Home
                 </Button>
               </div>
             </CardContent>

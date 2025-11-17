@@ -1,10 +1,13 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { Home } from "lucide-react";
 
 const TestEmail = () => {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [loadingApproval, setLoadingApproval] = useState(false);
 
@@ -54,9 +57,15 @@ const TestEmail = () => {
     <div className="min-h-screen bg-[image:var(--gradient-page)]">
       <div className="max-w-2xl mx-auto px-6 py-12">
         <div className="space-y-6">
-          <div>
-            <h1 className="text-3xl font-bold mb-2">Tutor Email Templates</h1>
-            <p className="text-muted-foreground">Send sample tutor emails to lanatutorskenya@gmail.com</p>
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold mb-2">Tutor Email Templates</h1>
+              <p className="text-muted-foreground">Send sample tutor emails to lanatutorskenya@gmail.com</p>
+            </div>
+            <Button onClick={() => navigate("/")} variant="outline">
+              <Home className="mr-2 h-4 w-4" />
+              Home
+            </Button>
           </div>
 
           <Card>
