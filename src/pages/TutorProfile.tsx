@@ -206,10 +206,17 @@ const TutorProfile = () => {
       .select("*")
       .eq("tutor_id", id)
       .eq("is_active", true)
+      .order("is_featured", { ascending: false })
       .order("session_count");
 
     if (packagesData) {
-      setPackages(packagesData);
+      // Deduplicate packages based on name and session_count
+      const uniquePackages = packagesData.filter((pkg, index, self) =>
+        index === self.findIndex((p) => 
+          p.name === pkg.name && p.session_count === pkg.session_count
+        )
+      );
+      setPackages(uniquePackages);
     }
   };
 
