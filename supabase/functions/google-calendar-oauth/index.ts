@@ -176,6 +176,8 @@ serve(async (req) => {
     // Handle OAuth initiation
     const { tutorId, appOrigin: requestedOrigin } = await req.json();
     
+    console.log('OAuth initiation - tutorId:', tutorId, 'requestedOrigin:', requestedOrigin);
+    
     if (!tutorId) {
       throw new Error('Tutor ID is required');
     }
@@ -184,6 +186,8 @@ serve(async (req) => {
     const redirectUri = `${supabaseUrl}/functions/v1/google-calendar-oauth/callback`;
     const appOrigin = requestedOrigin || Deno.env.get('APP_ORIGIN') || '';
 
+    console.log('Using appOrigin:', appOrigin);
+
     const authUrl = new URL('https://accounts.google.com/o/oauth2/v2/auth');
     authUrl.searchParams.set('client_id', googleClientId!);
     authUrl.searchParams.set('redirect_uri', redirectUri);
@@ -191,8 +195,11 @@ serve(async (req) => {
     authUrl.searchParams.set('scope', 'https://www.googleapis.com/auth/calendar https://www.googleapis.com/auth/calendar.events');
     authUrl.searchParams.set('access_type', 'offline');
     authUrl.searchParams.set('prompt', 'consent');
-    // Encode both tutorId and app origin in state
-    authUrl.searchParams.set('state', `tutor:${tutorId}:${appOrigin}`);
+    // Encode both tutorId and app origin in state - only add appOrigin if it exists
+    const state = appOrigin ? `tutor:${tutorId}:${appOrigin}` : `tutor:${tutorId}`;
+    authUrl.searchParams.set('state', state);
+    
+    console.log('OAuth state:', state);
 
     return new Response(
       JSON.stringify({ authUrl: authUrl.toString() }),
