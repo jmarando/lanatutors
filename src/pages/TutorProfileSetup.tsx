@@ -241,13 +241,74 @@ const TutorProfileSetup = () => {
         setIsEditMode(true);
         setExistingTutorId(existingTutor.id);
         
+        // Load pricing tiers
+        const { data: pricingTiers } = await supabase
+          .from("tutor_pricing_tiers")
+          .select("*")
+          .eq("tutor_id", existingTutor.id);
+        
+        const standardTier = pricingTiers?.find(t => t.tier_name === "Standard");
+        const advancedTier = pricingTiers?.find(t => t.tier_name === "Advanced");
+        
+        // Load tier assignments to reconstruct subjectsWithContext and curriculumLevels
+        const { data: tierAssignments } = await supabase
+          .from("curriculum_level_tier_assignments")
+          .select("curriculum, level, tier_id")
+          .eq("tutor_id", existingTutor.id);
+        
+        // Reconstruct curriculumLevels
+        const reconstructedCurriculumLevels: { [key: string]: string[] } = {};
+        const reconstructedSubjectsWithContext: Array<{
+          curriculum: string;
+          level: string;
+          subject: string;
+        }> = [];
+        const reconstructedTierAssignments: { [key: string]: 'standard' | 'advanced' } = {};
+        
+        if (tierAssignments) {
+          tierAssignments.forEach(assignment => {
+            // Build curriculum levels map
+            if (!reconstructedCurriculumLevels[assignment.curriculum]) {
+              reconstructedCurriculumLevels[assignment.curriculum] = [];
+            }
+            if (!reconstructedCurriculumLevels[assignment.curriculum].includes(assignment.level)) {
+              reconstructedCurriculumLevels[assignment.curriculum].push(assignment.level);
+            }
+            
+            // Build tier assignments
+            const key = `${assignment.curriculum}-${assignment.level}`;
+            reconstructedTierAssignments[key] = assignment.tier_id === standardTier?.id ? 'standard' : 'advanced';
+          });
+        }
+        
+        // Reconstruct subjects from the subjects array in tutor_profiles
+        if (existingTutor.subjects && Array.isArray(existingTutor.subjects)) {
+          existingTutor.subjects.forEach((subject: string) => {
+            // For each subject, find which curriculum-level combinations it belongs to
+            Object.entries(reconstructedCurriculumLevels).forEach(([curriculum, levels]) => {
+              levels.forEach(level => {
+                reconstructedSubjectsWithContext.push({
+                  curriculum,
+                  level,
+                  subject
+                });
+              });
+            });
+          });
+        }
+        
+        setCurriculumLevels(reconstructedCurriculumLevels);
+        setTierAssignments(reconstructedTierAssignments);
+        
         // Populate form with existing data
         setFormData(prev => ({
           ...prev,
           bio: existingTutor.bio || "",
           curriculum: existingTutor.curriculum || [],
           teachingMode: existingTutor.teaching_mode || [],
-          hourlyRate: existingTutor.hourly_rate?.toString() || "",
+          standardRate: standardTier?.online_hourly_rate?.toString() || "",
+          advancedRate: advancedTier?.online_hourly_rate?.toString() || "",
+          hourlyRate: existingTutor.hourly_rate?.toString() || standardTier?.online_hourly_rate?.toString() || "",
           experienceYears: existingTutor.experience_years?.toString() || "",
           currentInstitution: existingTutor.current_institution || "",
           showCurrentInstitution: existingTutor.display_institution ?? true,
@@ -256,6 +317,22 @@ const TutorProfileSetup = () => {
             : "",
           teachingLocations: existingTutor.teaching_location?.split(', ') || [],
           gender: existingTutor.gender || "",
+          subjectsWithContext: reconstructedSubjectsWithContext,
+          educationHistory: Array.isArray(existingTutor.teaching_experience) && existingTutor.teaching_experience.length > 0
+            ? existingTutor.teaching_experience.filter((exp: any) => exp.degree).map((exp: any) => ({
+                institution: exp.institution || "",
+                degree: exp.degree || "",
+                field: exp.field || "",
+                graduationYear: exp.graduationYear || ""
+              }))
+            : [],
+          teachingHistory: Array.isArray(existingTutor.teaching_experience) && existingTutor.teaching_experience.length > 0
+            ? existingTutor.teaching_experience.filter((exp: any) => exp.role).map((exp: any) => ({
+                institution: exp.institution || "",
+                role: exp.role || "",
+                years: exp.years || ""
+              }))
+            : [],
         }));
 
         // Set package discounts if they exist
