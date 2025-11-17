@@ -95,17 +95,14 @@ const TutorSearch = () => {
           ? Number(advancedTier.online_hourly_rate) 
           : hourlyRate;
 
-        // Check if this is Calvin
-        const isCalvin = name === "Calvins Onuko";
-        
-        // Use uploaded avatar if available and tutor chose to display it
+        // Only show real uploaded avatars, no AI fallback photos
         const uploadedAvatar = prof?.avatar_url;
-        const showPhoto = tp.show_photo !== false; // Default to true if not set
-        const fallbackPhoto = isCalvin ? calvinProfilePhoto : tutorImages[index % tutorImages.length];
         
         return {
           id: tp.id,
           name,
+          photo: name.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2),
+          photoUrl: uploadedAvatar || null, // Only use real avatar, no fallback
           subjects: tp.subjects || [],
           curriculum: tp.curriculum || [],
           teachingLevels: tp.teaching_levels || [],
@@ -118,19 +115,9 @@ const TutorSearch = () => {
           hourlyRateMax,
           hasTiers: tiers.length > 0,
           gender: tp.gender || null,
-          photo: name.split(' ').map((n: string) => n[0]).join('') || "T",
-          photoUrl: (showPhoto && uploadedAvatar) ? uploadedAvatar : null, // Only show photo if allowed
-          showPhoto,
-          isCalvin // Flag to sort Calvin first
         };
       });
 
-      // Sort to put Calvin first
-      formattedTutors.sort((a, b) => {
-        if (a.isCalvin) return -1;
-        if (b.isCalvin) return 1;
-        return 0;
-      });
       setTutors(formattedTutors);
     } catch (err) {
       console.error("Error fetching tutors:", err);
