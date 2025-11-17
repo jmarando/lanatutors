@@ -40,6 +40,7 @@ const PaymentCallback = lazy(() => import("./pages/PaymentCallback"));
 const TutorAvailability = lazy(() => import("./pages/TutorAvailability"));
 const TutorOnboardingGuide = lazy(() => import("./pages/TutorOnboardingGuide"));
 const TutorGuidePrintable = lazy(() => import("./pages/TutorGuidePrintable"));
+const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
 
 const queryClient = new QueryClient();
 
@@ -89,6 +90,7 @@ const App = () => {
                 <Route path="/setup-central-calendar" element={<SetupCentralCalendar />} />
                 <Route path="/payment-callback" element={<PaymentCallback />} />
                 <Route path="/holiday-packages" element={<HolidayPackages />} />
+                <Route path="/privacy-policy" element={<PrivacyPolicy />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>

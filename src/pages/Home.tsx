@@ -516,6 +516,7 @@ const Home = () => {
                 <li><Link to="#">Help Center</Link></li>
                 <li><Link to="#">Contact Us</Link></li>
                 <li><Link to="#">Safety Guidelines</Link></li>
+                <li><Link to="/privacy-policy">Privacy Policy</Link></li>
               </ul>
             </div>
           </div>
