@@ -327,27 +327,34 @@ const Home = () => {
         </div>
       </section>
 
-      {/* CTA Section - Between Services and How It Works */}
+      {/* Holiday Packages CTA */}
       <section className="py-16 px-6">
         <div className="max-w-4xl mx-auto">
-          <Card className="bg-gradient-to-r from-primary to-primary/90 text-primary-foreground border-0">
-            <CardContent className="p-10 text-center">
-              <h2 className="text-3xl font-bold mb-3">Ready to Get Started?</h2>
-              <p className="text-lg mb-6 opacity-90">
-                Book a free 30-minute consultation or browse our verified tutors
+          <Card className="bg-gradient-to-r from-primary via-primary/95 to-accent text-primary-foreground border-0 overflow-hidden relative">
+            <CardContent className="p-10 text-center relative z-10">
+              <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-white/20 text-white text-sm font-medium mb-4">
+                <Sparkles className="w-4 h-4" />
+                Limited Time Offer
+              </div>
+              <h2 className="text-3xl md:text-4xl font-bold mb-3">🎓 December Revision Packages</h2>
+              <p className="text-lg mb-6 opacity-90 max-w-2xl mx-auto">
+                Intensive exam preparation for candidate years. Save up to 25% on revision bundles for IGCSE, CBC & 8-4-4
               </p>
               <div className="flex flex-wrap gap-4 justify-center">
-                <Link to="/book-consultation">
+                <Link to="/holiday-packages">
                   <Button size="lg" variant="secondary" className="text-lg px-8 shadow-lg">
+                    View Packages
+                  </Button>
+                </Link>
+                <Link to="/book-consultation">
+                  <Button size="lg" variant="outline" className="text-lg px-8 shadow-lg bg-white/10 hover:bg-white/20 text-white border-white/30">
                     Book Free Consultation
                   </Button>
                 </Link>
-                <Link to="/tutors">
-                  <Button size="lg" variant="outline" className="text-lg px-8 shadow-lg bg-white/10 hover:bg-white/20 text-white border-white/30">
-                    Browse Tutors
-                  </Button>
-                </Link>
               </div>
+              <p className="text-sm mt-4 opacity-75">
+                Valid December 2025 - January 2026 • All Subjects • Expert Tutors
+              </p>
             </CardContent>
           </Card>
         </div>
