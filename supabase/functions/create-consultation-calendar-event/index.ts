@@ -26,7 +26,7 @@ const handler = async (req: Request): Promise<Response> => {
     const { parentName, studentName, email, phoneNumber, consultationDate, consultationTime, subjects, gradeLevel, notes }: CalendarEventRequest = await req.json();
 
     const serviceAccountJson = Deno.env.get("GOOGLE_SERVICE_ACCOUNT_JSON");
-    const impersonateEmail = Deno.env.get("GOOGLE_IMPERSONATE_EMAIL") || "info@lanatutors.com";
+    const impersonateEmail = Deno.env.get("GOOGLE_IMPERSONATE_EMAIL") || "info@lanatutors.africa";
     
     if (!serviceAccountJson) {
       throw new Error("Google service account credentials not found");
