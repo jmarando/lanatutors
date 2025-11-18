@@ -143,7 +143,7 @@ const BookConsultation = () => {
 
       const meetingLink = calendarData.meetingLink;
 
-      // Step 2: Insert booking into database
+      // Step 2: Insert booking into database with meeting link
       const { error: dbError } = await supabase.from("consultation_bookings").insert({
         parent_name: formData.parentName,
         student_name: formData.studentName,
@@ -156,6 +156,7 @@ const BookConsultation = () => {
         consultation_date: selectedDate!.toISOString().split('T')[0],
         consultation_time: selectedTime,
         status: "confirmed",
+        meeting_link: meetingLink,
       });
 
       if (dbError) throw dbError;
