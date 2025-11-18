@@ -43,11 +43,17 @@ const TutorProfile = () => {
   useEffect(() => {
     fetchTutorProfile();
     fetchCurrentUser();
-    fetchReviews();
-    fetchPackages();
-    fetchPricingTiers();
     checkHolidayPackageAvailability();
   }, [id]);
+
+  // Fetch data that depends on tutor.id after tutor is loaded
+  useEffect(() => {
+    if (tutor?.id) {
+      fetchReviews();
+      fetchPackages();
+      fetchPricingTiers();
+    }
+  }, [tutor?.id]);
 
   // Auto-select tier based on search context
   useEffect(() => {
@@ -163,10 +169,12 @@ const TutorProfile = () => {
   };
 
   const fetchReviews = async () => {
+    if (!tutor?.id) return;
+    
     const { data: reviewsData } = await supabase
       .from("tutor_reviews")
       .select("*")
-      .eq("tutor_id", id)
+      .eq("tutor_id", tutor.id)
       .eq("is_approved", true)
       .order("created_at", { ascending: false })
       .limit(10);
@@ -190,10 +198,12 @@ const TutorProfile = () => {
   };
 
   const fetchPackages = async () => {
+    if (!tutor?.id) return;
+    
     const { data: packagesData } = await supabase
       .from("package_offers")
       .select("*")
-      .eq("tutor_id", id)
+      .eq("tutor_id", tutor.id)
       .eq("is_active", true)
       .order("is_featured", { ascending: false })
       .order("session_count");
@@ -210,10 +220,12 @@ const TutorProfile = () => {
   };
 
   const fetchPricingTiers = async () => {
+    if (!tutor?.id) return;
+    
     const { data: tiersData } = await supabase
       .from("tutor_pricing_tiers")
       .select("*")
-      .eq("tutor_id", id)
+      .eq("tutor_id", tutor.id)
       .order("tier_name");
 
     if (tiersData) {
