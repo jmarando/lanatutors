@@ -26,17 +26,20 @@ const handler = async (req: Request): Promise<Response> => {
     const { parentName, studentName, email, phoneNumber, consultationDate, consultationTime, subjects, gradeLevel, notes }: CalendarEventRequest = await req.json();
 
     const serviceAccountJson = Deno.env.get("GOOGLE_SERVICE_ACCOUNT_JSON");
+    const impersonateEmail = Deno.env.get("GOOGLE_IMPERSONATE_EMAIL") || "info@lanatutors.com";
+    
     if (!serviceAccountJson) {
       throw new Error("Google service account credentials not found");
     }
 
     const serviceAccount = JSON.parse(serviceAccountJson);
     
-    // Create JWT for Google API authentication
+    // Create JWT for Google API authentication with impersonation
     const now = Math.floor(Date.now() / 1000);
     const jwtHeader = btoa(JSON.stringify({ alg: "RS256", typ: "JWT" }));
     const jwtClaimSet = btoa(JSON.stringify({
       iss: serviceAccount.client_email,
+      sub: impersonateEmail, // Impersonate the calendar owner
       scope: "https://www.googleapis.com/auth/calendar",
       aud: "https://oauth2.googleapis.com/token",
       exp: now + 3600,
@@ -84,7 +87,7 @@ ${notes ? `Notes: ${notes}` : ''}
       },
       attendees: [
         { email: email },
-        { email: "info@yehtu.com" },
+        { email: impersonateEmail },
       ],
       conferenceData: {
         createRequest: {
@@ -102,7 +105,7 @@ ${notes ? `Notes: ${notes}` : ''}
     };
 
     const calendarResponse = await fetch(
-      `https://www.googleapis.com/calendar/v3/calendars/info@yehtu.com/events?conferenceDataVersion=1`,
+      `https://www.googleapis.com/calendar/v3/calendars/${encodeURIComponent(impersonateEmail)}/events?conferenceDataVersion=1`,
       {
         method: "POST",
         headers: {
