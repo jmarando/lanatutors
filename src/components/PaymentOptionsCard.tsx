@@ -189,7 +189,7 @@ export const PaymentOptionsCard = ({
       {packageOffers.length > 0 && (
         <div className="space-y-2">
           <p className="text-sm font-medium text-primary">Save with Packages</p>
-          <p className="text-xs text-muted-foreground mb-2">💰 Book multiple sessions and save! Packages provide better value and show your commitment.</p>
+          <p className="text-xs text-muted-foreground mb-2">💰 Book multiple sessions and save! Packages provide better value for consistent learning.</p>
           {packageOffers.map((pkg) => {
             const regularPrice = totalAmount * pkg.session_count;
             const savings = regularPrice - pkg.total_price;
