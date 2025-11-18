@@ -777,23 +777,6 @@ const TutorProfile = () => {
                       </div>
                     </Button>
 
-                    <Button 
-                      variant="outline" 
-                      className="w-full group hover:bg-accent/50 transition-all h-auto py-3"
-                      size="lg"
-                      onClick={() => handleBookingTypeSelect('double')}
-                    >
-                      <div className="flex items-center justify-between w-full">
-                        <div className="flex flex-col items-start gap-1">
-                          <span className="flex items-center gap-2">
-                            <BookOpen className="w-4 h-4" />
-                            Double Session
-                          </span>
-                          <Badge variant="secondary" className="text-[10px]">Save 5%</Badge>
-                        </div>
-                        <span className="font-semibold ml-2">KES {Math.round(currentRate * 2 * 0.95).toLocaleString()}</span>
-                      </div>
-                    </Button>
 
                     <Separator className="my-3" />
 
