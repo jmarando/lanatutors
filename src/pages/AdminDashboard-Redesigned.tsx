@@ -30,6 +30,7 @@ const AdminDashboard = () => {
   const [tutoringBookings, setTutoringBookings] = useState<any[]>([]);
   const [dashboardMetrics, setDashboardMetrics] = useState<any>(null);
   const [timeRange, setTimeRange] = useState<'7days' | '30days' | '90days'>('30days');
+  const [activeTab, setActiveTab] = useState<string>('dashboard');
   const [interviewFilter, setInterviewFilter] = useState<'all' | 'scheduled' | 'passed' | 'failed'>('all');
   const [editingNote, setEditingNote] = useState<string | null>(null);
   const [noteContent, setNoteContent] = useState("");
@@ -1069,7 +1070,7 @@ The Lana Team`;
           <p className="text-muted-foreground text-lg">Overview of your tutoring platform</p>
         </div>
 
-        <Tabs defaultValue="dashboard" className="space-y-8">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
           <div className="border-b -mx-6 px-6">
             <TabsList className="h-auto p-0 bg-transparent w-full justify-start gap-6 flex-wrap border-0">
               <TabsTrigger 
@@ -1199,7 +1200,7 @@ The Lana Team`;
               <div className="space-y-8">
                 {/* Key Metrics Grid */}
                 <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-                  <Card className="overflow-hidden">
+                  <Card className="overflow-hidden cursor-pointer hover:shadow-lg transition-shadow" onClick={() => setActiveTab('students')}>
                     <CardHeader className="pb-3">
                       <div className="flex items-center justify-between">
                         <CardTitle className="text-sm font-medium text-muted-foreground">Total Students</CardTitle>
@@ -1218,7 +1219,7 @@ The Lana Team`;
                     </CardContent>
                   </Card>
 
-                  <Card className="overflow-hidden">
+                  <Card className="overflow-hidden cursor-pointer hover:shadow-lg transition-shadow" onClick={() => setActiveTab('tutors')}>
                     <CardHeader className="pb-3">
                       <div className="flex items-center justify-between">
                         <CardTitle className="text-sm font-medium text-muted-foreground">Active Tutors</CardTitle>
@@ -1237,7 +1238,7 @@ The Lana Team`;
                     </CardContent>
                   </Card>
 
-                  <Card className="overflow-hidden">
+                  <Card className="overflow-hidden cursor-pointer hover:shadow-lg transition-shadow" onClick={() => setActiveTab('bookings')}>
                     <CardHeader className="pb-3">
                       <div className="flex items-center justify-between">
                         <CardTitle className="text-sm font-medium text-muted-foreground">Total Revenue</CardTitle>
