@@ -32,7 +32,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
-import Navigation from "@/components/Navigation";
+
 import { RecordingPayment } from "@/components/RecordingPayment";
 import { StudentHolidayPackages } from "@/components/StudentHolidayPackages";
 
@@ -319,7 +319,6 @@ const NewStudentDashboard = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-[image:var(--gradient-page)]">
-        <Navigation />
         <div className="container mx-auto px-4 py-16 flex items-center justify-center">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
@@ -332,7 +331,6 @@ const NewStudentDashboard = () => {
 
   return (
     <div className="min-h-screen bg-[image:var(--gradient-page)]">
-      <Navigation />
       
       <div className="container mx-auto px-4 py-16 max-w-7xl">
         <h1 className="text-4xl font-bold mb-2">
