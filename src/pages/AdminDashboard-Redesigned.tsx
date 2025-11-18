@@ -14,12 +14,8 @@ import { toast } from "sonner";
 import { CheckCircle, XCircle, AlertCircle, Calendar as CalendarIcon, Clock, Mail, Phone, User, BookOpen, FileText, Video, Edit, Save, X, MessageCircle, Send, TrendingUp, Users, DollarSign, BookMarked, Activity, ArrowUpRight, ArrowDownRight, GraduationCap, Star, ExternalLink } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Calendar } from "@/components/ui/calendar";
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { formatConsultationDate, formatToEAT, formatFullDateTime } from "@/utils/dateUtils";
-import { format } from "date-fns";
-import { cn } from "@/lib/utils";
 import { BlogManagement } from "@/components/admin/BlogManagement";
 
 const AdminDashboard = () => {
@@ -1281,7 +1277,7 @@ The Lana Team`;
                   <Card>
                     <CardHeader>
                       <CardTitle className="text-base flex items-center gap-2">
-                        <Calendar className="h-5 w-5" />
+                        <CalendarIcon className="h-5 w-5" />
                         Consultations
                       </CardTitle>
                     </CardHeader>
@@ -1856,7 +1852,7 @@ The Lana Team`;
                     {/* Contact & Consultation Details */}
                     <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3 pb-4 border-b">
                       <div className="flex items-center gap-2 text-sm">
-                        <Calendar className="h-4 w-4 text-muted-foreground shrink-0" />
+                        <CalendarIcon className="h-4 w-4 text-muted-foreground shrink-0" />
                         <div className="min-w-0">
                           <div className="text-xs text-muted-foreground">Date</div>
                           <div className="font-medium truncate">{formatConsultationDate(booking.consultation_date)}</div>
@@ -2506,30 +2502,14 @@ const ApplicationReviewCard = ({ application, onReview }: any) => {
           <div className="space-y-4">
             <div className="space-y-2">
               <Label>Select Interview Date *</Label>
-              <Popover modal>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    className={cn(
-                      "w-full justify-start text-left font-normal",
-                      !selectedDate && "text-muted-foreground"
-                    )}
-                  >
-                    <CalendarIcon className="mr-2 h-4 w-4" />
-                    {selectedDate ? format(selectedDate, "PPP") : "Pick a date"}
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-auto p-0 z-[9999]" align="start" sideOffset={5}>
-                  <Calendar
-                    mode="single"
-                    selected={selectedDate}
-                    onSelect={setSelectedDate}
-                    disabled={(date) => date < new Date()}
-                    initialFocus
-                    className="p-3 pointer-events-auto"
-                  />
-                </PopoverContent>
-              </Popover>
+              <Input
+                type="date"
+                value={selectedDate ? selectedDate.toISOString().split("T")[0] : ""}
+                onChange={(e) => {
+                  const value = e.target.value;
+                  setSelectedDate(value ? new Date(value) : null);
+                }}
+              />
             </div>
 
             <div className="space-y-2">
