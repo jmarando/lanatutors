@@ -1940,32 +1940,68 @@ The Lana Team`;
                         </div>
                       ) : (
                         <div className="bg-amber-50 dark:bg-amber-950/20 p-3 rounded-md border border-amber-200 dark:border-amber-800 overflow-hidden">
-                           <div className="flex items-center gap-2 mb-2">
+                          <div className="flex items-center gap-2 mb-2">
                             <AlertCircle className="h-4 w-4 text-amber-600" />
                             <p className="text-sm font-medium text-amber-900 dark:text-amber-100">No Meeting Link Set</p>
                           </div>
                           <p className="text-xs text-amber-700 dark:text-amber-300 mb-2">
-                            Create a Google Meet link and add it manually, or it will be auto-created before the consultation.
+                            Create a Google Meet link automatically from the connected calendar.
                           </p>
-                          <Button
-                            variant="outline"
-                            onClick={() => {
-                              const meetLink = prompt("Enter Google Meet link:");
-                              if (meetLink) {
-                                supabase
-                                  .from('consultation_bookings')
-                                  .update({ meeting_link: meetLink })
-                                  .eq('id', booking.id)
-                                  .then(() => {
-                                    toast.success("Meeting link added!");
-                                    fetchConsultationBookings();
+                          <div className="flex gap-2">
+                            <Button
+                              onClick={async () => {
+                                try {
+                                  const { data: calendarData, error: calendarError } = await supabase.functions.invoke("create-consultation-calendar-event", {
+                                    body: {
+                                      parentName: booking.parent_name,
+                                      studentName: booking.student_name,
+                                      email: booking.email,
+                                      phoneNumber: booking.phone_number,
+                                      consultationDate: booking.consultation_date,
+                                      consultationTime: booking.consultation_time,
+                                      subjects: booking.subjects_interest,
+                                      gradeLevel: booking.grade_level,
+                                      notes: booking.additional_notes,
+                                    },
                                   });
-                              }
-                            }}
-                            className="w-full"
-                          >
-                            Add Meeting Link Manually
-                          </Button>
+
+                                  if (calendarError) throw calendarError;
+
+                                  await supabase
+                                    .from('consultation_bookings')
+                                    .update({ meeting_link: calendarData.meetingLink })
+                                    .eq('id', booking.id);
+
+                                  toast.success("Meeting link generated!");
+                                  fetchConsultationBookings();
+                                } catch (err: any) {
+                                  toast.error(err.message || "Failed to generate meeting link");
+                                }
+                              }}
+                              className="flex-1"
+                            >
+                              <Video className="h-4 w-4 mr-2" />
+                              Generate Meeting Link
+                            </Button>
+                            <Button
+                              variant="outline"
+                              onClick={() => {
+                                const meetLink = prompt("Or enter manually:");
+                                if (meetLink) {
+                                  supabase
+                                    .from('consultation_bookings')
+                                    .update({ meeting_link: meetLink })
+                                    .eq('id', booking.id)
+                                    .then(() => {
+                                      toast.success("Meeting link added!");
+                                      fetchConsultationBookings();
+                                    });
+                                }
+                              }}
+                            >
+                              Manual
+                            </Button>
+                          </div>
                         </div>
                       )}
 
