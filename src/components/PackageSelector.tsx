@@ -106,6 +106,11 @@ export const PackageSelector = ({ tutorId, onSelectPackage, selectedPackageId }:
 
   return (
     <div className="space-y-3">
+      <div className="bg-muted/30 rounded-lg p-3 mb-4">
+        <p className="text-xs text-muted-foreground">
+          💡 <strong>How packages work:</strong> Purchase sessions upfront at a discounted rate, then use them flexibly over time. Track your remaining sessions in your dashboard and book whenever it suits you - no pressure to use them all at once!
+        </p>
+      </div>
       <div className="grid gap-3">
         {packages.map((pkg) => {
           const pricePerSession = pkg.total_price / pkg.session_count;

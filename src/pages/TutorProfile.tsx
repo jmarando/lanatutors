@@ -918,6 +918,34 @@ const TutorProfile = () => {
           
           {selectedPackage && (
             <div className="space-y-6 py-4">
+              {/* How It Works Section */}
+              <Card className="bg-primary/5 border-primary/20">
+                <CardContent className="p-4">
+                  <h4 className="font-semibold text-sm mb-3 flex items-center gap-2">
+                    <Sparkles className="w-4 h-4 text-primary" />
+                    How Your Session Bundle Works
+                  </h4>
+                  <div className="space-y-2 text-xs text-muted-foreground">
+                    <div className="flex items-start gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+                      <span><strong>Use at your own pace:</strong> Book sessions whenever it suits your schedule over the next {selectedPackage.validity_days} days</span>
+                    </div>
+                    <div className="flex items-start gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+                      <span><strong>Track your sessions:</strong> View your remaining sessions anytime in your student dashboard</span>
+                    </div>
+                    <div className="flex items-start gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+                      <span><strong>Flexible booking:</strong> Schedule one session at a time or plan multiple sessions in advance</span>
+                    </div>
+                    <div className="flex items-start gap-2">
+                      <CheckCircle2 className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+                      <span><strong>No pressure:</strong> There's no obligation to use all sessions at once - spread them out as needed</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
               <Card className="bg-muted/50">
                 <CardContent className="p-4">
                   <div className="space-y-3">
@@ -952,6 +980,10 @@ const TutorProfile = () => {
               <Button className="w-full" size="lg">
                 Proceed to Payment
               </Button>
+              
+              <p className="text-xs text-center text-muted-foreground">
+                Secure payment via PesaPal. After payment, you can start booking your sessions immediately from your dashboard.
+              </p>
             </div>
           )}
         </DialogContent>
