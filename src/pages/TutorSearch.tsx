@@ -215,6 +215,25 @@ const TutorSearch = () => {
         <div className="mb-10">
           <div className="text-center mb-8">
             <h1 className="text-5xl font-bold mb-3">Find Your Tutor</h1>
+            <p className="text-lg text-muted-foreground mb-6">Browse verified tutors or explore our specialized revision packages</p>
+            
+            {/* Call-to-Action for Holiday Packages */}
+            <div className="max-w-2xl mx-auto">
+              <Card className="bg-gradient-to-r from-primary/10 to-accent/10 border-primary/20">
+                <CardContent className="p-6">
+                  <div className="flex items-center justify-between gap-4">
+                    <div className="text-left">
+                      <h3 className="font-semibold text-lg mb-1">🎓 December Revision Packages</h3>
+                      <p className="text-sm text-muted-foreground">Intensive exam prep for candidate years</p>
+                    </div>
+                    <Button onClick={() => navigate('/holiday-packages')} className="shrink-0">
+                      View Packages
+                      <ArrowRight className="ml-2 h-4 w-4" />
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
           </div>
 
         </div>
