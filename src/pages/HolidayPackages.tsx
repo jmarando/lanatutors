@@ -2,13 +2,15 @@ import { useState, useEffect } from "react";
 import Navigation from "@/components/Navigation";
 import { SEO } from "@/components/SEO";
 import { HolidayPackageBanner } from "@/components/HolidayPackageBanner";
-import { HolidayPackageCard } from "@/components/HolidayPackageCard";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
 import { supabase } from "@/integrations/supabase/client";
-import { GraduationCap, Calendar, Gift, CheckCircle } from "lucide-react";
+import { GraduationCap, Calendar, Gift, CheckCircle, BookOpen, Clock, Target, Sparkles } from "lucide-react";
 import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 
 interface HolidayPackage {
   id: string;
@@ -20,23 +22,30 @@ interface HolidayPackage {
   ends_at: string;
 }
 
-interface PackageOffer {
-  id: string;
-  name: string;
-  description: string;
-  session_count: number;
-  total_price: number;
-  discount_percentage: number;
-  package_type: string;
-  tutor_id: string;
-  curriculum: string[];
+interface SubjectPackage {
+  subject: string;
+  sessions: number;
+  selected: boolean;
+}
+
+interface CurriculumPackageConfig {
+  curriculum: string;
+  candidateLevels: string[];
+  subjects: SubjectPackage[];
+  sessionsPerSubject: number;
+  pricePerSession: number;
+  discount: number;
+  features: string[];
 }
 
 export default function HolidayPackages() {
+  const navigate = useNavigate();
   const [holidayConfigs, setHolidayConfigs] = useState<HolidayPackage[]>([]);
-  const [packageOffers, setPackageOffers] = useState<PackageOffer[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedCurriculum, setSelectedCurriculum] = useState<string>("all");
+  const [purchasing, setPurchasing] = useState(false);
+  const [selectedCurriculum, setSelectedCurriculum] = useState<string>("IGCSE");
+  const [selectedLevel, setSelectedLevel] = useState<string>("");
+  const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
 
   useEffect(() => {
     fetchData();
@@ -44,7 +53,6 @@ export default function HolidayPackages() {
 
   const fetchData = async () => {
     try {
-      // Fetch holiday package configurations
       const { data: holidays, error: holidayError } = await supabase
         .from("holiday_packages")
         .select("*")
@@ -52,18 +60,13 @@ export default function HolidayPackages() {
         .eq("holiday_period", "december");
 
       if (holidayError) throw holidayError;
-
-      // Fetch holiday revision package offers
-      const { data: offers, error: offersError } = await supabase
-        .from("package_offers")
-        .select("*")
-        .eq("package_type", "holiday_revision")
-        .eq("is_active", true);
-
-      if (offersError) throw offersError;
-
       setHolidayConfigs(holidays || []);
-      setPackageOffers(offers || []);
+      
+      // Set default curriculum and level
+      if (holidays && holidays.length > 0) {
+        setSelectedCurriculum(holidays[0].curriculum);
+        setSelectedLevel(holidays[0].candidate_levels[0]);
+      }
     } catch (error) {
       console.error("Error fetching holiday packages:", error);
       toast.error("Failed to load holiday packages");
@@ -72,18 +75,169 @@ export default function HolidayPackages() {
     }
   };
 
-  const curriculums = ["all", ...new Set(holidayConfigs.map(h => h.curriculum))];
+  // Package configurations for each curriculum
+  const packageConfigs: Record<string, CurriculumPackageConfig> = {
+    "IGCSE": {
+      curriculum: "IGCSE",
+      candidateLevels: ["Year 10", "Year 11"],
+      subjects: [
+        { subject: "Mathematics", sessions: 12, selected: false },
+        { subject: "Physics", sessions: 10, selected: false },
+        { subject: "Chemistry", sessions: 10, selected: false },
+        { subject: "Biology", sessions: 10, selected: false },
+        { subject: "English Language", sessions: 8, selected: false },
+        { subject: "Business Studies", sessions: 8, selected: false },
+      ],
+      sessionsPerSubject: 10,
+      pricePerSession: 1500,
+      discount: 20,
+      features: [
+        "Exam technique and past papers",
+        "Topic-by-topic revision",
+        "Personalized feedback",
+        "Progress tracking",
+      ],
+    },
+    "CBC": {
+      curriculum: "CBC",
+      candidateLevels: ["Grade 6", "Grade 9"],
+      subjects: [
+        { subject: "Mathematics", sessions: 10, selected: false },
+        { subject: "English", sessions: 8, selected: false },
+        { subject: "Science & Technology", sessions: 10, selected: false },
+        { subject: "Kiswahili", sessions: 8, selected: false },
+        { subject: "Social Studies", sessions: 6, selected: false },
+      ],
+      sessionsPerSubject: 8,
+      pricePerSession: 1200,
+      discount: 15,
+      features: [
+        "Competency-based assessments",
+        "Practical learning activities",
+        "Continuous feedback",
+        "Skills development focus",
+      ],
+    },
+    "8-4-4": {
+      curriculum: "8-4-4",
+      candidateLevels: ["Standard 8 (KCPE)", "Form 4 (KCSE)"],
+      subjects: [
+        { subject: "Mathematics", sessions: 15, selected: false },
+        { subject: "English", sessions: 12, selected: false },
+        { subject: "Kiswahili", sessions: 12, selected: false },
+        { subject: "Physics", sessions: 12, selected: false },
+        { subject: "Chemistry", sessions: 12, selected: false },
+        { subject: "Biology", sessions: 12, selected: false },
+        { subject: "History", sessions: 10, selected: false },
+        { subject: "Geography", sessions: 10, selected: false },
+      ],
+      sessionsPerSubject: 12,
+      pricePerSession: 1300,
+      discount: 25,
+      features: [
+        "Intensive exam preparation",
+        "Past paper practice",
+        "Exam strategies and tips",
+        "Comprehensive topic coverage",
+      ],
+    },
+  };
 
-  const filteredConfigs = selectedCurriculum === "all" 
-    ? holidayConfigs 
-    : holidayConfigs.filter(h => h.curriculum === selectedCurriculum);
+  const currentConfig = packageConfigs[selectedCurriculum];
+  
+  const handleSubjectToggle = (subject: string) => {
+    setSelectedSubjects(prev => 
+      prev.includes(subject) 
+        ? prev.filter(s => s !== subject)
+        : [...prev, subject]
+    );
+  };
+
+  const calculateTotal = () => {
+    if (!currentConfig) return 0;
+    const subtotal = selectedSubjects.reduce((total, subjectName) => {
+      const subject = currentConfig.subjects.find(s => s.subject === subjectName);
+      return total + (subject ? subject.sessions * currentConfig.pricePerSession : 0);
+    }, 0);
+    const discount = subtotal * (currentConfig.discount / 100);
+    return subtotal - discount;
+  };
+
+  const handlePurchase = async () => {
+    if (selectedSubjects.length === 0) {
+      toast.error("Please select at least one subject");
+      return;
+    }
+
+    if (!selectedLevel) {
+      toast.error("Please select a candidate level");
+      return;
+    }
+
+    setPurchasing(true);
+    
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (!session) {
+        toast.error("Please sign in to purchase a package");
+        navigate('/login');
+        return;
+      }
+
+      const totalAmount = calculateTotal();
+      const subjects = currentConfig.subjects.filter(s => 
+        selectedSubjects.includes(s.subject)
+      );
+
+      const { data, error } = await supabase.functions.invoke('purchase-holiday-package', {
+        body: {
+          packageDetails: {
+            curriculum: selectedCurriculum,
+            candidateLevel: selectedLevel,
+            subjects: subjects.map(s => s.subject),
+            sessionsPerSubject: currentConfig.sessionsPerSubject,
+            totalAmount,
+          },
+        },
+      });
+
+      if (error) throw error;
+
+      if (data?.payment?.redirect_url) {
+        // Redirect to PesaPal payment page
+        window.location.href = data.payment.redirect_url;
+      } else {
+        toast.success("Package purchase initiated");
+      }
+    } catch (error) {
+      console.error("Error purchasing package:", error);
+      toast.error("Failed to purchase package. Please try again.");
+    } finally {
+      setPurchasing(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <>
+        <Navigation />
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+            <p className="text-muted-foreground">Loading packages...</p>
+          </div>
+        </div>
+      </>
+    );
+  }
 
   return (
     <>
       <SEO 
         title="December Holiday Revision Packages | Lana Tutors"
-        description="Intensive exam revision packages for candidate years. Get ready for KCSE, IGCSE, A-Levels, and IB exams with expert tutors this December holiday."
-        keywords="holiday revision, december packages, exam preparation, KCSE revision, IGCSE revision, A-Level revision, IB revision, candidate classes"
+        description="Intensive exam revision packages for candidate years. Get ready for KCSE, IGCSE, and CBC exams with expert tutors this December holiday."
+        keywords="holiday revision, december packages, exam preparation, KCSE revision, IGCSE revision, CBC revision, candidate classes"
       />
       <Navigation />
       
@@ -105,7 +259,7 @@ export default function HolidayPackages() {
             <div className="flex items-center justify-center gap-6 text-sm text-muted-foreground">
               <span className="flex items-center gap-2">
                 <Calendar className="w-4 h-4 text-primary" />
-                Valid Dec 1 - Jan 15, 2026
+                Valid Dec 1 - Jan 31, 2026
               </span>
               <span className="flex items-center gap-2">
                 <GraduationCap className="w-4 h-4 text-primary" />
@@ -132,21 +286,21 @@ export default function HolidayPackages() {
                   </p>
                 </div>
                 <div className="space-y-2">
-                  <CheckCircle className="w-8 h-8 text-primary" />
+                  <Target className="w-8 h-8 text-primary" />
                   <h3 className="font-semibold">Expert Tutors</h3>
                   <p className="text-sm text-muted-foreground">
                     Verified teachers with proven track records in exam prep
                   </p>
                 </div>
                 <div className="space-y-2">
-                  <CheckCircle className="w-8 h-8 text-primary" />
+                  <Clock className="w-8 h-8 text-primary" />
                   <h3 className="font-semibold">Flexible Scheduling</h3>
                   <p className="text-sm text-muted-foreground">
                     Book sessions throughout December at your convenience
                   </p>
                 </div>
                 <div className="space-y-2">
-                  <CheckCircle className="w-8 h-8 text-primary" />
+                  <Sparkles className="w-8 h-8 text-primary" />
                   <h3 className="font-semibold">Big Savings</h3>
                   <p className="text-sm text-muted-foreground">
                     Save up to 25% compared to regular single-session rates
@@ -158,62 +312,169 @@ export default function HolidayPackages() {
 
           {/* Curriculum Tabs */}
           <Tabs value={selectedCurriculum} onValueChange={setSelectedCurriculum} className="mb-8">
-            <TabsList className="grid w-full grid-cols-2 lg:grid-cols-6">
-              {curriculums.map(curriculum => (
-                <TabsTrigger key={curriculum} value={curriculum} className="capitalize">
-                  {curriculum === "all" ? "All Curricula" : curriculum}
-                </TabsTrigger>
-              ))}
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="IGCSE">IGCSE</TabsTrigger>
+              <TabsTrigger value="CBC">CBC</TabsTrigger>
+              <TabsTrigger value="8-4-4">8-4-4</TabsTrigger>
             </TabsList>
+
+            {Object.keys(packageConfigs).map((curriculum) => (
+              <TabsContent key={curriculum} value={curriculum} className="space-y-6">
+                {currentConfig && (
+                  <>
+                    {/* Level Selection */}
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Select Your Level</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="flex gap-4">
+                          {currentConfig.candidateLevels.map((level) => (
+                            <Button
+                              key={level}
+                              variant={selectedLevel === level ? "default" : "outline"}
+                              onClick={() => setSelectedLevel(level)}
+                            >
+                              {level}
+                            </Button>
+                          ))}
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    {/* Subject Selection */}
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>Choose Your Subjects</CardTitle>
+                        <CardDescription>
+                          Select the subjects you want to focus on during the holiday revision
+                        </CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-4">
+                          {currentConfig.subjects.map((subject) => (
+                            <div
+                              key={subject.subject}
+                              className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent/50 transition-colors"
+                            >
+                              <div className="flex items-center gap-3">
+                                <Checkbox
+                                  id={subject.subject}
+                                  checked={selectedSubjects.includes(subject.subject)}
+                                  onCheckedChange={() => handleSubjectToggle(subject.subject)}
+                                />
+                                <label
+                                  htmlFor={subject.subject}
+                                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                                >
+                                  {subject.subject}
+                                </label>
+                              </div>
+                              <div className="text-right">
+                                <div className="text-sm font-medium">{subject.sessions} Sessions</div>
+                                <div className="text-xs text-muted-foreground">
+                                  KES {(subject.sessions * currentConfig.pricePerSession).toLocaleString()}
+                                </div>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    {/* Package Features */}
+                    <Card>
+                      <CardHeader>
+                        <CardTitle>What's Included</CardTitle>
+                      </CardHeader>
+                      <CardContent>
+                        <ul className="grid md:grid-cols-2 gap-3">
+                          {currentConfig.features.map((feature, idx) => (
+                            <li key={idx} className="flex items-center gap-2">
+                              <CheckCircle className="w-5 h-5 text-primary shrink-0" />
+                              <span className="text-sm">{feature}</span>
+                            </li>
+                          ))}
+                          <li className="flex items-center gap-2">
+                            <CheckCircle className="w-5 h-5 text-primary shrink-0" />
+                            <span className="text-sm">Sessions valid through January 2026</span>
+                          </li>
+                          <li className="flex items-center gap-2">
+                            <CheckCircle className="w-5 h-5 text-primary shrink-0" />
+                            <span className="text-sm">Online sessions from anywhere</span>
+                          </li>
+                        </ul>
+                      </CardContent>
+                    </Card>
+
+                    {/* Purchase Summary */}
+                    {selectedSubjects.length > 0 && (
+                      <Card className="border-primary">
+                        <CardHeader>
+                          <CardTitle>Package Summary</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                          <div className="space-y-2">
+                            <div className="flex justify-between text-sm">
+                              <span className="text-muted-foreground">Curriculum:</span>
+                              <span className="font-medium">{currentConfig.curriculum}</span>
+                            </div>
+                            <div className="flex justify-between text-sm">
+                              <span className="text-muted-foreground">Level:</span>
+                              <span className="font-medium">{selectedLevel}</span>
+                            </div>
+                            <div className="flex justify-between text-sm">
+                              <span className="text-muted-foreground">Subjects:</span>
+                              <span className="font-medium">{selectedSubjects.length}</span>
+                            </div>
+                            <div className="flex justify-between text-sm">
+                              <span className="text-muted-foreground">Total Sessions:</span>
+                              <span className="font-medium">
+                                {selectedSubjects.reduce((total, subjectName) => {
+                                  const subject = currentConfig.subjects.find(s => s.subject === subjectName);
+                                  return total + (subject?.sessions || 0);
+                                }, 0)}
+                              </span>
+                            </div>
+                          </div>
+                          
+                          <div className="border-t pt-4 space-y-2">
+                            <div className="flex justify-between">
+                              <span className="text-muted-foreground">Subtotal:</span>
+                              <span>KES {(calculateTotal() / (1 - currentConfig.discount / 100)).toLocaleString()}</span>
+                            </div>
+                            <div className="flex justify-between text-primary">
+                              <span>Discount ({currentConfig.discount}%):</span>
+                              <span>
+                                - KES {((calculateTotal() / (1 - currentConfig.discount / 100)) * (currentConfig.discount / 100)).toLocaleString()}
+                              </span>
+                            </div>
+                            <div className="flex justify-between text-lg font-bold border-t pt-2">
+                              <span>Total:</span>
+                              <span>KES {calculateTotal().toLocaleString()}</span>
+                            </div>
+                          </div>
+
+                          <Button 
+                            onClick={handlePurchase} 
+                            className="w-full" 
+                            size="lg"
+                            disabled={purchasing || !selectedLevel}
+                          >
+                            {purchasing ? "Processing..." : "Proceed to Payment"}
+                          </Button>
+                          
+                          <p className="text-xs text-center text-muted-foreground">
+                            Secure payment via PesaPal. You'll be matched with expert tutors after payment.
+                          </p>
+                        </CardContent>
+                      </Card>
+                    )}
+                  </>
+                )}
+              </TabsContent>
+            ))}
           </Tabs>
-
-          {/* Package Grid */}
-          {loading ? (
-            <div className="text-center py-12">
-              <p className="text-muted-foreground">Loading packages...</p>
-            </div>
-          ) : filteredConfigs.length === 0 ? (
-            <div className="text-center py-12">
-              <p className="text-muted-foreground mb-4">
-                No holiday packages available for this curriculum yet.
-              </p>
-              <Button onClick={() => window.location.href = '/book-consultation'}>
-                Request Custom Package
-              </Button>
-            </div>
-          ) : (
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
-              {filteredConfigs.map(config => (
-                <HolidayPackageCard
-                  key={config.id}
-                  curriculum={config.curriculum}
-                  candidateLevels={config.candidate_levels}
-                  sessionCount={12}
-                  totalPrice={18000}
-                  discount={25}
-                  validUntil="Jan 15, 2026"
-                />
-              ))}
-            </div>
-          )}
-
-          {/* CTA Section */}
-          <Card className="bg-gradient-to-r from-primary/10 via-primary/5 to-background border-primary/30">
-            <CardContent className="py-8 text-center">
-              <h2 className="text-2xl font-bold mb-3">Ready to Book Your Holiday Package?</h2>
-              <p className="text-muted-foreground mb-6 max-w-2xl mx-auto">
-                Browse our verified tutors, view their holiday packages, and secure your spot for December revision.
-              </p>
-              <div className="flex flex-wrap gap-4 justify-center">
-                <Button size="lg" onClick={() => window.location.href = '/tutors'}>
-                  Browse Tutors
-                </Button>
-                <Button size="lg" variant="outline" onClick={() => window.location.href = '/book-consultation'}>
-                  Talk to an Expert
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
         </div>
       </div>
     </>
