@@ -810,7 +810,7 @@ const TutorProfile = () => {
                             <Video className="w-4 h-4" />
                             <span>Free Consultation</span>
                           </div>
-                          <span className="text-[10px] opacity-80">15-minute video call</span>
+                          <span className="text-[10px] opacity-80">30-minute Video Call</span>
                         </div>
                       </Button>
                     </div>
