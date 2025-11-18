@@ -1925,10 +1925,28 @@ The Lana Team`;
                     <div className="pt-4 border-t space-y-4">
                       {/* Meeting Link Section */}
                       {booking.meeting_link ? (
-                        <div className="bg-green-50 dark:bg-green-950/20 p-3 rounded-md border border-green-200 dark:border-green-800">
-                          <div className="flex items-center gap-2 mb-2">
+                        <div className="bg-green-50 dark:bg-green-950/20 p-3 rounded-md border border-green-200 dark:border-green-800 space-y-3">
+                          <div className="flex items-center gap-2">
                             <Video className="h-4 w-4 text-green-600" />
                             <p className="text-sm font-medium text-green-900 dark:text-green-100">Meeting Link Available</p>
+                          </div>
+                          <div className="flex gap-2">
+                            <Input 
+                              value={booking.meeting_link} 
+                              readOnly 
+                              className="font-mono text-xs bg-white dark:bg-green-950/40"
+                            />
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                navigator.clipboard.writeText(booking.meeting_link);
+                                toast.success("Link copied to clipboard!");
+                              }}
+                              className="shrink-0"
+                            >
+                              <ExternalLink className="h-4 w-4" />
+                            </Button>
                           </div>
                           <Button
                             onClick={() => handleJoinCall(booking)}
@@ -1936,7 +1954,6 @@ The Lana Team`;
                           >
                             <Video className="h-4 w-4 mr-2" />
                             Join Consultation Call
-                            <ExternalLink className="h-4 w-4 ml-2" />
                           </Button>
                         </div>
                       ) : (
@@ -1973,7 +1990,7 @@ The Lana Team`;
                                     .update({ meeting_link: calendarData.meetingLink })
                                     .eq('id', booking.id);
 
-                                  toast.success("Meeting link generated!");
+                                  toast.success("Meeting link generated and saved!");
                                   fetchConsultationBookings();
                                 } catch (err: any) {
                                   toast.error(err.message || "Failed to generate meeting link");
