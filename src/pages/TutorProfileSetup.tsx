@@ -782,9 +782,9 @@ const TutorProfileSetup = () => {
             current_institution: formData.currentInstitution,
             display_institution: formData.showCurrentInstitution,
             qualifications: formData.qualifications.split('\n').filter(q => q.trim()),
-            teaching_location: formData.teachingLocations.join(', '),
-            teaching_experience: formData.teachingHistory,
-            graduation_year: formData.educationHistory[0]?.graduationYear ? parseInt(formData.educationHistory[0].graduationYear) : null,
+          teaching_location: formData.teachingLocations.join(', '),
+          teaching_experience: [...formData.teachingHistory, ...formData.educationHistory],
+          graduation_year: formData.educationHistory[0]?.graduationYear ? parseInt(formData.educationHistory[0].graduationYear) : null,
             gender: formData.gender || null,
             email: formData.email  // Add email to tutor profile
           })
@@ -814,7 +814,7 @@ const TutorProfileSetup = () => {
           display_institution: formData.showCurrentInstitution,
           qualifications: formData.qualifications.split('\n').filter(q => q.trim()),
           teaching_location: formData.teachingLocations.join(', '),
-          teaching_experience: formData.teachingHistory,
+          teaching_experience: [...formData.teachingHistory, ...formData.educationHistory],
           graduation_year: formData.educationHistory[0]?.graduationYear ? parseInt(formData.educationHistory[0].graduationYear) : null,
           gender: formData.gender || null,
           email: formData.email,  // Add email to tutor profile
