@@ -34,6 +34,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import Navigation from "@/components/Navigation";
 import { RecordingPayment } from "@/components/RecordingPayment";
+import { StudentHolidayPackages } from "@/components/StudentHolidayPackages";
 
 interface PackagePurchase {
   id: string;
@@ -455,6 +456,15 @@ const NewStudentDashboard = () => {
             </CardContent>
           </Card>
         )}
+
+        {/* Holiday Packages Section */}
+        <div className="mb-8">
+          <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
+            <Sparkles className="w-6 h-6 text-primary" />
+            December Revision Packages
+          </h2>
+          <StudentHolidayPackages />
+        </div>
 
         {/* Main Content */}
         <Tabs defaultValue="upcoming" className="space-y-6">

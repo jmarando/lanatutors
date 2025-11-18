@@ -448,6 +448,7 @@ export type Database = {
           created_at: string | null
           expires_at: string | null
           id: string
+          metadata: Json | null
           package_offer_id: string | null
           payment_status: string | null
           sessions_remaining: number
@@ -463,6 +464,7 @@ export type Database = {
           created_at?: string | null
           expires_at?: string | null
           id?: string
+          metadata?: Json | null
           package_offer_id?: string | null
           payment_status?: string | null
           sessions_remaining: number
@@ -478,6 +480,7 @@ export type Database = {
           created_at?: string | null
           expires_at?: string | null
           id?: string
+          metadata?: Json | null
           package_offer_id?: string | null
           payment_status?: string | null
           sessions_remaining?: number
@@ -539,6 +542,60 @@ export type Database = {
             columns: ["consultation_booking_id"]
             isOneToOne: false
             referencedRelation: "consultation_bookings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      package_subject_allocations: {
+        Row: {
+          created_at: string | null
+          id: string
+          package_purchase_id: string
+          sessions_allocated: number
+          sessions_remaining: number
+          sessions_used: number
+          status: string
+          subject: string
+          tutor_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          package_purchase_id: string
+          sessions_allocated: number
+          sessions_remaining: number
+          sessions_used?: number
+          status?: string
+          subject: string
+          tutor_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          package_purchase_id?: string
+          sessions_allocated?: number
+          sessions_remaining?: number
+          sessions_used?: number
+          status?: string
+          subject?: string
+          tutor_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "package_subject_allocations_package_purchase_id_fkey"
+            columns: ["package_purchase_id"]
+            isOneToOne: false
+            referencedRelation: "package_purchases"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "package_subject_allocations_tutor_id_fkey"
+            columns: ["tutor_id"]
+            isOneToOne: false
+            referencedRelation: "tutor_profiles"
             referencedColumns: ["id"]
           },
         ]
