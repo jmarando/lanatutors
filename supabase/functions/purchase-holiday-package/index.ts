@@ -42,21 +42,26 @@ serve(async (req) => {
 
     console.log('Creating holiday package purchase:', packageDetails)
 
-    // Calculate total sessions
     const totalSessions = packageDetails.subjects.length * packageDetails.sessionsPerSubject
 
-    // Find or create a tutor assignment for this package
-    // For now, we'll create a pending package purchase that will be assigned to tutors later
+    // Create the main package purchase
     const { data: purchaseData, error: purchaseError } = await supabase
       .from('package_purchases')
       .insert({
         student_id: user.id,
-        tutor_id: '00000000-0000-0000-0000-000000000000', // Placeholder - will be assigned per subject
+        tutor_id: '00000000-0000-0000-0000-000000000000', // Placeholder
         total_sessions: totalSessions,
         sessions_remaining: totalSessions,
         total_amount: packageDetails.totalAmount,
         payment_status: 'pending',
-        expires_at: new Date('2026-01-31').toISOString(), // Valid until end of January
+        expires_at: new Date('2026-01-31').toISOString(),
+        metadata: {
+          curriculum: packageDetails.curriculum,
+          candidateLevel: packageDetails.candidateLevel,
+          subjects: packageDetails.subjects,
+          sessionsPerSubject: packageDetails.sessionsPerSubject,
+          packageType: 'holiday_revision',
+        },
       })
       .select()
       .single()
@@ -68,8 +73,25 @@ serve(async (req) => {
 
     console.log('Package purchase created:', purchaseData.id)
 
-    // Store package metadata (subjects, curriculum, level) in a metadata table or use package_offers
-    // For now, we'll initiate payment via PesaPal
+    // Create subject allocations (tutors will be assigned by admin later)
+    const allocations = packageDetails.subjects.map(subject => ({
+      package_purchase_id: purchaseData.id,
+      subject,
+      tutor_id: null,
+      sessions_allocated: packageDetails.sessionsPerSubject,
+      sessions_used: 0,
+      sessions_remaining: packageDetails.sessionsPerSubject,
+      status: 'pending_assignment',
+    }))
+
+    const { error: allocationsError } = await supabase
+      .from('package_subject_allocations')
+      .insert(allocations)
+
+    if (allocationsError) {
+      console.error('Error creating allocations:', allocationsError)
+      // Don't fail the whole purchase if allocations fail
+    }
 
     const description = `${packageDetails.curriculum} December Revision - ${packageDetails.subjects.join(', ')}`
     

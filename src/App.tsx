@@ -27,6 +27,7 @@ const TutorDashboard = lazy(() => import("./pages/TutorDashboard"));
 const AdminDashboardRedesigned = lazy(() => import("./pages/AdminDashboard-Redesigned"));
 const BookConsultation = lazy(() => import("./pages/BookConsultation"));
 const HolidayPackages = lazy(() => import("./pages/HolidayPackages"));
+const AdminHolidayPackages = lazy(() => import("./pages/AdminHolidayPackages"));
 
 const NotFound = lazy(() => import("./pages/NotFound"));
 const TestEmail = lazy(() => import("./pages/TestEmail"));
@@ -90,6 +91,7 @@ const App = () => {
                 <Route path="/setup-central-calendar" element={<SetupCentralCalendar />} />
                 <Route path="/payment-callback" element={<PaymentCallback />} />
                 <Route path="/holiday-packages" element={<HolidayPackages />} />
+                <Route path="/admin/holiday-packages" element={<AdminHolidayPackages />} />
                 <Route path="/privacy-policy" element={<PrivacyPolicy />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
