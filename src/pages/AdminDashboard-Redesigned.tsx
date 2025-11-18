@@ -1969,6 +1969,8 @@ The Lana Team`;
                             <Button
                               onClick={async () => {
                                 try {
+                                  toast.loading("Generating meeting link...");
+
                                   const { data: calendarData, error: calendarError } = await supabase.functions.invoke("create-consultation-calendar-event", {
                                     body: {
                                       parentName: booking.parent_name,
@@ -1985,21 +1987,49 @@ The Lana Team`;
 
                                   if (calendarError) throw calendarError;
 
+                                  // Save meeting link
                                   await supabase
                                     .from('consultation_bookings')
                                     .update({ meeting_link: calendarData.meetingLink })
                                     .eq('id', booking.id);
 
-                                  toast.success("Meeting link generated and saved!");
+                                  // Auto-send email confirmation with link
+                                  if (booking.email) {
+                                    await supabase.functions.invoke('send-consultation-booking-confirmation', {
+                                      body: {
+                                        email: booking.email,
+                                        parentName: booking.parent_name,
+                                        studentName: booking.student_name,
+                                        consultationDate: booking.consultation_date,
+                                        consultationTime: booking.consultation_time,
+                                        meetingLink: calendarData.meetingLink,
+                                      },
+                                    });
+                                  }
+
+                                  // Auto-send WhatsApp confirmation with link
+                                  await supabase.functions.invoke('send-consultation-whatsapp', {
+                                    body: {
+                                      phoneNumber: booking.phone_number,
+                                      parentName: booking.parent_name,
+                                      studentName: booking.student_name,
+                                      consultationDate: booking.consultation_date,
+                                      consultationTime: booking.consultation_time,
+                                      meetingLink: calendarData.meetingLink,
+                                    },
+                                  });
+
+                                  toast.success("Meeting link generated and confirmations sent!");
                                   fetchConsultationBookings();
                                 } catch (err: any) {
+                                  console.error('Error generating meeting link:', err);
                                   toast.error(err.message || "Failed to generate meeting link");
                                 }
                               }}
                               className="flex-1"
                             >
                               <Video className="h-4 w-4 mr-2" />
-                              Generate Meeting Link
+                              Generate & Send Link
                             </Button>
                             <Button
                               variant="outline"
