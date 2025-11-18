@@ -1853,64 +1853,76 @@ The Lana Team`;
                     </div>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <div className="grid md:grid-cols-2 gap-4">
-                      <div className="space-y-3">
-                        <div className="flex items-center gap-2 text-sm">
-                          <Calendar className="h-4 w-4 text-muted-foreground" />
-                          <span className="font-medium">Date:</span>
-                          <span>{formatConsultationDate(booking.consultation_date)}</span>
+                    {/* Contact & Consultation Details */}
+                    <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3 pb-4 border-b">
+                      <div className="flex items-center gap-2 text-sm">
+                        <Calendar className="h-4 w-4 text-muted-foreground shrink-0" />
+                        <div className="min-w-0">
+                          <div className="text-xs text-muted-foreground">Date</div>
+                          <div className="font-medium truncate">{formatConsultationDate(booking.consultation_date)}</div>
                         </div>
-                        
-                        <div className="flex items-center gap-2 text-sm">
-                          <Clock className="h-4 w-4 text-muted-foreground" />
-                          <span className="font-medium">Time:</span>
-                          <span>{booking.consultation_time}</span>
+                      </div>
+                      
+                      <div className="flex items-center gap-2 text-sm">
+                        <Clock className="h-4 w-4 text-muted-foreground shrink-0" />
+                        <div className="min-w-0">
+                          <div className="text-xs text-muted-foreground">Time</div>
+                          <div className="font-medium">{booking.consultation_time}</div>
                         </div>
+                      </div>
 
-                        <div className="flex items-center gap-2 text-sm">
-                          <Mail className="h-4 w-4 text-muted-foreground" />
-                          <span className="font-medium">Email:</span>
-                          <a href={`mailto:${booking.email}`} className="text-primary hover:underline">
+                      <div className="flex items-center gap-2 text-sm">
+                        <Mail className="h-4 w-4 text-muted-foreground shrink-0" />
+                        <div className="min-w-0">
+                          <div className="text-xs text-muted-foreground">Email</div>
+                          <a href={`mailto:${booking.email}`} className="text-primary hover:underline truncate block font-medium">
                             {booking.email}
                           </a>
                         </div>
+                      </div>
 
-                        <div className="flex items-center gap-2 text-sm">
-                          <Phone className="h-4 w-4 text-muted-foreground" />
-                          <span className="font-medium">Phone:</span>
-                          <a href={`tel:${booking.phone_number}`} className="text-primary hover:underline">
+                      <div className="flex items-center gap-2 text-sm">
+                        <Phone className="h-4 w-4 text-muted-foreground shrink-0" />
+                        <div className="min-w-0">
+                          <div className="text-xs text-muted-foreground">Phone</div>
+                          <a href={`tel:${booking.phone_number}`} className="text-primary hover:underline font-medium">
                             {booking.phone_number}
                           </a>
                         </div>
                       </div>
+                    </div>
 
-                      <div className="space-y-3">
-                        <div className="flex items-center gap-2 text-sm">
+                    {/* Academic Details */}
+                    <div className="grid sm:grid-cols-3 gap-4">
+                      <div>
+                        <div className="flex items-center gap-2 text-sm mb-2">
                           <BookOpen className="h-4 w-4 text-muted-foreground" />
-                          <span className="font-medium">Grade:</span>
-                          <span>{booking.grade_level}</span>
+                          <span className="text-xs text-muted-foreground">Grade</span>
                         </div>
+                        <Badge variant="outline">{booking.grade_level}</Badge>
+                      </div>
 
-                        <div className="flex items-start gap-2 text-sm">
-                          <FileText className="h-4 w-4 text-muted-foreground mt-0.5" />
-                          <div>
-                            <span className="font-medium">Subjects:</span>
-                            <div className="flex flex-wrap gap-1 mt-1">
-                              {booking.subjects_interest.map((subject: string, idx: number) => (
-                                <Badge key={idx} variant="outline" className="text-xs">
-                                  {subject}
-                                </Badge>
-                              ))}
-                            </div>
-                          </div>
+                      <div className="sm:col-span-2">
+                        <div className="flex items-center gap-2 text-sm mb-2">
+                          <FileText className="h-4 w-4 text-muted-foreground" />
+                          <span className="text-xs text-muted-foreground">Subjects</span>
                         </div>
-
-                        <div className="flex items-center gap-2 text-sm">
-                          <Video className="h-4 w-4 text-muted-foreground" />
-                          <span className="font-medium">Mode:</span>
-                          <Badge variant="secondary">{booking.preferred_mode}</Badge>
+                        <div className="flex flex-wrap gap-1">
+                          {booking.subjects_interest.map((subject: string, idx: number) => (
+                            <Badge key={idx} variant="outline" className="text-xs">
+                              {subject}
+                            </Badge>
+                          ))}
                         </div>
                       </div>
+                    </div>
+
+                    <div>
+                      <div className="flex items-center gap-2 text-sm mb-2">
+                        <Video className="h-4 w-4 text-muted-foreground" />
+                        <span className="text-xs text-muted-foreground">Mode</span>
+                      </div>
+                      <Badge variant="secondary">{booking.preferred_mode}</Badge>
                     </div>
 
                     <div className="pt-4 border-t space-y-4">
