@@ -68,7 +68,7 @@ const ForStudents = () => {
     {
       icon: ShieldCheck,
       title: "Verified Expert Tutors",
-      description: "Learn from qualified teachers from Kenya's top schools. All tutors are background-checked and credential-verified.",
+      description: "Learn from verified teachers from top Kenyan schools. Join online from anywhere in the world. All tutors are background-checked and credential-verified.",
     },
     {
       icon: Clock,
@@ -78,7 +78,7 @@ const ForStudents = () => {
     {
       icon: Video,
       title: "Online & In-Person",
-      description: "Choose how you want to learn. Attend sessions from home via video call or meet your tutor in person.",
+      description: "Learn online from anywhere in the world via video call, or choose in-person sessions if you're in Kenya.",
     },
     {
       icon: Target,
@@ -155,8 +155,8 @@ const ForStudents = () => {
   return (
     <div className="min-h-screen bg-[image:var(--gradient-page)]">
       <SEO 
-        title="For Students - Quality Online Tutoring in Kenya"
-        description="Connect with verified tutors from top Kenyan schools. Get personalized 1-on-1 tutoring for KCSE, KCPE, CBC, IGCSE, and American curriculum. Flexible online and in-person sessions."
+        title="For Students - Quality Online Tutoring from Verified Kenyan Teachers"
+        description="Connect with verified tutors from top Kenyan schools from anywhere in the world. Get personalized 1-on-1 tutoring for KCSE, KCPE, CBC, IGCSE, and American curriculum. Learn online globally or in-person in Kenya."
       />
       
       {/* Hero Section */}
@@ -172,7 +172,7 @@ const ForStudents = () => {
               <span className="text-primary">Learn from the Best.</span>
             </h1>
             <p className="text-xl text-muted-foreground mb-8 leading-relaxed">
-              Connect with verified teachers from Kenya's top schools for safe, personalized 
+              Connect with verified teachers from top Kenyan schools for safe, personalized 
               one-on-one tutoring. Master KCSE, KCPE, and CBC curriculum from the comfort of home.
             </p>
             <div className="flex flex-wrap gap-4 justify-center">
@@ -250,7 +250,7 @@ const ForStudents = () => {
           <div className="text-center mb-12">
             <h2 className="text-4xl font-bold mb-4">Why Choose Lana?</h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              The most trusted tutoring platform in Kenya
+              Learn from verified Kenyan tutors - join from anywhere in the world
             </p>
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">

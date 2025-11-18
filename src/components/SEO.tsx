@@ -12,7 +12,7 @@ interface SEOProps {
 export const SEO = ({ 
   title, 
   description, 
-  keywords = "Kenya tutoring, online tutoring Kenya, KCSE tutors, KCPE tutors, CBC tutors, Nairobi tutors, verified teachers Kenya",
+  keywords = "Kenyan tutors online, KCSE tutors worldwide, KCPE tutors diaspora, CBC tutors global, verified Kenyan teachers, online tutoring East Africa",
   ogImage = "https://lovable.dev/opengraph-image-p98pqg.png",
   structuredData,
   canonical

@@ -44,7 +44,7 @@ const Home = () => {
     "@context": "https://schema.org",
     "@type": "EducationalOrganization",
     "name": "Lana Tutors",
-    "description": "Your Trusted Tutoring Partner - Quality online tutoring for Kenyan students with verified teachers from top schools",
+    "description": "Your Trusted Tutoring Partner - Quality online tutoring from verified Kenyan teachers. Join from anywhere in the world.",
     "url": window.location.origin,
     "logo": `${window.location.origin}/favicon.ico`,
     "address": {
@@ -77,7 +77,7 @@ const Home = () => {
     {
       icon: Search,
       title: "1. Browse & Compare Tutors",
-      description: "Search our database of 500+ verified tutors from Kenya's top schools. Filter by subject, experience level, rating, and hourly rate. View detailed profiles including qualifications, teaching style, student reviews, and availability."
+      description: "Search our database of 500+ verified tutors from top Kenyan schools. Learn online from anywhere in the world. Filter by subject, experience level, rating, and hourly rate. View detailed profiles including qualifications, teaching style, student reviews, and availability."
     },
     {
       icon: Calendar,
@@ -100,7 +100,7 @@ const Home = () => {
     {
       icon: ShieldCheck,
       title: "Verified Expert Tutors",
-      description: "Every tutor on Lana comes from recognized Kenyan schools including Alliance, Starehe, Kenya High, and more. We verify teaching credentials, academic qualifications, and conduct background checks. Only the top 15% of applicants are accepted to ensure quality education."
+      description: "Every tutor is a verified teacher from top Kenyan schools including Alliance, Starehe, Kenya High, and more. Learn online from anywhere - Kenya, East Africa, or the diaspora. We verify teaching credentials and conduct background checks. Only the top 15% of applicants are accepted."
     },
     {
       icon: Clock,
