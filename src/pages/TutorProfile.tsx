@@ -259,28 +259,37 @@ const TutorProfile = () => {
       return;
     }
     
-    setBookingType(type);
+    // Check authentication first
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) {
+      const urlWithIntent = `${window.location.pathname}?openBooking=1&bookingType=${type}`;
+      showToast({
+        title: "Please Sign In",
+        description: "You need to sign in to book a session",
+        variant: "destructive",
+      });
+      navigate(`/login?redirect=${encodeURIComponent(urlWithIntent)}`);
+      return;
+    }
 
-    const urlWithIntent = `${window.location.pathname}?openBooking=1&bookingType=${type}`;
-    window.history.replaceState(null, '', urlWithIntent);
-    
+    // If already authenticated, set up user profile
     if (!currentUser) {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (user) {
-        const { data: profile } = await supabase
-          .from("profiles")
-          .select("*")
-          .eq("id", user.id)
-          .single();
-        
-        setCurrentUser({
-          id: user.id,
-          email: user.email,
-          name: profile?.full_name || "Student",
-        });
-      }
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", user.id)
+        .single();
+      
+      setCurrentUser({
+        id: user.id,
+        email: user.email,
+        name: profile?.full_name || "Student",
+      });
     }
     
+    setBookingType(type);
+    const urlWithIntent = `${window.location.pathname}?openBooking=1&bookingType=${type}`;
+    window.history.replaceState(null, '', urlWithIntent);
     setIsBookingOpen(true);
   };
 
@@ -777,8 +786,23 @@ const TutorProfile = () => {
                       </div>
                     </Button>
 
-
-                    <Separator className="my-3" />
+                    <Button 
+                      variant="outline" 
+                      className="w-full group hover:bg-accent/50 transition-all h-auto py-3"
+                      size="lg"
+                      onClick={() => handleBookingTypeSelect('double')}
+                    >
+                      <div className="flex items-center justify-between w-full">
+                        <div className="flex flex-col items-start gap-1">
+                          <span className="flex items-center gap-2">
+                            <BookOpen className="w-4 h-4" />
+                            Double Session
+                          </span>
+                          <Badge variant="secondary" className="text-[10px]">Save 5%</Badge>
+                        </div>
+                        <span className="font-semibold ml-2">KES {Math.round(currentRate * 2 * 0.95).toLocaleString()}</span>
+                      </div>
+                    </Button>
 
                     <div className="text-center">
                       <p className="text-xs text-muted-foreground mb-3">Not sure yet?</p>
