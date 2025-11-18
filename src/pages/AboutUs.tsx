@@ -27,12 +27,12 @@ const AboutUs = () => {
     {
       icon: Target,
       title: "Our Mission",
-      description: "To democratize quality education across Kenya by connecting students with verified expert tutors through an accessible, affordable online platform."
+      description: "To democratize quality education globally by connecting students worldwide with verified Kenyan expert tutors through an accessible, affordable online platform."
     },
     {
       icon: Heart,
       title: "Our Vision",
-      description: "A Kenya where every student, regardless of location or background, has access to personalized, high-quality education that helps them reach their full potential."
+      description: "A world where every student, regardless of location or background, has access to personalized, high-quality education from verified Kenyan tutors."
     },
     {
       icon: Sparkles,
@@ -48,9 +48,9 @@ const AboutUs = () => {
   ];
 
   const story = {
-    problem: "Many Kenyan students struggle to access quality tutoring. Traditional in-person tutoring is expensive, requires travel, and has limited availability. Top tutors are concentrated in major cities, leaving students in rural areas without options.",
-    solution: "Lana bridges this gap by bringing Kenya's best tutors online. Our platform makes quality education accessible to any student with an internet connection, at affordable rates, with flexible scheduling.",
-    impact: "Since launch, we've connected thousands of students with expert tutors, helping them improve grades, build confidence, and achieve their academic goals. We're democratizing education across Kenya, one session at a time."
+    problem: "Students worldwide struggle to access quality tutoring from verified teachers. Traditional in-person tutoring is expensive, requires travel, and has limited availability.",
+    solution: "Lana bridges this gap by bringing Kenya's best tutors online. Our platform makes quality education accessible to any student with an internet connection - whether you're in Kenya, East Africa, or the diaspora - at affordable rates, with flexible scheduling.",
+    impact: "Since launch, we've connected thousands of students globally with expert Kenyan tutors, helping them improve grades, build confidence, and achieve their academic goals. We're democratizing education worldwide, one session at a time."
   };
 
   const howItWorksSteps = [
@@ -70,10 +70,10 @@ const AboutUs = () => {
       title: "2. Get Matched with Perfect Tutor",
       description: "We'll connect you with verified tutors from Kenya's top schools who specialize in your subject areas.",
       details: [
-        "Access 500+ tutors from Alliance, Starehe, Kenya High, and more",
+        "Access 500+ verified tutors from Alliance, Starehe, Kenya High, and more",
         "View detailed profiles with qualifications and experience",
-        "Read verified reviews from other students and parents",
-        "Choose between online or in-person sessions"
+        "Read verified reviews from students and parents worldwide",
+        "Learn online from anywhere or choose in-person sessions in Kenya"
       ]
     },
     {
@@ -81,8 +81,8 @@ const AboutUs = () => {
       title: "3. Schedule Your Sessions",
       description: "Book one-time or recurring sessions at times that work for you. Choose online video calls or in-person tutoring.",
       details: [
-        "Flexible scheduling - online sessions 7 days a week, 6 AM to 10 PM",
-        "In-person sessions at agreed locations in Nairobi and major towns",
+        "Flexible scheduling - online sessions 7 days a week, 6 AM to 10 PM EAT",
+        "Join from anywhere in the world or book in-person sessions in Nairobi",
         "Instant booking confirmation via SMS and email",
         "Set up weekly or bi-weekly recurring lessons"
       ]
@@ -92,8 +92,8 @@ const AboutUs = () => {
       title: "4. Attend & Learn",
       description: "Join online sessions via Google Meet or meet your tutor in person. Get personalized 1-on-1 attention.",
       details: [
-        "Online: No downloads required - works in your browser",
-        "In-Person: Safe, verified tutors at convenient locations",
+        "Online: No downloads required - works in your browser from anywhere",
+        "In-Person: Available for students in Kenya at convenient locations",
         "Interactive learning with whiteboards and materials",
         "Flexible learning mode - switch between online and in-person"
       ]
@@ -115,7 +115,7 @@ const AboutUs = () => {
     {
       icon: ShieldCheck,
       title: "Verified Expert Tutors",
-      description: "Every tutor comes from recognized Kenyan schools including Alliance, Starehe, Kenya High, and more. We verify teaching credentials, academic qualifications, and conduct thorough background checks. Only the top 15% of applicants are accepted.",
+      description: "Every tutor is a verified teacher from top Kenyan schools including Alliance, Starehe, Kenya High, and more. Students worldwide can access these expert tutors online. We verify teaching credentials, academic qualifications, and conduct thorough background checks. Only the top 15% of applicants are accepted.",
       highlights: [
         "Background-checked educators",
         "From top-tier Kenyan schools",
@@ -184,8 +184,8 @@ const AboutUs = () => {
   return (
     <div className="min-h-screen bg-[image:var(--gradient-page)]">
       <SEO
-        title="About Us - Our Mission to Democratize Quality Education in Kenya"
-        description="Learn about Lana's mission to make quality tutoring accessible to all Kenyan students. Discover how we work, our values, and why thousands of families trust us."
+        title="About Us - Our Mission to Democratize Quality Education Globally"
+        description="Learn about Lana's mission to make quality tutoring from verified Kenyan teachers accessible to students worldwide. Discover how we work, our values, and why thousands of families globally trust us."
       />
 
       {/* Hero Section */}
@@ -195,7 +195,7 @@ const AboutUs = () => {
             About <span className="text-primary">Lana</span>
           </h1>
           <p className="text-xl text-muted-foreground leading-relaxed">
-            We're on a mission to democratize quality education across Kenya by connecting students 
+            We're on a mission to democratize quality education globally by connecting students worldwide 
             with verified expert tutors from the country's top schools.
           </p>
         </div>
@@ -324,7 +324,7 @@ const AboutUs = () => {
           <div className="text-center mb-12">
             <h2 className="text-4xl font-bold mb-4">Why Choose Lana?</h2>
             <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-              The most trusted tutoring platform in Kenya
+              Connect with verified Kenyan tutors from anywhere in the world
             </p>
           </div>
           <div className="grid md:grid-cols-2 gap-8">
