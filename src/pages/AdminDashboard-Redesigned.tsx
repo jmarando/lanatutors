@@ -1943,8 +1943,8 @@ The Lana Team`;
                           </Button>
                         </div>
                       ) : (
-                        <div className="bg-amber-50 dark:bg-amber-950/20 p-3 rounded-md border border-amber-200 dark:border-amber-800">
-                          <div className="flex items-center gap-2 mb-2">
+                        <div className="bg-amber-50 dark:bg-amber-950/20 p-3 rounded-md border border-amber-200 dark:border-amber-800 overflow-hidden">
+                           <div className="flex items-center gap-2 mb-2">
                             <AlertCircle className="h-4 w-4 text-amber-600" />
                             <p className="text-sm font-medium text-amber-900 dark:text-amber-100">No Meeting Link Set</p>
                           </div>
