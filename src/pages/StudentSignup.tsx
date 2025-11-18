@@ -386,35 +386,6 @@ const StudentSignup = () => {
                 </div>
               )}
 
-              {/* Learning Style */}
-              <div className="space-y-2">
-                <Label htmlFor="learningStyle">How do you learn best?</Label>
-                <Select
-                  value={formData.learningStyle}
-                  onValueChange={(value) => setFormData({ ...formData, learningStyle: value })}
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select learning style" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {LEARNING_STYLES.map(style => (
-                      <SelectItem key={style} value={style}>{style}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Goals */}
-              <div className="space-y-2">
-                <Label htmlFor="learningGoals">What are your learning goals?</Label>
-                <Textarea
-                  id="learningGoals"
-                  placeholder="E.g., Improve my math grade, prepare for KCSE exams, understand difficult topics..."
-                  value={formData.learningGoals}
-                  onChange={(e) => setFormData({ ...formData, learningGoals: e.target.value })}
-                  rows={3}
-                />
-              </div>
 
               <Button type="submit" className="w-full" size="lg" disabled={isLoading}>
                 {isLoading ? "Creating your account..." : "Create Account & Find Tutors"}
