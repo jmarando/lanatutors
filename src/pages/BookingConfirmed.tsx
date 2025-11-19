@@ -8,7 +8,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { CheckCircle2, Calendar, Clock, User, BookOpen, MapPin, Video, Mail, ArrowRight, Home } from "lucide-react";
-import Navigation from "@/components/Navigation";
 
 interface BookingDetails {
   id: string;
@@ -113,7 +112,6 @@ const BookingConfirmed = () => {
   if (loading) {
     return (
       <div className="min-h-screen bg-[image:var(--gradient-page)]">
-        <Navigation />
         <div className="container mx-auto px-4 py-16 flex items-center justify-center">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
@@ -127,7 +125,6 @@ const BookingConfirmed = () => {
   if (!booking) {
     return (
       <div className="min-h-screen bg-[image:var(--gradient-page)]">
-        <Navigation />
         <div className="container mx-auto px-4 py-16">
           <Card className="max-w-2xl mx-auto">
             <CardContent className="p-6 text-center">

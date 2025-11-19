@@ -1,7 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
-import Navigation from "@/components/Navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -180,30 +179,25 @@ export default function AdminHolidayPackages() {
 
   if (loading) {
     return (
-      <>
-        <Navigation />
-        <div className="min-h-screen flex items-center justify-center">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-            <p className="text-muted-foreground">Loading packages...</p>
-          </div>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading packages...</p>
         </div>
-      </>
+      </div>
     );
   }
 
   return (
-    <>
-      <Navigation />
-      <div className="min-h-screen bg-background pt-20">
-        <div className="container mx-auto px-4 py-12 max-w-7xl">
-          <div className="mb-8">
+    <div className="min-h-screen bg-background pt-20">
+      <div className="container mx-auto px-4 py-12 max-w-7xl">
+        <div className="mb-8">
             <h1 className="text-4xl font-bold mb-2">Holiday Package Management</h1>
-            <p className="text-muted-foreground">Assign tutors to purchased holiday packages</p>
-          </div>
+          <p className="text-muted-foreground">Assign tutors to purchased holiday packages</p>
+        </div>
 
-          {/* Stats */}
-          <div className="grid md:grid-cols-4 gap-4 mb-8">
+        {/* Stats */}
+        <div className="grid md:grid-cols-4 gap-4 mb-8">
             <Card>
               <CardContent className="p-6">
                 <div className="flex items-center gap-3">
@@ -252,11 +246,11 @@ export default function AdminHolidayPackages() {
                 </div>
               </CardContent>
             </Card>
-          </div>
+        </div>
 
-          {/* Packages List */}
-          <div className="space-y-6">
-            {packages.map((pkg) => (
+        {/* Packages List */}
+        <div className="space-y-6">
+          {packages.map((pkg) => (
               <Card key={pkg.id}>
                 <CardHeader>
                   <div className="flex items-start justify-between">
@@ -356,9 +350,8 @@ export default function AdminHolidayPackages() {
                 </CardContent>
               </Card>
             )}
-          </div>
         </div>
       </div>
-    </>
+    </div>
   );
 }
