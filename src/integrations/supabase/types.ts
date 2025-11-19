@@ -964,6 +964,7 @@ export type Database = {
           current_institution: string | null
           curriculum: string[] | null
           display_institution: boolean | null
+          education: Json | null
           email: string | null
           experience_years: number | null
           gender: string | null
@@ -1002,6 +1003,7 @@ export type Database = {
           current_institution?: string | null
           curriculum?: string[] | null
           display_institution?: boolean | null
+          education?: Json | null
           email?: string | null
           experience_years?: number | null
           gender?: string | null
@@ -1040,6 +1042,7 @@ export type Database = {
           current_institution?: string | null
           curriculum?: string[] | null
           display_institution?: boolean | null
+          education?: Json | null
           email?: string | null
           experience_years?: number | null
           gender?: string | null

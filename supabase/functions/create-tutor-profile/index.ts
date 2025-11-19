@@ -17,6 +17,12 @@ interface CreateTutorRequest {
   experienceYears: number;
   currentInstitution: string;
   qualifications: string[];
+  education?: Array<{
+    institution: string;
+    degree: string;
+    field: string;
+    graduationYear: string;
+  }>;
   avatarUrl?: string;
   verified?: boolean;
 }
@@ -127,6 +133,7 @@ serve(async (req) => {
         experience_years: tutorData.experienceYears,
         current_institution: tutorData.currentInstitution,
         qualifications: tutorData.qualifications,
+        education: tutorData.education || [],
         verified: tutorData.verified ?? false,
         rating: 0,
         total_reviews: 0,
