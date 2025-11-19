@@ -20,6 +20,8 @@ import {
 import { Link } from "react-router-dom";
 import { SEO } from "@/components/SEO";
 import { supabase } from "@/integrations/supabase/client";
+import { HolidayPackageBanner } from "@/components/HolidayPackageBanner";
+import { useNavigate } from "react-router-dom";
 import heroVideo from "@/assets/hero-video.mp4";
 import heroImage from "@/assets/hero-image.jpg";
 
@@ -39,6 +41,7 @@ interface FeaturedTutor {
 }
 
 const Home = () => {
+  const navigate = useNavigate();
   const [featuredTutors, setFeaturedTutors] = useState<FeaturedTutor[]>([]);
   const organizationSchema = {
     "@context": "https://schema.org",
@@ -208,6 +211,13 @@ const Home = () => {
         description="Connect with verified teachers from top Kenyan schools for safe, convenient one-on-one tutoring. Master KCSE, KCPE, CBC, IGCSE, and American curriculum from home with Lana Tutors."
         structuredData={organizationSchema}
       />
+      
+      {/* Holiday Package Banner - Prominent Position */}
+      <section className="max-w-7xl mx-auto px-6 pt-8 pb-4">
+        <div className="animate-pulse-slow">
+          <HolidayPackageBanner onViewPackages={() => navigate("/holiday-packages")} />
+        </div>
+      </section>
       
       {/* Hero Section */}
       <section className="relative overflow-hidden">
