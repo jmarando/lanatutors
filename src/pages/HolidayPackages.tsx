@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { GraduationCap, Calendar, Gift, CheckCircle, BookOpen, Clock, Target, Sparkles } from "lucide-react";
 import { toast } from "sonner";
@@ -24,8 +25,12 @@ interface HolidayPackage {
 
 interface SubjectPackage {
   subject: string;
+  defaultSessions: number;
+}
+
+interface SelectedSubject {
+  subject: string;
   sessions: number;
-  selected: boolean;
 }
 
 interface CurriculumPackageConfig {
@@ -45,7 +50,7 @@ export default function HolidayPackages() {
   const [purchasing, setPurchasing] = useState(false);
   const [selectedCurriculum, setSelectedCurriculum] = useState<string>("IGCSE");
   const [selectedLevel, setSelectedLevel] = useState<string>("");
-  const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
+  const [selectedSubjects, setSelectedSubjects] = useState<SelectedSubject[]>([]);
 
   useEffect(() => {
     fetchData();
@@ -81,14 +86,14 @@ export default function HolidayPackages() {
       curriculum: "IGCSE",
       candidateLevels: ["Year 10", "Year 11", "Year 12 (A-Level)", "Year 13 (A-Level)"],
       subjects: [
-        { subject: "Mathematics", sessions: 15, selected: false },
-        { subject: "Physics", sessions: 15, selected: false },
-        { subject: "Chemistry", sessions: 15, selected: false },
-        { subject: "Biology", sessions: 15, selected: false },
-        { subject: "English Language", sessions: 15, selected: false },
-        { subject: "Business Studies", sessions: 15, selected: false },
+        { subject: "Mathematics", defaultSessions: 10 },
+        { subject: "Physics", defaultSessions: 10 },
+        { subject: "Chemistry", defaultSessions: 10 },
+        { subject: "Biology", defaultSessions: 10 },
+        { subject: "English Language", defaultSessions: 10 },
+        { subject: "Business Studies", defaultSessions: 10 },
       ],
-      sessionsPerSubject: 15,
+      sessionsPerSubject: 10,
       pricePerSession: 1500,
       discount: 20,
       features: [
@@ -102,13 +107,12 @@ export default function HolidayPackages() {
       curriculum: "CBC",
       candidateLevels: ["Grade 6", "Grade 9"],
       subjects: [
-        { subject: "Mathematics", sessions: 15, selected: false },
-        { subject: "English", sessions: 15, selected: false },
-        { subject: "Science & Technology", sessions: 15, selected: false },
-        { subject: "Kiswahili", sessions: 15, selected: false },
-        { subject: "Social Studies", sessions: 15, selected: false },
+        { subject: "Mathematics", defaultSessions: 10 },
+        { subject: "English", defaultSessions: 10 },
+        { subject: "Science & Technology", defaultSessions: 10 },
+        { subject: "Social Studies", defaultSessions: 10 },
       ],
-      sessionsPerSubject: 15,
+      sessionsPerSubject: 10,
       pricePerSession: 1200,
       discount: 15,
       features: [
@@ -122,16 +126,16 @@ export default function HolidayPackages() {
       curriculum: "8-4-4",
       candidateLevels: ["Form 3", "Form 4 (KCSE)"],
       subjects: [
-        { subject: "Mathematics", sessions: 15, selected: false },
-        { subject: "English", sessions: 15, selected: false },
-        { subject: "Kiswahili", sessions: 15, selected: false },
-        { subject: "Physics", sessions: 15, selected: false },
-        { subject: "Chemistry", sessions: 15, selected: false },
-        { subject: "Biology", sessions: 15, selected: false },
-        { subject: "History", sessions: 15, selected: false },
-        { subject: "Geography", sessions: 15, selected: false },
+        { subject: "Mathematics", defaultSessions: 10 },
+        { subject: "English", defaultSessions: 10 },
+        { subject: "Kiswahili", defaultSessions: 10 },
+        { subject: "Physics", defaultSessions: 10 },
+        { subject: "Chemistry", defaultSessions: 10 },
+        { subject: "Biology", defaultSessions: 10 },
+        { subject: "History", defaultSessions: 10 },
+        { subject: "Geography", defaultSessions: 10 },
       ],
-      sessionsPerSubject: 15,
+      sessionsPerSubject: 10,
       pricePerSession: 1300,
       discount: 25,
       features: [
@@ -145,19 +149,27 @@ export default function HolidayPackages() {
 
   const currentConfig = packageConfigs[selectedCurriculum];
   
-  const handleSubjectToggle = (subject: string) => {
+  const handleSubjectToggle = (subjectName: string, defaultSessions: number) => {
+    setSelectedSubjects(prev => {
+      const exists = prev.find(s => s.subject === subjectName);
+      if (exists) {
+        return prev.filter(s => s.subject !== subjectName);
+      } else {
+        return [...prev, { subject: subjectName, sessions: defaultSessions }];
+      }
+    });
+  };
+
+  const handleSessionChange = (subjectName: string, sessions: number) => {
     setSelectedSubjects(prev => 
-      prev.includes(subject) 
-        ? prev.filter(s => s !== subject)
-        : [...prev, subject]
+      prev.map(s => s.subject === subjectName ? { ...s, sessions } : s)
     );
   };
 
   const calculateTotal = () => {
     if (!currentConfig) return 0;
-    const subtotal = selectedSubjects.reduce((total, subjectName) => {
-      const subject = currentConfig.subjects.find(s => s.subject === subjectName);
-      return total + (subject ? subject.sessions * currentConfig.pricePerSession : 0);
+    const subtotal = selectedSubjects.reduce((total, selected) => {
+      return total + (selected.sessions * currentConfig.pricePerSession);
     }, 0);
     const discount = subtotal * (currentConfig.discount / 100);
     return subtotal - discount;
@@ -186,17 +198,13 @@ export default function HolidayPackages() {
       }
 
       const totalAmount = calculateTotal();
-      const subjects = currentConfig.subjects.filter(s => 
-        selectedSubjects.includes(s.subject)
-      );
 
       const { data, error } = await supabase.functions.invoke('purchase-holiday-package', {
         body: {
           packageDetails: {
             curriculum: selectedCurriculum,
             candidateLevel: selectedLevel,
-            subjects: subjects.map(s => s.subject),
-            sessionsPerSubject: currentConfig.sessionsPerSubject,
+            subjects: selectedSubjects,
             totalAmount,
           },
         },
@@ -352,32 +360,66 @@ export default function HolidayPackages() {
                       </CardHeader>
                       <CardContent>
                         <div className="space-y-4">
-                          {currentConfig.subjects.map((subject) => (
-                            <div
-                              key={subject.subject}
-                              className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent/50 transition-colors"
-                            >
-                              <div className="flex items-center gap-3">
-                                <Checkbox
-                                  id={subject.subject}
-                                  checked={selectedSubjects.includes(subject.subject)}
-                                  onCheckedChange={() => handleSubjectToggle(subject.subject)}
-                                />
-                                <label
-                                  htmlFor={subject.subject}
-                                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
-                                >
-                                  {subject.subject}
-                                </label>
-                              </div>
-                              <div className="text-right">
-                                <div className="text-sm font-medium">{subject.sessions} Sessions</div>
-                                <div className="text-xs text-muted-foreground">
-                                  KES {(subject.sessions * currentConfig.pricePerSession).toLocaleString()}
+                          {currentConfig.subjects.map((subject) => {
+                            const isSelected = selectedSubjects.some(s => s.subject === subject.subject);
+                            const selectedSubject = selectedSubjects.find(s => s.subject === subject.subject);
+                            
+                            return (
+                              <div
+                                key={subject.subject}
+                                className="flex items-center justify-between p-4 border rounded-lg hover:bg-accent/50 transition-colors"
+                              >
+                                <div className="flex items-center gap-3">
+                                  <Checkbox
+                                    id={subject.subject}
+                                    checked={isSelected}
+                                    onCheckedChange={() => handleSubjectToggle(subject.subject, subject.defaultSessions)}
+                                  />
+                                  <label
+                                    htmlFor={subject.subject}
+                                    className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70 cursor-pointer"
+                                  >
+                                    {subject.subject}
+                                  </label>
+                                </div>
+                                <div className="flex items-center gap-4">
+                                  {isSelected && (
+                                    <Select
+                                      value={selectedSubject?.sessions.toString() || subject.defaultSessions.toString()}
+                                      onValueChange={(value) => handleSessionChange(subject.subject, parseInt(value))}
+                                    >
+                                      <SelectTrigger className="w-32">
+                                        <SelectValue placeholder="Sessions" />
+                                      </SelectTrigger>
+                                      <SelectContent>
+                                        <SelectItem value="5">5 sessions</SelectItem>
+                                        <SelectItem value="8">8 sessions</SelectItem>
+                                        <SelectItem value="10">10 sessions</SelectItem>
+                                        <SelectItem value="12">12 sessions</SelectItem>
+                                        <SelectItem value="15">15 sessions</SelectItem>
+                                      </SelectContent>
+                                    </Select>
+                                  )}
+                                  <div className="text-right min-w-[100px]">
+                                    {isSelected ? (
+                                      <>
+                                        <div className="text-sm font-medium">
+                                          {selectedSubject?.sessions || subject.defaultSessions} Sessions
+                                        </div>
+                                        <div className="text-xs text-muted-foreground">
+                                          KES {((selectedSubject?.sessions || subject.defaultSessions) * currentConfig.pricePerSession).toLocaleString()}
+                                        </div>
+                                      </>
+                                    ) : (
+                                      <div className="text-xs text-muted-foreground">
+                                        From KES {(5 * currentConfig.pricePerSession).toLocaleString()}
+                                      </div>
+                                    )}
+                                  </div>
                                 </div>
                               </div>
-                            </div>
-                          ))}
+                            );
+                          })}
                         </div>
                       </CardContent>
                     </Card>
@@ -430,10 +472,7 @@ export default function HolidayPackages() {
                             <div className="flex justify-between text-sm">
                               <span className="text-muted-foreground">Total Sessions:</span>
                               <span className="font-medium">
-                                {selectedSubjects.reduce((total, subjectName) => {
-                                  const subject = currentConfig.subjects.find(s => s.subject === subjectName);
-                                  return total + (subject?.sessions || 0);
-                                }, 0)}
+                                {selectedSubjects.reduce((total, selected) => total + selected.sessions, 0)}
                               </span>
                             </div>
                           </div>
