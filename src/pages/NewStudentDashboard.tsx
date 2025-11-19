@@ -74,8 +74,7 @@ const NewStudentDashboard = () => {
   const [stats, setStats] = useState({
     totalSessions: 0,
     completedSessions: 0,
-    upcomingSessions: 0,
-    totalSpent: 0
+    upcomingSessions: 0
   });
   const [loading, setLoading] = useState(true);
   
@@ -233,13 +232,11 @@ const NewStudentDashboard = () => {
       // Calculate stats
       const allBookings = [...(upcoming || []), ...(past || [])];
       const completed = allBookings.filter(b => b.status === "completed").length;
-      const totalSpent = allBookings.reduce((sum, b) => sum + (b.amount || 0), 0);
 
       setStats({
         totalSessions: allBookings.length,
         completedSessions: completed,
-        upcomingSessions: (upcoming || []).length,
-        totalSpent
+        upcomingSessions: (upcoming || []).length
       });
 
     } catch (error) {
@@ -339,7 +336,7 @@ const NewStudentDashboard = () => {
         <p className="text-muted-foreground text-lg mb-8">Track your learning journey and manage your sessions</p>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
           <Card className="border-l-4 border-l-primary hover:shadow-lg transition-shadow">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
@@ -382,19 +379,6 @@ const NewStudentDashboard = () => {
             </CardContent>
           </Card>
 
-          <Card className="border-l-4 border-l-amber-500 hover:shadow-lg transition-shadow">
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground mb-1">Total Invested</p>
-                  <p className="text-3xl font-bold">KES {stats.totalSpent.toFixed(0)}</p>
-                </div>
-                <div className="p-3 bg-amber-100 dark:bg-amber-900 rounded-full">
-                  <TrendingUp className="w-6 h-6 text-amber-600 dark:text-amber-400" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
         </div>
 
         {/* Active Packages */}
