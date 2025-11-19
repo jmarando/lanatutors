@@ -1,5 +1,4 @@
 import { useState, useEffect } from "react";
-import Navigation from "@/components/Navigation";
 import { SEO } from "@/components/SEO";
 import { HolidayPackageBanner } from "@/components/HolidayPackageBanner";
 import { Button } from "@/components/ui/button";
@@ -228,15 +227,12 @@ export default function HolidayPackages() {
 
   if (loading) {
     return (
-      <>
-        <Navigation />
-        <div className="min-h-screen flex items-center justify-center">
-          <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-            <p className="text-muted-foreground">Loading packages...</p>
-          </div>
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading packages...</p>
         </div>
-      </>
+      </div>
     );
   }
 
@@ -247,7 +243,6 @@ export default function HolidayPackages() {
         description="Intensive exam revision packages for candidate years. Get ready for KCSE, IGCSE, and CBC exams with expert tutors this December holiday."
         keywords="holiday revision, december packages, exam preparation, KCSE revision, IGCSE revision, CBC revision, candidate classes"
       />
-      <Navigation />
       
       <div className="min-h-screen bg-background pt-20">
         <div className="container mx-auto px-4 py-12 max-w-7xl">

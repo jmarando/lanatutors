@@ -3,7 +3,6 @@ import { useSearchParams, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { CheckCircle2, Calendar, Clock, Mail, Video, BookOpen, Lightbulb, ClipboardList, ArrowRight, Sparkles } from "lucide-react";
-import Navigation from "@/components/Navigation";
 
 const ConsultationConfirmed = () => {
   const [searchParams] = useSearchParams();
@@ -31,7 +30,6 @@ const ConsultationConfirmed = () => {
 
   return (
     <div className="min-h-screen bg-[image:var(--gradient-page)]">
-      <Navigation />
       
       <div className="container mx-auto px-4 py-12">
         <div className="max-w-3xl mx-auto">
