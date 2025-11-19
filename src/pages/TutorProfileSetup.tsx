@@ -327,8 +327,8 @@ const TutorProfileSetup = () => {
           teachingLocations: existingTutor.teaching_location?.split(', ') || [],
           gender: existingTutor.gender || "",
           subjectsWithContext: reconstructedSubjectsWithContext,
-          educationHistory: Array.isArray(existingTutor.teaching_experience) && existingTutor.teaching_experience.length > 0
-            ? existingTutor.teaching_experience.filter((exp: any) => exp.degree).map((exp: any) => ({
+          educationHistory: Array.isArray(existingTutor.education) && existingTutor.education.length > 0
+            ? existingTutor.education.map((exp: any) => ({
                 institution: exp.institution || "",
                 degree: exp.degree || "",
                 field: exp.field || "",
@@ -336,7 +336,7 @@ const TutorProfileSetup = () => {
               }))
             : [],
           teachingHistory: Array.isArray(existingTutor.teaching_experience) && existingTutor.teaching_experience.length > 0
-            ? existingTutor.teaching_experience.filter((exp: any) => exp.role).map((exp: any) => ({
+            ? existingTutor.teaching_experience.map((exp: any) => ({
                 institution: exp.institution || "",
                 role: exp.role || "",
                 years: exp.years || ""
@@ -783,7 +783,8 @@ const TutorProfileSetup = () => {
             display_institution: formData.showCurrentInstitution,
             qualifications: formData.qualifications.split('\n').filter(q => q.trim()),
           teaching_location: formData.teachingLocations.join(', '),
-          teaching_experience: [...formData.teachingHistory, ...formData.educationHistory],
+          teaching_experience: formData.teachingHistory,
+          education: formData.educationHistory,
           graduation_year: formData.educationHistory[0]?.graduationYear ? parseInt(formData.educationHistory[0].graduationYear) : null,
             gender: formData.gender || null,
             email: formData.email  // Add email to tutor profile
@@ -814,7 +815,8 @@ const TutorProfileSetup = () => {
           display_institution: formData.showCurrentInstitution,
           qualifications: formData.qualifications.split('\n').filter(q => q.trim()),
           teaching_location: formData.teachingLocations.join(', '),
-          teaching_experience: [...formData.teachingHistory, ...formData.educationHistory],
+          teaching_experience: formData.teachingHistory,
+          education: formData.educationHistory,
           graduation_year: formData.educationHistory[0]?.graduationYear ? parseInt(formData.educationHistory[0].graduationYear) : null,
           gender: formData.gender || null,
           email: formData.email,  // Add email to tutor profile
