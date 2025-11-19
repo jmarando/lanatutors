@@ -94,7 +94,7 @@ export default function HolidayPackages() {
       ],
       sessionsPerSubject: 10,
       pricePerSession: 1500,
-      discount: 20,
+      discount: 25,
       features: [
         "IGCSE & A-Level exam preparation including Checkpoint and Mock exams",
         "Intensive past paper practice and exam technique",
@@ -112,8 +112,8 @@ export default function HolidayPackages() {
         { subject: "Social Studies", defaultSessions: 10 },
       ],
       sessionsPerSubject: 10,
-      pricePerSession: 1200,
-      discount: 15,
+      pricePerSession: 1500,
+      discount: 25,
       features: [
         "JSCAE exam preparation for Grade 9",
         "KPSEA preparation for Grade 6",
@@ -135,7 +135,7 @@ export default function HolidayPackages() {
         { subject: "Geography", defaultSessions: 10 },
       ],
       sessionsPerSubject: 10,
-      pricePerSession: 1300,
+      pricePerSession: 1500,
       discount: 25,
       features: [
         "KCSE exam preparation with intensive mock exams",
