@@ -30,6 +30,7 @@ const TutorProfile = () => {
   const [isBookingOpen, setIsBookingOpen] = useState(false);
   const [isPackagePurchaseOpen, setIsPackagePurchaseOpen] = useState(false);
   const [selectedPackage, setSelectedPackage] = useState<any>(null);
+  const [packagePaymentOption, setPackagePaymentOption] = useState<'full' | 'deposit'>('full');
   const [bookingType, setBookingType] = useState<'paid' | 'trial' | 'free' | 'single' | 'double'>('paid');
   const [tutor, setTutor] = useState<any>(null);
   const [currentUser, setCurrentUser] = useState<any>(null);
@@ -1019,6 +1020,45 @@ const TutorProfile = () => {
                 </CardContent>
               </Card>
 
+              {/* Payment Option Selector */}
+              <Card className="bg-muted/30 border-border/50">
+                <CardContent className="p-4">
+                  <div className="space-y-3">
+                    <label className="text-sm font-medium">Payment Option</label>
+                    <div className="grid grid-cols-2 gap-3">
+                      <button
+                        onClick={() => setPackagePaymentOption('full')}
+                        className={cn(
+                          "p-3 rounded-lg border-2 transition-all text-left",
+                          packagePaymentOption === 'full'
+                            ? "border-primary bg-primary/5"
+                            : "border-border hover:border-primary/30"
+                        )}
+                      >
+                        <div className="text-sm font-medium">Full Payment</div>
+                        <div className="text-xs text-muted-foreground mt-1">
+                          Pay KES {Math.round(selectedPackage.total_price).toLocaleString()} now
+                        </div>
+                      </button>
+                      <button
+                        onClick={() => setPackagePaymentOption('deposit')}
+                        className={cn(
+                          "p-3 rounded-lg border-2 transition-all text-left",
+                          packagePaymentOption === 'deposit'
+                            ? "border-primary bg-primary/5"
+                            : "border-border hover:border-primary/30"
+                        )}
+                      >
+                        <div className="text-sm font-medium">30% Deposit</div>
+                        <div className="text-xs text-muted-foreground mt-1">
+                          Pay KES {Math.round(selectedPackage.total_price * 0.3).toLocaleString()} now
+                        </div>
+                      </button>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
               <Card className="bg-muted/50">
                 <CardContent className="p-4">
                   <div className="space-y-3">
@@ -1035,17 +1075,41 @@ const TutorProfile = () => {
                       <span className="font-semibold">{selectedPackage.validity_days} days</span>
                     </div>
                     <Separator />
-                    <div className="flex justify-between items-baseline">
-                      <span className="font-semibold">Total Price:</span>
-                      <div className="text-right">
-                        <p className="text-lg font-bold">
-                          KES {Math.round(selectedPackage.total_price).toLocaleString()}
-                        </p>
-                        <p className="text-xs text-green-600">
-                          You save {selectedPackage.discount_percentage}%
-                        </p>
+                    {packagePaymentOption === 'deposit' ? (
+                      <>
+                        <div className="flex justify-between">
+                          <span className="text-sm text-muted-foreground">Total Price:</span>
+                          <span className="font-medium">KES {Math.round(selectedPackage.total_price).toLocaleString()}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-sm text-muted-foreground">Deposit (30%):</span>
+                          <span className="font-medium">KES {Math.round(selectedPackage.total_price * 0.3).toLocaleString()}</span>
+                        </div>
+                        <div className="flex justify-between items-baseline">
+                          <span className="font-semibold">Balance Due:</span>
+                          <div className="text-right">
+                            <p className="text-lg font-bold text-amber-600">
+                              KES {Math.round(selectedPackage.total_price * 0.7).toLocaleString()}
+                            </p>
+                            <p className="text-xs text-muted-foreground">
+                              Payable later
+                            </p>
+                          </div>
+                        </div>
+                      </>
+                    ) : (
+                      <div className="flex justify-between items-baseline">
+                        <span className="font-semibold">Total Price:</span>
+                        <div className="text-right">
+                          <p className="text-lg font-bold">
+                            KES {Math.round(selectedPackage.total_price).toLocaleString()}
+                          </p>
+                          <p className="text-xs text-green-600">
+                            You save {selectedPackage.discount_percentage}%
+                          </p>
+                        </div>
                       </div>
-                    </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>
