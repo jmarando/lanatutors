@@ -13,6 +13,10 @@ import { useToast } from "@/hooks/use-toast";
 import { Separator } from "@/components/ui/separator";
 import { validateAndNormalizePhone } from "@/utils/phoneValidation";
 import { getCurriculums, getLevelsForCurriculum, getSubjectsForCurriculumLevel } from "@/utils/curriculumData";
+import { CurrencySelector } from "@/components/CurrencySelector";
+import { TimezoneSelector } from "@/components/TimezoneSelector";
+import { Currency } from "@/utils/currencyUtils";
+import { getUserTimezone } from "@/utils/timezoneUtils";
 import { z } from "zod";
 
 const emailSchema = z.string().email({ message: "Please enter a valid email address" });
@@ -29,6 +33,8 @@ const StudentSignup = () => {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
+  const [preferredCurrency, setPreferredCurrency] = useState<Currency>('KES');
+  const [timezone, setTimezone] = useState<string>(getUserTimezone());
   
   const [formData, setFormData] = useState({
     email: "",
@@ -152,7 +158,9 @@ const StudentSignup = () => {
           grade_level: formData.gradeLevel,
           subjects_struggling: selectedSubjects,
           learning_goals: formData.learningGoals,
-          preferred_learning_style: formData.learningStyle
+          preferred_learning_style: formData.learningStyle,
+          preferred_currency: preferredCurrency,
+          timezone: timezone
         });
 
       if (profileError) throw profileError;
@@ -286,8 +294,27 @@ const StudentSignup = () => {
                       onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
                     />
                     <p className="text-xs text-muted-foreground">Accepts: +254, 254, or 0 prefix</p>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="currency">Preferred Currency *</Label>
+                    <CurrencySelector 
+                      value={preferredCurrency}
+                      onChange={setPreferredCurrency}
+                    />
+                    <p className="text-xs text-muted-foreground">All prices will be shown in this currency</p>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="timezone">Your Timezone *</Label>
+                    <TimezoneSelector 
+                      value={timezone}
+                      onChange={setTimezone}
+                    />
+                    <p className="text-xs text-muted-foreground">Session times will be shown in your timezone</p>
                   </div>
                 </div>
+              </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="password">Password *</Label>

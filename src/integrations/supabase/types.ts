@@ -62,11 +62,14 @@ export type Database = {
       bookings: {
         Row: {
           amount: number
+          amount_original_currency: number | null
           availability_slot_id: string
           balance_due: number | null
           class_type: string | null
           created_at: string | null
+          currency: string | null
           deposit_paid: number | null
+          exchange_rate: number | null
           id: string
           meeting_link: string | null
           notes: string | null
@@ -80,11 +83,14 @@ export type Database = {
         }
         Insert: {
           amount: number
+          amount_original_currency?: number | null
           availability_slot_id: string
           balance_due?: number | null
           class_type?: string | null
           created_at?: string | null
+          currency?: string | null
           deposit_paid?: number | null
+          exchange_rate?: number | null
           id?: string
           meeting_link?: string | null
           notes?: string | null
@@ -98,11 +104,14 @@ export type Database = {
         }
         Update: {
           amount?: number
+          amount_original_currency?: number | null
           availability_slot_id?: string
           balance_due?: number | null
           class_type?: string | null
           created_at?: string | null
+          currency?: string | null
           deposit_paid?: number | null
+          exchange_rate?: number | null
           id?: string
           meeting_link?: string | null
           notes?: string | null
@@ -281,6 +290,30 @@ export type Database = {
           },
         ]
       }
+      exchange_rates: {
+        Row: {
+          base_currency: string
+          id: string
+          rate: number
+          target_currency: string
+          updated_at: string | null
+        }
+        Insert: {
+          base_currency?: string
+          id?: string
+          rate: number
+          target_currency: string
+          updated_at?: string | null
+        }
+        Update: {
+          base_currency?: string
+          id?: string
+          rate?: number
+          target_currency?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       expert_consultation_requests: {
         Row: {
           additional_notes: string | null
@@ -444,8 +477,11 @@ export type Database = {
       }
       package_purchases: {
         Row: {
+          amount_original_currency: number | null
           amount_paid: number | null
           created_at: string | null
+          currency: string | null
+          exchange_rate: number | null
           expires_at: string | null
           id: string
           metadata: Json | null
@@ -460,8 +496,11 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          amount_original_currency?: number | null
           amount_paid?: number | null
           created_at?: string | null
+          currency?: string | null
+          exchange_rate?: number | null
           expires_at?: string | null
           id?: string
           metadata?: Json | null
@@ -476,8 +515,11 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          amount_original_currency?: number | null
           amount_paid?: number | null
           created_at?: string | null
+          currency?: string | null
+          exchange_rate?: number | null
           expires_at?: string | null
           id?: string
           metadata?: Json | null
@@ -603,7 +645,10 @@ export type Database = {
       payments: {
         Row: {
           amount: number
+          amount_original_currency: number | null
           created_at: string | null
+          currency: string | null
+          exchange_rate: number | null
           id: string
           payment_type: string
           pesapal_confirmation_code: string | null
@@ -619,7 +664,10 @@ export type Database = {
         }
         Insert: {
           amount: number
+          amount_original_currency?: number | null
           created_at?: string | null
+          currency?: string | null
+          exchange_rate?: number | null
           id?: string
           payment_type: string
           pesapal_confirmation_code?: string | null
@@ -635,7 +683,10 @@ export type Database = {
         }
         Update: {
           amount?: number
+          amount_original_currency?: number | null
           created_at?: string | null
+          currency?: string | null
+          exchange_rate?: number | null
           id?: string
           payment_type?: string
           pesapal_confirmation_code?: string | null
@@ -663,8 +714,10 @@ export type Database = {
           learning_goals: string | null
           must_reset_password: boolean
           phone_number: string | null
+          preferred_currency: string | null
           preferred_learning_style: string | null
           subjects_struggling: string[] | null
+          timezone: string | null
           updated_at: string | null
         }
         Insert: {
@@ -678,8 +731,10 @@ export type Database = {
           learning_goals?: string | null
           must_reset_password?: boolean
           phone_number?: string | null
+          preferred_currency?: string | null
           preferred_learning_style?: string | null
           subjects_struggling?: string[] | null
+          timezone?: string | null
           updated_at?: string | null
         }
         Update: {
@@ -693,8 +748,10 @@ export type Database = {
           learning_goals?: string | null
           must_reset_password?: boolean
           phone_number?: string | null
+          preferred_currency?: string | null
           preferred_learning_style?: string | null
           subjects_struggling?: string[] | null
+          timezone?: string | null
           updated_at?: string | null
         }
         Relationships: []
@@ -963,6 +1020,7 @@ export type Database = {
           created_at: string | null
           current_institution: string | null
           curriculum: string[] | null
+          diaspora_friendly: boolean | null
           display_institution: boolean | null
           education: Json | null
           email: string | null
@@ -1002,6 +1060,7 @@ export type Database = {
           created_at?: string | null
           current_institution?: string | null
           curriculum?: string[] | null
+          diaspora_friendly?: boolean | null
           display_institution?: boolean | null
           education?: Json | null
           email?: string | null
@@ -1041,6 +1100,7 @@ export type Database = {
           created_at?: string | null
           current_institution?: string | null
           curriculum?: string[] | null
+          diaspora_friendly?: boolean | null
           display_institution?: boolean | null
           education?: Json | null
           email?: string | null
