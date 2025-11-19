@@ -40,7 +40,7 @@ const Navigation = () => {
 
   const navLinks = [
     { to: "/tutors", label: "Find Tutors", singleLine: true },
-    { to: "/holiday-packages", label: "Revision Packages", singleLine: true },
+    { to: "/holiday-packages", label: "Holiday Revision Packages", singleLine: true },
     { to: "/for-students", label: "Student Hub", singleLine: true },
     { to: "/for-tutors", label: "Tutor Hub", singleLine: true },
     { to: "/about", label: "About Us", singleLine: true },
