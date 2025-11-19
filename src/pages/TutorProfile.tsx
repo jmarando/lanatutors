@@ -476,32 +476,32 @@ const TutorProfile = () => {
               </Card>
             )}
 
-            {/* Education & Teaching History */}
+            {/* Education */}
             {Array.isArray(tutor.teachingExperience) && tutor.teachingExperience.filter((exp: any) =>
-              exp && (exp.degree || exp.institution || exp.field || exp.graduationYear || exp.role)
+              exp && (exp.degree || exp.field || exp.graduationYear) && !exp.role
             ).length > 0 && (
               <Card className="border-border/50">
                 <CardContent className="p-6">
                   <div className="flex items-center gap-2 mb-4">
                     <GraduationCap className="w-5 h-5 text-primary" />
-                    <h2 className="font-bold text-lg">Education & Teaching History</h2>
+                    <h2 className="font-bold text-lg">Education</h2>
                   </div>
                   <div className="space-y-3">
                     {tutor.teachingExperience
-                      .filter((exp: any) => exp && (exp.degree || exp.institution || exp.field || exp.graduationYear || exp.role))
+                      .filter((exp: any) => exp && (exp.degree || exp.field || exp.graduationYear) && !exp.role)
                       .map((entry: any, index: number) => (
                         <div key={index} className="flex items-start gap-3 p-3 rounded-lg bg-muted/50">
                           <School className="w-5 h-5 text-primary mt-0.5 shrink-0" />
                           <div className="flex-1 min-w-0">
                             <p className="font-semibold text-foreground">
-                              {entry.degree || entry.role || "Education / Experience"}
+                              {entry.degree || "Degree"}
                             </p>
-                            {(entry.field || entry.subject) && (
+                            {entry.field && (
                               <p className="text-sm text-muted-foreground">
-                                {entry.field || entry.subject}
+                                {entry.field}
                               </p>
                             )}
-                            {(entry.institution || entry.graduationYear || entry.years) && (
+                            {(entry.institution || entry.graduationYear) && (
                               <div className="flex items-center gap-2 mt-1 text-sm text-muted-foreground">
                                 {entry.institution && (
                                   <>
@@ -512,8 +512,47 @@ const TutorProfile = () => {
                                 {entry.graduationYear && (
                                   <span className="ml-auto">• {entry.graduationYear}</span>
                                 )}
-                                {!entry.graduationYear && entry.years && (
-                                  <span className="ml-auto">• {entry.years}+ years</span>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Teaching History */}
+            {Array.isArray(tutor.teachingExperience) && tutor.teachingExperience.filter((exp: any) =>
+              exp && exp.role && exp.institution
+            ).length > 0 && (
+              <Card className="border-border/50">
+                <CardContent className="p-6">
+                  <div className="flex items-center gap-2 mb-4">
+                    <Building2 className="w-5 h-5 text-primary" />
+                    <h2 className="font-bold text-lg">Teaching History</h2>
+                  </div>
+                  <div className="space-y-3">
+                    {tutor.teachingExperience
+                      .filter((exp: any) => exp && exp.role && exp.institution)
+                      .map((entry: any, index: number) => (
+                        <div key={index} className="flex items-start gap-3 p-3 rounded-lg bg-muted/50">
+                          <School className="w-5 h-5 text-primary mt-0.5 shrink-0" />
+                          <div className="flex-1 min-w-0">
+                            <p className="font-semibold text-foreground">
+                              {entry.role}
+                            </p>
+                            {entry.subject && (
+                              <p className="text-sm text-muted-foreground">
+                                {entry.subject}
+                              </p>
+                            )}
+                            {(entry.institution || entry.years) && (
+                              <div className="flex items-center gap-2 mt-1 text-sm text-muted-foreground">
+                                <Building2 className="w-4 h-4" />
+                                <span>{entry.institution}</span>
+                                {entry.years && (
+                                  <span className="ml-auto">• {entry.years} years</span>
                                 )}
                               </div>
                             )}
