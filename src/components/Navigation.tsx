@@ -49,7 +49,7 @@ const Navigation = () => {
 
   return (
     <nav className="bg-background sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-6 py-1 flex items-center justify-between gap-8">
+      <div className="max-w-7xl mx-auto px-6 py-1 flex items-center justify-center gap-8">
         <Link to="/" className="flex items-center flex-shrink-0" aria-label="Lana Tutors Home">
           <img 
             src={lanaLogo} 
@@ -59,8 +59,8 @@ const Navigation = () => {
         </Link>
 
         {/* Desktop Navigation */}
-        <div className="hidden lg:flex items-center gap-8 flex-1 justify-between">
-          <div className="flex items-center gap-8 whitespace-nowrap">
+        <div className="hidden lg:flex items-center gap-6">
+          <div className="flex items-center gap-6 whitespace-nowrap">
             {navLinks.map((link) => (
               <Link
                 key={link.to}
