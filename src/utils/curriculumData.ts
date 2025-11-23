@@ -73,7 +73,7 @@ export const CURRICULUM_DATA: CurriculumData = {
         "Language Activities",
         "Mathematical Activities",
         "Environmental Activities",
-        "Psychomotor & Creative Activities",
+        "Creative Activities",
         "Religious Education Activities",
         "Social & Emotional Learning"
       ]
@@ -85,7 +85,7 @@ export const CURRICULUM_DATA: CurriculumData = {
         "English Language Activities",
         "Kiswahili",
         "Kenya Sign Language",
-        "Indigenous Language",
+        "Indigenous Languages",
         "Literacy",
         "Numeracy & Mathematics",
         "Environmental Activities",
@@ -129,7 +129,7 @@ export const CURRICULUM_DATA: CurriculumData = {
         "Integrated Science",
         "Social Studies",
         "Religious & Moral Education",
-        "Creative Arts & Sports",
+        "Creative Arts",
         "Pre-Technical Studies",
         "Pre-Vocational Studies",
         "ICT",
@@ -327,7 +327,7 @@ export const CURRICULUM_DATA: CurriculumData = {
       years: "Grades 6-8",
       subjects: [
         "English",
-        "Math",
+        "Mathematics",
         "Science",
         "Social Studies",
         "Foreign Languages",
@@ -340,7 +340,7 @@ export const CURRICULUM_DATA: CurriculumData = {
       years: "Grades 9-12",
       subjects: [
         "English",
-        "Math",
+        "Mathematics",
         "Science",
         "Social Studies",
         "AP Biology",
