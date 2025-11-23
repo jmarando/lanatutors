@@ -20,6 +20,7 @@ import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, R
 import { formatConsultationDate, formatToEAT, formatFullDateTime } from "@/utils/dateUtils";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
+import { TutorSignupList } from "@/components/admin/TutorSignupList";
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -1038,6 +1039,10 @@ The Lana Team`;
                 <Badge className="ml-2 bg-indigo-600">{tutoringBookings.length}</Badge>
               )}
             </TabsTrigger>
+            <TabsTrigger value="tutor-signups">
+              <GraduationCap className="h-4 w-4 mr-2" />
+              Tutor Signups
+            </TabsTrigger>
           </TabsList>
 
           {/* Dashboard Tab */}
@@ -2033,6 +2038,11 @@ The Lana Team`;
             </Card>
           ))
         )}
+      </TabsContent>
+
+      {/* Tutor Signups Tab */}
+      <TabsContent value="tutor-signups">
+        <TutorSignupList />
       </TabsContent>
     </Tabs>
 
