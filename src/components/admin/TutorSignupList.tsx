@@ -11,6 +11,10 @@ interface TutorSignupData {
   phone_number: string;
   current_institution: string;
   subjects: string[];
+  hourly_rate: number | null;
+  bio: string | null;
+  education: any;
+  teaching_levels: string[];
 }
 
 export const TutorSignupList = () => {
@@ -29,7 +33,11 @@ export const TutorSignupList = () => {
           created_at,
           current_institution,
           subjects,
-          user_id
+          user_id,
+          hourly_rate,
+          bio,
+          education,
+          teaching_levels
         `)
         .order("created_at", { ascending: true });
 
@@ -51,6 +59,10 @@ export const TutorSignupList = () => {
               phone_number: profile?.phone_number || "N/A",
               current_institution: tutor.current_institution || "N/A",
               subjects: tutor.subjects || [],
+              hourly_rate: tutor.hourly_rate,
+              bio: tutor.bio,
+              education: tutor.education,
+              teaching_levels: tutor.teaching_levels || [],
             };
           })
         );
@@ -90,6 +102,10 @@ export const TutorSignupList = () => {
                 <TableHead>Phone Number</TableHead>
                 <TableHead>Current School</TableHead>
                 <TableHead>Subjects</TableHead>
+                <TableHead>Rates Quoted</TableHead>
+                <TableHead>About Me</TableHead>
+                <TableHead>Education</TableHead>
+                <TableHead>Teaching Levels</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -102,6 +118,22 @@ export const TutorSignupList = () => {
                   <TableCell>{tutor.phone_number}</TableCell>
                   <TableCell>{tutor.current_institution}</TableCell>
                   <TableCell>{tutor.subjects.join(", ")}</TableCell>
+                  <TableCell>
+                    {tutor.hourly_rate ? `KES ${tutor.hourly_rate}` : "N/A"}
+                  </TableCell>
+                  <TableCell className="max-w-xs truncate">
+                    {tutor.bio || "N/A"}
+                  </TableCell>
+                  <TableCell className="max-w-xs">
+                    {tutor.education && Array.isArray(tutor.education) 
+                      ? tutor.education.map((edu: any) => 
+                          `${edu.degree || ''} ${edu.institution || ''}`.trim()
+                        ).join("; ") 
+                      : "N/A"}
+                  </TableCell>
+                  <TableCell>
+                    {tutor.teaching_levels.length > 0 ? tutor.teaching_levels.join(", ") : "N/A"}
+                  </TableCell>
                 </TableRow>
               ))}
             </TableBody>
