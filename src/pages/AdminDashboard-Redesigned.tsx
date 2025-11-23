@@ -18,6 +18,7 @@ import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, R
 import { formatConsultationDate, formatToEAT, formatFullDateTime } from "@/utils/dateUtils";
 import { BlogManagement } from "@/components/admin/BlogManagement";
 import { TutorSignupList } from "@/components/admin/TutorSignupList";
+import { TutorEmailList } from "@/components/admin/TutorEmailList";
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -1168,6 +1169,15 @@ The Lana Team`;
                 </span>
               </TabsTrigger>
               <TabsTrigger 
+                value="tutor-emails"
+                className="data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:bg-transparent rounded-none bg-transparent px-4 py-3 border-b-2 border-transparent"
+              >
+                <span className="flex items-center gap-2">
+                  <Mail className="h-4 w-4" />
+                  Tutor Emails
+                </span>
+              </TabsTrigger>
+              <TabsTrigger 
                 value="tools"
                 className="data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:bg-transparent rounded-none bg-transparent px-4 py-3 border-b-2 border-transparent"
               >
@@ -2304,9 +2314,13 @@ The Lana Team`;
       </TabsContent>
 
       {/* Tutor Signups Tab */}
-      <TabsContent value="tutor-signups">
-        <TutorSignupList />
-      </TabsContent>
+                <TabsContent value="tutor-signups">
+                  <TutorSignupList />
+                </TabsContent>
+
+                <TabsContent value="tutor-emails">
+                  <TutorEmailList />
+                </TabsContent>
     </Tabs>
 
     {/* Message Template Dialog */}
