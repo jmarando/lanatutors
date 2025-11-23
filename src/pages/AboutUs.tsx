@@ -148,12 +148,12 @@ const AboutUs = () => {
     {
       icon: Award,
       title: "Proven Academic Results",
-      description: "Our students see real, measurable improvement. On average, students using Lana improve their grades by 2 levels within 3 months. We've helped over 10,000 students excel in KCPE and KCSE examinations.",
+      description: "Our students see real, measurable improvement. With 50+ verified tutors teaching 500+ happy students across all curricula (CBC, IGCSE, American & 8-4-4), we deliver consistent academic excellence.",
       highlights: [
-        "2-level average grade improvement",
-        "94% report increased confidence",
-        "Personalized learning approach",
-        "Progress tracking & reports"
+        "50+ verified tutors from top schools",
+        "500+ students achieving their goals",
+        "All curricula covered",
+        "Proven track record of success"
       ]
     }
   ];
