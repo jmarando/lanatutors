@@ -131,7 +131,7 @@ export default function HolidayPackages() {
         { subject: "Physics", defaultSessions: 10 },
         { subject: "Chemistry", defaultSessions: 10 },
         { subject: "Biology", defaultSessions: 10 },
-        { subject: "History", defaultSessions: 10 },
+        { subject: "Business Studies", defaultSessions: 10 },
         { subject: "Geography", defaultSessions: 10 },
       ],
       sessionsPerSubject: 10,
