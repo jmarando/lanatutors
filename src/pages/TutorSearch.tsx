@@ -15,6 +15,7 @@ import { SEO } from "@/components/SEO";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { CURRICULUM_DATA, getCurriculums, getAllSubjects, getLevelsForCurriculum, getSubjectsForCurriculumLevel } from "@/utils/curriculumData";
+import { NAIROBI_LOCATIONS } from "@/utils/locationData";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import tutor1 from "@/assets/tutor-1.jpg";
@@ -31,6 +32,7 @@ const TutorSearch = () => {
   const [selectedSubject, setSelectedSubject] = useState("all");
   const [selectedCurriculum, setSelectedCurriculum] = useState("all");
   const [selectedTeachingLevel, setSelectedTeachingLevel] = useState("all");
+  const [selectedLocation, setSelectedLocation] = useState("all");
   const [tutors, setTutors] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   // Safety: ensure any legacy references to `sortBy` won't crash the page
@@ -107,6 +109,8 @@ const TutorSearch = () => {
           subjects: tp.subjects || [],
           curriculum: tp.curriculum || [],
           teachingLevels: tp.teaching_levels || [],
+          teachingLocation: tp.teaching_location || "",
+          teachingMode: tp.teaching_mode || [],
           school: tp.current_institution || "Not specified",
           displayInstitution: tp.display_institution || false,
           experienceYears: tp.experience_years || 0,
@@ -170,7 +174,8 @@ const TutorSearch = () => {
     const matchesSearch =
       tutor.name.toLowerCase().includes(q) ||
       tutor.subjects.some((s: string) => s.toLowerCase().includes(q)) ||
-      (tutor.school || "").toLowerCase().includes(q);
+      (tutor.school || "").toLowerCase().includes(q) ||
+      (tutor.teachingLocation || "").toLowerCase().includes(q);
 
     const matchesSubject =
       selectedSubject === "all" ||
@@ -199,8 +204,14 @@ const TutorSearch = () => {
         );
       }) ?? false);
 
+    const matchesLocation = 
+      selectedLocation === "all" ||
+      selectedLocation === "online" && tutor.teachingMode?.includes("Online") ||
+      selectedLocation === "in-person" && tutor.teachingMode?.includes("In-Person") ||
+      (tutor.teachingLocation || "").toLowerCase().includes(selectedLocation.toLowerCase());
 
-    return matchesSearch && matchesSubject && matchesCurriculum && matchesTeachingLevel;
+
+    return matchesSearch && matchesSubject && matchesCurriculum && matchesTeachingLevel && matchesLocation;
   });
   if (loading) {
     return <div className="min-h-screen bg-secondary/20 flex items-center justify-center">
@@ -242,7 +253,7 @@ const TutorSearch = () => {
         <div className="flex gap-4 mb-8 max-w-5xl mx-auto flex-wrap">
           <div className="relative flex-1 min-w-64">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-            <Input placeholder="Search by name, subject..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="pl-10 h-12" />
+            <Input placeholder="Search by name, subject, location..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="pl-10 h-12" />
           </div>
           
           <Select value={selectedCurriculum} onValueChange={value => {
@@ -288,6 +299,22 @@ const TutorSearch = () => {
             </SelectContent>
           </Select>
 
+          <Select value={selectedLocation} onValueChange={setSelectedLocation}>
+            <SelectTrigger className="w-48 h-12 bg-background z-50">
+              <SelectValue placeholder="All Locations" />
+            </SelectTrigger>
+            <SelectContent className="bg-background z-50 max-h-[300px]">
+              <SelectItem value="all">All Locations</SelectItem>
+              <SelectItem value="online">Online Only</SelectItem>
+              <SelectItem value="in-person">In-Person</SelectItem>
+              {NAIROBI_LOCATIONS.map(location => (
+                <SelectItem key={location} value={location}>
+                  {location}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
 
         </div>
 
@@ -297,7 +324,7 @@ const TutorSearch = () => {
             <p className="text-sm text-muted-foreground">
               Showing {filteredTutors.length} of {tutors.length} tutors
             </p>
-            {(selectedSubject !== "all" || selectedCurriculum !== "all" || selectedTeachingLevel !== "all" || searchQuery) && (
+            {(selectedSubject !== "all" || selectedCurriculum !== "all" || selectedTeachingLevel !== "all" || selectedLocation !== "all" || searchQuery) && (
               <Button
                 variant="ghost"
                 size="sm"
@@ -306,6 +333,7 @@ const TutorSearch = () => {
                   setSelectedSubject("all");
                   setSelectedCurriculum("all");
                   setSelectedTeachingLevel("all");
+                  setSelectedLocation("all");
                 }}
               >
                 Clear Filters
@@ -324,6 +352,7 @@ const TutorSearch = () => {
                 setSelectedSubject("all");
                 setSelectedCurriculum("all");
                 setSelectedTeachingLevel("all");
+                setSelectedLocation("all");
               }}
             >
               Reset Filters
@@ -340,13 +369,7 @@ const TutorSearch = () => {
                       <AvatarFallback className="bg-muted text-foreground font-semibold">{tutor.photo}</AvatarFallback>
                     </Avatar>
                     <div className="flex-1">
-                      <div className="flex items-center justify-between">
-                        <h3 className="font-semibold text-lg">{tutor.name}</h3>
-                        <div className="flex items-center gap-1 text-primary">
-                          <Star className="w-4 h-4 fill-primary" />
-                          <span className="text-sm">{(tutor.rating || 0).toFixed(1)}</span>
-                        </div>
-                      </div>
+                      <h3 className="font-semibold text-lg">{tutor.name}</h3>
                       <p className="text-sm text-muted-foreground">{tutor.school}</p>
                       <p className="mt-2 text-xs text-muted-foreground">
                         Subjects: {tutor.subjects.slice(0, 3).join(", ")}

@@ -443,17 +443,6 @@ const TutorProfile = () => {
                   </div>
                 </div>
 
-                {tutor.reviews > 0 && (
-                  <div className="flex items-center gap-4 pt-6 border-t border-border/50">
-                    <div className="flex items-center gap-1">
-                      <Star className="w-5 h-5 fill-yellow-400 text-yellow-400" />
-                      <span className="font-semibold">{tutor.rating}</span>
-                      <span className="text-sm text-muted-foreground ml-1">
-                        ({tutor.reviews} {tutor.reviews === 1 ? 'review' : 'reviews'})
-                      </span>
-                    </div>
-                  </div>
-                )}
               </CardContent>
             </Card>
 
