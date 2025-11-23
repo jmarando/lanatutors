@@ -17,6 +17,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { formatConsultationDate, formatToEAT, formatFullDateTime } from "@/utils/dateUtils";
 import { BlogManagement } from "@/components/admin/BlogManagement";
+import { TutorSignupList } from "@/components/admin/TutorSignupList";
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -1158,6 +1159,15 @@ The Lana Team`;
                 </span>
               </TabsTrigger>
               <TabsTrigger 
+                value="tutor-signups"
+                className="data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:bg-transparent rounded-none bg-transparent px-4 py-3 border-b-2 border-transparent"
+              >
+                <span className="flex items-center gap-2">
+                  <GraduationCap className="h-4 w-4" />
+                  Tutor Signups
+                </span>
+              </TabsTrigger>
+              <TabsTrigger 
                 value="tools"
                 className="data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:bg-transparent rounded-none bg-transparent px-4 py-3 border-b-2 border-transparent"
               >
@@ -2291,6 +2301,11 @@ The Lana Team`;
             </Card>
           ))
         )}
+      </TabsContent>
+
+      {/* Tutor Signups Tab */}
+      <TabsContent value="tutor-signups">
+        <TutorSignupList />
       </TabsContent>
     </Tabs>
 
