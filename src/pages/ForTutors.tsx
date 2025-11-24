@@ -170,9 +170,27 @@ const ForTutors = () => {
               <span className="text-primary">Transform Lives. Earn More.</span>
             </h1>
             <p className="text-xl text-muted-foreground mb-8 leading-relaxed">
-              Join Lana's network of elite tutors from Kenya's top schools. 
-              Teach students across the country, set your own schedule, and earn competitive rates.
+              Join Kenya's most selective tutoring platform with only a 15% acceptance rate. 
+              Our 500+ elite tutors collectively earn KES 2.5M+ monthly, averaging 4.9★ ratings. 
+              Teach students from top schools across Kenya, set your own schedule, and earn 70% of session fees 
+              with monthly payouts within the first 5 business days.
             </p>
+            <div className="bg-primary/10 border border-primary/20 rounded-lg p-6 mb-8 max-w-3xl mx-auto">
+              <div className="grid md:grid-cols-3 gap-6 text-sm">
+                <div>
+                  <div className="font-bold text-primary mb-1">Earnings Split</div>
+                  <div className="text-muted-foreground">You keep 70% of every session fee, paid monthly</div>
+                </div>
+                <div>
+                  <div className="font-bold text-primary mb-1">Flexible Hours</div>
+                  <div className="text-muted-foreground">Set availability 8 AM - 8 PM EAT, manage your calendar</div>
+                </div>
+                <div>
+                  <div className="font-bold text-primary mb-1">Professional Standards</div>
+                  <div className="text-muted-foreground">Punctuality, professionalism, and progress tracking required</div>
+                </div>
+              </div>
+            </div>
             <div className="flex flex-wrap gap-4 justify-center">
               <Link to="/become-a-tutor">
                 <Button size="lg" className="h-14 px-8 text-lg">
