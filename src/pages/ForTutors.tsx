@@ -16,7 +16,6 @@ import {
 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { SEO } from "@/components/SEO";
-import { TierExplainer } from "@/components/TutorTierBadge";
 import { supabase } from "@/integrations/supabase/client";
 
 const ForTutors = () => {
@@ -68,7 +67,7 @@ const ForTutors = () => {
     {
       icon: DollarSign,
       title: "Competitive Earnings",
-      description: "Earn KES 2,000-3,500 per hour teaching students across Kenya. Set your own rates and get paid weekly.",
+      description: "Earn competitive rates teaching students across Kenya. Set your own rates and get paid weekly.",
     },
     {
       icon: Clock,
@@ -205,16 +204,24 @@ const ForTutors = () => {
         </div>
       </section>
 
-      {/* Tier System Section */}
+      {/* Earnings Section */}
       <section className="py-20 px-6">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-8">
-            <h2 className="text-4xl font-bold mb-4">Transparent Tier-Based Earnings</h2>
+            <h2 className="text-4xl font-bold mb-4">Transparent Earnings</h2>
             <p className="text-lg text-muted-foreground">
-              Your tier is determined fairly by AI based on your experience, ratings, and qualifications
+              Set your own competitive rates based on your experience and qualifications
             </p>
           </div>
-          <TierExplainer />
+          <Card className="p-8">
+            <div className="text-center">
+              <DollarSign className="w-16 h-16 text-primary mx-auto mb-4" />
+              <h3 className="text-2xl font-bold mb-4">You Control Your Rates</h3>
+              <p className="text-muted-foreground max-w-2xl mx-auto">
+                Our tutors typically earn competitive hourly rates. You set your own pricing based on your experience, qualifications, and the subjects you teach. We provide transparency and fair compensation for quality teaching.
+              </p>
+            </div>
+          </Card>
         </div>
       </section>
 
