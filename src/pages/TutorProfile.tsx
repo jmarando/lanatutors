@@ -38,7 +38,6 @@ const TutorProfile = () => {
   const [reviews, setReviews] = useState<any[]>([]);
   const [packages, setPackages] = useState<any[]>([]);
   const [pricingTiers, setPricingTiers] = useState<any[]>([]);
-  const [selectedTier, setSelectedTier] = useState<'standard' | 'advanced'>('standard');
   const [showHolidayBanner, setShowHolidayBanner] = useState(false);
 
   useEffect(() => {
@@ -55,23 +54,6 @@ const TutorProfile = () => {
       fetchPricingTiers();
     }
   }, [tutor?.id]);
-
-  // Auto-select tier based on search context
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const curriculum = params.get('curriculum');
-    
-    if (curriculum && pricingTiers.length > 0) {
-      const advancedCurricula = ['IGCSE', 'IB', 'A-Level', 'Cambridge IGCSE', 'International Baccalaureate'];
-      const isAdvanced = advancedCurricula.some(c => curriculum.includes(c));
-      
-      if (isAdvanced) {
-        setSelectedTier('advanced');
-      } else {
-        setSelectedTier('standard');
-      }
-    }
-  }, [pricingTiers]);
 
   // Auto-open booking dialog when returning from login via redirect
   useEffect(() => {
@@ -248,10 +230,7 @@ const TutorProfile = () => {
   };
 
   const getCurrentRate = () => {
-    if (pricingTiers.length === 0) return Number(tutor?.hourlyRate) || 0;
-    
-    const tier = pricingTiers.find(t => t.tier_name.toLowerCase() === selectedTier);
-    return tier ? Number(tier.online_hourly_rate) : Number(tutor?.hourlyRate) || 0;
+    return Number(tutor?.hourlyRate) || 0;
   };
 
   const handleBookingTypeSelect = async (type: 'paid' | 'trial' | 'free' | 'single' | 'double') => {
@@ -747,43 +726,6 @@ const TutorProfile = () => {
                     <h3 className="font-bold text-2xl mb-2">Book a Session</h3>
                     <p className="text-muted-foreground text-sm">Choose your preferred option</p>
                   </div>
-
-                  {/* Tier Selector */}
-                  {pricingTiers.length > 0 && (
-                    <div className="mb-6">
-                      <label className="text-sm font-medium mb-2 block">Curriculum Level</label>
-                      <div className="grid grid-cols-2 gap-2">
-                        <button
-                          onClick={() => setSelectedTier('standard')}
-                          className={cn(
-                            "p-3 rounded-lg border-2 text-left transition-all",
-                            selectedTier === 'standard'
-                              ? "border-primary bg-primary/5"
-                              : "border-border hover:border-primary/50"
-                          )}
-                        >
-                          <div className="font-semibold text-sm">Standard</div>
-                          <div className="text-xs text-muted-foreground">
-                            8-4-4, CBC, American, etc.
-                          </div>
-                        </button>
-                        <button
-                          onClick={() => setSelectedTier('advanced')}
-                          className={cn(
-                            "p-3 rounded-lg border-2 text-left transition-all",
-                            selectedTier === 'advanced'
-                              ? "border-primary bg-primary/5"
-                              : "border-border hover:border-primary/50"
-                          )}
-                        >
-                          <div className="font-semibold text-sm">Advanced</div>
-                          <div className="text-xs text-muted-foreground">
-                            IGCSE, IB, A-Level
-                          </div>
-                        </button>
-                      </div>
-                    </div>
-                  )}
 
                   {/* Booking Options */}
                   <div className="space-y-3">
