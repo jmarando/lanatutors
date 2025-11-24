@@ -94,7 +94,7 @@ const TutorOnboardingGuide = () => {
     },
     {
       question: "How do I set my rates?",
-      answer: "During profile setup, you'll set standard and advanced rates. You can also create package offers with discounts for multiple sessions."
+      answer: "During profile setup, you'll set your hourly rates. You can also create package offers with discounts for multiple sessions."
     },
     {
       question: "Can I teach both online and in-person?",
@@ -107,6 +107,18 @@ const TutorOnboardingGuide = () => {
     {
       question: "Can I update my profile after it's live?",
       answer: "Absolutely! You can update your profile, availability, and rates anytime from your tutor dashboard."
+    },
+    {
+      question: "How do earnings work?",
+      answer: "You earn 70% of the session fee, with LANA Tutors keeping 30% to maintain the platform. Earnings are paid out monthly within the first 5 business days of each month."
+    },
+    {
+      question: "How do I manage my availability?",
+      answer: "Use the 'Generate 4 Weeks Availability' feature to create hourly slots from 8 AM - 8 PM EAT. You can then block specific times or entire days. Green = available, Yellow = blocked, Blue = booked."
+    },
+    {
+      question: "Can I connect my Google Calendar?",
+      answer: "Yes! Connect your Google Calendar to automatically sync bookings, receive notifications, and avoid double-booking. Look for the connection option on your dashboard."
     }
   ];
 
