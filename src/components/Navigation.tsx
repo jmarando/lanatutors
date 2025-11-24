@@ -57,7 +57,7 @@ const Navigation = () => {
             <img 
               src={lanaLogo} 
               alt="Lana Tutors - Your Trusted Tutoring Partner"
-              className="h-10 w-auto object-contain"
+              className="h-14 sm:h-16 w-auto object-contain"
             />
           </Link>
 
