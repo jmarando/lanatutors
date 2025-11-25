@@ -228,6 +228,77 @@ const TutorSearch = () => {
             <h1 className="text-5xl font-bold mb-3">Find Your Tutor</h1>
             <p className="text-lg text-muted-foreground mb-6">Browse verified tutors or explore our specialized revision packages</p>
             
+            {/* How It Works Section */}
+            <div className="max-w-4xl mx-auto mb-8">
+              <Card className="border-border/50">
+                <CardContent className="p-6">
+                  <h2 className="text-xl font-semibold mb-4">How It Works</h2>
+                  <div className="grid md:grid-cols-4 gap-4 text-left">
+                    <div className="flex flex-col items-start">
+                      <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mb-3">
+                        <SlidersHorizontal className="w-5 h-5 text-primary" />
+                      </div>
+                      <h3 className="font-semibold mb-1">1. Filter</h3>
+                      <p className="text-sm text-muted-foreground">Use filters to find tutors by subject, curriculum, level, and location</p>
+                    </div>
+                    <div className="flex flex-col items-start">
+                      <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mb-3">
+                        <Search className="w-5 h-5 text-primary" />
+                      </div>
+                      <h3 className="font-semibold mb-1">2. View Profile</h3>
+                      <p className="text-sm text-muted-foreground">Browse tutor profiles to see qualifications, experience, and availability</p>
+                    </div>
+                    <div className="flex flex-col items-start">
+                      <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mb-3">
+                        <CalendarIcon className="w-5 h-5 text-primary" />
+                      </div>
+                      <h3 className="font-semibold mb-1">3. Book or Request</h3>
+                      <p className="text-sm text-muted-foreground">Book lessons directly, request a custom learning plan, or build a package</p>
+                    </div>
+                    <div className="flex flex-col items-start">
+                      <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mb-3">
+                        <CheckCircle className="w-5 h-5 text-primary" />
+                      </div>
+                      <h3 className="font-semibold mb-1">4. Start Learning</h3>
+                      <p className="text-sm text-muted-foreground">Confirm payment and begin your tutoring sessions</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Action Buttons */}
+            <div className="flex flex-wrap gap-4 justify-center mb-8">
+              <Button 
+                onClick={() => navigate('/multi-tutor-package')}
+                size="lg"
+                variant="default"
+                className="gap-2"
+              >
+                <Sparkles className="w-5 h-5" />
+                Create Custom Package
+              </Button>
+              <Button 
+                onClick={() => {
+                  const user = supabase.auth.getUser();
+                  user.then(({ data }) => {
+                    if (!data.user) {
+                      toast.error("Please sign in to request a learning plan");
+                      navigate('/login');
+                    } else {
+                      navigate('/tutors?action=request-plan');
+                    }
+                  });
+                }}
+                size="lg"
+                variant="outline"
+                className="gap-2"
+              >
+                <Award className="w-5 h-5" />
+                Request Learning Plan
+              </Button>
+            </div>
+            
             {/* Call-to-Action for Holiday Packages */}
             <div className="max-w-2xl mx-auto">
               <Card className="bg-gradient-to-r from-primary/10 to-accent/10 border-primary/20">
