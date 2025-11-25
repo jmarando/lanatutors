@@ -27,6 +27,7 @@ import { z } from "zod";
 
 const emailSchema = z.string().email({ message: "Please enter a valid email address" });
 const TEACHING_MODES = ["Online", "In-Person"];
+const TUTOR_PROFILE_DRAFT_KEY = "tutor_profile_setup_draft";
 
 // Robust numeric parser: strips commas/spaces and returns 0 for invalid
 const toNumber = (v: unknown): number => {
@@ -119,21 +120,51 @@ const TutorProfileSetup = () => {
     return rates.reduce((sum, rate) => sum + rate, 0) / rates.length;
   };
 
-  // State for hierarchical curriculum/level/subject selection
-  const [curriculumLevels, setCurriculumLevels] = useState<{
-    [key: string]: string[];
-  }>({});
-  const [selectedCurriculumForSubjects, setSelectedCurriculumForSubjects] = useState("");
-  const [selectedLevelForSubjects, setSelectedLevelForSubjects] = useState("");
-  const [photoFile, setPhotoFile] = useState<File | null>(null);
-  const [validationErrors, setValidationErrors] = useState<{
-    fullName?: string;
-    phoneNumber?: string;
-  }>({});
-  const [touched, setTouched] = useState<{ fullName?: boolean; email?: boolean; phoneNumber?: boolean }>({});
-  const curriculums = getCurriculums();
-  const availableLevelsForSubjects = selectedCurriculumForSubjects ? getLevelsForCurriculum(selectedCurriculumForSubjects) : [];
-  const availableSubjects = selectedCurriculumForSubjects && selectedLevelForSubjects ? getSubjectsForCurriculumLevel(selectedCurriculumForSubjects, selectedLevelForSubjects) : [];
+// State for hierarchical curriculum/level/subject selection
+const [curriculumLevels, setCurriculumLevels] = useState<{
+  [key: string]: string[];
+}>({});
+const [selectedCurriculumForSubjects, setSelectedCurriculumForSubjects] = useState("");
+const [selectedLevelForSubjects, setSelectedLevelForSubjects] = useState("");
+const [photoFile, setPhotoFile] = useState<File | null>(null);
+const [validationErrors, setValidationErrors] = useState<{
+  fullName?: string;
+  phoneNumber?: string;
+}>({});
+const [touched, setTouched] = useState<{ fullName?: boolean; email?: boolean; phoneNumber?: boolean }>({});
+const curriculums = getCurriculums();
+const availableLevelsForSubjects = selectedCurriculumForSubjects ? getLevelsForCurriculum(selectedCurriculumForSubjects) : [];
+const availableSubjects = selectedCurriculumForSubjects && selectedLevelForSubjects ? getSubjectsForCurriculumLevel(selectedCurriculumForSubjects, selectedLevelForSubjects) : [];
+
+// Restore draft from local storage on mount so tutors don't lose progress on errors
+useEffect(() => {
+  try {
+    const raw = localStorage.getItem(TUTOR_PROFILE_DRAFT_KEY);
+    if (!raw) return;
+    const parsed = JSON.parse(raw);
+    if (parsed.formData) {
+      setFormData((prev) => ({ ...prev, ...parsed.formData }));
+    }
+    if (parsed.curriculumLevels) {
+      setCurriculumLevels(parsed.curriculumLevels);
+    }
+  } catch (e) {
+    console.error("Failed to restore tutor profile draft", e);
+  }
+}, []);
+
+// Persist draft whenever key fields change
+useEffect(() => {
+  try {
+    const draft = {
+      formData,
+      curriculumLevels,
+    };
+    localStorage.setItem(TUTOR_PROFILE_DRAFT_KEY, JSON.stringify(draft));
+  } catch (e) {
+    console.error("Failed to save tutor profile draft", e);
+  }
+}, [formData, curriculumLevels]);
 
   // Get all available subjects from selected curriculum-level combinations
   const allAvailableSubjects = Object.entries(curriculumLevels).flatMap(([curriculum, levels]) => levels.flatMap(level => getSubjectsForCurriculumLevel(curriculum, level).map(subject => ({
@@ -1008,6 +1039,9 @@ const TutorProfileSetup = () => {
       
       // Only send email and redirect for new submissions
       if (isNewProfile) {
+        // Clear saved draft on success
+        localStorage.removeItem(TUTOR_PROFILE_DRAFT_KEY);
+
         // Send confirmation email
         try {
           const { data: slugData } = await supabase.rpc('generate_tutor_slug', {
@@ -1033,7 +1067,9 @@ const TutorProfileSetup = () => {
         });
         navigate("/tutor-profile-submitted");
       } else {
-        // For updates, also go to submitted page
+        // For updates, also go to submitted page and clear draft
+        localStorage.removeItem(TUTOR_PROFILE_DRAFT_KEY);
+
         toast({
           title: "Profile updated!",
           description: "Your changes have been saved successfully."
