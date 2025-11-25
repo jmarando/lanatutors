@@ -48,16 +48,35 @@ export default function PaymentCallback() {
 
           console.log("Payment found:", payment);
 
-          // If payment is completed, redirect
+          // If payment is completed, process accordingly
           if (payment.status === "completed") {
+            // Handle package purchases with recurring slots
+            if (payment.payment_type === "package_purchase" && payment.reference_id) {
+              // Call edge function to block recurring slots (if applicable)
+              try {
+                await supabase.functions.invoke("block-recurring-slots", {
+                  body: { packagePurchaseId: payment.reference_id }
+                });
+                console.log("Recurring slots blocking initiated");
+              } catch (error) {
+                console.error("Error blocking recurring slots:", error);
+                // Continue anyway - slots can be manually blocked later
+              }
+              
+              setStatus("success");
+              return;
+            }
+            
+            // Handle booking payments
             if (payment.payment_type === "booking" && payment.reference_id) {
               setBookingId(payment.reference_id);
               setStatus("success");
               return;
-            } else {
-              setStatus("success");
-              return;
             }
+            
+            // Other payment types
+            setStatus("success");
+            return;
           }
 
           // If still pending, wait and retry
@@ -78,9 +97,17 @@ export default function PaymentCallback() {
   }, [searchParams]);
 
   useEffect(() => {
-    // Redirect to booking confirmed page if we have a booking ID
-    if (status === "success" && bookingId) {
-      navigate(`/booking-confirmed?bookingId=${bookingId}`);
+    // Redirect to appropriate page based on payment type
+    if (status === "success") {
+      if (bookingId) {
+        // Booking payment - redirect to booking confirmed
+        navigate(`/booking-confirmed?bookingId=${bookingId}`);
+      } else {
+        // Package or other payment - redirect to dashboard
+        setTimeout(() => {
+          navigate("/student/dashboard");
+        }, 2000);
+      }
     }
   }, [status, bookingId, navigate]);
 
@@ -94,6 +121,22 @@ export default function PaymentCallback() {
             </div>
             <h1 className="text-2xl font-bold">Processing Payment</h1>
             <p className="text-muted-foreground">Please wait while we verify your payment...</p>
+          </>
+        )}
+
+        {status === "success" && (
+          <>
+            <div className="flex justify-center">
+              <CheckCircle className="w-16 h-16 text-green-500" />
+            </div>
+            <h1 className="text-2xl font-bold">Payment Successful!</h1>
+            {bookingId ? (
+              <p className="text-muted-foreground">Redirecting to booking confirmation...</p>
+            ) : (
+              <p className="text-muted-foreground">
+                Your package has been purchased. Redirecting to dashboard...
+              </p>
+            )}
           </>
         )}
 
