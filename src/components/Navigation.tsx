@@ -51,11 +51,11 @@ const Navigation = () => {
     <nav className="bg-background sticky top-0 z-50 border-0">
       <div className="max-w-7xl mx-auto px-6 py-1 flex items-center justify-center gap-8">
         <Link to="/" className="flex items-center flex-shrink-0" aria-label="Lana Tutors Home">
-          <div className="overflow-hidden">
+          <div className="overflow-hidden" style={{ clipPath: 'inset(0 0 0 2px)' }}>
             <img 
               src={lanaLogo} 
               alt="Lana Tutors - Your Trusted Tutoring Partner"
-              className="block h-12 sm:h-14 md:h-16 w-auto object-contain border-0 outline-none -ml-[2px]"
+              className="block h-12 sm:h-14 md:h-16 w-auto object-contain border-0 outline-none"
             />
           </div>
         </Link>
