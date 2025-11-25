@@ -268,7 +268,7 @@ const TutorSearch = () => {
             </div>
 
             {/* Action Buttons */}
-            <div className="flex flex-wrap gap-4 justify-center mb-8">
+            <div className="flex flex-wrap gap-4 justify-center">
               <Button 
                 onClick={() => navigate('/multi-tutor-package')}
                 size="lg"
@@ -297,24 +297,6 @@ const TutorSearch = () => {
                 <Award className="w-5 h-5" />
                 Request Learning Plan
               </Button>
-            </div>
-            
-            {/* Call-to-Action for Holiday Packages */}
-            <div className="max-w-2xl mx-auto">
-              <Card className="bg-gradient-to-r from-primary/10 to-accent/10 border-primary/20">
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between gap-4">
-                    <div className="text-left">
-                      <h3 className="font-semibold text-lg mb-1">🎓 December Revision Packages</h3>
-                      <p className="text-sm text-muted-foreground">Intensive exam prep for candidate years</p>
-                    </div>
-                    <Button onClick={() => navigate('/holiday-packages')} className="shrink-0">
-                      View Packages
-                      <ArrowRight className="ml-2 h-4 w-4" />
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
             </div>
           </div>
 
