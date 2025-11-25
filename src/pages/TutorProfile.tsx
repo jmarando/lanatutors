@@ -14,6 +14,8 @@ import { SEO } from "@/components/SEO";
 import { BookingCalendar } from "@/components/BookingCalendar";
 import { PackageSelector } from "@/components/PackageSelector";
 import { HolidayPackageBanner } from "@/components/HolidayPackageBanner";
+import { CustomPackageBuilder } from "@/components/CustomPackageBuilder";
+import { LearningPlanRequest } from "@/components/LearningPlanRequest";
 import { cn } from "@/lib/utils";
 
 import tutor1 from "@/assets/tutor-1.jpg";
@@ -29,6 +31,8 @@ const TutorProfile = () => {
   const navigate = useNavigate();
   const [isBookingOpen, setIsBookingOpen] = useState(false);
   const [isPackagePurchaseOpen, setIsPackagePurchaseOpen] = useState(false);
+  const [isCustomPackageOpen, setIsCustomPackageOpen] = useState(false);
+  const [isLearningPlanOpen, setIsLearningPlanOpen] = useState(false);
   const [selectedPackage, setSelectedPackage] = useState<any>(null);
   const [packagePaymentOption, setPackagePaymentOption] = useState<'full' | 'deposit'>('full');
   const [bookingType, setBookingType] = useState<'paid' | 'trial' | 'free' | 'single' | 'double'>('paid');
@@ -729,37 +733,100 @@ const TutorProfile = () => {
 
                   {/* Booking Options */}
                   <div className="space-y-3">
+                    {/* Direct Session Booking */}
+                    <div className="space-y-2">
+                      <Button 
+                        className="w-full group hover:shadow-md transition-all"
+                        size="lg"
+                        onClick={() => handleBookingTypeSelect('single')}
+                      >
+                        <div className="flex items-center justify-between w-full">
+                          <span className="flex items-center gap-2">
+                            <BookOpen className="w-4 h-4" />
+                            Single Session
+                          </span>
+                          <span className="font-bold ml-2">KES {currentRate.toLocaleString()}</span>
+                        </div>
+                      </Button>
+
+                      <Button 
+                        variant="outline" 
+                        className="w-full group hover:bg-accent/50 transition-all h-auto py-3"
+                        size="lg"
+                        onClick={() => handleBookingTypeSelect('double')}
+                      >
+                        <div className="flex items-center justify-between w-full">
+                          <div className="flex flex-col items-start gap-1">
+                            <span className="flex items-center gap-2">
+                              <BookOpen className="w-4 h-4" />
+                              Double Session
+                            </span>
+                            <Badge variant="secondary" className="text-[10px]">Save 5%</Badge>
+                          </div>
+                          <span className="font-semibold ml-2">KES {Math.round(currentRate * 2 * 0.95).toLocaleString()}</span>
+                        </div>
+                      </Button>
+                    </div>
+
+                    <Separator className="my-4" />
+
+                    {/* Custom Package Builder */}
                     <Button 
-                      className="w-full group hover:shadow-md transition-all"
+                      variant="outline"
+                      className="w-full bg-gradient-to-r from-primary/5 to-primary/10 border-primary/30 hover:bg-primary/20 h-auto py-4"
                       size="lg"
-                      onClick={() => handleBookingTypeSelect('single')}
+                      onClick={async () => {
+                        const { data: { user } } = await supabase.auth.getUser();
+                        if (!user) {
+                          showToast({
+                            title: "Please Sign In",
+                            description: "You need to sign in to create a package",
+                            variant: "destructive",
+                          });
+                          navigate(`/login?redirect=${encodeURIComponent(window.location.pathname)}`);
+                          return;
+                        }
+                        setIsCustomPackageOpen(true);
+                      }}
                     >
-                      <div className="flex items-center justify-between w-full">
-                        <span className="flex items-center gap-2">
-                          <BookOpen className="w-4 h-4" />
-                          Single Session
-                        </span>
-                        <span className="font-bold ml-2">KES {currentRate.toLocaleString()}</span>
+                      <div className="flex flex-col items-center gap-1 w-full">
+                        <div className="flex items-center gap-2">
+                          <Sparkles className="w-5 h-5" />
+                          <span className="font-semibold">Create Custom Package</span>
+                        </div>
+                        <span className="text-[10px] opacity-70">Choose sessions & subject yourself</span>
                       </div>
                     </Button>
 
+                    {/* Learning Plan Request */}
                     <Button 
-                      variant="outline" 
-                      className="w-full group hover:bg-accent/50 transition-all h-auto py-3"
+                      variant="outline"
+                      className="w-full bg-gradient-to-r from-secondary/5 to-secondary/10 border-secondary/30 hover:bg-secondary/20 h-auto py-4"
                       size="lg"
-                      onClick={() => handleBookingTypeSelect('double')}
+                      onClick={async () => {
+                        const { data: { user } } = await supabase.auth.getUser();
+                        if (!user) {
+                          showToast({
+                            title: "Please Sign In",
+                            description: "You need to sign in to request a learning plan",
+                            variant: "destructive",
+                          });
+                          navigate(`/login?redirect=${encodeURIComponent(window.location.pathname)}`);
+                          return;
+                        }
+                        setIsLearningPlanOpen(true);
+                      }}
                     >
-                      <div className="flex items-center justify-between w-full">
-                        <div className="flex flex-col items-start gap-1">
-                          <span className="flex items-center gap-2">
-                            <BookOpen className="w-4 h-4" />
-                            Double Session
-                          </span>
-                          <Badge variant="secondary" className="text-[10px]">Save 5%</Badge>
+                      <div className="flex flex-col items-center gap-1 w-full">
+                        <div className="flex items-center gap-2">
+                          <Users className="w-5 h-5" />
+                          <span className="font-semibold">Request Learning Plan</span>
                         </div>
-                        <span className="font-semibold ml-2">KES {Math.round(currentRate * 2 * 0.95).toLocaleString()}</span>
+                        <span className="text-[10px] opacity-70">Let {tutor.name} design a plan for you</span>
                       </div>
                     </Button>
+
+                    <Separator className="my-4" />
 
                     <div className="text-center">
                       <p className="text-xs text-muted-foreground mb-3">Not sure yet?</p>
@@ -945,7 +1012,54 @@ const TutorProfile = () => {
                         </div>
                       </button>
                     </div>
-                  </div>
+      {/* Custom Package Dialog */}
+      <Dialog open={isCustomPackageOpen} onOpenChange={setIsCustomPackageOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Create Your Custom Package</DialogTitle>
+            <DialogDescription>
+              Build a personalized session package with {tutor.name}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <CustomPackageBuilder
+            tutorId={tutor.id}
+            tutorName={tutor.name}
+            tutorEmail={tutor.email}
+            tutorSubjects={tutor.subjects}
+            hourlyRate={currentRate}
+            onClose={() => setIsCustomPackageOpen(false)}
+            onPurchaseSuccess={() => {
+              setIsCustomPackageOpen(false);
+              toast.success("Package created! Redirecting to payment...");
+            }}
+          />
+        </DialogContent>
+      </Dialog>
+
+      {/* Learning Plan Request Dialog */}
+      <Dialog open={isLearningPlanOpen} onOpenChange={setIsLearningPlanOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Request a Personalized Learning Plan</DialogTitle>
+            <DialogDescription>
+              Let {tutor.name} create a custom learning plan tailored to your child's needs
+            </DialogDescription>
+          </DialogHeader>
+          
+          <LearningPlanRequest
+            tutorId={tutor.id}
+            tutorName={tutor.name}
+            tutorEmail={tutor.email}
+            tutorSubjects={tutor.subjects}
+            onClose={() => setIsLearningPlanOpen(false)}
+            onSubmitSuccess={() => {
+              setIsLearningPlanOpen(false);
+            }}
+          />
+        </DialogContent>
+      </Dialog>
+    </div>
                 </CardContent>
               </Card>
 
