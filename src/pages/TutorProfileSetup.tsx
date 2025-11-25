@@ -86,9 +86,8 @@ const TutorProfileSetup = () => {
       subject: string;
     }>,
     teachingMode: [] as string[],
-    // Tiered pricing
-    standardRate: "",
-    advancedRate: "",
+    // Per curriculum-level rates (key format: "curriculum-level")
+    curriculumLevelRates: {} as { [key: string]: string },
     // Legacy field for backwards compatibility
     hourlyRate: "",
     experienceYears: "",
@@ -113,17 +112,12 @@ const TutorProfileSetup = () => {
     }>
   });
 
-  // State for tier assignments
-  const [tierAssignments, setTierAssignments] = useState<{
-    [key: string]: 'standard' | 'advanced'; // key format: "curriculum-level"
-  }>({});
-
-  // Sync hourlyRate with standardRate for package calculations
-  useEffect(() => {
-    if (formData.standardRate && !formData.hourlyRate) {
-      setFormData(prev => ({ ...prev, hourlyRate: prev.standardRate }));
-    }
-  }, [formData.standardRate]);
+  // Calculate average rate for package calculations
+  const getAverageRate = () => {
+    const rates = Object.values(formData.curriculumLevelRates).map(r => parseFloat(r)).filter(r => !isNaN(r) && r > 0);
+    if (rates.length === 0) return 0;
+    return rates.reduce((sum, rate) => sum + rate, 0) / rates.length;
+  };
 
   // State for hierarchical curriculum/level/subject selection
   const [curriculumLevels, setCurriculumLevels] = useState<{
@@ -277,9 +271,9 @@ const TutorProfileSetup = () => {
           level: string;
           subject: string;
         }> = [];
-        const reconstructedTierAssignments: { [key: string]: 'standard' | 'advanced' } = {};
+        const reconstructedCurriculumLevelRates: { [key: string]: string } = {};
         
-        if (tierAssignments) {
+        if (tierAssignments && pricingTiers) {
           tierAssignments.forEach(assignment => {
             // Build curriculum levels map
             if (!reconstructedCurriculumLevels[assignment.curriculum]) {
@@ -289,9 +283,12 @@ const TutorProfileSetup = () => {
               reconstructedCurriculumLevels[assignment.curriculum].push(assignment.level);
             }
             
-            // Build tier assignments
+            // Build curriculum-level rates from tier data
             const key = `${assignment.curriculum}-${assignment.level}`;
-            reconstructedTierAssignments[key] = assignment.tier_id === standardTier?.id ? 'standard' : 'advanced';
+            const tierForThisCombo = pricingTiers.find(t => t.id === assignment.tier_id);
+            if (tierForThisCombo) {
+              reconstructedCurriculumLevelRates[key] = Math.round(Number(tierForThisCombo.online_hourly_rate)).toString();
+            }
           });
         }
         
@@ -312,7 +309,6 @@ const TutorProfileSetup = () => {
         }
         
         setCurriculumLevels(reconstructedCurriculumLevels);
-        setTierAssignments(reconstructedTierAssignments);
         
         // Populate form with existing data
         setFormData(prev => ({
@@ -320,9 +316,8 @@ const TutorProfileSetup = () => {
           bio: existingTutor.bio || "",
           curriculum: existingTutor.curriculum || [],
           teachingMode: existingTutor.teaching_mode || [],
-          standardRate: standardTier?.online_hourly_rate ? Math.round(Number(standardTier.online_hourly_rate)).toString() : "",
-          advancedRate: advancedTier?.online_hourly_rate ? Math.round(Number(advancedTier.online_hourly_rate)).toString() : "",
-          hourlyRate: existingTutor.hourly_rate ? Math.round(Number(existingTutor.hourly_rate)).toString() : (standardTier?.online_hourly_rate ? Math.round(Number(standardTier.online_hourly_rate)).toString() : ""),
+          curriculumLevelRates: reconstructedCurriculumLevelRates,
+          hourlyRate: existingTutor.hourly_rate ? Math.round(Number(existingTutor.hourly_rate)).toString() : "",
           experienceYears: existingTutor.experience_years?.toString() || "",
           currentInstitution: existingTutor.current_institution || "",
           showCurrentInstitution: existingTutor.display_institution ?? true,
@@ -782,7 +777,7 @@ const TutorProfileSetup = () => {
             curriculum: finalCurriculum,
             teaching_mode: formData.teachingMode,
             teaching_levels: teachingLevels,
-            hourly_rate: toNumber(formData.standardRate || formData.hourlyRate), // Use standard rate as base
+            hourly_rate: Math.round(getAverageRate()), // Use average of all rates
             experience_years: parseInt(formData.experienceYears),
             current_institution: formData.currentInstitution,
             display_institution: formData.showCurrentInstitution,
@@ -814,7 +809,7 @@ const TutorProfileSetup = () => {
           curriculum: finalCurriculum,
           teaching_mode: formData.teachingMode,
           teaching_levels: teachingLevels,
-          hourly_rate: toNumber(formData.standardRate || formData.hourlyRate), // Use standard rate as base
+          hourly_rate: Math.round(getAverageRate()), // Use average of all rates
           experience_years: parseInt(formData.experienceYears),
           current_institution: formData.currentInstitution,
           display_institution: formData.showCurrentInstitution,
@@ -844,43 +839,38 @@ const TutorProfileSetup = () => {
         }
       }
 
-      // Create pricing tiers
-      const standardRate = toNumber(formData.standardRate);
-      const advancedRate = toNumber(formData.advancedRate);
+      // Create pricing tiers - one per curriculum-level combination
+      const tierInserts = Object.entries(curriculumLevels).flatMap(([curriculum, levels]) =>
+        levels.map(level => {
+          const key = `${curriculum}-${level}`;
+          const rate = toNumber(formData.curriculumLevelRates[key]);
+          
+          return {
+            tutor_id: tutorProfileId,
+            tier_name: key, // Store curriculum-level as tier name
+            online_hourly_rate: rate
+          };
+        })
+      );
 
       const { data: tiers, error: tiersError } = await supabase
         .from("tutor_pricing_tiers")
-        .insert([
-          {
-            tutor_id: tutorProfileId,
-            tier_name: 'standard',
-            online_hourly_rate: standardRate
-          },
-          {
-            tutor_id: tutorProfileId,
-            tier_name: 'advanced',
-            online_hourly_rate: advancedRate
-          }
-        ])
+        .insert(tierInserts)
         .select();
       
       if (tiersError) throw tiersError;
 
-      // Create tier assignments for each curriculum-level combination
-      const standardTier = tiers.find(t => t.tier_name === 'standard');
-      const advancedTier = tiers.find(t => t.tier_name === 'advanced');
-
+      // Create tier assignments linking each curriculum-level to its tier
       const assignments = Object.entries(curriculumLevels).flatMap(([curriculum, levels]) =>
         levels.map(level => {
           const key = `${curriculum}-${level}`;
-          const assignedTier = tierAssignments[key] || 'standard';
-          const tierId = assignedTier === 'standard' ? standardTier?.id : advancedTier?.id;
+          const tier = tiers.find(t => t.tier_name === key);
           
           return {
             tutor_id: tutorProfileId,
             curriculum,
             level,
-            tier_id: tierId
+            tier_id: tier?.id
           };
         })
       );
@@ -899,7 +889,7 @@ const TutorProfileSetup = () => {
       // Create package offers with auto-calculated prices based on selected discounts
       if (tutorProfile) {
         const packages = [];
-        const baseRate = toNumber(formData.standardRate || formData.hourlyRate);
+        const baseRate = Math.round(getAverageRate()); // Use average rate for packages
         const MIN_PRICE_PER_SESSION = 500; // KES 500 minimum per session
 
         // 5-session bundle with custom discount
@@ -1835,177 +1825,147 @@ TEFL/TESOL Certification" value={formData.qualifications} onChange={e => setForm
                     </div>
                   )}
 
-                  {/* Tier Rate Inputs */}
-                  <div className="space-y-4">
-                    <div className="border rounded-lg p-4 space-y-3 bg-secondary/10">
-                      <div className="flex items-center gap-2">
-                        <Badge variant="secondary">Standard Tier</Badge>
-                        <span className="text-xs text-muted-foreground">For foundational levels</span>
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="standardRate">Online Hourly Rate (KES) *</Label>
-                        <Input 
-                          id="standardRate" 
-                          type="number" 
-                          min="1000" 
-                          max="6000" 
-                          step="100" 
-                          placeholder="e.g., 1500" 
-                          value={formData.standardRate} 
-                          onChange={e => {
-                            const cleaned = e.target.value.replace(/[^0-9.]/g, "");
-                            setFormData({
-                              ...formData,
-                              standardRate: cleaned
-                            });
-                          }} 
-                          required 
-                        />
-                        {(() => {
-                          const suggestedRange = getSuggestedRateRange(
-                            curriculumLevels,
-                            formData.teachingMode,
-                            'standard'
-                          );
-                          const currentRate = parseFloat(formData.standardRate);
-                          const isOutOfRange = suggestedRange && currentRate && 
-                            (currentRate < suggestedRange.min || currentRate > suggestedRange.max);
-                          
-                          return (
-                            <>
-                              {suggestedRange && (
-                                <p className="text-xs text-muted-foreground">
-                                  Suggested range: KES {suggestedRange.min.toLocaleString()} – {suggestedRange.max.toLocaleString()} per hour
-                                </p>
-                              )}
-                              {isOutOfRange && (
-                                <p className="text-xs text-amber-600 dark:text-amber-400 font-medium">
-                                  ⚠️ Your rate is outside the suggested range. This may affect student bookings.
-                                </p>
-                              )}
-                            </>
-                          );
-                        })()}
-                        {formData.standardRate && (
-                          <div className="space-y-1">
-                            <p className="text-xs text-muted-foreground">
-                              In-person: KES {(parseFloat(formData.standardRate) * 1.5).toLocaleString()}/hr
+
+                  {/* Per Curriculum-Level Rate Inputs */}
+                  {Object.keys(curriculumLevels).length > 0 && formData.teachingMode.length > 0 ? (
+                    <div className="space-y-4">
+                      <div className="border rounded-lg p-4 space-y-3 bg-blue-50 dark:bg-blue-950/20">
+                        <div className="flex items-start gap-2">
+                          <span className="text-blue-600 dark:text-blue-400 text-lg">💡</span>
+                          <div className="space-y-1 flex-1">
+                            <p className="font-medium text-sm text-blue-900 dark:text-blue-100">
+                              Set Your Hourly Rate for Each Level
                             </p>
-                            <p className="text-xs text-muted-foreground">
-                              You earn 70%: KES {(parseFloat(formData.standardRate) * 0.7).toLocaleString()}/hr
+                            <p className="text-xs text-blue-700 dark:text-blue-300">
+                              Set rates based on the recommended ranges below. Rates shown are for online sessions. In-person sessions are typically 1.5x higher.
                             </p>
                           </div>
-                        )}
+                        </div>
                       </div>
-                    </div>
 
-                    <div className="border rounded-lg p-4 space-y-3 bg-primary/5">
-                      <div className="flex items-center gap-2">
-                        <Badge>Advanced Tier</Badge>
-                        <span className="text-xs text-muted-foreground">For IB, A-Level, IGCSE</span>
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="advancedRate">Online Hourly Rate (KES) *</Label>
-                        <Input 
-                          id="advancedRate" 
-                          type="number" 
-                          min="1000" 
-                          max="6000" 
-                          step="100" 
-                          placeholder="e.g., 2500" 
-                          value={formData.advancedRate} 
-                          onChange={e => {
-                            const cleaned = e.target.value.replace(/[^0-9.]/g, "");
-                            setFormData({
-                              ...formData,
-                              advancedRate: cleaned
-                            });
-                          }} 
-                          required 
-                        />
-                        {(() => {
-                          const suggestedRange = getSuggestedRateRange(
-                            curriculumLevels,
-                            formData.teachingMode,
-                            'advanced'
+                      {Object.entries(curriculumLevels).map(([curriculum, levels]) =>
+                        levels.map(level => {
+                          const key = `${curriculum}-${level}`;
+                          const guidanceMap = getRateGuidanceForSelections(
+                            { [curriculum]: [level] },
+                            formData.teachingMode
                           );
-                          const currentRate = parseFloat(formData.advancedRate);
-                          const isOutOfRange = suggestedRange && currentRate && 
-                            (currentRate < suggestedRange.min || currentRate > suggestedRange.max);
+                          const guidance = guidanceMap.get(key);
+                          const currentRate = parseFloat(formData.curriculumLevelRates[key] || '');
                           
-                          return (
-                            <>
-                              {suggestedRange && (
-                                <p className="text-xs text-muted-foreground">
-                                  Suggested range: KES {suggestedRange.min.toLocaleString()} – {suggestedRange.max.toLocaleString()} per hour
-                                </p>
-                              )}
-                              {isOutOfRange && (
-                                <p className="text-xs text-amber-600 dark:text-amber-400 font-medium">
-                                  ⚠️ Your rate is outside the suggested range. This may affect student bookings.
-                                </p>
-                              )}
-                            </>
-                          );
-                        })()}
-                        {formData.advancedRate && (
-                          <div className="space-y-1">
-                            <p className="text-xs text-muted-foreground">
-                              In-person: KES {(parseFloat(formData.advancedRate) * 1.5).toLocaleString()}/hr
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              You earn 70%: KES {(parseFloat(formData.advancedRate) * 0.7).toLocaleString()}/hr
-                            </p>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Tier Assignments */}
-                  {formData.subjectsWithContext.length > 0 && formData.standardRate && formData.advancedRate && (
-                    <div className="space-y-3 border rounded-lg p-4 bg-muted/10">
-                      <div>
-                        <Label className="font-medium">Assign Tiers to Your Curriculum Levels</Label>
-                        <p className="text-sm text-muted-foreground mt-1">
-                          Choose which rate applies to each curriculum-level combination
-                        </p>
-                      </div>
-
-                      <div className="space-y-2 max-h-[250px] overflow-y-auto">
-                        {Object.entries(
-                          formData.subjectsWithContext.reduce((acc, s) => {
-                            const key = `${s.curriculum}-${s.level}`;
-                            const displayKey = `${s.curriculum} - ${s.level}`;
-                            if (!acc[key]) {
-                              acc[key] = { displayKey, curriculum: s.curriculum, level: s.level };
+                          // Determine if rate is out of range
+                          let isOutOfRange = false;
+                          let suggestedMin = 0;
+                          let suggestedMax = 0;
+                          
+                          if (guidance) {
+                            const ranges = [guidance.online, guidance.inPerson].filter(Boolean);
+                            if (ranges.length > 0) {
+                              suggestedMin = Math.min(...ranges.map(r => r!.min));
+                              suggestedMax = Math.max(...ranges.map(r => r!.max));
+                              isOutOfRange = currentRate > 0 && (currentRate < suggestedMin || currentRate > suggestedMax);
                             }
-                            return acc;
-                          }, {} as { [key: string]: { displayKey: string; curriculum: string; level: string } })
-                        ).map(([key, { displayKey }]) => (
-                          <div key={key} className="flex items-center justify-between p-3 border rounded bg-background">
-                            <p className="text-sm font-medium">{displayKey}</p>
-                            <Select
-                              value={tierAssignments[key] || 'standard'}
-                              onValueChange={(value: 'standard' | 'advanced') => {
-                                setTierAssignments({
-                                  ...tierAssignments,
-                                  [key]: value
-                                });
-                              }}
-                            >
-                              <SelectTrigger className="w-[140px]">
-                                <SelectValue />
-                              </SelectTrigger>
-                              <SelectContent>
-                                <SelectItem value="standard">Standard</SelectItem>
-                                <SelectItem value="advanced">Advanced</SelectItem>
-                              </SelectContent>
-                            </Select>
-                          </div>
-                        ))}
-                      </div>
+                          }
+
+                          return (
+                            <div key={key} className="border rounded-lg p-4 space-y-3 bg-background">
+                              <div className="space-y-2">
+                                <div className="flex items-center justify-between">
+                                  <div>
+                                    <Label className="font-medium text-base">{curriculum} - {level}</Label>
+                                    <p className="text-xs text-muted-foreground mt-0.5">Online hourly rate</p>
+                                  </div>
+                                  <Badge variant="outline" className="text-xs">
+                                    {guidance?.online && guidance?.inPerson 
+                                      ? 'Online & In-person' 
+                                      : guidance?.online 
+                                        ? 'Online Only' 
+                                        : 'In-person Only'}
+                                  </Badge>
+                                </div>
+                                
+                                {/* Recommended Range Display */}
+                                {guidance && (guidance.online || guidance.inPerson) && (
+                                  <div className="bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 rounded p-3 space-y-1">
+                                    <p className="text-xs font-medium text-green-900 dark:text-green-100">
+                                      💰 Recommended Rate Range
+                                    </p>
+                                    {guidance.online && (
+                                      <p className="text-sm text-green-700 dark:text-green-300">
+                                        <strong>Online:</strong> {formatRateRange(guidance.online)} per hour
+                                      </p>
+                                    )}
+                                    {guidance.inPerson && (
+                                      <p className="text-sm text-green-700 dark:text-green-300">
+                                        <strong>In-person:</strong> {formatRateRange(guidance.inPerson)} per hour
+                                      </p>
+                                    )}
+                                  </div>
+                                )}
+                                
+                                {/* Rate Input */}
+                                <div className="space-y-2">
+                                  <Label htmlFor={`rate-${key}`}>Your Online Rate (KES) *</Label>
+                                  <Input
+                                    id={`rate-${key}`}
+                                    type="number"
+                                    min="500"
+                                    max="10000"
+                                    step="100"
+                                    placeholder="e.g., 1500"
+                                    value={formData.curriculumLevelRates[key] || ''}
+                                    onChange={e => {
+                                      const cleaned = e.target.value.replace(/[^0-9.]/g, "");
+                                      setFormData(prev => ({
+                                        ...prev,
+                                        curriculumLevelRates: {
+                                          ...prev.curriculumLevelRates,
+                                          [key]: cleaned
+                                        }
+                                      }));
+                                    }}
+                                    required
+                                    className={isOutOfRange ? 'border-amber-500' : ''}
+                                  />
+                                  
+                                  {suggestedMin > 0 && suggestedMax > 0 && (
+                                    <p className="text-xs text-muted-foreground">
+                                      Suggested: KES {suggestedMin.toLocaleString()} – {suggestedMax.toLocaleString()}
+                                    </p>
+                                  )}
+                                  
+                                  {isOutOfRange && (
+                                    <div className="flex items-start gap-2 p-2 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded">
+                                      <span className="text-amber-600 dark:text-amber-400 text-sm">⚠️</span>
+                                      <p className="text-xs text-amber-700 dark:text-amber-300">
+                                        Your rate is outside the recommended range. This may affect student bookings. Consider adjusting to stay competitive.
+                                      </p>
+                                    </div>
+                                  )}
+                                  
+                                  {currentRate > 0 && (
+                                    <div className="space-y-1 pt-1">
+                                      <p className="text-xs text-muted-foreground">
+                                        💵 In-person rate: KES {Math.round(currentRate * 1.5).toLocaleString()}/hr
+                                      </p>
+                                      <p className="text-xs text-muted-foreground">
+                                        💰 You earn (70%): KES {Math.round(currentRate * 0.7).toLocaleString()}/hr
+                                      </p>
+                                    </div>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })
+                      )}
                     </div>
+                  ) : (
+                    <Alert>
+                      <AlertDescription>
+                        Please select your curriculum, levels, and teaching mode in the previous step to set your rates.
+                      </AlertDescription>
+                    </Alert>
                   )}
 
                   <Separator />
@@ -2036,8 +1996,8 @@ TEFL/TESOL Certification" value={formData.qualifications} onChange={e => setForm
                             <SelectItem value="20">20% off</SelectItem>
                           </SelectContent>
                         </Select>
-                        {formData.standardRate && formData.package5Discount && <p className="text-xs text-green-600 font-medium">
-                            Rate: KES {Math.round(parseFloat(formData.standardRate) * 5 * (1 - parseFloat(formData.package5Discount) / 100)).toLocaleString()}
+                        {getAverageRate() > 0 && formData.package5Discount && <p className="text-xs text-green-600 font-medium">
+                            Rate: KES {Math.round(getAverageRate() * 5 * (1 - parseFloat(formData.package5Discount) / 100)).toLocaleString()}
                           </p>}
                       </div>
 
@@ -2057,8 +2017,8 @@ TEFL/TESOL Certification" value={formData.qualifications} onChange={e => setForm
                             <SelectItem value="25">25% off</SelectItem>
                           </SelectContent>
                         </Select>
-                        {formData.standardRate && formData.package10Discount && <p className="text-xs text-green-600 font-medium">
-                            Rate: KES {Math.round(parseFloat(formData.standardRate) * 10 * (1 - parseFloat(formData.package10Discount) / 100)).toLocaleString()}
+                        {getAverageRate() > 0 && formData.package10Discount && <p className="text-xs text-green-600 font-medium">
+                            Rate: KES {Math.round(getAverageRate() * 10 * (1 - parseFloat(formData.package10Discount) / 100)).toLocaleString()}
                           </p>}
                       </div>
                     </div>
@@ -2206,7 +2166,7 @@ TEFL/TESOL Certification" value={formData.qualifications} onChange={e => setForm
 
 
               {/* Validation Summary for Step 4 */}
-              {step === 4 && (!formData.standardRate || !formData.advancedRate) && (
+              {step === 4 && Object.keys(formData.curriculumLevelRates).length === 0 && (
                 <div className="bg-amber-50 dark:bg-amber-950/30 border border-amber-200 dark:border-amber-800 rounded-lg p-4 mb-4">
                   <div className="flex items-start gap-3">
                     <div className="mt-0.5">
@@ -2218,18 +2178,10 @@ TEFL/TESOL Certification" value={formData.qualifications} onChange={e => setForm
                       <h4 className="font-semibold text-amber-900 dark:text-amber-200 mb-2">Complete Required Fields</h4>
                       <p className="text-sm text-amber-800 dark:text-amber-300 mb-2">Please complete the following to submit your profile:</p>
                       <ul className="space-y-1 text-sm text-amber-800 dark:text-amber-300">
-                        {!formData.standardRate && (
-                          <li className="flex items-center gap-2">
-                            <span className="w-1.5 h-1.5 bg-amber-600 dark:bg-amber-500 rounded-full"></span>
-                            <span><strong>Standard Rate:</strong> Go to Step 3 (Pricing) to set your hourly rate</span>
-                          </li>
-                        )}
-                        {!formData.advancedRate && (
-                          <li className="flex items-center gap-2">
-                            <span className="w-1.5 h-1.5 bg-amber-600 dark:bg-amber-500 rounded-full"></span>
-                            <span><strong>Advanced Rate:</strong> Go to Step 3 (Pricing) to set your advanced rate</span>
-                          </li>
-                        )}
+                        <li className="flex items-center gap-2">
+                          <span className="w-1.5 h-1.5 bg-amber-600 dark:bg-amber-500 rounded-full"></span>
+                          <span><strong>Rates:</strong> Go to Step 3 (Pricing) to set your hourly rates for each curriculum-level combination</span>
+                        </li>
                       </ul>
                     </div>
                   </div>
@@ -2252,7 +2204,7 @@ TEFL/TESOL Certification" value={formData.qualifications} onChange={e => setForm
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Button> : (
                     <div className="ml-auto flex flex-col items-end gap-2">
-                      {(!formData.standardRate || !formData.advancedRate) && (
+                      {Object.keys(formData.curriculumLevelRates).length === 0 && (
                         <p className="text-sm text-muted-foreground">
                           Complete all required fields to enable submission
                         </p>
@@ -2264,7 +2216,7 @@ TEFL/TESOL Certification" value={formData.qualifications} onChange={e => setForm
                           e.stopPropagation();
                           handleSubmit(e as any);
                         }} 
-                        disabled={isLoading || !formData.standardRate || !formData.advancedRate}
+                        disabled={isLoading || Object.keys(formData.curriculumLevelRates).length === 0}
                       >
                         {isLoading ? "Submitting..." : "Submit Profile"}
                       </Button>
@@ -2328,14 +2280,13 @@ TEFL/TESOL Certification" value={formData.qualifications} onChange={e => setForm
                           <span className="font-semibold text-sm">New</span>
                         </div>
                         <div className="text-right">
-                          {formData.standardRate && <>
+                          {getAverageRate() > 0 ? <>
                               <div className="font-bold text-lg">
-                                KES {Math.round(parseFloat(formData.standardRate)).toLocaleString()}
+                                KES {Math.round(getAverageRate()).toLocaleString()}
                                 <span className="text-sm font-normal text-muted-foreground">/hr</span>
                               </div>
-                              <span className="text-xs text-muted-foreground">online</span>
-                            </>}
-                          {!formData.standardRate && <span className="text-sm text-muted-foreground">Set rate in Step 3</span>}
+                              <span className="text-xs text-muted-foreground">starting from</span>
+                            </> : <span className="text-sm text-muted-foreground">Set rates in Step 3</span>}
                         </div>
                       </div>
                     </CardContent>
