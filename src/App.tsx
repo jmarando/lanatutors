@@ -24,7 +24,7 @@ const TutorSignup = lazy(() => import("./pages/TutorSignup"));
 const BecomeATutor = lazy(() => import("./pages/BecomeATutor"));
 const StudentDashboard = lazy(() => import("./pages/NewStudentDashboard"));
 const TutorDashboard = lazy(() => import("./pages/TutorDashboard"));
-const AdminDashboardRedesigned = lazy(() => import("./pages/AdminDashboard-Redesigned"));
+const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
 const BookConsultation = lazy(() => import("./pages/BookConsultation"));
 const HolidayPackages = lazy(() => import("./pages/HolidayPackages"));
 const AdminHolidayPackages = lazy(() => import("./pages/AdminHolidayPackages"));
@@ -84,7 +84,7 @@ const App = () => {
                 <Route path="/tutor-profile-submitted" element={<TutorProfileSubmitted />} />
                 <Route path="/tutor-onboarding-guide" element={<TutorOnboardingGuide />} />
                 <Route path="/tutor-guide-printable" element={<TutorGuidePrintable />} />
-                <Route path="/admin" element={<AdminDashboardRedesigned />} />
+                <Route path="/admin" element={<AdminDashboard />} />
                 <Route path="/book-consultation" element={<BookConsultation />} />
                 <Route path="/test-email" element={<TestEmail />} />
                 <Route path="/booking-confirmed" element={<BookingConfirmed />} />
