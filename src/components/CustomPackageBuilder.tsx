@@ -164,15 +164,30 @@ export const CustomPackageBuilder = ({
         cart.push(newItem);
       });
 
+      // Save to localStorage
       localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart));
+      
+      // Verify save was successful
+      const verifyCart = localStorage.getItem(CART_STORAGE_KEY);
+      if (!verifyCart) {
+        throw new Error("Failed to save cart to storage");
+      }
 
+      console.log("Cart saved successfully:", cart);
       toast.success(`Added ${selectedSubjects.length} subject(s) to cart`);
       
-      // Navigate to cart
-      navigate('/multi-tutor-package');
+      // Close modal first
+      onClose();
+      
+      // Navigate to cart with a small delay to ensure modal closes
+      setTimeout(() => {
+        navigate('/multi-tutor-package', { 
+          state: { fromCart: true, itemsAdded: selectedSubjects.length }
+        });
+      }, 100);
     } catch (error) {
       console.error("Add to cart error:", error);
-      toast.error("Failed to add to cart");
+      toast.error("Failed to add to cart. Please try again.");
     }
   };
 

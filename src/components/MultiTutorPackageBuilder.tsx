@@ -31,10 +31,11 @@ export const MultiTutorPackageBuilder = () => {
     fetchCurrentUser();
     loadCartFromStorage();
     
-    // Check if tutor was passed via navigation state
+    // Check if items were just added via navigation state
     const state = location.state as any;
-    if (state?.addTutor) {
-      // Don't automatically add, let user select subject first
+    if (state?.fromCart && state?.itemsAdded) {
+      toast.success(`${state.itemsAdded} subject(s) added to your cart!`);
+    } else if (state?.addTutor) {
       toast.info(`Select a subject to add ${state.addTutor.tutorName} to your cart`);
     }
   }, []);
@@ -46,11 +47,17 @@ export const MultiTutorPackageBuilder = () => {
   const loadCartFromStorage = () => {
     try {
       const saved = localStorage.getItem(CART_STORAGE_KEY);
+      console.log('Loading cart from storage:', saved);
       if (saved) {
-        setCart(JSON.parse(saved));
+        const parsedCart = JSON.parse(saved);
+        console.log('Parsed cart:', parsedCart);
+        setCart(parsedCart);
+      } else {
+        console.log('No cart found in storage');
       }
     } catch (error) {
       console.error('Failed to load cart:', error);
+      toast.error('Failed to load your cart. Please try again.');
     }
   };
 
@@ -268,9 +275,12 @@ export const MultiTutorPackageBuilder = () => {
               {cart.length === 0 ? (
                 <div className="text-center py-12">
                   <ShoppingCart className="w-12 h-12 mx-auto text-muted-foreground mb-3" />
-                  <p className="text-muted-foreground">Your cart is empty</p>
-                  <Button variant="link" onClick={() => navigate('/tutors')} className="mt-2">
-                    Browse tutors
+                  <p className="text-muted-foreground mb-2">Your cart is empty</p>
+                  <p className="text-xs text-muted-foreground mb-4">
+                    Add subjects from tutor profiles to build your custom package
+                  </p>
+                  <Button onClick={() => navigate('/tutors')}>
+                    Browse Tutors
                   </Button>
                 </div>
               ) : (
