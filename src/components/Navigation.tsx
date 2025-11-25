@@ -51,13 +51,17 @@ const Navigation = () => {
   return (
     <nav className="bg-background/95 backdrop-blur-sm sticky top-0 z-50 border-b shadow-md">
       <div className="max-w-7xl mx-auto px-4 sm:px-6">
-        <div className="flex items-center justify-between h-20">
+        <div className="flex items-center justify-between h-24">
           {/* Logo */}
-          <Link to="/" className="flex items-center flex-shrink-0 py-2" aria-label="Lana Tutors Home">
+          <Link 
+            to="/" 
+            className="flex items-center flex-shrink-0 py-2 px-6 rounded-lg bg-gradient-to-r from-primary/10 via-brand-accent/10 to-primary/5 hover:from-primary/15 hover:via-brand-accent/15 hover:to-primary/10 transition-all duration-300" 
+            aria-label="Lana Tutors Home"
+          >
             <img 
               src={lanaLogo} 
               alt="Lana Tutors - Your Trusted Tutoring Partner"
-              className="h-16 w-auto object-contain"
+              className="h-20 w-auto object-contain"
             />
           </Link>
 
