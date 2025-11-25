@@ -789,25 +789,6 @@ const TutorProfile = () => {
                       </div>
                     </Button>
 
-                    <Separator className="my-4" />
-
-                    <div className="text-center">
-                      <p className="text-xs text-muted-foreground mb-3">Not sure yet?</p>
-                      <Button 
-                        variant="secondary"
-                        className="w-full bg-gradient-to-r from-secondary to-secondary/80 hover:from-secondary/90 hover:to-secondary/70"
-                        size="lg"
-                        onClick={() => handleBookingTypeSelect('free')}
-                      >
-                        <div className="flex flex-col items-center gap-1 py-1">
-                          <div className="flex items-center gap-2">
-                            <Video className="w-4 h-4" />
-                            <span>Free Consultation</span>
-                          </div>
-                          <span className="text-[10px] opacity-80">30-minute Video Call</span>
-                        </div>
-                      </Button>
-                    </div>
                   </div>
                 </CardContent>
               </Card>
