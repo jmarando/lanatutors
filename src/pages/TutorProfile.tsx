@@ -690,53 +690,53 @@ const TutorProfile = () => {
               <Card className="border-primary/30 shadow-lg">
                 <CardContent className="p-6">
                   <div className="text-center mb-6">
-                    <h3 className="font-bold text-2xl mb-2">Book a Session</h3>
-                    <p className="text-muted-foreground text-sm">Choose your preferred option</p>
+                    <h3 className="font-bold text-3xl mb-2">Book a Session</h3>
+                    <p className="text-muted-foreground text-base">Choose your preferred option</p>
                   </div>
 
                   {/* Booking Options */}
-                  <div className="space-y-3">
+                  <div className="space-y-4">
                     {/* Direct Session Booking */}
-                    <div className="space-y-2">
+                    <div className="space-y-3">
                       <Button 
-                        className="w-full group hover:shadow-md transition-all"
+                        className="w-full group hover:shadow-lg transition-all h-auto py-4"
                         size="lg"
                         onClick={() => handleBookingTypeSelect('single')}
                       >
                         <div className="flex items-center justify-between w-full">
-                          <span className="flex items-center gap-2">
-                            <BookOpen className="w-4 h-4" />
+                          <span className="flex items-center gap-2 text-lg font-semibold">
+                            <BookOpen className="w-5 h-5" />
                             Single Session
                           </span>
-                          <span className="font-bold ml-2">KES {currentRate.toLocaleString()}</span>
+                          <span className="font-bold text-xl ml-2">KES {currentRate.toLocaleString()}</span>
                         </div>
                       </Button>
 
                       <Button 
                         variant="outline" 
-                        className="w-full group hover:bg-accent/50 transition-all h-auto py-3"
+                        className="w-full group hover:bg-accent/50 transition-all h-auto py-4"
                         size="lg"
                         onClick={() => handleBookingTypeSelect('double')}
                       >
                         <div className="flex items-center justify-between w-full">
-                          <div className="flex flex-col items-start gap-1">
-                            <span className="flex items-center gap-2">
-                              <BookOpen className="w-4 h-4" />
+                          <div className="flex flex-col items-start gap-1.5">
+                            <span className="flex items-center gap-2 text-base font-semibold">
+                              <BookOpen className="w-5 h-5" />
                               Double Session
                             </span>
-                            <Badge variant="secondary" className="text-[10px]">Save 5%</Badge>
+                            <Badge variant="secondary" className="text-xs">Save 5%</Badge>
                           </div>
-                          <span className="font-semibold ml-2">KES {Math.round(currentRate * 2 * 0.95).toLocaleString()}</span>
+                          <span className="font-semibold text-lg ml-2">KES {Math.round(currentRate * 2 * 0.95).toLocaleString()}</span>
                         </div>
                       </Button>
                     </div>
 
-                    <Separator className="my-4" />
+                    <Separator className="my-5" />
 
                     {/* Custom Package Builder */}
                     <Button 
                       variant="outline"
-                      className="w-full bg-primary/5 border-primary/30 hover:bg-primary/10 hover:border-primary h-auto py-4 text-foreground"
+                      className="w-full bg-primary/5 border-primary/30 hover:bg-primary/10 hover:border-primary h-auto py-5 text-foreground"
                       size="lg"
                       onClick={async () => {
                         const { data: { user } } = await supabase.auth.getUser();
@@ -752,19 +752,19 @@ const TutorProfile = () => {
                         setIsCustomPackageOpen(true);
                       }}
                     >
-                      <div className="flex flex-col items-center gap-1 w-full">
+                      <div className="flex flex-col items-center gap-2 w-full">
                         <div className="flex items-center gap-2">
                           <Sparkles className="w-5 h-5 text-primary" />
-                          <span className="font-semibold text-foreground">Create Custom Package</span>
+                          <span className="font-semibold text-base text-foreground">Create Custom Package</span>
                         </div>
-                        <span className="text-[10px] text-muted-foreground">Choose sessions & subject yourself</span>
+                        <span className="text-sm text-muted-foreground">Choose sessions & subject yourself</span>
                       </div>
                     </Button>
 
                     {/* Learning Plan Request */}
                     <Button 
                       variant="outline"
-                      className="w-full bg-accent/5 border-accent/30 hover:bg-accent/10 hover:border-accent h-auto py-4 text-foreground"
+                      className="w-full bg-accent/5 border-accent/30 hover:bg-accent/10 hover:border-accent h-auto py-5 text-foreground"
                       size="lg"
                       onClick={async () => {
                         const { data: { user } } = await supabase.auth.getUser();
@@ -780,12 +780,12 @@ const TutorProfile = () => {
                         setIsLearningPlanOpen(true);
                       }}
                     >
-                      <div className="flex flex-col items-center gap-1 w-full">
+                      <div className="flex flex-col items-center gap-2 w-full">
                         <div className="flex items-center gap-2">
                           <Users className="w-5 h-5 text-accent" />
-                          <span className="font-semibold text-foreground">Request Learning Plan</span>
+                          <span className="font-semibold text-base text-foreground">Request Learning Plan</span>
                         </div>
-                        <span className="text-[10px] text-muted-foreground">Let {tutor.name} design a plan for you</span>
+                        <span className="text-sm text-muted-foreground">Let {tutor.name} design a plan for you</span>
                       </div>
                     </Button>
 
