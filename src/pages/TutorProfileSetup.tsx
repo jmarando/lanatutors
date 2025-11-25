@@ -850,18 +850,22 @@ const TutorProfileSetup = () => {
         }
       }
 
-      // Create pricing tiers - one per curriculum-level combination
+      // Create pricing tiers - one per curriculum-level combination, only for positive rates
       const tierInserts = Object.entries(curriculumLevels).flatMap(([curriculum, levels]) =>
         levels.map(level => {
           const key = `${curriculum}-${level}`;
           const rate = toNumber(formData.curriculumLevelRates[key]);
-          
+
+          if (!rate || rate <= 0) {
+            return null;
+          }
+
           return {
             tutor_id: tutorProfileId,
             tier_name: key, // Store curriculum-level as tier name
             online_hourly_rate: rate
           };
-        })
+        }).filter((tier): tier is { tutor_id: string; tier_name: string; online_hourly_rate: number } => tier !== null)
       );
 
       const { data: tiers, error: tiersError } = await supabase
