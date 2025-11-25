@@ -476,15 +476,9 @@ const TutorProfile = () => {
                             )}
                             {(entry.institution || entry.graduationYear) && (
                               <div className="flex items-center gap-2 mt-1 text-sm text-muted-foreground">
-                                {entry.institution && (
-                                  <>
-                                    <Building2 className="w-4 h-4" />
-                                    <span>{entry.institution}</span>
-                                  </>
-                                )}
-                                {entry.graduationYear && (
-                                  <span className="ml-auto">• {entry.graduationYear}</span>
-                                )}
+                                {entry.institution && <span>{entry.institution}</span>}
+                                {entry.institution && entry.graduationYear && <span>•</span>}
+                                {entry.graduationYear && <span>Class of {entry.graduationYear}</span>}
                               </div>
                             )}
                           </div>
@@ -495,58 +489,27 @@ const TutorProfile = () => {
               </Card>
             )}
 
-
-            {/* Qualifications */}
-            {tutor.education && tutor.education.length > 0 && (
-              <Card className="border-border/50">
-                <CardContent className="p-6">
-                  <div className="flex items-center gap-2 mb-4">
-                    <Award className="w-5 h-5 text-primary" />
-                    <h2 className="font-bold text-lg">Qualifications & Certifications</h2>
-                  </div>
-                  <div className="space-y-3">
-                    {tutor.education.map((qual: string, index: number) => (
-                      <div key={index} className="flex items-start gap-3 p-3 rounded-lg bg-muted/30">
-                        <CheckCircle2 className="w-5 h-5 text-primary shrink-0 mt-0.5" />
-                        <div className="flex-1">
-                          <p className="text-sm font-medium">{qual}</p>
-                        </div>
-                      </div>
-                    ))}
-                    {tutor.graduationYear && tutor.graduationYear > 1900 && (
-                      <div className="flex items-center gap-2 mt-4 pt-4 border-t border-border/50">
-                        <Calendar className="w-4 h-4 text-muted-foreground" />
-                        <span className="text-sm text-muted-foreground">
-                          Graduated: {tutor.graduationYear}
-                        </span>
-                      </div>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-
-            {/* Why Students Love Me */}
+            {/* Why Students Love This Tutor */}
             {tutor.whyStudentsLove && tutor.whyStudentsLove.length > 0 && (
               <Card className="border-border/50">
                 <CardContent className="p-6">
                   <div className="flex items-center gap-2 mb-4">
                     <Sparkles className="w-5 h-5 text-primary" />
-                    <h2 className="font-bold text-lg">Why Students Love My Teaching</h2>
+                    <h2 className="font-bold text-lg">Why Students Love This Tutor</h2>
                   </div>
-                  <ul className="space-y-2">
-                    {tutor.whyStudentsLove.map((reason: string, index: number) => (
-                      <li key={index} className="flex items-start gap-2 text-muted-foreground">
-                        <CheckCircle2 className="w-5 h-5 text-primary shrink-0 mt-0.5" />
-                        <span>{reason}</span>
-                      </li>
+                  <div className="flex flex-wrap gap-2">
+                    {tutor.whyStudentsLove.map((reason: string, idx: number) => (
+                      <Badge key={idx} variant="secondary" className="text-xs">
+                        <CheckCircle2 className="w-3 h-3 mr-1" />
+                        {reason}
+                      </Badge>
                     ))}
-                  </ul>
+                  </div>
                 </CardContent>
               </Card>
             )}
 
-            {/* Services Offered - Only show if has services */}
+            {/* Services Offered */}
             {tutor.servicesOffered && tutor.servicesOffered.length > 0 && (
               <Card className="border-border/50">
                 <CardContent className="p-6">
@@ -773,7 +736,7 @@ const TutorProfile = () => {
                     {/* Custom Package Builder */}
                     <Button 
                       variant="outline"
-                      className="w-full bg-gradient-to-r from-primary/5 to-primary/10 border-primary/30 hover:bg-primary/20 h-auto py-4"
+                      className="w-full bg-primary/5 border-primary/30 hover:bg-primary/10 hover:border-primary h-auto py-4 text-foreground"
                       size="lg"
                       onClick={async () => {
                         const { data: { user } } = await supabase.auth.getUser();
@@ -791,17 +754,17 @@ const TutorProfile = () => {
                     >
                       <div className="flex flex-col items-center gap-1 w-full">
                         <div className="flex items-center gap-2">
-                          <Sparkles className="w-5 h-5" />
-                          <span className="font-semibold">Create Custom Package</span>
+                          <Sparkles className="w-5 h-5 text-primary" />
+                          <span className="font-semibold text-foreground">Create Custom Package</span>
                         </div>
-                        <span className="text-[10px] opacity-70">Choose sessions & subject yourself</span>
+                        <span className="text-[10px] text-muted-foreground">Choose sessions & subject yourself</span>
                       </div>
                     </Button>
 
                     {/* Learning Plan Request */}
                     <Button 
                       variant="outline"
-                      className="w-full bg-gradient-to-r from-secondary/5 to-secondary/10 border-secondary/30 hover:bg-secondary/20 h-auto py-4"
+                      className="w-full bg-accent/5 border-accent/30 hover:bg-accent/10 hover:border-accent h-auto py-4 text-foreground"
                       size="lg"
                       onClick={async () => {
                         const { data: { user } } = await supabase.auth.getUser();
@@ -819,10 +782,10 @@ const TutorProfile = () => {
                     >
                       <div className="flex flex-col items-center gap-1 w-full">
                         <div className="flex items-center gap-2">
-                          <Users className="w-5 h-5" />
-                          <span className="font-semibold">Request Learning Plan</span>
+                          <Users className="w-5 h-5 text-accent" />
+                          <span className="font-semibold text-foreground">Request Learning Plan</span>
                         </div>
-                        <span className="text-[10px] opacity-70">Let {tutor.name} design a plan for you</span>
+                        <span className="text-[10px] text-muted-foreground">Let {tutor.name} design a plan for you</span>
                       </div>
                     </Button>
 
@@ -1012,54 +975,7 @@ const TutorProfile = () => {
                         </div>
                       </button>
                     </div>
-      {/* Custom Package Dialog */}
-      <Dialog open={isCustomPackageOpen} onOpenChange={setIsCustomPackageOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Create Your Custom Package</DialogTitle>
-            <DialogDescription>
-              Build a personalized session package with {tutor.name}
-            </DialogDescription>
-          </DialogHeader>
-          
-          <CustomPackageBuilder
-            tutorId={tutor.id}
-            tutorName={tutor.name}
-            tutorEmail={tutor.email}
-            tutorSubjects={tutor.subjects}
-            hourlyRate={currentRate}
-            onClose={() => setIsCustomPackageOpen(false)}
-            onPurchaseSuccess={() => {
-              setIsCustomPackageOpen(false);
-              toast.success("Package created! Redirecting to payment...");
-            }}
-          />
-        </DialogContent>
-      </Dialog>
-
-      {/* Learning Plan Request Dialog */}
-      <Dialog open={isLearningPlanOpen} onOpenChange={setIsLearningPlanOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Request a Personalized Learning Plan</DialogTitle>
-            <DialogDescription>
-              Let {tutor.name} create a custom learning plan tailored to your child's needs
-            </DialogDescription>
-          </DialogHeader>
-          
-          <LearningPlanRequest
-            tutorId={tutor.id}
-            tutorName={tutor.name}
-            tutorEmail={tutor.email}
-            tutorSubjects={tutor.subjects}
-            onClose={() => setIsLearningPlanOpen(false)}
-            onSubmitSuccess={() => {
-              setIsLearningPlanOpen(false);
-            }}
-          />
-        </DialogContent>
-      </Dialog>
-    </div>
+                  </div>
                 </CardContent>
               </Card>
 
@@ -1127,6 +1043,54 @@ const TutorProfile = () => {
               </p>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Custom Package Dialog */}
+      <Dialog open={isCustomPackageOpen} onOpenChange={setIsCustomPackageOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Create Your Custom Package</DialogTitle>
+            <DialogDescription>
+              Build a personalized session package with {tutor.name}
+            </DialogDescription>
+          </DialogHeader>
+          
+          <CustomPackageBuilder
+            tutorId={tutor.id}
+            tutorName={tutor.name}
+            tutorEmail={tutor.email}
+            tutorSubjects={tutor.subjects}
+            hourlyRate={currentRate}
+            onClose={() => setIsCustomPackageOpen(false)}
+            onPurchaseSuccess={() => {
+              setIsCustomPackageOpen(false);
+              toast.success("Package created! Redirecting to payment...");
+            }}
+          />
+        </DialogContent>
+      </Dialog>
+
+      {/* Learning Plan Request Dialog */}
+      <Dialog open={isLearningPlanOpen} onOpenChange={setIsLearningPlanOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Request a Personalized Learning Plan</DialogTitle>
+            <DialogDescription>
+              Let {tutor.name} create a custom learning plan tailored to your child's needs
+            </DialogDescription>
+          </DialogHeader>
+          
+          <LearningPlanRequest
+            tutorId={tutor.id}
+            tutorName={tutor.name}
+            tutorEmail={tutor.email}
+            tutorSubjects={tutor.subjects}
+            onClose={() => setIsLearningPlanOpen(false)}
+            onSubmitSuccess={() => {
+              setIsLearningPlanOpen(false);
+            }}
+          />
         </DialogContent>
       </Dialog>
     </div>
