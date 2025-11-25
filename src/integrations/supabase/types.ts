@@ -1369,6 +1369,7 @@ export type Database = {
         Args: { full_name: string; tutor_id: string }
         Returns: string
       }
+      get_user_email: { Args: { _user_id: string }; Returns: string }
       has_recording_access: {
         Args: { _class_id: string; _user_id: string }
         Returns: boolean
