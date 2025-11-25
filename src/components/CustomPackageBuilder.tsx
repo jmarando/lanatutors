@@ -5,9 +5,10 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { CheckCircle2, BookOpen, Calendar, CreditCard, X, Plus } from "lucide-react";
+import { CheckCircle2, BookOpen, Calendar, CreditCard, X, Plus, ShoppingCart } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useNavigate } from "react-router-dom";
 
 interface CustomPackageBuilderProps {
   tutorId: string;
@@ -19,6 +20,8 @@ interface CustomPackageBuilderProps {
   onPurchaseSuccess: () => void;
 }
 
+const CART_STORAGE_KEY = 'lana_multi_tutor_cart';
+
 export const CustomPackageBuilder = ({
   tutorId,
   tutorName,
@@ -28,6 +31,7 @@ export const CustomPackageBuilder = ({
   onClose,
   onPurchaseSuccess,
 }: CustomPackageBuilderProps) => {
+  const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [selectedSubject, setSelectedSubject] = useState<string>("");
   const [sessionsCount, setSessionsCount] = useState<number>(5);
@@ -75,6 +79,45 @@ export const CustomPackageBuilder = ({
   const depositAmount = Math.round(totalPrice * 0.3);
   const balanceDue = totalPrice - depositAmount;
   const discountPercentage = sessionsCount >= 10 ? 15 : sessionsCount >= 5 ? 10 : sessionsCount >= 2 ? 5 : 0;
+
+  const handleAddToCart = () => {
+    if (!selectedSubject) {
+      toast.error("Please select a subject");
+      return;
+    }
+
+    if (sessionsCount < 1) {
+      toast.error("Please select at least 1 session");
+      return;
+    }
+
+    try {
+      // Load existing cart
+      const existingCart = localStorage.getItem(CART_STORAGE_KEY);
+      const cart = existingCart ? JSON.parse(existingCart) : [];
+
+      // Add new item
+      const newItem = {
+        id: `${tutorId}-${selectedSubject}-${Date.now()}`,
+        tutorId,
+        tutorName,
+        tutorRate: hourlyRate,
+        subject: selectedSubject,
+        sessions: sessionsCount,
+      };
+
+      cart.push(newItem);
+      localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart));
+
+      toast.success(`Added ${selectedSubject} to your multi-subject cart`);
+      
+      // Navigate to cart
+      navigate('/multi-tutor-package');
+    } catch (error) {
+      console.error("Add to cart error:", error);
+      toast.error("Failed to add to cart");
+    }
+  };
 
   const handlePurchase = async () => {
     if (!selectedSubject) {
@@ -347,30 +390,48 @@ export const CustomPackageBuilder = ({
       </div>
 
       {/* Actions */}
-      <div className="flex gap-3">
+      <div className="space-y-3">
+        <div className="flex gap-3">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={onClose}
+            className="flex-1"
+            disabled={loading}
+          >
+            Cancel
+          </Button>
+          <Button
+            onClick={handlePurchase}
+            className="flex-1"
+            disabled={loading || !selectedSubject}
+          >
+            {loading ? (
+              "Processing..."
+            ) : (
+              <>
+                <CreditCard className="w-4 h-4 mr-2" />
+                Pay Now
+              </>
+            )}
+          </Button>
+        </div>
+        
+        <Separator className="my-2" />
+        
         <Button
           type="button"
           variant="outline"
-          onClick={onClose}
-          className="flex-1"
-          disabled={loading}
+          onClick={handleAddToCart}
+          className="w-full border-secondary/30 hover:bg-secondary/10"
+          disabled={!selectedSubject}
         >
-          Cancel
+          <ShoppingCart className="w-4 h-4 mr-2" />
+          Add to Multi-Subject Cart
         </Button>
-        <Button
-          onClick={handlePurchase}
-          className="flex-1"
-          disabled={loading || !selectedSubject}
-        >
-          {loading ? (
-            "Processing..."
-          ) : (
-            <>
-              <CreditCard className="w-4 h-4 mr-2" />
-              Proceed to Payment
-            </>
-          )}
-        </Button>
+        <p className="text-xs text-center text-muted-foreground">
+          Combine with other tutors/subjects for bulk discounts
+        </p>
       </div>
     </div>
   );
