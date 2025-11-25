@@ -1748,18 +1748,18 @@ TEFL/TESOL Certification" value={formData.qualifications} onChange={e => setForm
                   </div>
 
                   {/* Pricing Explainer */}
-                  <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 space-y-3">
-                    <h4 className="font-medium text-blue-900 dark:text-blue-100 flex items-center gap-2">
+                  <div className="bg-primary/5 border border-primary/20 rounded-lg p-4 space-y-3">
+                    <h4 className="font-medium text-foreground flex items-center gap-2">
                       <span className="text-lg">💡</span> How to Set Your Rates
                     </h4>
-                    <div className="space-y-2 text-sm text-blue-800 dark:text-blue-200">
+                    <div className="space-y-2 text-sm text-foreground">
                       <p>
                         You'll set a separate hourly rate for each curriculum-level combination you teach (e.g., CBC Upper Primary, IGCSE, A-Levels).
                       </p>
                       <p>
                         We provide recommended rate ranges based on market standards for each level. You're free to set your own rates, but staying within these ranges helps maintain competitive pricing.
                       </p>
-                      <p className="font-medium pt-2 border-t border-blue-200 dark:border-blue-800">
+                      <p className="font-medium pt-2 border-t border-primary/20">
                         💰 Platform earnings: You take home 70% of each session rate. In-person rates are typically 1.5x online rates.
                       </p>
                     </div>
@@ -1767,11 +1767,11 @@ TEFL/TESOL Certification" value={formData.qualifications} onChange={e => setForm
 
                   {/* Rate Guidance Info */}
                   {Object.keys(curriculumLevels).length > 0 && (
-                    <div className="border rounded-lg p-4 space-y-3 bg-blue-50 dark:bg-blue-950/20">
+                    <div className="border rounded-lg p-4 space-y-3 bg-secondary/50">
                       <div className="flex items-start gap-2">
-                        <span className="text-blue-600 dark:text-blue-400 text-lg">💡</span>
+                        <span className="text-primary text-lg">💡</span>
                         <div className="space-y-2 flex-1">
-                          <p className="font-medium text-sm text-blue-900 dark:text-blue-100">
+                          <p className="font-medium text-sm text-foreground">
                             Rate Guidance for Your Selected Subjects
                           </p>
                           <div className="space-y-2 text-xs">
@@ -1787,17 +1787,17 @@ TEFL/TESOL Certification" value={formData.qualifications} onChange={e => setForm
                                 if (!guidance || (!guidance.online && !guidance.inPerson)) return null;
                                 
                                 return (
-                                  <div key={key} className="border-l-2 border-blue-300 dark:border-blue-700 pl-3 py-1">
-                                    <p className="font-medium text-blue-900 dark:text-blue-100">
+                                  <div key={key} className="border-l-2 border-primary pl-3 py-1">
+                                    <p className="font-medium text-foreground">
                                       {curriculum} - {level}
                                     </p>
                                     {guidance.online && (
-                                      <p className="text-blue-700 dark:text-blue-300">
+                                      <p className="text-muted-foreground">
                                         Online: {formatRateRange(guidance.online)}
                                       </p>
                                     )}
                                     {guidance.inPerson && (
-                                      <p className="text-blue-700 dark:text-blue-300">
+                                      <p className="text-muted-foreground">
                                         In-person: {formatRateRange(guidance.inPerson)}
                                       </p>
                                     )}
@@ -1806,7 +1806,7 @@ TEFL/TESOL Certification" value={formData.qualifications} onChange={e => setForm
                               })
                             )}
                           </div>
-                          <p className="text-xs text-blue-700 dark:text-blue-300 italic mt-2">
+                          <p className="text-xs text-muted-foreground italic mt-2">
                             These are recommended ranges based on your curriculum and level selections. You can set your own rates, but staying within these ranges helps maintain competitive pricing.
                           </p>
                         </div>
@@ -1818,14 +1818,14 @@ TEFL/TESOL Certification" value={formData.qualifications} onChange={e => setForm
                   {/* Per Curriculum-Level Rate Inputs */}
                   {Object.keys(curriculumLevels).length > 0 ? (
                     <div className="space-y-4">
-                      <div className="border rounded-lg p-4 space-y-3 bg-blue-50 dark:bg-blue-950/20">
+                      <div className="border rounded-lg p-4 space-y-3 bg-primary/5 border-primary/20">
                         <div className="flex items-start gap-2">
-                          <span className="text-blue-600 dark:text-blue-400 text-lg">💡</span>
+                          <span className="text-primary text-lg">💡</span>
                           <div className="space-y-1 flex-1">
-                            <p className="font-medium text-sm text-blue-900 dark:text-blue-100">
+                            <p className="font-medium text-sm text-foreground">
                               Set Your Hourly Rate for Each Level
                             </p>
-                            <p className="text-xs text-blue-700 dark:text-blue-300">
+                            <p className="text-xs text-muted-foreground">
                               Set rates based on the recommended ranges below. Rates shown are for online sessions. In-person sessions are typically 1.5x higher.
                             </p>
                           </div>
@@ -1875,17 +1875,17 @@ TEFL/TESOL Certification" value={formData.qualifications} onChange={e => setForm
                                 
                                 {/* Recommended Range Display */}
                                 {guidance && (guidance.online || guidance.inPerson) && (
-                                  <div className="bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 rounded p-3 space-y-1">
-                                    <p className="text-xs font-medium text-green-900 dark:text-green-100">
+                                  <div className="bg-accent/10 border border-accent/30 rounded p-3 space-y-1">
+                                    <p className="text-xs font-medium text-foreground">
                                       💰 Recommended Rate Range
                                     </p>
                                     {guidance.online && (
-                                      <p className="text-sm text-green-700 dark:text-green-300">
+                                      <p className="text-sm text-muted-foreground">
                                         <strong>Online:</strong> {formatRateRange(guidance.online)} per hour
                                       </p>
                                     )}
                                     {guidance.inPerson && (
-                                      <p className="text-sm text-green-700 dark:text-green-300">
+                                      <p className="text-sm text-muted-foreground">
                                         <strong>In-person:</strong> {formatRateRange(guidance.inPerson)} per hour
                                       </p>
                                     )}
@@ -1959,62 +1959,31 @@ TEFL/TESOL Certification" value={formData.qualifications} onChange={e => setForm
 
                   <Separator />
 
-                  {/* Package Bundles */}
-                  <div className="space-y-4 border rounded-lg p-4 bg-accent/5">
-                    <div>
-                      <Label className="text-base font-semibold">Package Discounts (Optional)</Label>
-                      <p className="text-sm text-muted-foreground mt-1">
-                        Offer bundle discounts to encourage bulk bookings
-                      </p>
+                  {/* Package Bundles - Auto-set */}
+                  <div className="space-y-2 border rounded-lg p-4 bg-secondary/50">
+                    <div className="flex items-center gap-2">
+                      <span className="text-lg">📦</span>
+                      <Label className="text-base font-semibold">Session Packages</Label>
                     </div>
-                    
-                    <div className="grid md:grid-cols-2 gap-4">
-                      <div className="space-y-2 p-3 border rounded-lg bg-background">
-                        <Label className="font-medium text-sm">5-Session Bundle</Label>
-                        <Select value={formData.package5Discount} onValueChange={value => setFormData({
-                        ...formData,
-                        package5Discount: value
-                      })}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select discount" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="5">5% off</SelectItem>
-                            <SelectItem value="10">10% off</SelectItem>
-                            <SelectItem value="15">15% off</SelectItem>
-                            <SelectItem value="20">20% off</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        {getAverageRate() > 0 && formData.package5Discount && <p className="text-xs text-green-600 font-medium">
-                            Rate: KES {Math.round(getAverageRate() * 5 * (1 - parseFloat(formData.package5Discount) / 100)).toLocaleString()}
-                          </p>}
-                      </div>
-
-                      <div className="space-y-2 p-3 border rounded-lg bg-background">
-                        <Label className="font-medium text-sm">10-Session Bundle</Label>
-                        <Select value={formData.package10Discount} onValueChange={value => setFormData({
-                        ...formData,
-                        package10Discount: value
-                      })}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Select discount" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="10">10% off</SelectItem>
-                            <SelectItem value="15">15% off</SelectItem>
-                            <SelectItem value="20">20% off</SelectItem>
-                            <SelectItem value="25">25% off</SelectItem>
-                          </SelectContent>
-                        </Select>
-                        {getAverageRate() > 0 && formData.package10Discount && <p className="text-xs text-green-600 font-medium">
-                            Rate: KES {Math.round(getAverageRate() * 10 * (1 - parseFloat(formData.package10Discount) / 100)).toLocaleString()}
-                          </p>}
-                      </div>
-                    </div>
-                    
-                    <p className="text-xs text-muted-foreground italic">
-                      💡 Bundles increase student commitment and provide predictable income
+                    <p className="text-sm text-muted-foreground">
+                      Students can purchase bundles with automatic discounts: <strong>5 sessions at 10% off</strong> or <strong>10 sessions at 15% off</strong>.
                     </p>
+                    {getAverageRate() > 0 && (
+                      <div className="grid md:grid-cols-2 gap-3 mt-3">
+                        <div className="p-3 border rounded bg-background">
+                          <p className="text-xs font-medium text-muted-foreground">5-Session Bundle (10% off)</p>
+                          <p className="text-sm font-bold text-primary mt-1">
+                            KES {Math.round(getAverageRate() * 5 * 0.9).toLocaleString()}
+                          </p>
+                        </div>
+                        <div className="p-3 border rounded bg-background">
+                          <p className="text-xs font-medium text-muted-foreground">10-Session Bundle (15% off)</p>
+                          <p className="text-sm font-bold text-primary mt-1">
+                            KES {Math.round(getAverageRate() * 10 * 0.85).toLocaleString()}
+                          </p>
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                 </div>}
