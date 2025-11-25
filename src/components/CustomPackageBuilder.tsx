@@ -9,6 +9,7 @@ import { CheckCircle2, BookOpen, Calendar, CreditCard, X, Plus, ShoppingCart } f
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
+import { RecurringSlotSelector } from "./RecurringSlotSelector";
 
 interface CustomPackageBuilderProps {
   tutorId: string;
@@ -29,8 +30,7 @@ interface SubjectItem {
 
 interface SchedulePreference {
   mode: 'schedule_now' | 'use_flexibly';
-  preferredDays?: string[];
-  preferredTimes?: string[];
+  recurringSlotIds?: string[];
   notes?: string;
 }
 
@@ -54,9 +54,6 @@ export const CustomPackageBuilder = ({
     mode: 'use_flexibly'
   });
   const [showScheduleOptions, setShowScheduleOptions] = useState(false);
-
-  const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
-  const timeSlots = ['Morning (8am-12pm)', 'Afternoon (12pm-5pm)', 'Evening (5pm-8pm)'];
 
   useEffect(() => {
     fetchCurrentUser();
@@ -136,23 +133,10 @@ export const CustomPackageBuilder = ({
     ));
   };
 
-  const toggleDay = (day: string) => {
-    const currentDays = schedulePreference.preferredDays || [];
+  const handleSlotsSelected = (slotIds: string[]) => {
     setSchedulePreference({
       ...schedulePreference,
-      preferredDays: currentDays.includes(day)
-        ? currentDays.filter(d => d !== day)
-        : [...currentDays, day]
-    });
-  };
-
-  const toggleTime = (time: string) => {
-    const currentTimes = schedulePreference.preferredTimes || [];
-    setSchedulePreference({
-      ...schedulePreference,
-      preferredTimes: currentTimes.includes(time)
-        ? currentTimes.filter(t => t !== time)
-        : [...currentTimes, time]
+      recurringSlotIds: slotIds
     });
   };
 
@@ -550,45 +534,17 @@ export const CustomPackageBuilder = ({
               {/* Scheduling Options */}
               {showScheduleOptions && schedulePreference.mode === 'schedule_now' && (
                 <div className="space-y-4 pt-3 border-t">
-                  <div className="space-y-2">
-                    <Label className="text-xs font-medium">Preferred Days (select all that apply)</Label>
-                    <div className="flex flex-wrap gap-2">
-                      {daysOfWeek.map(day => (
-                        <Badge
-                          key={day}
-                          variant={schedulePreference.preferredDays?.includes(day) ? "default" : "outline"}
-                          className="cursor-pointer hover:bg-primary/20"
-                          onClick={() => toggleDay(day)}
-                        >
-                          {day}
-                          {schedulePreference.preferredDays?.includes(day) && <CheckCircle2 className="w-3 h-3 ml-1" />}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label className="text-xs font-medium">Preferred Time Slots</Label>
-                    <div className="flex flex-wrap gap-2">
-                      {timeSlots.map(time => (
-                        <Badge
-                          key={time}
-                          variant={schedulePreference.preferredTimes?.includes(time) ? "default" : "outline"}
-                          className="cursor-pointer hover:bg-primary/20"
-                          onClick={() => toggleTime(time)}
-                        >
-                          {time}
-                          {schedulePreference.preferredTimes?.includes(time) && <CheckCircle2 className="w-3 h-3 ml-1" />}
-                        </Badge>
-                      ))}
-                    </div>
-                  </div>
+                  <RecurringSlotSelector
+                    tutorId={tutorId}
+                    onSlotsSelected={handleSlotsSelected}
+                    selectedSlots={schedulePreference.recurringSlotIds || []}
+                  />
 
                   <div className="space-y-2">
                     <Label htmlFor="schedule-notes" className="text-xs font-medium">Additional Notes (Optional)</Label>
                     <Input
                       id="schedule-notes"
-                      placeholder="e.g., 'Need sessions before 5pm' or 'Prefer weekends'"
+                      placeholder="e.g., 'Please confirm slots before blocking' or 'Prefer morning sessions'"
                       value={schedulePreference.notes || ''}
                       onChange={(e) => setSchedulePreference({
                         ...schedulePreference,
@@ -600,7 +556,7 @@ export const CustomPackageBuilder = ({
 
                   <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
                     <p className="text-xs text-blue-900">
-                      <strong>Note:</strong> After payment, {tutorName} will review your preferences and block the recurring time slots on their calendar. You'll receive confirmation once slots are reserved.
+                      <strong>Next step:</strong> After payment, the selected slots will be automatically blocked on {tutorName}'s calendar for the duration of your package. You'll receive confirmation once slots are reserved.
                     </p>
                   </div>
                 </div>
