@@ -802,12 +802,6 @@ const TutorProfile = () => {
                         <Sparkles className="w-5 h-5 text-primary" />
                         <h3 className="font-bold text-lg">Save with Packages</h3>
                       </div>
-                      <p className="text-sm text-muted-foreground">
-                        Need a custom package? 
-                        <a href="/book-consultation" className="text-primary hover:underline ml-1">
-                          Talk to an expert →
-                        </a>
-                      </p>
                     </div>
                     
                     <div className="space-y-4">
