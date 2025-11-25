@@ -27,6 +27,13 @@ interface SubjectItem {
   sessions: number;
 }
 
+interface SchedulePreference {
+  mode: 'schedule_now' | 'use_flexibly';
+  preferredDays?: string[];
+  preferredTimes?: string[];
+  notes?: string;
+}
+
 export const CustomPackageBuilder = ({
   tutorId,
   tutorName,
@@ -43,6 +50,13 @@ export const CustomPackageBuilder = ({
   const [currentSessions, setCurrentSessions] = useState<number>(5);
   const [paymentOption, setPaymentOption] = useState<'full' | 'deposit'>('full');
   const [currentUser, setCurrentUser] = useState<any>(null);
+  const [schedulePreference, setSchedulePreference] = useState<SchedulePreference>({
+    mode: 'use_flexibly'
+  });
+  const [showScheduleOptions, setShowScheduleOptions] = useState(false);
+
+  const daysOfWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+  const timeSlots = ['Morning (8am-12pm)', 'Afternoon (12pm-5pm)', 'Evening (5pm-8pm)'];
 
   useEffect(() => {
     fetchCurrentUser();
@@ -122,6 +136,26 @@ export const CustomPackageBuilder = ({
     ));
   };
 
+  const toggleDay = (day: string) => {
+    const currentDays = schedulePreference.preferredDays || [];
+    setSchedulePreference({
+      ...schedulePreference,
+      preferredDays: currentDays.includes(day)
+        ? currentDays.filter(d => d !== day)
+        : [...currentDays, day]
+    });
+  };
+
+  const toggleTime = (time: string) => {
+    const currentTimes = schedulePreference.preferredTimes || [];
+    setSchedulePreference({
+      ...schedulePreference,
+      preferredTimes: currentTimes.includes(time)
+        ? currentTimes.filter(t => t !== time)
+        : [...currentTimes, time]
+    });
+  };
+
   const handleAddToCart = () => {
     if (selectedSubjects.length === 0) {
       toast.error("Please add at least one subject");
@@ -192,6 +226,7 @@ export const CustomPackageBuilder = ({
             subjects: selectedSubjects.map(s => ({ subject: s.subject, sessions: s.sessions })),
             discount_percentage: discountPercentage,
             created_via: 'custom_package_builder',
+            schedule_preference: schedulePreference,
           } as any,
         }])
         .select()
@@ -265,19 +300,23 @@ export const CustomPackageBuilder = ({
               <BookOpen className="w-5 h-5 text-primary" />
             </div>
             <div className="flex-1">
-              <h4 className="font-semibold text-sm mb-1">Build Your Custom Package</h4>
-              <ul className="text-xs text-muted-foreground space-y-1">
+              <h4 className="font-semibold text-sm mb-2">How Custom Packages Work</h4>
+              <ul className="text-xs text-muted-foreground space-y-2">
                 <li className="flex items-start gap-2">
                   <CheckCircle2 className="w-3 h-3 shrink-0 mt-0.5 text-primary" />
-                  <span>Add multiple subjects with custom session counts</span>
+                  <span><strong>Add subjects:</strong> Select multiple subjects with individual session counts</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <CheckCircle2 className="w-3 h-3 shrink-0 mt-0.5 text-primary" />
-                  <span>Get automatic discounts for 2+ sessions</span>
+                  <span><strong>Save automatically:</strong> Get bulk discounts for 2+ total sessions</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <CheckCircle2 className="w-3 h-3 shrink-0 mt-0.5 text-primary" />
-                  <span>Use sessions flexibly over 90 days</span>
+                  <span><strong>Two ways to use:</strong> Pre-schedule recurring slots OR use session credits flexibly over 90 days</span>
+                </li>
+                <li className="flex items-start gap-2">
+                  <CheckCircle2 className="w-3 h-3 shrink-0 mt-0.5 text-primary" />
+                  <span><strong>Block time before paying:</strong> Reserve your preferred days/times, then complete payment</span>
                 </li>
               </ul>
             </div>
@@ -451,6 +490,121 @@ export const CustomPackageBuilder = ({
                   )}
                 </div>
               </div>
+            </CardContent>
+          </Card>
+
+          {/* Schedule Preference */}
+          <Card>
+            <CardContent className="p-4 space-y-4">
+              <div>
+                <Label className="text-sm font-semibold mb-3 block">How would you like to use these sessions?</Label>
+                <div className="space-y-3">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSchedulePreference({ mode: 'schedule_now' });
+                      setShowScheduleOptions(true);
+                    }}
+                    className={`w-full p-4 rounded-lg border-2 transition-all text-left ${
+                      schedulePreference.mode === 'schedule_now'
+                        ? "border-primary bg-primary/5"
+                        : "border-border hover:border-primary/30"
+                    }`}
+                  >
+                    <div className="flex items-start gap-3">
+                      <Calendar className="w-5 h-5 text-primary shrink-0 mt-0.5" />
+                      <div className="flex-1">
+                        <div className="text-sm font-medium mb-1">Pre-Schedule Recurring Slots</div>
+                        <p className="text-xs text-muted-foreground">
+                          Reserve specific days/times now (e.g., every Monday & Wednesday 4pm). We'll block time on the tutor's calendar before you pay.
+                        </p>
+                      </div>
+                    </div>
+                  </button>
+                  
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSchedulePreference({ mode: 'use_flexibly' });
+                      setShowScheduleOptions(false);
+                    }}
+                    className={`w-full p-4 rounded-lg border-2 transition-all text-left ${
+                      schedulePreference.mode === 'use_flexibly'
+                        ? "border-primary bg-primary/5"
+                        : "border-border hover:border-primary/30"
+                    }`}
+                  >
+                    <div className="flex items-start gap-3">
+                      <CheckCircle2 className="w-5 h-5 text-primary shrink-0 mt-0.5" />
+                      <div className="flex-1">
+                        <div className="text-sm font-medium mb-1">Use Session Credits Flexibly</div>
+                        <p className="text-xs text-muted-foreground">
+                          Get {totalSessions} session credits to book anytime over the next 90 days. Book as needed based on your child's schedule.
+                        </p>
+                      </div>
+                    </div>
+                  </button>
+                </div>
+              </div>
+
+              {/* Scheduling Options */}
+              {showScheduleOptions && schedulePreference.mode === 'schedule_now' && (
+                <div className="space-y-4 pt-3 border-t">
+                  <div className="space-y-2">
+                    <Label className="text-xs font-medium">Preferred Days (select all that apply)</Label>
+                    <div className="flex flex-wrap gap-2">
+                      {daysOfWeek.map(day => (
+                        <Badge
+                          key={day}
+                          variant={schedulePreference.preferredDays?.includes(day) ? "default" : "outline"}
+                          className="cursor-pointer hover:bg-primary/20"
+                          onClick={() => toggleDay(day)}
+                        >
+                          {day}
+                          {schedulePreference.preferredDays?.includes(day) && <CheckCircle2 className="w-3 h-3 ml-1" />}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-xs font-medium">Preferred Time Slots</Label>
+                    <div className="flex flex-wrap gap-2">
+                      {timeSlots.map(time => (
+                        <Badge
+                          key={time}
+                          variant={schedulePreference.preferredTimes?.includes(time) ? "default" : "outline"}
+                          className="cursor-pointer hover:bg-primary/20"
+                          onClick={() => toggleTime(time)}
+                        >
+                          {time}
+                          {schedulePreference.preferredTimes?.includes(time) && <CheckCircle2 className="w-3 h-3 ml-1" />}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="schedule-notes" className="text-xs font-medium">Additional Notes (Optional)</Label>
+                    <Input
+                      id="schedule-notes"
+                      placeholder="e.g., 'Need sessions before 5pm' or 'Prefer weekends'"
+                      value={schedulePreference.notes || ''}
+                      onChange={(e) => setSchedulePreference({
+                        ...schedulePreference,
+                        notes: e.target.value
+                      })}
+                      className="text-sm"
+                    />
+                  </div>
+
+                  <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
+                    <p className="text-xs text-blue-900">
+                      <strong>Note:</strong> After payment, {tutorName} will review your preferences and block the recurring time slots on their calendar. You'll receive confirmation once slots are reserved.
+                    </p>
+                  </div>
+                </div>
+              )}
             </CardContent>
           </Card>
 
