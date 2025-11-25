@@ -407,6 +407,75 @@ export type Database = {
         }
         Relationships: []
       }
+      learning_plans: {
+        Row: {
+          created_at: string | null
+          discount_applied: number | null
+          expires_at: string | null
+          id: string
+          inquiry_id: string | null
+          notes: string | null
+          status: string | null
+          student_id: string | null
+          subjects: Json
+          title: string
+          total_price: number
+          total_sessions: number
+          tutor_id: string
+          updated_at: string | null
+          validity_days: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          discount_applied?: number | null
+          expires_at?: string | null
+          id?: string
+          inquiry_id?: string | null
+          notes?: string | null
+          status?: string | null
+          student_id?: string | null
+          subjects?: Json
+          title: string
+          total_price: number
+          total_sessions: number
+          tutor_id: string
+          updated_at?: string | null
+          validity_days?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          discount_applied?: number | null
+          expires_at?: string | null
+          id?: string
+          inquiry_id?: string | null
+          notes?: string | null
+          status?: string | null
+          student_id?: string | null
+          subjects?: Json
+          title?: string
+          total_price?: number
+          total_sessions?: number
+          tutor_id?: string
+          updated_at?: string | null
+          validity_days?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "learning_plans_inquiry_id_fkey"
+            columns: ["inquiry_id"]
+            isOneToOne: false
+            referencedRelation: "tutor_inquiries"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "learning_plans_tutor_id_fkey"
+            columns: ["tutor_id"]
+            isOneToOne: false
+            referencedRelation: "tutor_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       package_offers: {
         Row: {
           created_at: string | null
@@ -976,6 +1045,71 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      tutor_inquiries: {
+        Row: {
+          created_at: string | null
+          current_challenges: string | null
+          curriculum: string | null
+          grade_level: string
+          id: string
+          parent_email: string
+          parent_id: string | null
+          parent_name: string
+          parent_phone: string | null
+          preferred_contact: string | null
+          preferred_sessions: number | null
+          status: string | null
+          student_name: string
+          subjects_needed: string[]
+          tutor_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          current_challenges?: string | null
+          curriculum?: string | null
+          grade_level: string
+          id?: string
+          parent_email: string
+          parent_id?: string | null
+          parent_name: string
+          parent_phone?: string | null
+          preferred_contact?: string | null
+          preferred_sessions?: number | null
+          status?: string | null
+          student_name: string
+          subjects_needed: string[]
+          tutor_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          current_challenges?: string | null
+          curriculum?: string | null
+          grade_level?: string
+          id?: string
+          parent_email?: string
+          parent_id?: string | null
+          parent_name?: string
+          parent_phone?: string | null
+          preferred_contact?: string | null
+          preferred_sessions?: number | null
+          status?: string | null
+          student_name?: string
+          subjects_needed?: string[]
+          tutor_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tutor_inquiries_tutor_id_fkey"
+            columns: ["tutor_id"]
+            isOneToOne: false
+            referencedRelation: "tutor_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       tutor_pricing_tiers: {
         Row: {
