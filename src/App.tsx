@@ -42,6 +42,7 @@ const TutorAvailability = lazy(() => import("./pages/TutorAvailability"));
 const TutorOnboardingGuide = lazy(() => import("./pages/TutorOnboardingGuide"));
 const TutorGuidePrintable = lazy(() => import("./pages/TutorGuidePrintable"));
 const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
+const TutorSignupReport = lazy(() => import("./pages/TutorSignupReport"));
 
 const queryClient = new QueryClient();
 
@@ -93,6 +94,7 @@ const App = () => {
                 <Route path="/holiday-packages" element={<HolidayPackages />} />
                 <Route path="/admin/holiday-packages" element={<AdminHolidayPackages />} />
                 <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+                <Route path="/admin/tutor-signups" element={<TutorSignupReport />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
