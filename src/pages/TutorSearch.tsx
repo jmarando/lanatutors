@@ -233,7 +233,7 @@ const TutorSearch = () => {
               <Card className="border-border/50">
                 <CardContent className="p-6">
                   <h2 className="text-xl font-semibold mb-4">How It Works</h2>
-                  <div className="grid md:grid-cols-4 gap-4 text-left">
+                  <div className="grid md:grid-cols-5 gap-4 text-left">
                     <div className="flex flex-col items-start">
                       <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mb-3">
                         <SlidersHorizontal className="w-5 h-5 text-primary" />
@@ -261,6 +261,13 @@ const TutorSearch = () => {
                       </div>
                       <h3 className="font-semibold mb-1">4. Start Learning</h3>
                       <p className="text-sm text-muted-foreground">Confirm payment and begin your tutoring sessions</p>
+                    </div>
+                    <div className="flex flex-col items-start">
+                      <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mb-3">
+                        <Sparkles className="w-5 h-5 text-primary" />
+                      </div>
+                      <h3 className="font-semibold mb-1">5. Custom Options</h3>
+                      <p className="text-sm text-muted-foreground">Create custom packages or request learning plans across multiple tutors and subjects</p>
                     </div>
                   </div>
                 </CardContent>
