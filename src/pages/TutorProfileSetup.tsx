@@ -1766,7 +1766,7 @@ TEFL/TESOL Certification" value={formData.qualifications} onChange={e => setForm
                   </div>
 
                   {/* Rate Guidance Info */}
-                  {Object.keys(curriculumLevels).length > 0 && formData.teachingMode.length > 0 && (
+                  {Object.keys(curriculumLevels).length > 0 && (
                     <div className="border rounded-lg p-4 space-y-3 bg-blue-50 dark:bg-blue-950/20">
                       <div className="flex items-start gap-2">
                         <span className="text-blue-600 dark:text-blue-400 text-lg">💡</span>
@@ -1779,7 +1779,7 @@ TEFL/TESOL Certification" value={formData.qualifications} onChange={e => setForm
                               levels.map(level => {
                                 const guidanceMap = getRateGuidanceForSelections(
                                   { [curriculum]: [level] },
-                                  formData.teachingMode
+                                  TEACHING_MODES
                                 );
                                 const key = `${curriculum}-${level}`;
                                 const guidance = guidanceMap.get(key);
@@ -1816,7 +1816,7 @@ TEFL/TESOL Certification" value={formData.qualifications} onChange={e => setForm
 
 
                   {/* Per Curriculum-Level Rate Inputs */}
-                  {Object.keys(curriculumLevels).length > 0 && formData.teachingMode.length > 0 ? (
+                  {Object.keys(curriculumLevels).length > 0 ? (
                     <div className="space-y-4">
                       <div className="border rounded-lg p-4 space-y-3 bg-blue-50 dark:bg-blue-950/20">
                         <div className="flex items-start gap-2">
@@ -1837,7 +1837,7 @@ TEFL/TESOL Certification" value={formData.qualifications} onChange={e => setForm
                           const key = `${curriculum}-${level}`;
                           const guidanceMap = getRateGuidanceForSelections(
                             { [curriculum]: [level] },
-                            formData.teachingMode
+                            TEACHING_MODES
                           );
                           const guidance = guidanceMap.get(key);
                           const currentRate = parseFloat(formData.curriculumLevelRates[key] || '');
