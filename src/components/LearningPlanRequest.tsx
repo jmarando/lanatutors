@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -28,6 +28,7 @@ export const LearningPlanRequest = ({
   onSubmitSuccess,
 }: LearningPlanRequestProps) => {
   const [loading, setLoading] = useState(false);
+  const [loadingProfile, setLoadingProfile] = useState(true);
   const [formData, setFormData] = useState({
     parentName: "",
     parentEmail: "",
@@ -39,6 +40,38 @@ export const LearningPlanRequest = ({
     preferredSessions: 0,
   });
   const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
+
+  useEffect(() => {
+    fetchUserProfile();
+  }, []);
+
+  const fetchUserProfile = async () => {
+    setLoadingProfile(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (user) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("*")
+          .eq("id", user.id)
+          .single();
+        
+        if (profile) {
+          setFormData(prev => ({
+            ...prev,
+            parentName: profile.full_name || "",
+            parentEmail: user.email || "",
+            parentPhone: profile.phone_number || "",
+          }));
+        }
+      }
+    } catch (error) {
+      console.error("Error fetching profile:", error);
+    } finally {
+      setLoadingProfile(false);
+    }
+  };
 
   const gradeLevels = [
     "Grade 1", "Grade 2", "Grade 3", "Grade 4", "Grade 5", "Grade 6",
@@ -164,18 +197,20 @@ export const LearningPlanRequest = ({
       </Card>
 
       <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Parent Information */}
+        {/* Parent Information - Pre-filled from profile */}
         <div className="space-y-3">
-          <h4 className="font-semibold text-sm">Parent/Guardian Information</h4>
+          <h4 className="font-semibold text-sm flex items-center gap-2">
+            Parent/Guardian Information
+            <Badge variant="secondary" className="text-xs">Auto-filled from your profile</Badge>
+          </h4>
           
           <div>
             <Label htmlFor="parentName">Your Name *</Label>
             <Input
               id="parentName"
               value={formData.parentName}
-              onChange={(e) => setFormData({ ...formData, parentName: e.target.value })}
-              placeholder="e.g., Jane Wanjiku"
-              required
+              disabled
+              className="bg-muted cursor-not-allowed"
             />
           </div>
 
@@ -185,21 +220,24 @@ export const LearningPlanRequest = ({
               id="parentEmail"
               type="email"
               value={formData.parentEmail}
-              onChange={(e) => setFormData({ ...formData, parentEmail: e.target.value })}
-              placeholder="your.email@example.com"
-              required
+              disabled
+              className="bg-muted cursor-not-allowed"
             />
           </div>
 
           <div>
-            <Label htmlFor="parentPhone">Phone Number (Optional)</Label>
+            <Label htmlFor="parentPhone">Phone Number</Label>
             <Input
               id="parentPhone"
               type="tel"
               value={formData.parentPhone}
-              onChange={(e) => setFormData({ ...formData, parentPhone: e.target.value })}
-              placeholder="+254 7XX XXX XXX"
+              disabled
+              placeholder="Not provided"
+              className="bg-muted cursor-not-allowed"
             />
+            <p className="text-xs text-muted-foreground mt-1">
+              Update your phone number in your profile settings if needed
+            </p>
           </div>
         </div>
 
