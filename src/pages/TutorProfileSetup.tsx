@@ -255,9 +255,6 @@ const TutorProfileSetup = () => {
           .select("*")
           .eq("tutor_id", existingTutor.id);
         
-        const standardTier = pricingTiers?.find(t => t.tier_name === "Standard");
-        const advancedTier = pricingTiers?.find(t => t.tier_name === "Advanced");
-        
         // Load tier assignments to reconstruct subjectsWithContext and curriculumLevels
         const { data: tierAssignments } = await supabase
           .from("curriculum_level_tier_assignments")
@@ -1753,28 +1750,20 @@ TEFL/TESOL Certification" value={formData.qualifications} onChange={e => setForm
                   {/* Pricing Explainer */}
                   <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 space-y-3">
                     <h4 className="font-medium text-blue-900 dark:text-blue-100 flex items-center gap-2">
-                      <span className="text-lg">💡</span> Understanding Your Pricing Tiers
+                      <span className="text-lg">💡</span> How to Set Your Rates
                     </h4>
                     <div className="space-y-2 text-sm text-blue-800 dark:text-blue-200">
                       <p>
-                        <strong>Standard Tier:</strong> Your rate for foundational and intermediate levels (e.g., CBC Grade 1-9, IGCSE Year 9-10, lower secondary levels).
+                        You'll set a separate hourly rate for each curriculum-level combination you teach (e.g., CBC Upper Primary, IGCSE, A-Levels).
                       </p>
                       <p>
-                        <strong>Advanced Tier:</strong> Your rate for advanced curriculum levels (e.g., IB, A-Level, IGCSE Year 11-13, university prep).
+                        We provide recommended rate ranges based on market standards for each level. You're free to set your own rates, but staying within these ranges helps maintain competitive pricing.
                       </p>
-                      <p className="pt-2 border-t border-blue-200 dark:border-blue-800">
-                        After setting your rates, you'll assign which tier applies to each specific curriculum-level combination based on your subjects.
+                      <p className="font-medium pt-2 border-t border-blue-200 dark:border-blue-800">
+                        💰 Platform earnings: You take home 70% of each session rate. In-person rates are typically 1.5x online rates.
                       </p>
                     </div>
                   </div>
-
-                  <Alert>
-                    <AlertTitle>Important: Enter your own rates</AlertTitle>
-                    <AlertDescription>
-                      The numbers you may see (like 2,000 or 3,500) are examples only. Please enter your own hourly rates.
-                      Typical range: KES 2,000–6,000 per hour.
-                    </AlertDescription>
-                  </Alert>
 
                   {/* Rate Guidance Info */}
                   {Object.keys(curriculumLevels).length > 0 && formData.teachingMode.length > 0 && (
