@@ -22,6 +22,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { getCurriculums, getLevelsForCurriculum, getSubjectsForCurriculumLevel } from "@/utils/curriculumData";
 import { NAIROBI_LOCATIONS } from "@/utils/locationData";
 import { validateAndNormalizePhone } from "@/utils/phoneValidation";
+import { getSuggestedRateRange, getRateGuidanceForSelections, formatRateRange } from "@/utils/rateGuidance";
 import { z } from "zod";
 
 const emailSchema = z.string().email({ message: "Please enter a valid email address" });
@@ -1785,6 +1786,55 @@ TEFL/TESOL Certification" value={formData.qualifications} onChange={e => setForm
                     </AlertDescription>
                   </Alert>
 
+                  {/* Rate Guidance Info */}
+                  {Object.keys(curriculumLevels).length > 0 && formData.teachingMode.length > 0 && (
+                    <div className="border rounded-lg p-4 space-y-3 bg-blue-50 dark:bg-blue-950/20">
+                      <div className="flex items-start gap-2">
+                        <span className="text-blue-600 dark:text-blue-400 text-lg">💡</span>
+                        <div className="space-y-2 flex-1">
+                          <p className="font-medium text-sm text-blue-900 dark:text-blue-100">
+                            Rate Guidance for Your Selected Subjects
+                          </p>
+                          <div className="space-y-2 text-xs">
+                            {Object.entries(curriculumLevels).map(([curriculum, levels]) =>
+                              levels.map(level => {
+                                const guidanceMap = getRateGuidanceForSelections(
+                                  { [curriculum]: [level] },
+                                  formData.teachingMode
+                                );
+                                const key = `${curriculum}-${level}`;
+                                const guidance = guidanceMap.get(key);
+                                
+                                if (!guidance || (!guidance.online && !guidance.inPerson)) return null;
+                                
+                                return (
+                                  <div key={key} className="border-l-2 border-blue-300 dark:border-blue-700 pl-3 py-1">
+                                    <p className="font-medium text-blue-900 dark:text-blue-100">
+                                      {curriculum} - {level}
+                                    </p>
+                                    {guidance.online && (
+                                      <p className="text-blue-700 dark:text-blue-300">
+                                        Online: {formatRateRange(guidance.online)}
+                                      </p>
+                                    )}
+                                    {guidance.inPerson && (
+                                      <p className="text-blue-700 dark:text-blue-300">
+                                        In-person: {formatRateRange(guidance.inPerson)}
+                                      </p>
+                                    )}
+                                  </div>
+                                );
+                              })
+                            )}
+                          </div>
+                          <p className="text-xs text-blue-700 dark:text-blue-300 italic mt-2">
+                            These are recommended ranges based on your curriculum and level selections. You can set your own rates, but staying within these ranges helps maintain competitive pricing.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
                   {/* Tier Rate Inputs */}
                   <div className="space-y-4">
                     <div className="border rounded-lg p-4 space-y-3 bg-secondary/10">
@@ -1797,10 +1847,10 @@ TEFL/TESOL Certification" value={formData.qualifications} onChange={e => setForm
                         <Input 
                           id="standardRate" 
                           type="number" 
-                          min="2000" 
+                          min="1000" 
                           max="6000" 
                           step="100" 
-                          placeholder="e.g., 2000 — enter your own rate" 
+                          placeholder="e.g., 1500" 
                           value={formData.standardRate} 
                           onChange={e => {
                             const cleaned = e.target.value.replace(/[^0-9.]/g, "");
@@ -1811,12 +1861,31 @@ TEFL/TESOL Certification" value={formData.qualifications} onChange={e => setForm
                           }} 
                           required 
                         />
-                        <p className="text-xs text-muted-foreground">
-                          Guideline: KES 2,000–6,000 per hour. This is an example — please enter your own rate.
-                        </p>
-                        {formData.standardRate === "2000" && (
-                          <p className="text-xs text-destructive">2,000 is our example value. Make sure this reflects your own rate.</p>
-                        )}
+                        {(() => {
+                          const suggestedRange = getSuggestedRateRange(
+                            curriculumLevels,
+                            formData.teachingMode,
+                            'standard'
+                          );
+                          const currentRate = parseFloat(formData.standardRate);
+                          const isOutOfRange = suggestedRange && currentRate && 
+                            (currentRate < suggestedRange.min || currentRate > suggestedRange.max);
+                          
+                          return (
+                            <>
+                              {suggestedRange && (
+                                <p className="text-xs text-muted-foreground">
+                                  Suggested range: KES {suggestedRange.min.toLocaleString()} – {suggestedRange.max.toLocaleString()} per hour
+                                </p>
+                              )}
+                              {isOutOfRange && (
+                                <p className="text-xs text-amber-600 dark:text-amber-400 font-medium">
+                                  ⚠️ Your rate is outside the suggested range. This may affect student bookings.
+                                </p>
+                              )}
+                            </>
+                          );
+                        })()}
                         {formData.standardRate && (
                           <div className="space-y-1">
                             <p className="text-xs text-muted-foreground">
@@ -1840,10 +1909,10 @@ TEFL/TESOL Certification" value={formData.qualifications} onChange={e => setForm
                         <Input 
                           id="advancedRate" 
                           type="number" 
-                          min="2000" 
+                          min="1000" 
                           max="6000" 
                           step="100" 
-                          placeholder="e.g., 3500 — enter your own rate" 
+                          placeholder="e.g., 2500" 
                           value={formData.advancedRate} 
                           onChange={e => {
                             const cleaned = e.target.value.replace(/[^0-9.]/g, "");
@@ -1854,12 +1923,31 @@ TEFL/TESOL Certification" value={formData.qualifications} onChange={e => setForm
                           }} 
                           required 
                         />
-                        <p className="text-xs text-muted-foreground">
-                          Guideline: KES 2,000–6,000 per hour. This is an example — please enter your own rate.
-                        </p>
-                        {formData.advancedRate === "3500" && (
-                          <p className="text-xs text-destructive">3,500 is our example value. Make sure this reflects your own rate.</p>
-                        )}
+                        {(() => {
+                          const suggestedRange = getSuggestedRateRange(
+                            curriculumLevels,
+                            formData.teachingMode,
+                            'advanced'
+                          );
+                          const currentRate = parseFloat(formData.advancedRate);
+                          const isOutOfRange = suggestedRange && currentRate && 
+                            (currentRate < suggestedRange.min || currentRate > suggestedRange.max);
+                          
+                          return (
+                            <>
+                              {suggestedRange && (
+                                <p className="text-xs text-muted-foreground">
+                                  Suggested range: KES {suggestedRange.min.toLocaleString()} – {suggestedRange.max.toLocaleString()} per hour
+                                </p>
+                              )}
+                              {isOutOfRange && (
+                                <p className="text-xs text-amber-600 dark:text-amber-400 font-medium">
+                                  ⚠️ Your rate is outside the suggested range. This may affect student bookings.
+                                </p>
+                              )}
+                            </>
+                          );
+                        })()}
                         {formData.advancedRate && (
                           <div className="space-y-1">
                             <p className="text-xs text-muted-foreground">
