@@ -789,6 +789,33 @@ const TutorProfile = () => {
                       </div>
                     </Button>
 
+                    {/* Add to Multi-Subject Cart */}
+                    <Button 
+                      variant="outline"
+                      className="w-full bg-secondary/5 border-secondary/30 hover:bg-secondary/10 hover:border-secondary h-auto py-4 text-foreground"
+                      size="lg"
+                      onClick={() => {
+                        navigate('/multi-tutor-package', { 
+                          state: { 
+                            addTutor: {
+                              tutorId: tutor.id,
+                              tutorName: tutor.name,
+                              tutorRate: tutor.hourlyRate,
+                              subjects: tutor.subjects
+                            }
+                          }
+                        });
+                      }}
+                    >
+                      <div className="flex flex-col items-center gap-1 w-full">
+                        <div className="flex items-center gap-2">
+                          <BookOpen className="w-5 h-5 text-secondary" />
+                          <span className="font-semibold text-foreground">Add to Multi-Subject Cart</span>
+                        </div>
+                        <span className="text-[10px] text-muted-foreground">Build package across tutors</span>
+                      </div>
+                    </Button>
+
                   </div>
                 </CardContent>
               </Card>

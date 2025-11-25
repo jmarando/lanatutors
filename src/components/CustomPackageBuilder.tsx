@@ -64,6 +64,8 @@ export const CustomPackageBuilder = ({
       discount = 0.15; // 15% off for 10+ sessions
     } else if (sessionsCount >= 5) {
       discount = 0.10; // 10% off for 5-9 sessions
+    } else if (sessionsCount >= 2) {
+      discount = 0.05; // 5% off for 2-4 sessions
     }
     
     return Math.round(basePrice * (1 - discount));
@@ -72,7 +74,7 @@ export const CustomPackageBuilder = ({
   const totalPrice = calculatePrice();
   const depositAmount = Math.round(totalPrice * 0.3);
   const balanceDue = totalPrice - depositAmount;
-  const discountPercentage = sessionsCount >= 10 ? 15 : sessionsCount >= 5 ? 10 : 0;
+  const discountPercentage = sessionsCount >= 10 ? 15 : sessionsCount >= 5 ? 10 : sessionsCount >= 2 ? 5 : 0;
 
   const handlePurchase = async () => {
     if (!selectedSubject) {
@@ -194,7 +196,7 @@ export const CustomPackageBuilder = ({
                 </li>
                 <li className="flex items-start gap-2">
                   <CheckCircle2 className="w-3 h-3 shrink-0 mt-0.5 text-primary" />
-                  <span>Get automatic discounts for 5+ sessions</span>
+                  <span>Get automatic discounts for 2+ sessions</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <CheckCircle2 className="w-3 h-3 shrink-0 mt-0.5 text-primary" />
