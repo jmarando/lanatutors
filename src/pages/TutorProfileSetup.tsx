@@ -752,7 +752,21 @@ const TutorProfileSetup = () => {
       const teachingLevels = Object.entries(curriculumLevels).flatMap(([curriculum, levels]) => levels.map(level => `${curriculum} - ${level}`));
 
       // Build final curriculum array including custom curriculum
-      const finalCurriculum = formData.curriculum.includes("Other") && formData.customCurriculum ? [...formData.curriculum.filter(c => c !== "Other"), formData.customCurriculum] : formData.curriculum;
+      const finalCurriculum = formData.curriculum.includes("Other") && formData.customCurriculum
+        ? [...formData.curriculum.filter(c => c !== "Other"), formData.customCurriculum]
+        : formData.curriculum;
+
+      // Calculate average hourly rate from curriculum-level entries
+      const averageRate = getAverageRate();
+      if (averageRate <= 0) {
+        toast({
+          title: "Missing rates",
+          description: "Please enter at least one hourly rate before submitting.",
+          variant: "destructive",
+        });
+        setIsLoading(false);
+        return;
+      }
 
       // Check if tutor profile already exists
       const { data: existingProfile } = await supabase
@@ -769,23 +783,23 @@ const TutorProfileSetup = () => {
         const { error: tutorError } = await supabase
           .from("tutor_profiles")
           .update({
-            bio: formData.bio,
-            subjects: derivedSubjects,
-            curriculum: finalCurriculum,
-            teaching_mode: formData.teachingMode,
-            teaching_levels: teachingLevels,
-            hourly_rate: Math.round(getAverageRate()), // Use average of all rates
-            experience_years: parseInt(formData.experienceYears),
-            current_institution: formData.currentInstitution,
-            display_institution: formData.showCurrentInstitution,
-            qualifications: formData.qualifications.split('\n').filter(q => q.trim()),
-          teaching_location: formData.teachingLocations.join(', '),
-          teaching_experience: formData.teachingHistory,
-          education: formData.educationHistory,
-          graduation_year: formData.educationHistory[0]?.graduationYear ? parseInt(formData.educationHistory[0].graduationYear) : null,
-            gender: formData.gender || null,
-            email: formData.email  // Add email to tutor profile
-          })
+             bio: formData.bio,
+             subjects: derivedSubjects,
+             curriculum: finalCurriculum,
+             teaching_mode: formData.teachingMode,
+             teaching_levels: teachingLevels,
+             hourly_rate: averageRate > 0 ? Math.round(averageRate) : null, // Use average of all rates when set
+             experience_years: parseInt(formData.experienceYears),
+             current_institution: formData.currentInstitution,
+             display_institution: formData.showCurrentInstitution,
+             qualifications: formData.qualifications.split('\n').filter(q => q.trim()),
+             teaching_location: formData.teachingLocations.join(', '),
+             teaching_experience: formData.teachingHistory,
+             education: formData.educationHistory,
+             graduation_year: formData.educationHistory[0]?.graduationYear ? parseInt(formData.educationHistory[0].graduationYear) : null,
+             gender: formData.gender || null,
+             email: formData.email  // Add email to tutor profile
+           })
           .eq("user_id", userId);
         
         if (tutorError) throw tutorError;
@@ -800,25 +814,25 @@ const TutorProfileSetup = () => {
           data: newTutorProfile,
           error: tutorError
         } = await supabase.from("tutor_profiles").insert({
-          user_id: userId,
-          bio: formData.bio,
-          subjects: derivedSubjects,
-          curriculum: finalCurriculum,
-          teaching_mode: formData.teachingMode,
-          teaching_levels: teachingLevels,
-          hourly_rate: Math.round(getAverageRate()), // Use average of all rates
-          experience_years: parseInt(formData.experienceYears),
-          current_institution: formData.currentInstitution,
-          display_institution: formData.showCurrentInstitution,
-          qualifications: formData.qualifications.split('\n').filter(q => q.trim()),
-          teaching_location: formData.teachingLocations.join(', '),
-          teaching_experience: formData.teachingHistory,
-          education: formData.educationHistory,
-          graduation_year: formData.educationHistory[0]?.graduationYear ? parseInt(formData.educationHistory[0].graduationYear) : null,
-          gender: formData.gender || null,
-          email: formData.email,  // Add email to tutor profile
-          verified: false // Requires admin approval
-        }).select('id').single();
+           user_id: userId,
+           bio: formData.bio,
+           subjects: derivedSubjects,
+           curriculum: finalCurriculum,
+           teaching_mode: formData.teachingMode,
+           teaching_levels: teachingLevels,
+           hourly_rate: averageRate > 0 ? Math.round(averageRate) : null, // Use average of all rates when set
+           experience_years: parseInt(formData.experienceYears),
+           current_institution: formData.currentInstitution,
+           display_institution: formData.showCurrentInstitution,
+           qualifications: formData.qualifications.split('\n').filter(q => q.trim()),
+           teaching_location: formData.teachingLocations.join(', '),
+           teaching_experience: formData.teachingHistory,
+           education: formData.educationHistory,
+           graduation_year: formData.educationHistory[0]?.graduationYear ? parseInt(formData.educationHistory[0].graduationYear) : null,
+           gender: formData.gender || null,
+           email: formData.email,  // Add email to tutor profile
+           verified: false // Requires admin approval
+         }).select('id').single();
         if (tutorError) throw tutorError;
 
         tutorProfileId = newTutorProfile.id;
