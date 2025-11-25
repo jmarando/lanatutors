@@ -932,6 +932,9 @@ useEffect(() => {
       // Get the tutor profile ID (use from above)
       const tutorProfile = { id: tutorProfileId };
 
+      // Delete existing packages to avoid duplicates when updating
+      await supabase.from("package_offers").delete().eq("tutor_id", tutorProfileId);
+
       // Create package offers with auto-calculated prices based on selected discounts
       if (tutorProfile) {
         const packages = [];
