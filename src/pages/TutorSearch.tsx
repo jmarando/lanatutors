@@ -267,7 +267,7 @@ const TutorSearch = () => {
                         <Sparkles className="w-5 h-5 text-primary" />
                       </div>
                       <h3 className="font-semibold mb-1">5. Custom Options</h3>
-                      <p className="text-sm text-muted-foreground">Create custom packages or request learning plans across multiple tutors and subjects</p>
+                      <p className="text-sm text-muted-foreground">You can also create custom packages or request learning plans across multiple tutors and subjects</p>
                     </div>
                   </div>
                 </CardContent>
