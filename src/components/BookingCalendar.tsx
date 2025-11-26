@@ -831,72 +831,87 @@ export const BookingCalendar = ({
                           </div>
                         </div>
 
-                        <PaymentOptionsCard
-                          paymentOption={paymentOption}
-                          onPaymentOptionChange={(option) => {
-                            setPaymentOption(option);
-                            if (option !== 'package') {
-                              setSelectedPackage(null);
-                              setSelectedExistingPackage(null);
-                            }
-                          }}
-                          totalAmount={total}
-                          depositAmount={deposit}
-                          balanceDue={balance}
-                          packageOffers={packageOffers}
-                          existingPackages={existingPackages}
-                          selectedPackage={selectedPackage}
-                          selectedExistingPackage={selectedExistingPackage}
-                          onPackageSelect={setSelectedPackage}
-                          onExistingPackageSelect={(pkg) => {
-                            setSelectedExistingPackage(pkg);
-                            if (pkg) {
-                              setPaymentOption('package');
-                            }
-                          }}
-                          disabled={paymentInitiated}
-                        />
+                        {/* Payment Option Selector */}
+                        <div>
+                          <Label className="text-sm font-medium mb-2 block">Payment Option *</Label>
+                          <div className="grid grid-cols-2 gap-3">
+                            <button
+                              type="button"
+                              className={`p-4 rounded-lg border-2 transition-all text-left ${
+                                paymentOption === 'deposit' 
+                                  ? 'border-primary bg-primary/5' 
+                                  : 'border-border hover:border-primary/50'
+                              } ${paymentInitiated ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                              onClick={() => !paymentInitiated && setPaymentOption('deposit')}
+                              disabled={paymentInitiated}
+                            >
+                              <div className="font-semibold mb-1">30% Deposit</div>
+                              <div className="text-sm text-muted-foreground mb-2">
+                                Pay KES {deposit.toFixed(0)} now
+                              </div>
+                              <div className="text-xs text-muted-foreground">
+                                Balance due: KES {balance.toFixed(0)}
+                              </div>
+                            </button>
+                            <button
+                              type="button"
+                              className={`p-4 rounded-lg border-2 transition-all text-left ${
+                                paymentOption === 'full' 
+                                  ? 'border-primary bg-primary/5' 
+                                  : 'border-border hover:border-primary/50'
+                              } ${paymentInitiated ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                              onClick={() => !paymentInitiated && setPaymentOption('full')}
+                              disabled={paymentInitiated}
+                            >
+                              <div className="font-semibold mb-1">Full Payment</div>
+                              <div className="text-sm text-muted-foreground mb-2">
+                                Pay KES {total.toFixed(0)} now
+                              </div>
+                              <div className="text-xs text-muted-foreground">
+                                No balance due
+                              </div>
+                            </button>
+                          </div>
+                        </div>
                       </>
                     );
                   })()}
 
-                  {/* Show payment method when NOT using existing package */}
-                  {!(paymentOption === 'package' && selectedExistingPackage) && (
-                    <>
-                      <div>
-                        <Label className="text-sm font-medium mb-2 block">Payment Method *</Label>
-                        <Tabs value={paymentMethod} onValueChange={(v) => setPaymentMethod(v as 'mpesa' | 'card')} className="w-full">
-                          <TabsList className="grid w-full grid-cols-2">
-                            <TabsTrigger value="mpesa" className="flex items-center gap-2">
-                              <Smartphone className="w-4 h-4" />
-                              M-Pesa
-                            </TabsTrigger>
-                            <TabsTrigger value="card" className="flex items-center gap-2">
-                              <CreditCard className="w-4 h-4" />
-                              Card
-                            </TabsTrigger>
-                          </TabsList>
-                        </Tabs>
-                      </div>
+                  {/* Payment Method Section */}
+                  <>
+                    <div>
+                      <Label className="text-sm font-medium mb-2 block">Payment Method *</Label>
+                      <Tabs value={paymentMethod} onValueChange={(v) => setPaymentMethod(v as 'mpesa' | 'card')} className="w-full">
+                        <TabsList className="grid w-full grid-cols-2">
+                          <TabsTrigger value="mpesa" className="flex items-center gap-2">
+                            <Smartphone className="w-4 h-4" />
+                            M-Pesa
+                          </TabsTrigger>
+                          <TabsTrigger value="card" className="flex items-center gap-2">
+                            <CreditCard className="w-4 h-4" />
+                            Card
+                          </TabsTrigger>
+                        </TabsList>
+                      </Tabs>
+                    </div>
 
-                      {paymentMethod === 'mpesa' && (
-                        <div>
-                          <Label className="text-sm font-medium mb-2 block">M-Pesa Phone Number *</Label>
-                          <Input
-                            type="tel"
-                            placeholder="0712345678"
-                            value={phoneNumber}
-                            onChange={(e) => setPhoneNumber(e.target.value)}
-                            maxLength={10}
-                            disabled={paymentInitiated}
-                          />
-                          <p className="text-xs text-muted-foreground mt-1">
-                            Enter your Safaricom number (format: 07XXXXXXXX)
-                          </p>
-                        </div>
-                      )}
-                    </>
-                  )}
+                    {paymentMethod === 'mpesa' && (
+                      <div>
+                        <Label className="text-sm font-medium mb-2 block">M-Pesa Phone Number *</Label>
+                        <Input
+                          type="tel"
+                          placeholder="0712345678"
+                          value={phoneNumber}
+                          onChange={(e) => setPhoneNumber(e.target.value)}
+                          maxLength={10}
+                          disabled={paymentInitiated}
+                        />
+                        <p className="text-xs text-muted-foreground mt-1">
+                          Enter your Safaricom number (format: 07XXXXXXXX)
+                        </p>
+                      </div>
+                    )}
+                  </>
                 </>
               )}
 
@@ -927,13 +942,6 @@ export const BookingCalendar = ({
                   "Waiting for Payment..."
                 ) : isTrialSession ? (
                   "Confirm Free Trial"
-                ) : selectedExistingPackage ? (
-                  "Book with Package"
-                ) : paymentOption === 'package' ? (
-                  <>
-                    {paymentMethod === 'mpesa' ? <Smartphone className="w-4 h-4 mr-2" /> : <CreditCard className="w-4 h-4 mr-2" />}
-                    Pay for Package & Book
-                  </>
                 ) : paymentOption === 'full' ? (
                   <>
                     {paymentMethod === 'mpesa' ? <Smartphone className="w-4 h-4 mr-2" /> : <CreditCard className="w-4 h-4 mr-2" />}
