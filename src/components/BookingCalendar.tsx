@@ -32,6 +32,7 @@ interface BookingCalendarProps {
   hourlyRate: number;
   tutorSubjects?: string[];
   tutorLocations?: string[];
+  tutorCurriculum?: string[];
   onBookingComplete?: () => void;
   classType?: 'online' | 'in-person';
   isTrialSession?: boolean;
@@ -63,6 +64,7 @@ export const BookingCalendar = ({
   hourlyRate,
   tutorSubjects = [],
   tutorLocations = [],
+  tutorCurriculum = [],
   onBookingComplete,
   classType = 'online',
   isTrialSession = false,
@@ -73,6 +75,7 @@ export const BookingCalendar = ({
   const [monthSlots, setMonthSlots] = useState<any[]>([]);
   const [selectedSlot, setSelectedSlot] = useState<AvailabilitySlot | null>(null);
   const [subject, setSubject] = useState("");
+  const [curriculum, setCurriculum] = useState("");
   const [notes, setNotes] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [selectedClassType, setSelectedClassType] = useState<'online' | 'in-person'>(classType);
@@ -86,12 +89,37 @@ export const BookingCalendar = ({
   const [selectedExistingPackage, setSelectedExistingPackage] = useState<PackagePurchase | null>(null);
   const [loading, setLoading] = useState(false);
   const [paymentInitiated, setPaymentInitiated] = useState(false);
+  const [pricingTiers, setPricingTiers] = useState<any[]>([]);
+  const [curriculumSpecificRate, setCurriculumSpecificRate] = useState<number | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
   const [tutorUserId, setTutorUserId] = useState<string | null>(null);
 
   useEffect(() => {
-    // Resolve the tutor's auth user_id from the tutor profile id
+    // Determine curriculum-specific rate when curriculum changes
+    if (!curriculum || pricingTiers.length === 0) {
+      setCurriculumSpecificRate(null);
+      return;
+    }
+
+    // Determine if the curriculum is "higher level" (IGCSE Y11, A-Levels)
+    const isHigherLevel = 
+      curriculum.toLowerCase().includes('igcse') || 
+      curriculum.toLowerCase().includes('a-level') ||
+      curriculum.toLowerCase().includes('a level');
+
+    const tierName = isHigherLevel ? 'Advanced' : 'Standard';
+    const tier = pricingTiers.find(t => t.tier_name === tierName);
+    
+    if (tier) {
+      setCurriculumSpecificRate(Number(tier.online_hourly_rate));
+    } else {
+      setCurriculumSpecificRate(hourlyRate);
+    }
+  }, [curriculum, pricingTiers, hourlyRate]);
+
+  useEffect(() => {
+    // Resolve the tutor's auth user_id from the tutor profile id and fetch pricing tiers
     (async () => {
       const { data } = await supabase
         .from('tutor_profiles')
@@ -99,7 +127,23 @@ export const BookingCalendar = ({
         .eq('id', tutorId)
         .eq('verified', true)
         .maybeSingle();
-      setTutorUserId(data?.user_id ?? null);
+      
+      if (data?.user_id) {
+        setTutorUserId(data.user_id);
+      }
+    })();
+    
+    // Fetch tutor pricing tiers
+    (async () => {
+      const { data } = await supabase
+        .from('tutor_pricing_tiers')
+        .select('*')
+        .eq('tutor_id', tutorId)
+        .order('tier_name');
+      
+      if (data) {
+        setPricingTiers(data);
+      }
     })();
   }, [tutorId]);
 
@@ -193,10 +237,10 @@ export const BookingCalendar = ({
   };
 
   const handleBookSlot = async () => {
-    if (!selectedSlot || !subject.trim()) {
+    if (!selectedSlot || !subject.trim() || !curriculum.trim()) {
       toast({
         title: "Missing information",
-        description: "Please select a slot and enter a subject",
+        description: "Please select a slot, enter a subject, and select a curriculum",
         variant: "destructive",
       });
       return;
@@ -251,8 +295,10 @@ export const BookingCalendar = ({
             new Date(selectedSlot.start_time).getTime()) /
           (1000 * 60 * 60);
         
+        // Use curriculum-specific rate if available, otherwise use base hourly rate
+        const effectiveRate = curriculumSpecificRate !== null ? curriculumSpecificRate : hourlyRate;
         // Calculate rate (50% more for in-person)
-        const rate = selectedClassType === 'in-person' ? hourlyRate * 1.5 : hourlyRate;
+        const rate = selectedClassType === 'in-person' ? effectiveRate * 1.5 : effectiveRate;
         totalAmount = duration * rate;
         
         // Handle different payment options
@@ -751,7 +797,11 @@ export const BookingCalendar = ({
                     >
                       <div className="font-semibold mb-1">Single Session (1 hour)</div>
                       <div className="text-sm text-muted-foreground">
-                        KES {selectedClassType === 'online' ? hourlyRate : (hourlyRate * 1.5).toFixed(0)}
+                        {curriculumSpecificRate !== null && curriculum ? (
+                          <>From KES {selectedClassType === 'online' ? curriculumSpecificRate : (curriculumSpecificRate * 1.5).toFixed(0)}</>
+                        ) : (
+                          <>KES {selectedClassType === 'online' ? hourlyRate : (hourlyRate * 1.5).toFixed(0)}</>
+                        )}
                       </div>
                     </button>
                     <button
@@ -769,13 +819,47 @@ export const BookingCalendar = ({
                         <Badge variant="secondary" className="text-xs">Save 5%</Badge>
                       </div>
                       <div className="text-sm text-muted-foreground">
-                        KES {selectedClassType === 'online' ? (hourlyRate * 2 * 0.95).toFixed(0) : (hourlyRate * 1.5 * 2 * 0.95).toFixed(0)}
+                        {curriculumSpecificRate !== null && curriculum ? (
+                          <>From KES {selectedClassType === 'online' ? (curriculumSpecificRate * 2 * 0.95).toFixed(0) : (curriculumSpecificRate * 1.5 * 2 * 0.95).toFixed(0)}</>
+                        ) : (
+                          <>KES {selectedClassType === 'online' ? (hourlyRate * 2 * 0.95).toFixed(0) : (hourlyRate * 1.5 * 2 * 0.95).toFixed(0)}</>
+                        )}
                       </div>
                     </button>
                   </div>
                 </div>
               )}
 
+
+              <div>
+                <Label className="text-sm font-medium mb-2 block">Curriculum *</Label>
+                {tutorCurriculum && tutorCurriculum.length > 0 ? (
+                  <Select value={curriculum} onValueChange={setCurriculum} disabled={paymentInitiated}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select curriculum" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-background z-50">
+                      {tutorCurriculum.map((curr) => (
+                        <SelectItem key={curr} value={curr}>
+                          {curr}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <Input
+                    placeholder="e.g., CBC, IGCSE, 8-4-4"
+                    value={curriculum}
+                    onChange={(e) => setCurriculum(e.target.value)}
+                    disabled={paymentInitiated}
+                  />
+                )}
+                {curriculumSpecificRate !== null && curriculum && (
+                  <p className="text-sm font-semibold text-primary mt-2">
+                    Rate for {curriculum}: KES {curriculumSpecificRate.toLocaleString()}/hr
+                  </p>
+                )}
+              </div>
 
               <div>
                 <Label className="text-sm font-medium mb-2 block">Subject *</Label>
@@ -818,7 +902,9 @@ export const BookingCalendar = ({
                   {selectedSlot && (() => {
                     const slotDuration = (new Date(selectedSlot.end_time).getTime() - new Date(selectedSlot.start_time).getTime()) / (1000 * 60 * 60);
                     const duration = slotDuration * sessionDuration;
-                    const baseRate = selectedClassType === 'in-person' ? hourlyRate * 1.5 : hourlyRate;
+                    // Use curriculum-specific rate if available, otherwise use base hourly rate
+                    const effectiveRate = curriculumSpecificRate !== null ? curriculumSpecificRate : hourlyRate;
+                    const baseRate = selectedClassType === 'in-person' ? effectiveRate * 1.5 : effectiveRate;
                     // Apply 5% discount for double lessons (2 hours)
                     const rate = sessionDuration === 2 ? baseRate * 0.95 : baseRate;
                     const total = duration * rate;
