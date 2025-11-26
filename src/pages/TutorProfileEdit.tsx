@@ -370,21 +370,21 @@ const TutorProfileEdit = () => {
             <CardHeader>
               <CardTitle>Hourly Rates</CardTitle>
               <CardDescription>
-                Set your rates based on curriculum complexity (KES per hour)
+                Set your rates based on curriculum level (KES per hour)
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="bg-muted/50 p-4 rounded-lg mb-4">
                 <p className="text-sm text-muted-foreground">
                   <strong>Rate Guidelines:</strong><br/>
-                  • <strong>Standard Rate</strong> (CBC, 8-4-4, British Y1-10): KES 1,000 - 2,000/hr<br/>
-                  • <strong>Advanced Rate</strong> (IGCSE Y11, A-Levels): KES 1,500 - 3,000/hr
+                  • CBC, 8-4-4, British Year 1-10: KES 1,000 - 2,000/hr<br/>
+                  • IGCSE Year 11, A-Levels: KES 1,500 - 3,000/hr
                 </p>
               </div>
               
               <div>
                 <Label htmlFor="standardRate">
-                  Standard Rate <span className="text-sm text-muted-foreground">(CBC, 8-4-4, British Year 1-10)</span>
+                  Base Rate <span className="text-sm text-muted-foreground">(CBC, 8-4-4, British Year 1-10)</span>
                 </Label>
                 <Input
                   id="standardRate"
@@ -408,7 +408,7 @@ const TutorProfileEdit = () => {
 
               <div>
                 <Label htmlFor="advancedRate">
-                  Advanced Rate <span className="text-sm text-muted-foreground">(IGCSE Year 11, A-Levels)</span>
+                  Higher Level Rate <span className="text-sm text-muted-foreground">(IGCSE Year 11, A-Levels)</span>
                 </Label>
                 <Input
                   id="advancedRate"
