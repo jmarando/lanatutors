@@ -176,23 +176,36 @@ serve(async (req) => {
             const tutorProfile = booking.tutor as any
             const availabilitySlot = booking.availability_slot as any
 
-            // Send email
-            await supabase.functions.invoke('send-booking-email', {
-              body: {
-                studentEmail: studentProfile.email,
-                studentName: studentProfile.full_name,
-                tutorEmail: tutorProfile.email,
-                tutorName: tutorProfile.full_name,
-                subject: booking.subject,
-                startTime: availabilitySlot.start_time,
-                endTime: availabilitySlot.end_time,
-                meetingLink: booking.meeting_link,
-                depositPaid: booking.deposit_paid,
-                balanceDue: booking.balance_due,
-                totalAmount: booking.amount,
-                classType: booking.class_type,
-              },
-            })
+            // Get student and tutor emails from auth.users
+            const { data: studentUser } = await supabase.auth.admin.getUserById(booking.student_id)
+            const { data: tutorUser } = await supabase.auth.admin.getUserById(booking.tutor_id)
+
+            if (studentUser?.user?.email && tutorUser?.user?.email) {
+              // Send email
+              try {
+                const emailResult = await supabase.functions.invoke('send-booking-email', {
+                  body: {
+                    studentEmail: studentUser.user.email,
+                    studentName: studentProfile.full_name,
+                    tutorEmail: tutorUser.user.email,
+                    tutorName: tutorProfile.full_name,
+                    subject: booking.subject,
+                    startTime: availabilitySlot.start_time,
+                    endTime: availabilitySlot.end_time,
+                    meetingLink: booking.meeting_link,
+                    depositPaid: booking.deposit_paid,
+                    balanceDue: booking.balance_due,
+                    totalAmount: booking.amount,
+                    classType: booking.class_type,
+                  },
+                })
+                console.log('Email sent successfully:', emailResult)
+              } catch (emailError) {
+                console.error('Error sending booking email:', emailError)
+              }
+            } else {
+              console.error('Could not find student or tutor email')
+            }
 
             // Send WhatsApp if phone number exists
             if (studentProfile.phone_number) {
