@@ -142,7 +142,7 @@ const NewStudentDashboard = () => {
 
       setActivePackages(packages);
 
-      // Fetch upcoming bookings
+      // Fetch upcoming bookings (confirmed or pending)
       const { data: upcomingData } = await supabase
         .from("bookings")
         .select(`
@@ -151,7 +151,6 @@ const NewStudentDashboard = () => {
         `)
         .eq("student_id", currentUser.id)
         .in("status", ["confirmed", "pending"])
-        .gte("tutor_availability.start_time", new Date().toISOString())
         .order("tutor_availability(start_time)", { ascending: true })
         .limit(5);
 
