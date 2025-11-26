@@ -14,7 +14,6 @@ import {
 } from "@/components/ui/sidebar";
 
 const menuItems = [
-  { title: "Overview", path: "overview", icon: Home },
   { title: "My Classes", path: "classes", icon: Calendar },
   { title: "Classrooms", path: "classrooms", icon: GraduationCap },
   { title: "Progress", path: "progress", icon: TrendingUp },
