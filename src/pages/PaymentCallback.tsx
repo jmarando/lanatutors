@@ -73,8 +73,8 @@ export default function PaymentCallback() {
               return;
             }
 
-            // Handle booking payments
-            if (payment.payment_type === "booking" && payment.reference_id) {
+            // Handle booking payments (initial or balance)
+            if ((payment.payment_type === "booking" || payment.payment_type === "booking_balance") && payment.reference_id) {
               setBookingId(payment.reference_id);
               setStatus("success");
               return;

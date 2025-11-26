@@ -256,20 +256,14 @@ export const CustomPackageBuilder = ({
       const { data: pesapalData, error: pesapalError } = await supabase.functions.invoke(
         "initiate-pesapal-payment",
         {
-        body: {
-          amount: amountToPay,
-          currency: "KES",
-          description: `Custom Package: ${totalSessions} sessions (${selectedSubjects.map(s => s.subject).join(', ')}) with ${tutorName}`,
-          callback_url: `${window.location.origin}/payment/callback`,
-            notification_id: currentUser.email,
-            billing_address: {
-              email_address: currentUser.email,
-              phone_number: currentUser.phone || "0000000000",
-              country_code: "KE",
-              first_name: currentUser.name.split(" ")[0] || "Student",
-              last_name: currentUser.name.split(" ").slice(1).join(" ") || "",
-            },
-            paymentId: payment.id,
+          body: {
+            amount: amountToPay,
+            currency: "KES",
+            description: `Custom Package: ${totalSessions} sessions (${selectedSubjects.map(s => s.subject).join(', ')}) with ${tutorName}`,
+            callbackUrl: `${window.location.origin}/payment-callback`,
+            paymentType: "package_purchase",
+            referenceId: packagePurchase.id,
+            phoneNumber: currentUser.phone || "0000000000",
           },
         }
       );
