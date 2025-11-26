@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Menu, LogOut, MessageCircle, Globe } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -126,15 +127,6 @@ const Navigation = () => {
             )}
           </div>
           <div className="flex items-center gap-3 whitespace-nowrap">
-            {user && (
-              <div className="hidden md:block">
-                <CurrencySelector
-                  value={selectedCurrency}
-                  onChange={handleCurrencyChange}
-                  className="w-[140px] h-9 text-xs"
-                />
-              </div>
-            )}
             {user ? (
               <>
                 <span className="text-sm text-muted-foreground max-w-[120px] truncate">{user.email}</span>
@@ -142,6 +134,23 @@ const Navigation = () => {
                   <LogOut className="w-4 h-4 mr-2" />
                   Sign Out
                 </Button>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="ghost" size="sm" className="hover-scale" title="Change Currency">
+                      <Globe className="w-4 h-4" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[200px] p-3" align="end">
+                    <div className="space-y-2">
+                      <label className="text-xs font-medium">Currency</label>
+                      <CurrencySelector
+                        value={selectedCurrency}
+                        onChange={handleCurrencyChange}
+                        className="w-full"
+                      />
+                    </div>
+                  </PopoverContent>
+                </Popover>
               </>
             ) : (
               <>
