@@ -15,6 +15,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2, CreditCard, Smartphone } from "lucide-react";
 import { PaymentOptionsCard } from "./PaymentOptionsCard";
 import { NAIROBI_LOCATIONS } from "@/utils/locationData";
+import { getLevelsForCurriculum } from "@/utils/curriculumData";
 
 interface AvailabilitySlot {
   id: string;
@@ -76,6 +77,7 @@ export const BookingCalendar = ({
   const [selectedSlot, setSelectedSlot] = useState<AvailabilitySlot | null>(null);
   const [subject, setSubject] = useState("");
   const [curriculum, setCurriculum] = useState("");
+  const [level, setLevel] = useState("");
   const [notes, setNotes] = useState("");
   const [phoneNumber, setPhoneNumber] = useState("");
   const [selectedClassType, setSelectedClassType] = useState<'online' | 'in-person'>(classType);
@@ -96,27 +98,31 @@ export const BookingCalendar = ({
   const [tutorUserId, setTutorUserId] = useState<string | null>(null);
 
   useEffect(() => {
-    // Determine curriculum-specific rate when curriculum changes
-    if (!curriculum || pricingTiers.length === 0) {
+    // Determine curriculum-level-specific rate when curriculum or level changes
+    if (!curriculum || !level) {
       setCurriculumSpecificRate(null);
       return;
     }
 
-    // Determine if the curriculum is "higher level" (IGCSE Y11, A-Levels)
-    const isHigherLevel = 
-      curriculum.toLowerCase().includes('igcse') || 
-      curriculum.toLowerCase().includes('a-level') ||
-      curriculum.toLowerCase().includes('a level');
-
-    const tierName = isHigherLevel ? 'Advanced' : 'Standard';
-    const tier = pricingTiers.find(t => t.tier_name === tierName);
-    
-    if (tier) {
-      setCurriculumSpecificRate(Number(tier.online_hourly_rate));
-    } else {
-      setCurriculumSpecificRate(hourlyRate);
-    }
-  }, [curriculum, pricingTiers, hourlyRate]);
+    (async () => {
+      // Query curriculum_level_tier_assignments to find the correct tier for this curriculum-level combo
+      const { data: assignment } = await supabase
+        .from('curriculum_level_tier_assignments')
+        .select('tier_id, tutor_pricing_tiers(online_hourly_rate)')
+        .eq('tutor_id', tutorId)
+        .eq('curriculum', curriculum)
+        .eq('level', level)
+        .maybeSingle();
+      
+      if (assignment && assignment.tutor_pricing_tiers) {
+        const tierData = assignment.tutor_pricing_tiers as any;
+        setCurriculumSpecificRate(Number(tierData.online_hourly_rate));
+      } else {
+        // Fallback to base hourly rate if no specific tier found
+        setCurriculumSpecificRate(hourlyRate);
+      }
+    })();
+  }, [curriculum, level, tutorId, hourlyRate]);
 
   useEffect(() => {
     // Resolve the tutor's auth user_id from the tutor profile id and fetch pricing tiers
@@ -237,10 +243,10 @@ export const BookingCalendar = ({
   };
 
   const handleBookSlot = async () => {
-    if (!selectedSlot || !subject.trim() || !curriculum.trim()) {
+    if (!selectedSlot || !subject.trim() || !curriculum.trim() || !level.trim()) {
       toast({
         title: "Missing information",
-        description: "Please select a slot, enter a subject, and select a curriculum",
+        description: "Please select a slot, enter a subject, select a curriculum, and select a level",
         variant: "destructive",
       });
       return;
@@ -363,7 +369,7 @@ export const BookingCalendar = ({
         ? `${noteText ? noteText + ' | ' : ''}Location: ${selectedLocation}`
         : noteText;
 
-      const notesWithTier = `${notesWithLocation ? notesWithLocation + ' | ' : ''}Tier: ${selectedTier}`;
+      const notesWithCurriculumLevel = `${notesWithLocation ? notesWithLocation + ' | ' : ''}Curriculum: ${curriculum} | Level: ${level} | Tier: ${selectedTier}`;
 
       const { data: booking, error: bookingError } = await supabase
         .from("bookings")
@@ -372,7 +378,7 @@ export const BookingCalendar = ({
           tutor_id: tutorUserId,
           availability_slot_id: selectedSlot.id,
           subject: subject.trim(),
-          notes: notesWithTier,
+          notes: notesWithCurriculumLevel,
           amount: totalAmount,
           deposit_paid: depositAmount,
           balance_due: balanceDue,
@@ -834,7 +840,14 @@ export const BookingCalendar = ({
               <div>
                 <Label className="text-sm font-medium mb-2 block">Curriculum *</Label>
                 {tutorCurriculum && tutorCurriculum.length > 0 ? (
-                  <Select value={curriculum} onValueChange={setCurriculum} disabled={paymentInitiated}>
+                  <Select 
+                    value={curriculum} 
+                    onValueChange={(val) => {
+                      setCurriculum(val);
+                      setLevel(""); // Reset level when curriculum changes
+                    }} 
+                    disabled={paymentInitiated}
+                  >
                     <SelectTrigger>
                       <SelectValue placeholder="Select curriculum" />
                     </SelectTrigger>
@@ -850,16 +863,37 @@ export const BookingCalendar = ({
                   <Input
                     placeholder="e.g., CBC, IGCSE, 8-4-4"
                     value={curriculum}
-                    onChange={(e) => setCurriculum(e.target.value)}
+                    onChange={(e) => {
+                      setCurriculum(e.target.value);
+                      setLevel(""); // Reset level when curriculum changes
+                    }}
                     disabled={paymentInitiated}
                   />
                 )}
-                {curriculumSpecificRate !== null && curriculum && (
-                  <p className="text-sm font-semibold text-primary mt-2">
-                    Rate for {curriculum}: KES {curriculumSpecificRate.toLocaleString()}/hr
-                  </p>
-                )}
               </div>
+
+              {curriculum && (
+                <div>
+                  <Label className="text-sm font-medium mb-2 block">Level/Grade *</Label>
+                  <Select value={level} onValueChange={setLevel} disabled={paymentInitiated}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select level/grade" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-background z-50 max-h-[300px]">
+                      {getLevelsForCurriculum(curriculum).map((lvl) => (
+                        <SelectItem key={lvl.value} value={lvl.value}>
+                          {lvl.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {curriculumSpecificRate !== null && curriculum && level && (
+                    <p className="text-sm font-semibold text-primary mt-2">
+                      Rate for {curriculum} - {level}: KES {curriculumSpecificRate.toLocaleString()}/hr
+                    </p>
+                  )}
+                </div>
+              )}
 
               <div>
                 <Label className="text-sm font-medium mb-2 block">Subject *</Label>
