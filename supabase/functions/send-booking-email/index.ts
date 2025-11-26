@@ -176,7 +176,7 @@ const handler = async (req: Request): Promise<Response> => {
               <p style="color: #666666; font-size: 14px; margin-top: 30px;">If you have any questions or need to reschedule, please contact us at <a href="mailto:info@lanatutors.africa" style="color: #D95436;">info@lanatutors.africa</a></p>
             </div>
             <div class="footer">
-              <p style="margin: 0 0 5px 0; font-weight: 600; color: #D95436;">LANA Tutors</p>
+              <p style="margin: 0 0 5px 0; font-weight: 600; color: #D95436;">Lana Tutors</p>
               <p style="margin: 0;">Supporting your learning journey, one session at a time.</p>
             </div>
           </div>
@@ -191,9 +191,9 @@ const handler = async (req: Request): Promise<Response> => {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          from: 'LANA Tutors <info@lanatutors.africa>',
+          from: 'Lana Tutors <info@lanatutors.africa>',
           to: [studentEmail || ''],
-          subject: 'Booking Confirmation - LANA Tutors',
+          subject: 'Booking Confirmation - Lana Tutors',
           html: studentEmailHtml,
         }),
       });
@@ -285,7 +285,7 @@ const handler = async (req: Request): Promise<Response> => {
               <p style="color: #666666; font-size: 14px; margin-top: 30px;">If you need to reschedule or have any questions, please contact us at <a href="mailto:info@lanatutors.africa" style="color: #D95436;">info@lanatutors.africa</a></p>
             </div>
             <div class="footer">
-              <p style="margin: 0 0 5px 0; font-weight: 600; color: #D95436;">LANA Tutors</p>
+              <p style="margin: 0 0 5px 0; font-weight: 600; color: #D95436;">Lana Tutors</p>
               <p style="margin: 0;">Thank you for being part of our tutoring community!</p>
             </div>
           </div>
@@ -300,9 +300,9 @@ const handler = async (req: Request): Promise<Response> => {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          from: 'LANA Tutors <info@lanatutors.africa>',
+          from: 'Lana Tutors <info@lanatutors.africa>',
           to: [tutorProfile?.email || ''],
-          subject: 'New Booking - LANA Tutors',
+          subject: 'New Booking - Lana Tutors',
           html: tutorEmailHtml,
         }),
       });

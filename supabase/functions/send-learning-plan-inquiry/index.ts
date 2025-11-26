@@ -112,10 +112,10 @@ const handler = async (req: Request): Promise<Response> => {
               <p style="color: #92400e; font-size: 14px; margin-top: 15px; margin-bottom: 0;"><strong>⏱️ Please respond within 24 hours to maintain excellent parent communication.</strong></p>
             </div>
             
-            <p style="color: #666666; font-size: 14px;">Best regards,<br><strong style="color: #D95436;">LANA Tutors Team</strong></p>
+            <p style="color: #666666; font-size: 14px;">Best regards,<br><strong style="color: #D95436;">Lana Tutors Team</strong></p>
           </div>
           <div class="footer">
-            <p style="margin: 0 0 5px 0; font-weight: 600; color: #D95436;">LANA Tutors</p>
+            <p style="margin: 0 0 5px 0; font-weight: 600; color: #D95436;">Lana Tutors</p>
             <p style="margin: 0;">Thank you for being part of our tutoring community!</p>
           </div>
         </div>
@@ -124,7 +124,7 @@ const handler = async (req: Request): Promise<Response> => {
     `;
 
     const tutorEmailResponse = await resend.emails.send({
-      from: "LANA Tutors <inquiries@lanatutors.africa>",
+      from: "Lana Tutors <inquiries@lanatutors.africa>",
       reply_to: parentEmail,
       to: [tutorEmail],
       subject: `New Learning Plan Request from ${parentName}`,
@@ -191,10 +191,10 @@ const handler = async (req: Request): Promise<Response> => {
             
             <p style="color: #666666; font-size: 14px;">If you have any questions in the meantime, feel free to reply to this email or contact us at <a href="mailto:info@lanatutors.africa" style="color: #D95436;">info@lanatutors.africa</a></p>
             
-            <p style="color: #666666; font-size: 14px;">Best regards,<br><strong style="color: #D95436;">LANA Tutors Team</strong></p>
+            <p style="color: #666666; font-size: 14px;">Best regards,<br><strong style="color: #D95436;">Lana Tutors Team</strong></p>
           </div>
           <div class="footer">
-            <p style="margin: 0 0 5px 0; font-weight: 600; color: #D95436;">LANA Tutors</p>
+            <p style="margin: 0 0 5px 0; font-weight: 600; color: #D95436;">Lana Tutors</p>
             <p style="margin: 0;">Supporting your learning journey, one session at a time.</p>
           </div>
         </div>
@@ -203,7 +203,7 @@ const handler = async (req: Request): Promise<Response> => {
     `;
 
     const parentEmailResponse = await resend.emails.send({
-      from: "LANA Tutors <inquiries@lanatutors.africa>",
+      from: "Lana Tutors <inquiries@lanatutors.africa>",
       to: [parentEmail],
       subject: "Your Learning Plan Request Has Been Sent",
       html: parentEmailHtml,
