@@ -784,14 +784,16 @@ const TutorProfile = () => {
                         size="lg"
                         onClick={() => handleBookingTypeSelect('single')}
                       >
-                        <div className="flex flex-col sm:flex-row items-center sm:justify-between w-full gap-2 sm:gap-3 text-center sm:text-left">
-                          <span className="flex items-center gap-2 text-base font-semibold">
-                            <BookOpen className="w-5 h-5" />
-                            Single Session
-                          </span>
-                          <span className="font-bold text-base sm:text-lg">
-                            From KES {currentRate.toLocaleString()}/hr
-                          </span>
+                        <div className="flex flex-col items-stretch w-full gap-1">
+                          <div className="flex items-center justify-between gap-2">
+                            <span className="flex items-center gap-2 text-base font-semibold min-w-0">
+                              <BookOpen className="w-5 h-5 shrink-0" />
+                              <span className="truncate text-left">Single Session</span>
+                            </span>
+                            <span className="font-bold text-sm sm:text-base ml-2 whitespace-nowrap">
+                              From KES {currentRate.toLocaleString()}/hr
+                            </span>
+                          </div>
                         </div>
                       </Button>
 
@@ -801,17 +803,23 @@ const TutorProfile = () => {
                         size="lg"
                         onClick={() => handleBookingTypeSelect('double')}
                       >
-                        <div className="flex flex-col sm:flex-row items-center sm:justify-between w-full gap-2 sm:gap-3 text-center sm:text-left">
-                          <div className="flex flex-col items-center sm:items-start gap-1.5">
-                            <span className="flex items-center gap-2 text-base font-semibold">
-                              <BookOpen className="w-5 h-5" />
-                              Double Session
+                        <div className="flex flex-col items-stretch w-full gap-1">
+                          <div className="flex items-center justify-between gap-2">
+                            <div className="flex items-center gap-2 min-w-0">
+                              <BookOpen className="w-5 h-5 shrink-0" />
+                              <div className="flex flex-col items-start gap-0.5 min-w-0">
+                                <span className="text-base font-semibold truncate text-left">
+                                  Double Session
+                                </span>
+                                <Badge variant="secondary" className="text-[10px] px-2 py-0.5 mt-0.5 whitespace-nowrap">
+                                  Save 5%
+                                </Badge>
+                              </div>
+                            </div>
+                            <span className="font-bold text-sm sm:text-base ml-2 whitespace-nowrap">
+                              From KES {Math.round(currentRate * 2 * 0.95).toLocaleString()}/2 hrs
                             </span>
-                            <Badge variant="secondary" className="text-xs">Save 5%</Badge>
                           </div>
-                          <span className="font-bold text-base sm:text-lg">
-                            From KES {Math.round(currentRate * 2 * 0.95).toLocaleString()}/2 hrs
-                          </span>
                         </div>
                       </Button>
                     </div>
