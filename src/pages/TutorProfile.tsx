@@ -310,6 +310,82 @@ const TutorProfile = () => {
     setIsPackagePurchaseOpen(true);
   };
 
+  const handlePackagePurchase = async () => {
+    if (!selectedPackage || !currentUser) return;
+
+    try {
+      // Calculate amount based on payment option
+      const amount = packagePaymentOption === 'deposit' 
+        ? Math.round(selectedPackage.total_price * 0.3)
+        : Math.round(selectedPackage.total_price);
+
+      // Get current user's currency preference
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('preferred_currency, phone_number')
+        .eq('id', currentUser.id)
+        .single();
+
+      const currency = profile?.preferred_currency || 'KES';
+      const phoneNumber = profile?.phone_number || '';
+
+      // Create package purchase record
+      const { data: purchase, error: purchaseError } = await supabase
+        .from('package_purchases')
+        .insert({
+          student_id: currentUser.id,
+          tutor_id: tutor.id,
+          package_offer_id: selectedPackage.id,
+          total_sessions: selectedPackage.session_count,
+          sessions_remaining: selectedPackage.session_count,
+          total_amount: selectedPackage.total_price,
+          amount_paid: packagePaymentOption === 'deposit' ? amount : selectedPackage.total_price,
+          payment_status: packagePaymentOption === 'deposit' ? 'partial' : 'pending',
+          currency: currency,
+        })
+        .select()
+        .single();
+
+      if (purchaseError) throw purchaseError;
+
+      // Initiate payment via PesaPal
+      const { data: pesapalData, error: pesapalError } = await supabase.functions.invoke(
+        "initiate-pesapal-payment",
+        {
+          body: {
+            amount: amount,
+            currency: currency,
+            description: `${selectedPackage.name} with ${tutor.name}`,
+            referenceId: purchase.id,
+            paymentType: 'package_purchase',
+            phoneNumber: phoneNumber,
+            callbackUrl: `${window.location.origin}/payment-callback?type=package&id=${purchase.id}`,
+          },
+        }
+      );
+
+      if (pesapalError) {
+        console.error("Payment initiation error:", pesapalError);
+        throw pesapalError;
+      }
+
+      if (!pesapalData?.redirect_url) {
+        throw new Error("No payment redirect URL received");
+      }
+
+      // Redirect to payment gateway
+      window.location.href = pesapalData.redirect_url;
+
+    } catch (error: any) {
+      console.error("Package purchase error:", error);
+      showToast({
+        title: "Payment Error",
+        description: error.message || "Failed to initiate payment. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-[image:var(--gradient-page)] flex items-center justify-center">
@@ -1014,7 +1090,11 @@ const TutorProfile = () => {
                 </CardContent>
               </Card>
 
-              <Button className="w-full" size="lg">
+              <Button 
+                className="w-full" 
+                size="lg"
+                onClick={handlePackagePurchase}
+              >
                 Proceed to Payment
               </Button>
               
