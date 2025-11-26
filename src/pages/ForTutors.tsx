@@ -144,10 +144,10 @@ const ForTutors = () => {
   ];
 
   const stats = [
-    { value: "500+", label: "Active Tutors" },
-    { value: "KES 2.5M+", label: "Monthly Tutor Earnings" },
+    { value: "70%", label: "Earnings Split" },
     { value: "15%", label: "Acceptance Rate" },
-    { value: "4.9★", label: "Average Tutor Rating" }
+    { value: "Monthly", label: "Payment Frequency" },
+    { value: "Flexible", label: "Schedule" }
   ];
 
   return (
@@ -170,8 +170,7 @@ const ForTutors = () => {
               <span className="text-primary">Transform Lives. Earn More.</span>
             </h1>
             <p className="text-xl text-muted-foreground mb-8 leading-relaxed">
-              Join Kenya's most selective tutoring platform with only a 15% acceptance rate. 
-              Our 500+ elite tutors collectively earn KES 2.5M+ monthly, averaging 4.9★ ratings. 
+              Join Kenya's selective tutoring platform with a 15% acceptance rate. 
               Teach students from top schools across Kenya, set your own schedule, and earn 70% of session fees 
               with monthly payouts within the first 5 business days.
             </p>
