@@ -1,25 +1,66 @@
 import { Button } from "@/components/ui/button";
-import { Menu, LogOut, MessageCircle } from "lucide-react";
+import { Menu, LogOut, MessageCircle, Globe } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import lanaLogo from "@/assets/lana-header-logo-2025.png";
+import { CurrencySelector } from "@/components/CurrencySelector";
+import { Currency } from "@/utils/currencyUtils";
+import { useToast } from "@/hooks/use-toast";
 
 const Navigation = () => {
   const [open, setOpen] = useState(false);
   const { user, signOut } = useAuth();
   const [isAdmin, setIsAdmin] = useState(false);
+  const [selectedCurrency, setSelectedCurrency] = useState<Currency>('KES');
   const navigate = useNavigate();
+  const { toast } = useToast();
 
   useEffect(() => {
     if (user?.id) {
       checkAdminStatus(user.id);
+      fetchUserCurrency(user.id);
     } else {
       setIsAdmin(false);
     }
   }, [user?.id]);
+
+  const fetchUserCurrency = async (userId: string) => {
+    const { data } = await supabase
+      .from('profiles')
+      .select('preferred_currency')
+      .eq('id', userId)
+      .single();
+    
+    if (data?.preferred_currency) {
+      setSelectedCurrency(data.preferred_currency as Currency);
+    }
+  };
+
+  const handleCurrencyChange = async (currency: Currency) => {
+    setSelectedCurrency(currency);
+    
+    if (user) {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ preferred_currency: currency })
+        .eq('id', user.id);
+      
+      if (error) {
+        console.error('Error updating currency:', error);
+        toast({
+          title: "Error",
+          description: "Failed to update currency preference",
+          variant: "destructive",
+        });
+      } else {
+        // Refresh the page to apply currency changes
+        window.location.reload();
+      }
+    }
+  };
 
   const checkAdminStatus = async (userId: string) => {
     const { data } = await supabase
@@ -85,6 +126,15 @@ const Navigation = () => {
             )}
           </div>
           <div className="flex items-center gap-3 whitespace-nowrap">
+            {user && (
+              <div className="hidden md:block">
+                <CurrencySelector
+                  value={selectedCurrency}
+                  onChange={handleCurrencyChange}
+                  className="w-[140px] h-9 text-xs"
+                />
+              </div>
+            )}
             {user ? (
               <>
                 <span className="text-sm text-muted-foreground max-w-[120px] truncate">{user.email}</span>
@@ -119,6 +169,16 @@ const Navigation = () => {
           </SheetTrigger>
           <SheetContent side="right" className="w-[300px]">
             <div className="flex flex-col gap-6 mt-8">
+              {user && (
+                <div className="pb-4 border-b">
+                  <label className="text-xs text-muted-foreground mb-2 block">Currency</label>
+                  <CurrencySelector
+                    value={selectedCurrency}
+                    onChange={handleCurrencyChange}
+                    className="w-full"
+                  />
+                </div>
+              )}
               {navLinks.map((link) => (
                 <Link
                   key={link.to}
