@@ -1,12 +1,15 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { Loader2, FileText, Calendar, User, Book, CreditCard, Clock } from "lucide-react";
+import { Loader2, FileText, Calendar, User, Book, CreditCard, Clock, Download } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
+import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
+import lanaLogo from "@/assets/lana-tutors-logo-hd.png";
 
 export default function InvoicePreview() {
   const [searchParams] = useSearchParams();
@@ -19,7 +22,9 @@ export default function InvoicePreview() {
   
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
+  const [downloading, setDownloading] = useState(false);
   const [invoiceData, setInvoiceData] = useState<any>(null);
+  const invoiceRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (!type || (!bookingId && !packageId)) {
@@ -138,6 +143,46 @@ export default function InvoicePreview() {
     }
   };
 
+  const handleDownloadPDF = async () => {
+    if (!invoiceRef.current) return;
+    
+    setDownloading(true);
+    try {
+      const canvas = await html2canvas(invoiceRef.current, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+      });
+
+      const imgData = canvas.toDataURL("image/png");
+      const pdf = new jsPDF({
+        orientation: "portrait",
+        unit: "mm",
+        format: "a4",
+      });
+
+      const imgWidth = 210; // A4 width in mm
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+      pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight);
+      pdf.save(`lana-tutors-invoice-${invoiceData.bookingId || invoiceData.packageId}.pdf`);
+
+      toast({
+        title: "Success",
+        description: "Invoice downloaded successfully",
+      });
+    } catch (error) {
+      console.error("Error generating PDF:", error);
+      toast({
+        title: "Error",
+        description: "Failed to generate PDF",
+        variant: "destructive",
+      });
+    } finally {
+      setDownloading(false);
+    }
+  };
+
   const handleProceedToPayment = async () => {
     setProcessing(true);
     try {
@@ -208,19 +253,40 @@ export default function InvoicePreview() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-primary/5 to-background flex items-center justify-center p-4">
       <Card className="w-full max-w-2xl">
-        <CardHeader className="text-center border-b">
-          <div className="flex justify-center mb-4">
-            <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
-              <FileText className="w-8 h-8 text-primary" />
+        <div ref={invoiceRef}>
+          <CardHeader className="text-center border-b">
+            {/* Logo and Branding */}
+            <div className="flex flex-col items-center mb-6">
+              <img 
+                src={lanaLogo} 
+                alt="Lana Tutors" 
+                className="h-16 mb-4"
+              />
+              <div className="text-center space-y-1">
+                <h3 className="text-sm font-medium text-muted-foreground">LANA TUTORS</h3>
+                <p className="text-xs text-muted-foreground max-w-md">
+                  Expert tutoring for CBC, IGCSE, A-Levels & more. Empowering students to achieve their academic goals with personalized learning.
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  📧 info@lanatutors.africa | 📱 WhatsApp: +254 700 000 000
+                </p>
+              </div>
             </div>
-          </div>
-          <CardTitle className="text-2xl">Payment Invoice</CardTitle>
-          <CardDescription>
-            Review your booking details before completing payment
-          </CardDescription>
-        </CardHeader>
 
-        <CardContent className="space-y-6 pt-6">
+            <Separator className="mb-6" />
+
+            <div className="flex justify-center mb-4">
+              <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
+                <FileText className="w-8 h-8 text-primary" />
+              </div>
+            </div>
+            <CardTitle className="text-2xl">Payment Invoice</CardTitle>
+            <CardDescription>
+              Review your booking details before completing payment
+            </CardDescription>
+          </CardHeader>
+
+          <CardContent className="space-y-6 pt-6">
           {/* Booking Details */}
           {type === "booking" || type === "balance" ? (
             <>
@@ -376,33 +442,54 @@ export default function InvoicePreview() {
               You will be redirected to Pesapal to complete your payment securely.
             </p>
           </div>
+        </CardContent>
+        </div>
 
-          <div className="space-y-3">
-            <Button 
-              onClick={handleProceedToPayment}
-              disabled={processing}
-              className="w-full"
-              size="lg"
-            >
-              {processing ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Redirecting to Payment...
-                </>
-              ) : (
-                `Proceed to Pay ${invoiceData.currency} ${Math.round(invoiceData.amountToPay).toLocaleString()}`
-              )}
-            </Button>
+        <CardContent className="space-y-3 pb-6">
+          <Button 
+            onClick={handleDownloadPDF}
+            disabled={downloading}
+            variant="outline"
+            className="w-full"
+            size="lg"
+          >
+            {downloading ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Generating PDF...
+              </>
+            ) : (
+              <>
+                <Download className="mr-2 h-4 w-4" />
+                Download Invoice as PDF
+              </>
+            )}
+          </Button>
 
-            <Button
-              variant="outline"
-              onClick={() => navigate(-1)}
-              className="w-full"
-              disabled={processing}
-            >
-              Go Back
-            </Button>
-          </div>
+          <Button 
+            onClick={handleProceedToPayment}
+            disabled={processing}
+            className="w-full"
+            size="lg"
+          >
+            {processing ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Redirecting to Payment...
+              </>
+            ) : (
+              `Proceed to Pay ${invoiceData.currency} ${Math.round(invoiceData.amountToPay).toLocaleString()}`
+            )}
+          </Button>
+
+          <Button
+            variant="outline"
+            onClick={() => navigate(-1)}
+            className="w-full"
+            disabled={processing}
+          >
+            Go Back
+          </Button>
         </CardContent>
       </Card>
     </div>
