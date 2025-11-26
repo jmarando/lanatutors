@@ -22,15 +22,10 @@ serve(async (req) => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Fetch booking details
+    // Fetch booking details (no FK relationships used)
     const { data: booking, error: bookingError } = await supabase
       .from("bookings")
-      .select(`
-        *,
-        student:profiles!student_id(full_name, email),
-        tutor:tutor_profiles!tutor_id(email),
-        slot:tutor_availability!availability_slot_id(start_time, end_time)
-      `)
+      .select("*")
       .eq("id", bookingId)
       .single();
 
@@ -80,39 +75,58 @@ serve(async (req) => {
           }
         }
 
-        // Create Google Calendar event with Meet link
-        const startTime = new Date(booking.slot.start_time);
-        const endTime = new Date(booking.slot.end_time);
+    // Create Google Calendar event with Meet link
+    const { data: slot, error: slotError } = await supabase
+      .from("tutor_availability")
+      .select("start_time, end_time")
+      .eq("id", booking.availability_slot_id)
+      .single();
 
-        const calendarEvent = {
-          summary: `${booking.subject} - ${booking.student.full_name}`,
-          description: `Tutoring session for ${booking.subject}\nTutor: ${booking.tutor.email}\nStudent: ${booking.student.full_name}`,
-          start: {
-            dateTime: startTime.toISOString(),
-            timeZone: "Africa/Nairobi",
-          },
-          end: {
-            dateTime: endTime.toISOString(),
-            timeZone: "Africa/Nairobi",
-          },
-          attendees: [
-            { email: booking.student.email },
-            { email: booking.tutor.email },
-          ],
-          conferenceData: {
-            createRequest: {
-              requestId: `booking-${bookingId}`,
-              conferenceSolutionKey: { type: "hangoutsMeet" },
-            },
-          },
-          reminders: {
-            useDefault: false,
-            overrides: [
-              { method: "email", minutes: 1440 },
-              { method: "popup", minutes: 30 },
-            ],
-          },
-        };
+    if (slotError) throw slotError;
+
+    const startTime = new Date(slot.start_time);
+    const endTime = new Date(slot.end_time);
+
+    const { data: studentProfile } = await supabase
+      .from("profiles")
+      .select("full_name")
+      .eq("id", booking.student_id)
+      .maybeSingle();
+
+    const { data: tutorProfile } = await supabase
+      .from("tutor_profiles")
+      .select("email")
+      .eq("id", booking.tutor_id)
+      .maybeSingle();
+
+    const studentName = studentProfile?.full_name || "Student";
+    const tutorEmail = tutorProfile?.email || "";
+
+    const calendarEvent = {
+      summary: `${booking.subject} - ${studentName}`,
+      description: `Tutoring session for ${booking.subject}\nTutor: ${tutorEmail}\nStudent: ${studentName}`,
+      start: {
+        dateTime: startTime.toISOString(),
+        timeZone: "Africa/Nairobi",
+      },
+      end: {
+        dateTime: endTime.toISOString(),
+        timeZone: "Africa/Nairobi",
+      },
+      conferenceData: {
+        createRequest: {
+          requestId: `booking-${bookingId}`,
+          conferenceSolutionKey: { type: "hangoutsMeet" },
+        },
+      },
+      reminders: {
+        useDefault: false,
+        overrides: [
+          { method: "email", minutes: 1440 },
+          { method: "popup", minutes: 30 },
+        ],
+      },
+    };
 
         const calendarResponse = await fetch(
           "https://www.googleapis.com/calendar/v3/calendars/primary/events?conferenceDataVersion=1",

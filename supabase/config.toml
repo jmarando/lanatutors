@@ -68,3 +68,6 @@ verify_jwt = false
 
 [functions.approve-tutor-interview]
 verify_jwt = true
+
+[functions.get-payment-status]
+verify_jwt = false

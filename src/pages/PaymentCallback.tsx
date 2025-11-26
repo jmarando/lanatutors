@@ -31,49 +31,55 @@ export default function PaymentCallback() {
         // Poll for payment status for up to 30 seconds
         let attempts = 0;
         const maxAttempts = 15; // 15 attempts * 2 seconds = 30 seconds
-        
-        while (attempts < maxAttempts) {
-          const { data: payment, error: paymentError } = await supabase
-            .from("payments")
-            .select("reference_id, payment_type, status")
-            .eq("pesapal_order_tracking_id", orderTrackingId)
-            .single();
 
-          if (paymentError) {
-            console.error("Payment lookup error:", paymentError);
+        while (attempts < maxAttempts) {
+          // Prefer backend status check to avoid RLS / auth issues
+          const { data, error } = await supabase.functions.invoke("get-payment-status", {
+            body: { orderTrackingId },
+          });
+
+          if (error) {
+            console.error("Payment status function error:", error);
             attempts++;
-            await new Promise(resolve => setTimeout(resolve, 2000));
+            await new Promise((resolve) => setTimeout(resolve, 2000));
             continue;
           }
 
-          console.log("Payment found:", payment);
+          const payment = (data?.payment as { reference_id: string | null; payment_type: string | null; status: string | null } | null) ?? null;
+
+          if (!payment) {
+            attempts++;
+            await new Promise((resolve) => setTimeout(resolve, 2000));
+            continue;
+          }
+
+          console.log("Payment status from function:", payment);
 
           // If payment is completed, process accordingly
           if (payment.status === "completed") {
             // Handle package purchases with recurring slots
             if (payment.payment_type === "package_purchase" && payment.reference_id) {
-              // Call edge function to block recurring slots (if applicable)
               try {
                 await supabase.functions.invoke("block-recurring-slots", {
-                  body: { packagePurchaseId: payment.reference_id }
+                  body: { packagePurchaseId: payment.reference_id },
                 });
                 console.log("Recurring slots blocking initiated");
               } catch (error) {
                 console.error("Error blocking recurring slots:", error);
                 // Continue anyway - slots can be manually blocked later
               }
-              
+
               setStatus("success");
               return;
             }
-            
+
             // Handle booking payments
             if (payment.payment_type === "booking" && payment.reference_id) {
               setBookingId(payment.reference_id);
               setStatus("success");
               return;
             }
-            
+
             // Other payment types
             setStatus("success");
             return;
@@ -81,7 +87,7 @@ export default function PaymentCallback() {
 
           // If still pending, wait and retry
           attempts++;
-          await new Promise(resolve => setTimeout(resolve, 2000));
+          await new Promise((resolve) => setTimeout(resolve, 2000));
         }
 
         // If we get here, payment wasn't completed in time
