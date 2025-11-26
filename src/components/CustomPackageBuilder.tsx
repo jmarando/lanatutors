@@ -252,30 +252,8 @@ export const CustomPackageBuilder = ({
 
       if (paymentRecordError) throw paymentRecordError;
 
-      // Initiate payment via PesaPal
-      const { data: pesapalData, error: pesapalError } = await supabase.functions.invoke(
-        "initiate-pesapal-payment",
-        {
-          body: {
-            amount: amountToPay,
-            currency: "KES",
-            description: `Custom Package: ${totalSessions} sessions (${selectedSubjects.map(s => s.subject).join(', ')}) with ${tutorName}`,
-            callbackUrl: `${window.location.origin}/payment-callback`,
-            paymentType: "package_purchase",
-            referenceId: packagePurchase.id,
-            phoneNumber: currentUser.phone || "0000000000",
-          },
-        }
-      );
-
-      if (pesapalError) throw pesapalError;
-
-      if (pesapalData?.redirect_url) {
-        // Redirect to PesaPal payment page
-        window.location.href = pesapalData.redirect_url;
-      } else {
-        throw new Error("Failed to get payment URL");
-      }
+      // Redirect to invoice preview page instead of directly to Pesapal
+      window.location.href = `/invoice-preview?type=package&packageId=${packagePurchase.id}`;
     } catch (error: any) {
       console.error("Purchase error:", error);
       toast.error(error.message || "Failed to create package. Please try again.");

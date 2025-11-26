@@ -488,71 +488,12 @@ export const BookingCalendar = ({
         return;
       }
 
-      // For paid options (deposit, full, or new package), handle payment
-      const amountToPay = depositAmount;
+      // For paid options (deposit, full, or new package), redirect to invoice preview
+      const invoiceUrl = paymentOption === 'package'
+        ? `/invoice-preview?type=package&packageId=${packagePurchaseId}`
+        : `/invoice-preview?type=booking&bookingId=${booking.id}`;
       
-      if (paymentMethod === 'mpesa') {
-        // Initiate Pesapal payment
-        const description = paymentOption === 'package' 
-          ? `${selectedPackage?.name} - ${selectedPackage?.session_count} sessions`
-          : `${subject} tutoring session with ${tutorName}`;
-
-        const { data: paymentData, error: paymentError} = await supabase.functions.invoke(
-          "initiate-pesapal-payment",
-          {
-            body: {
-              amount: Math.round(amountToPay),
-              description,
-              paymentType: paymentOption === 'package' ? "package_purchase" : "booking",
-              referenceId: paymentOption === 'package' ? packagePurchaseId : booking.id,
-              callbackUrl: window.location.origin + '/payment-callback',
-              phoneNumber: phoneNumber,
-            },
-          }
-        );
-
-        if (paymentError) {
-          console.error("Payment initiation error:", paymentError);
-          
-          // Clean up booking and package if payment fails
-          await supabase.from("bookings").delete().eq("id", booking.id);
-          if (packagePurchaseId) {
-            await supabase.from("package_purchases").delete().eq("id", packagePurchaseId);
-          }
-
-          // Check for specific Pesapal test limit error
-          const errorMessage = paymentError.message || '';
-          if (errorMessage.includes('maximum_amount_limit_exceeded') || errorMessage.includes('test transactions limit')) {
-            throw new Error('Pesapal test transaction limit reached. Please contact support or try again later.');
-          }
-          
-          throw new Error(errorMessage || 'Payment initialization failed');
-        }
-
-        // Check if we got the data back with error
-        if (paymentData?.error) {
-          await supabase.from("bookings").delete().eq("id", booking.id);
-          if (packagePurchaseId) {
-            await supabase.from("package_purchases").delete().eq("id", packagePurchaseId);
-          }
-
-          if (paymentData.code === 'maximum_amount_limit_exceeded') {
-            throw new Error('Pesapal test transaction limit reached. Please contact support or try again later.');
-          }
-          
-          throw new Error(paymentData.error);
-        }
-
-        // Redirect to Pesapal payment page
-        if (paymentData?.redirect_url) {
-          window.location.href = paymentData.redirect_url;
-        } else {
-          throw new Error('No redirect URL received from payment gateway');
-        }
-      } else {
-        // Handle Stripe payment
-        await handleStripePayment(booking.id, depositAmount, balanceDue);
-      }
+      window.location.href = invoiceUrl;
     } catch (error: any) {
       console.error("Error booking slot:", error);
       toast({
