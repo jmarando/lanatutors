@@ -3,13 +3,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Video, ExternalLink, Calendar } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Video, ExternalLink, Calendar, DollarSign } from "lucide-react";
+import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 
 export function StudentClassesTab() {
   const { toast } = useToast();
+  const navigate = useNavigate();
   const [upcomingBookings, setUpcomingBookings] = useState<any[]>([]);
   const [pastBookings, setPastBookings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -128,6 +129,16 @@ export function StudentClassesTab() {
                         </div>
                         
                         <div className="flex flex-col sm:flex-row gap-2">
+                          {booking.balance_due && booking.balance_due > 0 && (
+                            <Button
+                              variant="outline"
+                              onClick={() => navigate(`/pay-balance?bookingId=${booking.id}`)}
+                              className="w-full sm:w-auto"
+                            >
+                              <DollarSign className="w-4 h-4 mr-2" />
+                              Pay Balance
+                            </Button>
+                          )}
                           {booking.meeting_link && (
                             <Button
                               onClick={() => window.open(booking.meeting_link, '_blank')}
