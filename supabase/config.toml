@@ -18,9 +18,6 @@ verify_jwt = false
 [functions.send-booking-email]
 verify_jwt = false
 
-[functions.create-stripe-checkout]
-verify_jwt = true
-
 [functions.generate-session-summary]
 verify_jwt = true
 
