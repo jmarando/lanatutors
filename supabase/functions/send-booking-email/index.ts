@@ -26,22 +26,37 @@ const handler = async (req: Request): Promise<Response> => {
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
+    // Fetch core booking record
     const { data: booking, error: bookingError } = await supabase
       .from('bookings')
-      .select(`
-        *,
-        student:profiles!student_id(full_name, email),
-        tutor:tutor_profiles!tutor_id(email),
-        slot:tutor_availability!availability_slot_id(start_time, end_time)
-      `)
+      .select('*')
       .eq('id', bookingId)
       .single();
 
-    if (bookingError) throw bookingError;
+    if (bookingError || !booking) throw bookingError || new Error('Booking not found');
+
+    // Fetch related records individually (no FK relationships required)
+    const { data: studentProfile } = await supabase
+      .from('profiles')
+      .select('full_name, email')
+      .eq('id', booking.student_id)
+      .maybeSingle();
+
+    const { data: tutorProfile } = await supabase
+      .from('tutor_profiles')
+      .select('email')
+      .eq('user_id', booking.tutor_id)
+      .maybeSingle();
+
+    const { data: slot } = await supabase
+      .from('tutor_availability')
+      .select('start_time, end_time')
+      .eq('id', booking.availability_slot_id)
+      .maybeSingle();
 
     const finalMeetingLink = meetingLink || booking.meeting_link || 'Will be shared soon';
 
-    const startTime = new Date(booking.slot.start_time);
+    const startTime = slot ? new Date(slot.start_time) : new Date();
     const formattedDate = startTime.toLocaleDateString('en-US', {
       weekday: 'long',
       year: 'numeric',
@@ -58,7 +73,7 @@ const handler = async (req: Request): Promise<Response> => {
     if (recipientType === 'student' || recipientType === 'both') {
       const studentEmailHtml = `
         <h1>Booking Confirmation</h1>
-        <p>Dear ${booking.student.full_name},</p>
+        <p>Dear ${studentProfile?.full_name || 'Parent'},</p>
         <p>Your tutoring session has been confirmed!</p>
         <h2>Booking Details:</h2>
         <ul>
@@ -66,7 +81,7 @@ const handler = async (req: Request): Promise<Response> => {
           <li><strong>Date:</strong> ${formattedDate}</li>
           <li><strong>Time:</strong> ${formattedTime} EAT</li>
           <li><strong>Type:</strong> ${booking.class_type}</li>
-          <li><strong>Amount:</strong> ${booking.currency} ${booking.amount}</li>
+          <li><strong>Amount:</strong> ${booking.currency || 'KES'} ${booking.amount}</li>
           <li><strong>Meeting Link:</strong> <a href="${finalMeetingLink}">${finalMeetingLink}</a></li>
         </ul>
         <p>Click the meeting link above to join your session at the scheduled time.</p>
@@ -81,7 +96,7 @@ const handler = async (req: Request): Promise<Response> => {
         },
         body: JSON.stringify({
           from: 'LANA Tutors <info@lanatutors.africa>',
-          to: [booking.student.email],
+          to: [studentProfile?.email || ''],
           subject: 'Booking Confirmation - LANA Tutors',
           html: studentEmailHtml,
         }),
@@ -96,7 +111,7 @@ const handler = async (req: Request): Promise<Response> => {
         <p>You have a new tutoring session booked!</p>
         <h2>Session Details:</h2>
         <ul>
-          <li><strong>Student:</strong> ${booking.student.full_name}</li>
+          <li><strong>Student:</strong> ${studentProfile?.full_name || 'Student'}</li>
           <li><strong>Subject:</strong> ${booking.subject}</li>
           <li><strong>Date:</strong> ${formattedDate}</li>
           <li><strong>Time:</strong> ${formattedTime} EAT</li>
@@ -115,7 +130,7 @@ const handler = async (req: Request): Promise<Response> => {
         },
         body: JSON.stringify({
           from: 'LANA Tutors <info@lanatutors.africa>',
-          to: [booking.tutor.email],
+          to: [tutorProfile?.email || ''],
           subject: 'New Booking - LANA Tutors',
           html: tutorEmailHtml,
         }),
