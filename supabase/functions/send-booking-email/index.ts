@@ -11,6 +11,7 @@ const corsHeaders = {
 interface BookingEmailRequest {
   bookingId: string;
   meetingLink?: string;
+  classroomLink?: string;
   recipientType?: 'student' | 'tutor' | 'both';
 }
 
@@ -20,7 +21,7 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    const { bookingId, meetingLink, recipientType = 'both' }: BookingEmailRequest = await req.json();
+    const { bookingId, meetingLink, classroomLink, recipientType = 'both' }: BookingEmailRequest = await req.json();
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
@@ -214,6 +215,19 @@ const handler = async (req: Request): Promise<Response> => {
                           <td align="center" style="padding-top: 12px; font-size: 13px; color: #666666;">Click the button above to join your session at the scheduled time</td>
                         </tr>
                       </table>
+                      ${classroomLink ? `
+                      <!-- Google Classroom -->
+                      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin: 24px 0;">
+                        <tr>
+                          <td align="center">
+                            <a href="${classroomLink}" style="display: inline-block; background-color: #ffffff; color: #1967D2; text-decoration: none; padding: 12px 32px; border-radius: 8px; font-size: 14px; font-weight: 600; border: 2px solid #1967D2;">📚 Access Google Classroom</a>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td align="center" style="padding-top: 8px; font-size: 13px; color: #666666;">Your tutor will share materials, assignments, and track your progress here</td>
+                        </tr>
+                      </table>
+                      ` : ''}
                       ` : `
                       <!-- Physical Location -->
                       <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color: #EDE9FE; border-radius: 12px; margin: 24px 0;">
@@ -387,6 +401,19 @@ const handler = async (req: Request): Promise<Response> => {
                           <td align="center" style="padding-top: 12px; font-size: 13px; color: #666666;">Use this link to start the session at the scheduled time</td>
                         </tr>
                       </table>
+                      ${classroomLink ? `
+                      <!-- Google Classroom -->
+                      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin: 24px 0;">
+                        <tr>
+                          <td align="center">
+                            <a href="${classroomLink}" style="display: inline-block; background-color: #ffffff; color: #1967D2; text-decoration: none; padding: 12px 32px; border-radius: 8px; font-size: 14px; font-weight: 600; border: 2px solid #1967D2;">📚 Manage Classroom</a>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td align="center" style="padding-top: 8px; font-size: 13px; color: #666666;">Share materials, create assignments, and track student progress</td>
+                        </tr>
+                      </table>
+                      ` : ''}
                       ` : `
                       <!-- Physical Session Info -->
                       <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color: #DBEAFE; border-radius: 12px; margin: 24px 0;">
