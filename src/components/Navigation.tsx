@@ -40,7 +40,7 @@ const Navigation = () => {
 
   const navLinks = [
     { to: "/tutors", label: "Find Tutors", singleLine: true },
-    { to: "/holiday-packages", label: "Holiday Revision Packages", singleLine: true },
+    { to: "/holiday-packages", label: "Revision Packages", singleLine: true },
     { to: "/for-students", label: "Student Hub", singleLine: true },
     { to: "/for-tutors", label: "Tutor Hub", singleLine: true },
     { to: "/about", label: "About Us", singleLine: true },
@@ -61,8 +61,8 @@ const Navigation = () => {
         </Link>
 
         {/* Desktop Navigation */}
-        <div className="hidden lg:flex items-center gap-6">
-          <div className="flex items-center gap-6 whitespace-nowrap">
+        <div className="hidden lg:flex items-center gap-4 xl:gap-6">
+          <div className="flex items-center gap-4 xl:gap-6 whitespace-nowrap">
             {navLinks.map((link) => (
               <Link
                 key={link.to}
@@ -84,14 +84,10 @@ const Navigation = () => {
               </Link>
             )}
           </div>
-          <div className="flex items-center gap-4 whitespace-nowrap">
-            <a href="https://wa.me/254725252542?text=Hello%20Lana%20Tutors!%20I%20would%20like%20to%20inquire%20about%20your%20tutoring%20services." target="_blank" rel="noopener noreferrer" className="group flex items-center gap-2 text-sm font-medium hover:text-primary transition-colors px-3 py-2 rounded-md hover:bg-primary/5 whitespace-nowrap">
-              <MessageCircle className="w-4 h-4 transition-transform group-hover:scale-110" />
-              <span>Chat on WhatsApp</span>
-            </a>
+          <div className="flex items-center gap-3 whitespace-nowrap">
             {user ? (
               <>
-                <span className="text-sm text-muted-foreground max-w-[150px] truncate">{user.email}</span>
+                <span className="text-sm text-muted-foreground max-w-[120px] truncate">{user.email}</span>
                 <Button variant="outline" size="sm" onClick={handleSignOut} className="hover-scale whitespace-nowrap">
                   <LogOut className="w-4 h-4 mr-2" />
                   Sign Out
@@ -107,6 +103,10 @@ const Navigation = () => {
                 </Link>
               </>
             )}
+            <a href="https://wa.me/254725252542?text=Hello%20Lana%20Tutors!%20I%20would%20like%20to%20inquire%20about%20your%20tutoring%20services." target="_blank" rel="noopener noreferrer" className="group flex items-center gap-1.5 text-sm font-medium hover:text-primary transition-colors px-2.5 py-2 rounded-md hover:bg-primary/5 whitespace-nowrap" title="Chat on WhatsApp">
+              <MessageCircle className="w-4 h-4 transition-transform group-hover:scale-110" />
+              <span className="hidden xl:inline">WhatsApp</span>
+            </a>
           </div>
         </div>
 
