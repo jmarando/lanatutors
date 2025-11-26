@@ -778,25 +778,31 @@ const TutorProfile = () => {
                   {/* Booking Options */}
                   <div className="space-y-4">
                     {/* Direct Session Booking */}
-                    <Button 
-                      className="w-full group hover:shadow-lg transition-all h-auto py-5"
-                      size="lg"
-                      onClick={() => handleBookingTypeSelect('single')}
-                    >
-                      <div className="flex flex-col items-center justify-center w-full gap-2">
-                        <span className="flex items-center gap-2 text-base font-semibold">
-                          <BookOpen className="w-5 h-5 shrink-0" />
-                          <span>Book a Session</span>
-                        </span>
-                        <span className="font-bold text-base">
-                          From KES {currentRate.toLocaleString()}/hr
-                        </span>
-                      </div>
-                    </Button>
+                    <div className="space-y-3">
+                      <Button 
+                        className="w-full group hover:shadow-lg transition-all h-auto py-5"
+                        size="lg"
+                        onClick={() => handleBookingTypeSelect('single')}
+                      >
+                        <div className="flex flex-col items-center justify-center w-full gap-2">
+                          <span className="flex items-center gap-2 text-base font-semibold">
+                            <BookOpen className="w-5 h-5 shrink-0" />
+                            <span>Book a Session</span>
+                          </span>
+                          <span className="font-bold text-base">
+                            From KES {currentRate.toLocaleString()}/hr
+                          </span>
+                        </div>
+                      </Button>
+                      <p className="text-xs text-center text-muted-foreground px-2">
+                        Choose date & time, select single (1hr) or double (2hrs) session, pick your curriculum & level, then pay and get instant confirmation
+                      </p>
+                    </div>
 
                     <Separator className="my-5" />
 
                     {/* Custom Package Builder */}
+                    <div className="space-y-3">
                       <Button 
                         variant="outline"
                         className="w-full bg-primary/5 border-primary/30 hover:bg-primary/10 hover:border-primary h-auto py-5 text-foreground whitespace-normal text-wrap"
@@ -823,8 +829,13 @@ const TutorProfile = () => {
                           <span className="text-sm text-muted-foreground">Choose sessions & subject yourself</span>
                         </div>
                       </Button>
+                      <p className="text-xs text-center text-muted-foreground px-2">
+                        Build your own multi-session package - select number of sessions (2+ gets discounts), pick subject & schedule, pay once and use sessions flexibly over 90 days
+                      </p>
+                    </div>
 
                     {/* Learning Plan Request */}
+                    <div className="space-y-3">
                       <Button 
                         variant="outline"
                         className="w-full bg-accent/5 border-accent/30 hover:bg-accent/10 hover:border-accent h-auto py-5 text-foreground whitespace-normal text-wrap"
@@ -851,6 +862,10 @@ const TutorProfile = () => {
                           <span className="text-sm text-muted-foreground">Let {tutor.name} design a plan for you</span>
                         </div>
                       </Button>
+                      <p className="text-xs text-center text-muted-foreground px-2">
+                        Share your child's needs & goals, our team reviews and creates a personalized learning plan with recommended subjects, session count, and pricing tailored for you
+                      </p>
+                    </div>
 
                   </div>
                 </CardContent>
