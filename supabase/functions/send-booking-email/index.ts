@@ -38,9 +38,13 @@ const handler = async (req: Request): Promise<Response> => {
     // Fetch related records individually (no FK relationships required)
     const { data: studentProfile } = await supabase
       .from('profiles')
-      .select('full_name, email')
+      .select('full_name')
       .eq('id', booking.student_id)
       .maybeSingle();
+
+    // Get student email from auth.users
+    const { data: studentAuth } = await supabase.auth.admin.getUserById(booking.student_id);
+    const studentEmail = studentAuth?.user?.email;
 
     const { data: tutorProfile } = await supabase
       .from('tutor_profiles')
@@ -71,6 +75,8 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Send to student
     if (recipientType === 'student' || recipientType === 'both') {
+      console.log(`Sending email to student: ${studentEmail}`);
+      
       const studentEmailHtml = `
         <h1>Booking Confirmation</h1>
         <p>Dear ${studentProfile?.full_name || 'Parent'},</p>
@@ -88,7 +94,7 @@ const handler = async (req: Request): Promise<Response> => {
         <p>Best regards,<br>LANA Tutors Team</p>
       `;
 
-      await fetch("https://api.resend.com/emails", {
+      const studentEmailResponse = await fetch("https://api.resend.com/emails", {
         method: "POST",
         headers: {
           "Authorization": `Bearer ${RESEND_API_KEY}`,
@@ -96,15 +102,20 @@ const handler = async (req: Request): Promise<Response> => {
         },
         body: JSON.stringify({
           from: 'LANA Tutors <info@lanatutors.africa>',
-          to: [studentProfile?.email || ''],
+          to: [studentEmail || ''],
           subject: 'Booking Confirmation - LANA Tutors',
           html: studentEmailHtml,
         }),
       });
+
+      const studentEmailResult = await studentEmailResponse.json();
+      console.log('Student email result:', studentEmailResult);
     }
 
     // Send to tutor
     if (recipientType === 'tutor' || recipientType === 'both') {
+      console.log(`Sending email to tutor: ${tutorProfile?.email}`);
+      
       const tutorEmailHtml = `
         <h1>New Booking Notification</h1>
         <p>Dear Tutor,</p>
@@ -122,7 +133,7 @@ const handler = async (req: Request): Promise<Response> => {
         <p>Best regards,<br>LANA Tutors Team</p>
       `;
 
-      await fetch("https://api.resend.com/emails", {
+      const tutorEmailResponse = await fetch("https://api.resend.com/emails", {
         method: "POST",
         headers: {
           "Authorization": `Bearer ${RESEND_API_KEY}`,
@@ -135,6 +146,9 @@ const handler = async (req: Request): Promise<Response> => {
           html: tutorEmailHtml,
         }),
       });
+
+      const tutorEmailResult = await tutorEmailResponse.json();
+      console.log('Tutor email result:', tutorEmailResult);
     }
 
     return new Response(
