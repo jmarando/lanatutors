@@ -9,8 +9,21 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Switch } from "@/components/ui/switch";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import { toast } from "sonner";
-import { Loader2, Upload, X } from "lucide-react";
+import { Loader2, Upload, X, Plus, Trash2, AlertCircle } from "lucide-react";
+import { getCurriculums, getLevelsForCurriculum, getSubjectsForCurriculumLevel } from "@/utils/curriculumData";
+import { NAIROBI_LOCATIONS } from "@/utils/locationData";
+import { getRateGuidance } from "@/utils/rateGuidance";
+
+const toNumber = (v: unknown): number => {
+  if (typeof v === 'number') return v;
+  if (v == null) return 0;
+  const cleaned = String(v).replace(/[^0-9.]/g, '');
+  const n = parseFloat(cleaned);
+  return isNaN(n) ? 0 : n;
+};
 
 const TutorProfileEdit = () => {
   const navigate = useNavigate();
@@ -20,33 +33,63 @@ const TutorProfileEdit = () => {
   const [tutorId, setTutorId] = useState<string | null>(null);
   const [photoFile, setPhotoFile] = useState<File | null>(null);
   const [photoPreview, setPhotoPreview] = useState<string | null>(null);
-  
+
+  const [curriculumLevels, setCurriculumLevels] = useState<{
+    [key: string]: string[];
+  }>({});
+  const [selectedCurriculumForSubjects, setSelectedCurriculumForSubjects] = useState("");
+  const [selectedLevelForSubjects, setSelectedLevelForSubjects] = useState("");
+
   const [formData, setFormData] = useState({
     bio: "",
     experienceYears: "",
     currentInstitution: "",
     displayInstitution: true,
     qualifications: "",
-    standardRate: "",
-    advancedRate: "",
+    curriculumLevelRates: {} as { [key: string]: string },
+    curriculum: [] as string[],
+    subjectsWithContext: [] as Array<{
+      curriculum: string;
+      level: string;
+      subject: string;
+    }>,
     teachingMode: [] as string[],
+    teachingLocations: [] as string[],
     gender: "",
-    servicesOffered: [] as string[],
-    specializations: "",
-    teachingLocation: "",
     whyStudentsLove: "",
     avatarUrl: "",
+    educationHistory: [] as Array<{
+      institution: string;
+      degree: string;
+      field: string;
+      graduationYear: string;
+    }>,
+    teachingHistory: [] as Array<{
+      institution: string;
+      role: string;
+      years: string;
+    }>
   });
 
+  const curriculums = getCurriculums();
+  const availableLevelsForSubjects = selectedCurriculumForSubjects 
+    ? getLevelsForCurriculum(selectedCurriculumForSubjects).map(l => l.value)
+    : [];
+  const availableSubjects = selectedCurriculumForSubjects && selectedLevelForSubjects 
+    ? getSubjectsForCurriculumLevel(selectedCurriculumForSubjects, selectedLevelForSubjects) 
+    : [];
+
+  const derivedSubjects = Array.from(new Set(formData.subjectsWithContext.map(s => s.subject)));
+
   useEffect(() => {
-    const checkAuth = async () => {
+    const loadProfile = async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) {
         navigate("/login");
         return;
       }
       setUserId(session.user.id);
-      
+
       // Load tutor profile
       const { data: tutorProfile } = await supabase
         .from("tutor_profiles")
@@ -68,8 +111,54 @@ const TutorProfileEdit = () => {
         .select("*")
         .eq("tutor_id", tutorProfile.id);
 
-      const standardTier = pricingTiers?.find(t => t.tier_name === "Standard");
-      const advancedTier = pricingTiers?.find(t => t.tier_name === "Advanced");
+      // Load tier assignments
+      const { data: tierAssignments } = await supabase
+        .from("curriculum_level_tier_assignments")
+        .select("curriculum, level, tier_id")
+        .eq("tutor_id", tutorProfile.id);
+
+      // Reconstruct data structures
+      const reconstructedCurriculumLevels: { [key: string]: string[] } = {};
+      const reconstructedSubjectsWithContext: Array<{
+        curriculum: string;
+        level: string;
+        subject: string;
+      }> = [];
+      const reconstructedCurriculumLevelRates: { [key: string]: string } = {};
+
+      if (tierAssignments && pricingTiers) {
+        tierAssignments.forEach(assignment => {
+          if (!reconstructedCurriculumLevels[assignment.curriculum]) {
+            reconstructedCurriculumLevels[assignment.curriculum] = [];
+          }
+          if (!reconstructedCurriculumLevels[assignment.curriculum].includes(assignment.level)) {
+            reconstructedCurriculumLevels[assignment.curriculum].push(assignment.level);
+          }
+
+          const key = `${assignment.curriculum}-${assignment.level}`;
+          const tierForThisCombo = pricingTiers.find(t => t.id === assignment.tier_id);
+          if (tierForThisCombo) {
+            reconstructedCurriculumLevelRates[key] = Math.round(Number(tierForThisCombo.online_hourly_rate)).toString();
+          }
+        });
+      }
+
+      // Reconstruct subjects
+      if (tutorProfile.subjects && Array.isArray(tutorProfile.subjects)) {
+        tutorProfile.subjects.forEach((subject: string) => {
+          Object.entries(reconstructedCurriculumLevels).forEach(([curriculum, levels]) => {
+            levels.forEach(level => {
+              reconstructedSubjectsWithContext.push({
+                curriculum,
+                level,
+                subject
+              });
+            });
+          });
+        });
+      }
+
+      setCurriculumLevels(reconstructedCurriculumLevels);
 
       // Load user profile for avatar
       const { data: userProfile } = await supabase
@@ -83,24 +172,34 @@ const TutorProfileEdit = () => {
         experienceYears: tutorProfile.experience_years?.toString() || "",
         currentInstitution: tutorProfile.current_institution || "",
         displayInstitution: tutorProfile.display_institution ?? true,
-        qualifications: Array.isArray(tutorProfile.qualifications) 
+        qualifications: Array.isArray(tutorProfile.qualifications)
           ? tutorProfile.qualifications.join('\n')
           : "",
-        standardRate: standardTier?.online_hourly_rate 
-          ? Math.round(Number(standardTier.online_hourly_rate)).toString()
-          : "",
-        advancedRate: advancedTier?.online_hourly_rate 
-          ? Math.round(Number(advancedTier.online_hourly_rate)).toString()
-          : "",
+        curriculumLevelRates: reconstructedCurriculumLevelRates,
+        curriculum: tutorProfile.curriculum || [],
+        subjectsWithContext: reconstructedSubjectsWithContext,
         teachingMode: tutorProfile.teaching_mode || [],
+        teachingLocations: tutorProfile.teaching_location?.split(', ') || [],
         gender: tutorProfile.gender || "",
-        servicesOffered: tutorProfile.services_offered || [],
-        specializations: tutorProfile.specializations || "",
-        teachingLocation: tutorProfile.teaching_location || "",
         whyStudentsLove: Array.isArray(tutorProfile.why_students_love)
           ? tutorProfile.why_students_love.join('\n')
           : "",
         avatarUrl: userProfile?.avatar_url || "",
+        educationHistory: Array.isArray(tutorProfile.education) && tutorProfile.education.length > 0
+          ? tutorProfile.education.map((exp: any) => ({
+              institution: exp.institution || "",
+              degree: exp.degree || "",
+              field: exp.field || "",
+              graduationYear: exp.graduationYear || ""
+            }))
+          : [],
+        teachingHistory: Array.isArray(tutorProfile.teaching_experience) && tutorProfile.teaching_experience.length > 0
+          ? tutorProfile.teaching_experience.map((exp: any) => ({
+              institution: exp.institution || "",
+              role: exp.role || "",
+              years: exp.years || ""
+            }))
+          : [],
       });
 
       if (userProfile?.avatar_url) {
@@ -110,13 +209,8 @@ const TutorProfileEdit = () => {
       setLoading(false);
     };
 
-    checkAuth();
+    loadProfile();
   }, [navigate]);
-
-  const toNumber = (value: string): number => {
-    const cleaned = value.replace(/[^\d]/g, '');
-    return cleaned ? parseInt(cleaned, 10) : 0;
-  };
 
   const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -130,6 +224,77 @@ const TutorProfileEdit = () => {
     }
   };
 
+  const handleCurriculumToggle = (curriculum: string, checked: boolean) => {
+    if (checked) {
+      setFormData(prev => ({
+        ...prev,
+        curriculum: [...prev.curriculum, curriculum]
+      }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        curriculum: prev.curriculum.filter(c => c !== curriculum)
+      }));
+      const newLevels = { ...curriculumLevels };
+      delete newLevels[curriculum];
+      setCurriculumLevels(newLevels);
+      setFormData(prev => ({
+        ...prev,
+        subjectsWithContext: prev.subjectsWithContext.filter(s => s.curriculum !== curriculum)
+      }));
+    }
+  };
+
+  const handleLevelToggle = (curriculum: string, level: string, checked: boolean) => {
+    const currentLevels = curriculumLevels[curriculum] || [];
+    if (checked) {
+      setCurriculumLevels({
+        ...curriculumLevels,
+        [curriculum]: [...currentLevels, level]
+      });
+    } else {
+      setCurriculumLevels({
+        ...curriculumLevels,
+        [curriculum]: currentLevels.filter(l => l !== level)
+      });
+      setFormData(prev => ({
+        ...prev,
+        subjectsWithContext: prev.subjectsWithContext.filter(
+          s => !(s.curriculum === curriculum && s.level === level)
+        )
+      }));
+    }
+  };
+
+  const handleSubjectToggle = (subject: string, checked: boolean) => {
+    if (!selectedCurriculumForSubjects || !selectedLevelForSubjects) return;
+
+    if (checked) {
+      setFormData(prev => ({
+        ...prev,
+        subjectsWithContext: [
+          ...prev.subjectsWithContext,
+          {
+            curriculum: selectedCurriculumForSubjects,
+            level: selectedLevelForSubjects,
+            subject
+          }
+        ]
+      }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        subjectsWithContext: prev.subjectsWithContext.filter(
+          s => !(
+            s.curriculum === selectedCurriculumForSubjects &&
+            s.level === selectedLevelForSubjects &&
+            s.subject === subject
+          )
+        )
+      }));
+    }
+  };
+
   const handleToggleTeachingMode = (mode: string) => {
     setFormData(prev => ({
       ...prev,
@@ -139,17 +304,95 @@ const TutorProfileEdit = () => {
     }));
   };
 
-  const handleToggleService = (service: string) => {
+  const handleToggleLocation = (location: string) => {
     setFormData(prev => ({
       ...prev,
-      servicesOffered: prev.servicesOffered.includes(service)
-        ? prev.servicesOffered.filter(s => s !== service)
-        : [...prev.servicesOffered, service]
+      teachingLocations: prev.teachingLocations.includes(location)
+        ? prev.teachingLocations.filter(l => l !== location)
+        : [...prev.teachingLocations, location]
+    }));
+  };
+
+  const addEducationEntry = () => {
+    setFormData(prev => ({
+      ...prev,
+      educationHistory: [
+        ...prev.educationHistory,
+        { institution: "", degree: "", field: "", graduationYear: "" }
+      ]
+    }));
+  };
+
+  const removeEducationEntry = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      educationHistory: prev.educationHistory.filter((_, i) => i !== index)
+    }));
+  };
+
+  const updateEducationEntry = (index: number, field: string, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      educationHistory: prev.educationHistory.map((entry, i) =>
+        i === index ? { ...entry, [field]: value } : entry
+      )
+    }));
+  };
+
+  const addTeachingEntry = () => {
+    setFormData(prev => ({
+      ...prev,
+      teachingHistory: [
+        ...prev.teachingHistory,
+        { institution: "", role: "", years: "" }
+      ]
+    }));
+  };
+
+  const removeTeachingEntry = (index: number) => {
+    setFormData(prev => ({
+      ...prev,
+      teachingHistory: prev.teachingHistory.filter((_, i) => i !== index)
+    }));
+  };
+
+  const updateTeachingEntry = (index: number, field: string, value: string) => {
+    setFormData(prev => ({
+      ...prev,
+      teachingHistory: prev.teachingHistory.map((entry, i) =>
+        i === index ? { ...entry, [field]: value } : entry
+      )
     }));
   };
 
   const handleSave = async () => {
     if (!tutorId || !userId) return;
+
+    // Validation
+    if (!formData.bio?.trim()) {
+      toast.error("Please provide a bio");
+      return;
+    }
+    if (formData.curriculum.length === 0) {
+      toast.error("Please select at least one curriculum");
+      return;
+    }
+    if (Object.keys(curriculumLevels).length === 0) {
+      toast.error("Please select at least one level for your curricula");
+      return;
+    }
+    if (derivedSubjects.length === 0) {
+      toast.error("Please select at least one subject");
+      return;
+    }
+    if (formData.teachingMode.length === 0) {
+      toast.error("Please select at least one teaching mode");
+      return;
+    }
+    if (Object.keys(formData.curriculumLevelRates).length === 0) {
+      toast.error("Please set rates for your curriculum-level combinations");
+      return;
+    }
 
     setSaving(true);
     try {
@@ -159,7 +402,7 @@ const TutorProfileEdit = () => {
       if (photoFile) {
         const fileExt = photoFile.name.split('.').pop();
         const fileName = `${userId}-${Date.now()}.${fileExt}`;
-        const { error: uploadError, data } = await supabase.storage
+        const { error: uploadError } = await supabase.storage
           .from('avatars')
           .upload(fileName, photoFile, { upsert: true });
 
@@ -171,7 +414,6 @@ const TutorProfileEdit = () => {
 
         avatarUrl = publicUrl;
 
-        // Update profile avatar
         await supabase
           .from("profiles")
           .update({ avatar_url: avatarUrl })
@@ -190,56 +432,85 @@ const TutorProfileEdit = () => {
             .split('\n')
             .map(q => q.trim())
             .filter(q => q.length > 0),
+          curriculum: formData.curriculum,
+          subjects: derivedSubjects,
           teaching_mode: formData.teachingMode,
+          teaching_location: formData.teachingLocations.join(', '),
           gender: formData.gender,
-          services_offered: formData.servicesOffered,
-          specializations: formData.specializations,
-          teaching_location: formData.teachingLocation,
           why_students_love: formData.whyStudentsLove
             .split('\n')
             .map(w => w.trim())
             .filter(w => w.length > 0),
+          education: formData.educationHistory.filter(e => e.institution && e.degree),
+          teaching_experience: formData.teachingHistory.filter(t => t.institution && t.role),
           updated_at: new Date().toISOString(),
         })
         .eq("id", tutorId);
 
       if (profileError) throw profileError;
 
-      // Update pricing tiers
-      const { data: existingTiers } = await supabase
-        .from("tutor_pricing_tiers")
-        .select("*")
+      // Delete existing pricing tiers and tier assignments
+      await supabase
+        .from("curriculum_level_tier_assignments")
+        .delete()
         .eq("tutor_id", tutorId);
 
-      const standardTier = existingTiers?.find(t => t.tier_name === "Standard");
-      const advancedTier = existingTiers?.find(t => t.tier_name === "Advanced");
+      await supabase
+        .from("tutor_pricing_tiers")
+        .delete()
+        .eq("tutor_id", tutorId);
 
-      if (standardTier && formData.standardRate) {
-        await supabase
+      // Create new pricing tiers and assignments
+      const tierMap = new Map<string, string>();
+
+      for (const [key, rateStr] of Object.entries(formData.curriculumLevelRates)) {
+        const rate = toNumber(rateStr);
+        if (rate <= 0) continue;
+
+        const tierName = `${key}-tier`;
+        const { data: newTier, error: tierError } = await supabase
           .from("tutor_pricing_tiers")
-          .update({
-            online_hourly_rate: toNumber(formData.standardRate),
-            updated_at: new Date().toISOString(),
+          .insert({
+            tutor_id: tutorId,
+            tier_name: tierName,
+            online_hourly_rate: rate,
           })
-          .eq("id", standardTier.id);
+          .select("id")
+          .single();
+
+        if (tierError) throw tierError;
+        tierMap.set(key, newTier.id);
       }
 
-      if (advancedTier && formData.advancedRate) {
-        await supabase
-          .from("tutor_pricing_tiers")
-          .update({
-            online_hourly_rate: toNumber(formData.advancedRate),
-            updated_at: new Date().toISOString(),
-          })
-          .eq("id", advancedTier.id);
+      // Create tier assignments
+      for (const [curriculum, levels] of Object.entries(curriculumLevels)) {
+        for (const level of levels) {
+          const key = `${curriculum}-${level}`;
+          const tierId = tierMap.get(key);
+          if (!tierId) continue;
+
+          await supabase
+            .from("curriculum_level_tier_assignments")
+            .insert({
+              tutor_id: tutorId,
+              curriculum,
+              level,
+              tier_id: tierId,
+            });
+        }
       }
 
-      // Update hourly_rate in tutor_profiles (use standard rate as base)
+      // Calculate average rate for base hourly_rate field
+      const rates = Object.values(formData.curriculumLevelRates)
+        .map(r => toNumber(r))
+        .filter(r => r > 0);
+      const avgRate = rates.length > 0
+        ? rates.reduce((sum, r) => sum + r, 0) / rates.length
+        : 0;
+
       await supabase
         .from("tutor_profiles")
-        .update({
-          hourly_rate: toNumber(formData.standardRate),
-        })
+        .update({ hourly_rate: avgRate })
         .eq("id", tutorId);
 
       toast.success("Profile updated successfully!");
@@ -270,10 +541,11 @@ const TutorProfileEdit = () => {
       </div>
 
       <Tabs defaultValue="about" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-5">
+        <TabsList className="grid w-full grid-cols-6">
           <TabsTrigger value="about">About</TabsTrigger>
+          <TabsTrigger value="curriculum">Curriculum</TabsTrigger>
           <TabsTrigger value="rates">Rates</TabsTrigger>
-          <TabsTrigger value="qualifications">Qualifications</TabsTrigger>
+          <TabsTrigger value="education">Education</TabsTrigger>
           <TabsTrigger value="preferences">Preferences</TabsTrigger>
           <TabsTrigger value="photo">Photo</TabsTrigger>
         </TabsList>
@@ -341,17 +613,6 @@ const TutorProfileEdit = () => {
               </div>
 
               <div>
-                <Label htmlFor="specializations">Specializations</Label>
-                <Textarea
-                  id="specializations"
-                  value={formData.specializations}
-                  onChange={(e) => setFormData(prev => ({ ...prev, specializations: e.target.value }))}
-                  rows={3}
-                  placeholder="e.g., Exam preparation, Special needs education, Advanced Mathematics"
-                />
-              </div>
-
-              <div>
                 <Label>Why Students Love Learning With You</Label>
                 <p className="text-sm text-muted-foreground mb-2">One reason per line (up to 3)</p>
                 <Textarea
@@ -360,6 +621,154 @@ const TutorProfileEdit = () => {
                   rows={4}
                   placeholder="Patient and encouraging teaching style&#10;Real-world examples that make concepts clear&#10;Flexible scheduling to fit student needs"
                 />
+              </div>
+
+              <div>
+                <Label>Qualifications & Certifications</Label>
+                <p className="text-sm text-muted-foreground mb-2">One per line</p>
+                <Textarea
+                  value={formData.qualifications}
+                  onChange={(e) => setFormData(prev => ({ ...prev, qualifications: e.target.value }))}
+                  rows={6}
+                  placeholder="Bachelor of Education, Kenyatta University&#10;IGCSE Teacher Training Certificate&#10;TSC Registered Teacher"
+                />
+              </div>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="curriculum">
+          <Card>
+            <CardHeader>
+              <CardTitle>Curriculum, Levels & Subjects</CardTitle>
+              <CardDescription>
+                Select the curricula, levels, and subjects you teach
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div>
+                <Label className="mb-3 block">Curricula *</Label>
+                <div className="grid grid-cols-2 gap-3">
+                  {curriculums.map(curriculum => (
+                    <div key={curriculum} className="flex items-center space-x-2">
+                      <Checkbox
+                        id={`curriculum-${curriculum}`}
+                        checked={formData.curriculum.includes(curriculum)}
+                        onCheckedChange={(checked) => handleCurriculumToggle(curriculum, checked as boolean)}
+                      />
+                      <Label htmlFor={`curriculum-${curriculum}`} className="font-normal cursor-pointer">
+                        {curriculum}
+                      </Label>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {formData.curriculum.map(curriculum => (
+                <div key={curriculum} className="border rounded-lg p-4">
+                  <h4 className="font-semibold mb-3">{curriculum} - Select Levels</h4>
+                  <div className="grid grid-cols-3 gap-2">
+                    {getLevelsForCurriculum(curriculum).map(levelObj => (
+                      <div key={levelObj.value} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`level-${curriculum}-${levelObj.value}`}
+                          checked={curriculumLevels[curriculum]?.includes(levelObj.value) || false}
+                          onCheckedChange={(checked) => handleLevelToggle(curriculum, levelObj.value, checked as boolean)}
+                        />
+                        <Label htmlFor={`level-${curriculum}-${levelObj.value}`} className="font-normal cursor-pointer text-sm">
+                          {levelObj.label}
+                        </Label>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+
+              <div className="my-6 border-t" />
+
+              <div>
+                <Label className="mb-3 block">Select Subjects *</Label>
+                <p className="text-sm text-muted-foreground mb-4">
+                  Choose a curriculum and level combination, then select subjects
+                </p>
+
+                <div className="grid grid-cols-2 gap-4 mb-4">
+                  <div>
+                    <Label>Curriculum</Label>
+                    <Select
+                      value={selectedCurriculumForSubjects}
+                      onValueChange={setSelectedCurriculumForSubjects}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select curriculum" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Object.keys(curriculumLevels).map(curriculum => (
+                          <SelectItem key={curriculum} value={curriculum}>
+                            {curriculum}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div>
+                    <Label>Level</Label>
+                    <Select
+                      value={selectedLevelForSubjects}
+                      onValueChange={setSelectedLevelForSubjects}
+                      disabled={!selectedCurriculumForSubjects}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select level" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {availableLevelsForSubjects.map(level => (
+                          <SelectItem key={level} value={level}>
+                            {level}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                </div>
+
+                {selectedCurriculumForSubjects && selectedLevelForSubjects && (
+                  <div className="grid grid-cols-3 gap-2">
+                    {availableSubjects.map(subject => {
+                      const isSelected = formData.subjectsWithContext.some(
+                        s => s.curriculum === selectedCurriculumForSubjects &&
+                             s.level === selectedLevelForSubjects &&
+                             s.subject === subject
+                      );
+                      return (
+                        <div key={subject} className="flex items-center space-x-2">
+                          <Checkbox
+                            id={`subject-${subject}`}
+                            checked={isSelected}
+                            onCheckedChange={(checked) => handleSubjectToggle(subject, checked as boolean)}
+                          />
+                          <Label htmlFor={`subject-${subject}`} className="font-normal cursor-pointer text-sm">
+                            {subject}
+                          </Label>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {derivedSubjects.length > 0 && (
+                  <div className="mt-4 p-3 bg-muted/50 rounded-lg">
+                    <p className="text-sm font-medium mb-2">Selected Subjects:</p>
+                    <div className="flex flex-wrap gap-2">
+                      {derivedSubjects.map(subject => (
+                        <span key={subject} className="px-2 py-1 bg-secondary text-secondary-foreground rounded-md text-sm">
+                          {subject}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
             </CardContent>
           </Card>
@@ -370,86 +779,183 @@ const TutorProfileEdit = () => {
             <CardHeader>
               <CardTitle>Hourly Rates</CardTitle>
               <CardDescription>
-                Set your rates based on curriculum level (KES per hour)
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="bg-muted/50 p-4 rounded-lg mb-4">
-                <p className="text-sm text-muted-foreground">
-                  <strong>Rate Guidelines:</strong><br/>
-                  • CBC, 8-4-4, British Year 1-10: KES 1,000 - 2,000/hr<br/>
-                  • IGCSE Year 11, A-Levels: KES 1,500 - 3,000/hr
-                </p>
-              </div>
-              
-              <div>
-                <Label htmlFor="standardRate">
-                  Base Rate <span className="text-sm text-muted-foreground">(CBC, 8-4-4, British Year 1-10)</span>
-                </Label>
-                <Input
-                  id="standardRate"
-                  type="text"
-                  value={formData.standardRate}
-                  onChange={(e) => {
-                    const value = e.target.value.replace(/[^\d]/g, '');
-                    setFormData(prev => ({ ...prev, standardRate: value }));
-                  }}
-                  placeholder="e.g., 1500"
-                />
-                {formData.standardRate && (
-                  <p className="text-sm text-muted-foreground mt-1">
-                    KES {Math.round(Number(formData.standardRate)).toLocaleString()} per hour
-                  </p>
-                )}
-                <p className="text-xs text-muted-foreground mt-2">
-                  Recommended: KES 1,000 - 2,000/hr
-                </p>
-              </div>
+              Set your rates for each curriculum-level combination (KES per hour)
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-6">
+            <Alert>
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>
+                <strong>Rate Guidelines:</strong><br />
+                • CBC, 8-4-4, British Year 1-10: KES 1,000 - 2,000/hr<br />
+                • IGCSE Year 11, A-Levels: KES 1,500 - 3,000/hr
+              </AlertDescription>
+            </Alert>
 
-              <div>
-                <Label htmlFor="advancedRate">
-                  Higher Level Rate <span className="text-sm text-muted-foreground">(IGCSE Year 11, A-Levels)</span>
-                </Label>
-                <Input
-                  id="advancedRate"
-                  type="text"
-                  value={formData.advancedRate}
-                  onChange={(e) => {
-                    const value = e.target.value.replace(/[^\d]/g, '');
-                    setFormData(prev => ({ ...prev, advancedRate: value }));
-                  }}
-                  placeholder="e.g., 2500"
-                />
-                {formData.advancedRate && (
-                  <p className="text-sm text-muted-foreground mt-1">
-                    KES {Math.round(Number(formData.advancedRate)).toLocaleString()} per hour
-                  </p>
-                )}
-                <p className="text-xs text-muted-foreground mt-2">
-                  Recommended: KES 1,500 - 3,000/hr
-                </p>
-              </div>
+            {Object.entries(curriculumLevels).map(([curriculum, levels]) =>
+              levels.map(level => {
+                const key = `${curriculum}-${level}`;
+                const guidance = getRateGuidance(curriculum, level, 'Online');
+                const rangeText = guidance 
+                  ? `KES ${guidance.min.toLocaleString()} - ${guidance.max.toLocaleString()}`
+                  : "No specific guidance";
+                return (
+                  <div key={key}>
+                    <Label htmlFor={`rate-${key}`}>
+                      {curriculum} - {level}
+                    </Label>
+                    <Input
+                      id={`rate-${key}`}
+                      type="text"
+                      value={formData.curriculumLevelRates[key] || ""}
+                      onChange={(e) => {
+                        const value = e.target.value.replace(/[^\d]/g, '');
+                        setFormData(prev => ({
+                          ...prev,
+                          curriculumLevelRates: {
+                            ...prev.curriculumLevelRates,
+                            [key]: value
+                          }
+                        }));
+                      }}
+                      placeholder={`e.g., ${guidance ? guidance.min : 1500}`}
+                    />
+                    {formData.curriculumLevelRates[key] && (
+                      <p className="text-sm text-muted-foreground mt-1">
+                        KES {Math.round(Number(formData.curriculumLevelRates[key])).toLocaleString()} per hour
+                      </p>
+                    )}
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Recommended: {rangeText}
+                    </p>
+                  </div>
+                );
+              })
+            )}
             </CardContent>
           </Card>
         </TabsContent>
 
-        <TabsContent value="qualifications">
-          <Card>
-            <CardHeader>
-              <CardTitle>Qualifications & Certifications</CardTitle>
-              <CardDescription>
-                List your academic credentials (one per line)
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Textarea
-                value={formData.qualifications}
-                onChange={(e) => setFormData(prev => ({ ...prev, qualifications: e.target.value }))}
-                rows={8}
-                placeholder="Bachelor of Education, Kenyatta University&#10;IGCSE Teacher Training Certificate&#10;TSC Registered Teacher"
-              />
-            </CardContent>
-          </Card>
+        <TabsContent value="education">
+          <div className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle>Education History</CardTitle>
+                <CardDescription>
+                  List your academic qualifications
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {formData.educationHistory.map((edu, index) => (
+                  <div key={index} className="border rounded-lg p-4 space-y-3">
+                    <div className="flex justify-between items-center mb-2">
+                      <h4 className="font-medium">Education #{index + 1}</h4>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeEducationEntry(index)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <Label>Institution</Label>
+                        <Input
+                          value={edu.institution}
+                          onChange={(e) => updateEducationEntry(index, 'institution', e.target.value)}
+                          placeholder="e.g., University of Nairobi"
+                        />
+                      </div>
+                      <div>
+                        <Label>Degree</Label>
+                        <Input
+                          value={edu.degree}
+                          onChange={(e) => updateEducationEntry(index, 'degree', e.target.value)}
+                          placeholder="e.g., Bachelor of Education"
+                        />
+                      </div>
+                      <div>
+                        <Label>Field of Study</Label>
+                        <Input
+                          value={edu.field}
+                          onChange={(e) => updateEducationEntry(index, 'field', e.target.value)}
+                          placeholder="e.g., Mathematics"
+                        />
+                      </div>
+                      <div>
+                        <Label>Graduation Year</Label>
+                        <Input
+                          value={edu.graduationYear}
+                          onChange={(e) => updateEducationEntry(index, 'graduationYear', e.target.value)}
+                          placeholder="e.g., 2020"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                <Button onClick={addEducationEntry} variant="outline" className="w-full">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Education
+                </Button>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle>Teaching Experience</CardTitle>
+                <CardDescription>
+                  List your teaching and tutoring experience
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {formData.teachingHistory.map((exp, index) => (
+                  <div key={index} className="border rounded-lg p-4 space-y-3">
+                    <div className="flex justify-between items-center mb-2">
+                      <h4 className="font-medium">Experience #{index + 1}</h4>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => removeTeachingEntry(index)}
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                    <div className="grid grid-cols-3 gap-3">
+                      <div>
+                        <Label>Institution</Label>
+                        <Input
+                          value={exp.institution}
+                          onChange={(e) => updateTeachingEntry(index, 'institution', e.target.value)}
+                          placeholder="e.g., ABC High School"
+                        />
+                      </div>
+                      <div>
+                        <Label>Role</Label>
+                        <Input
+                          value={exp.role}
+                          onChange={(e) => updateTeachingEntry(index, 'role', e.target.value)}
+                          placeholder="e.g., Mathematics Teacher"
+                        />
+                      </div>
+                      <div>
+                        <Label>Years</Label>
+                        <Input
+                          value={exp.years}
+                          onChange={(e) => updateTeachingEntry(index, 'years', e.target.value)}
+                          placeholder="e.g., 3"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                <Button onClick={addTeachingEntry} variant="outline" className="w-full">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Add Experience
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
 
         <TabsContent value="preferences">
@@ -457,14 +963,14 @@ const TutorProfileEdit = () => {
             <CardHeader>
               <CardTitle>Teaching Preferences</CardTitle>
               <CardDescription>
-                Configure your teaching modes, location, and services
+                Configure your teaching modes and location preferences
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               <div>
                 <Label className="mb-3 block">Teaching Modes *</Label>
                 <div className="space-y-2">
-                  {["Online", "Physical"].map(mode => (
+                  {["Online", "In-Person"].map(mode => (
                     <div key={mode} className="flex items-center space-x-2">
                       <Checkbox
                         id={`mode-${mode}`}
@@ -479,33 +985,25 @@ const TutorProfileEdit = () => {
                 </div>
               </div>
 
-              <div>
-                <Label htmlFor="teachingLocation">Teaching Location (for physical sessions)</Label>
-                <Input
-                  id="teachingLocation"
-                  value={formData.teachingLocation}
-                  onChange={(e) => setFormData(prev => ({ ...prev, teachingLocation: e.target.value }))}
-                  placeholder="e.g., Westlands, Nairobi or Student's home"
-                />
-              </div>
-
-              <div>
-                <Label className="mb-3 block">Services Offered</Label>
-                <div className="space-y-2">
-                  {["One-on-One Tutoring", "Group Sessions", "Exam Preparation", "Homework Help", "Assignment Support"].map(service => (
-                    <div key={service} className="flex items-center space-x-2">
-                      <Checkbox
-                        id={`service-${service}`}
-                        checked={formData.servicesOffered.includes(service)}
-                        onCheckedChange={() => handleToggleService(service)}
-                      />
-                      <Label htmlFor={`service-${service}`} className="font-normal cursor-pointer">
-                        {service}
-                      </Label>
-                    </div>
-                  ))}
+              {formData.teachingMode.includes("In-Person") && (
+                <div>
+                  <Label className="mb-3 block">Physical Teaching Locations</Label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {NAIROBI_LOCATIONS.map(location => (
+                      <div key={location} className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`location-${location}`}
+                          checked={formData.teachingLocations.includes(location)}
+                          onCheckedChange={() => handleToggleLocation(location)}
+                        />
+                        <Label htmlFor={`location-${location}`} className="font-normal cursor-pointer text-sm">
+                          {location}
+                        </Label>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              )}
             </CardContent>
           </Card>
         </TabsContent>
@@ -515,65 +1013,44 @@ const TutorProfileEdit = () => {
             <CardHeader>
               <CardTitle>Profile Photo</CardTitle>
               <CardDescription>
-                Upload a professional photo to help students connect with you
+                Upload a professional photo of yourself
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               {photoPreview && (
-                <div className="relative w-32 h-32">
+                <div className="flex justify-center">
                   <img
                     src={photoPreview}
                     alt="Profile preview"
-                    className="w-full h-full object-cover rounded-full"
+                    className="w-48 h-48 object-cover rounded-full"
                   />
-                  <button
-                    onClick={() => {
-                      setPhotoFile(null);
-                      setPhotoPreview(null);
-                    }}
-                    className="absolute -top-2 -right-2 bg-destructive text-destructive-foreground rounded-full p-1 hover:bg-destructive/90"
-                  >
-                    <X className="h-4 w-4" />
-                  </button>
                 </div>
               )}
-
-              <div>
-                <Label htmlFor="photo">Upload New Photo</Label>
-                <div className="mt-2">
-                  <Input
-                    id="photo"
-                    type="file"
-                    accept="image/*"
-                    onChange={handlePhotoChange}
-                    className="cursor-pointer"
-                  />
-                </div>
-                <p className="text-sm text-muted-foreground mt-2">
-                  Recommended: Square image, minimum 400x400px
-                </p>
+              <div className="flex justify-center">
+                <Button onClick={() => document.getElementById('photo-upload')?.click()}>
+                  <Upload className="h-4 w-4 mr-2" />
+                  {photoPreview ? 'Change Photo' : 'Upload Photo'}
+                </Button>
+                <input
+                  id="photo-upload"
+                  type="file"
+                  accept="image/*"
+                  className="hidden"
+                  onChange={handlePhotoChange}
+                />
               </div>
             </CardContent>
           </Card>
         </TabsContent>
       </Tabs>
 
-      <div className="flex gap-3 mt-6">
-        <Button
-          onClick={handleSave}
-          disabled={saving}
-          size="lg"
-        >
+      <div className="flex justify-between mt-8">
+        <Button variant="outline" onClick={() => navigate("/tutor-dashboard")}>
+          Cancel
+        </Button>
+        <Button onClick={handleSave} disabled={saving}>
           {saving && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
           Save Changes
-        </Button>
-        <Button
-          variant="outline"
-          onClick={() => navigate("/tutor-dashboard")}
-          disabled={saving}
-          size="lg"
-        >
-          Cancel
         </Button>
       </div>
     </div>
