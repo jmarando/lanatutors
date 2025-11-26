@@ -12,45 +12,53 @@ export interface RateRange {
 
 // Rate guidance data structure based on curriculum, level, and delivery mode
 const RATE_GUIDANCE: RateRange[] = [
-  // CBC - Early Years / Pre-Primary, Lower Primary, Upper Primary
-  { curriculum: 'CBC', level: 'Early Years / Pre-Primary', mode: 'Online', min: 1000, max: 1500 },
-  { curriculum: 'CBC', level: 'Early Years / Pre-Primary', mode: 'In-person', min: 1000, max: 2000 },
-  { curriculum: 'CBC', level: 'Lower Primary', mode: 'Online', min: 1000, max: 1500 },
-  { curriculum: 'CBC', level: 'Lower Primary', mode: 'In-person', min: 1000, max: 2000 },
-  { curriculum: 'CBC', level: 'Upper Primary', mode: 'Online', min: 1000, max: 1500 },
-  { curriculum: 'CBC', level: 'Upper Primary', mode: 'In-person', min: 1000, max: 2000 },
+  // CBC - Primary (Early Years / Pre-Primary, Lower Primary, Upper Primary)
+  // Rate: Online KES 1,000 | In-person KES 1,500
+  { curriculum: 'CBC', level: 'Early Years / Pre-Primary', mode: 'Online', min: 1000, max: 1000 },
+  { curriculum: 'CBC', level: 'Early Years / Pre-Primary', mode: 'In-person', min: 1500, max: 1500 },
+  { curriculum: 'CBC', level: 'Lower Primary', mode: 'Online', min: 1000, max: 1000 },
+  { curriculum: 'CBC', level: 'Lower Primary', mode: 'In-person', min: 1500, max: 1500 },
+  { curriculum: 'CBC', level: 'Upper Primary', mode: 'Online', min: 1000, max: 1000 },
+  { curriculum: 'CBC', level: 'Upper Primary', mode: 'In-person', min: 1500, max: 1500 },
   
-  // CBC - Junior Secondary, Senior Secondary
-  { curriculum: 'CBC', level: 'Junior Secondary', mode: 'Online', min: 1000, max: 1500 },
-  { curriculum: 'CBC', level: 'Junior Secondary', mode: 'In-person', min: 2000, max: 3000 },
-  { curriculum: 'CBC', level: 'Senior Secondary', mode: 'Online', min: 1000, max: 1500 },
-  { curriculum: 'CBC', level: 'Senior Secondary', mode: 'In-person', min: 2000, max: 3000 },
+  // CBC - Junior Secondary / Lower IGCSE (Year 7-10)
+  // Rate: Online KES 1,500 | In-person KES 2,000
+  { curriculum: 'CBC', level: 'Junior Secondary', mode: 'Online', min: 1500, max: 1500 },
+  { curriculum: 'CBC', level: 'Junior Secondary', mode: 'In-person', min: 2000, max: 2000 },
+  { curriculum: 'CBC', level: 'Senior Secondary', mode: 'Online', min: 1500, max: 1500 },
+  { curriculum: 'CBC', level: 'Senior Secondary', mode: 'In-person', min: 2000, max: 2000 },
   
   // 8-4-4 - Form 3 and 4
-  { curriculum: '8-4-4', level: 'Form 3', mode: 'Online', min: 1000, max: 1500 },
-  { curriculum: '8-4-4', level: 'Form 3', mode: 'In-person', min: 2000, max: 3000 },
-  { curriculum: '8-4-4', level: 'Form 4', mode: 'Online', min: 1000, max: 1500 },
-  { curriculum: '8-4-4', level: 'Form 4', mode: 'In-person', min: 2000, max: 3000 },
+  { curriculum: '8-4-4', level: 'Form 3', mode: 'Online', min: 1500, max: 1500 },
+  { curriculum: '8-4-4', level: 'Form 3', mode: 'In-person', min: 2000, max: 2000 },
+  { curriculum: '8-4-4', level: 'Form 4', mode: 'Online', min: 1500, max: 1500 },
+  { curriculum: '8-4-4', level: 'Form 4', mode: 'In-person', min: 2000, max: 2000 },
   
-  // British Curriculum - Key Stage 1-6
-  { curriculum: 'British Curriculum', level: 'Key Stage 1', mode: 'Online', min: 1000, max: 2000 },
-  { curriculum: 'British Curriculum', level: 'Key Stage 1', mode: 'In-person', min: 2000, max: 3000 },
-  { curriculum: 'British Curriculum', level: 'Key Stage 2', mode: 'Online', min: 1000, max: 2000 },
-  { curriculum: 'British Curriculum', level: 'Key Stage 2', mode: 'In-person', min: 2000, max: 3000 },
-  { curriculum: 'British Curriculum', level: 'Key Stage 3', mode: 'Online', min: 1000, max: 2000 },
-  { curriculum: 'British Curriculum', level: 'Key Stage 3', mode: 'In-person', min: 2000, max: 3000 },
-  { curriculum: 'British Curriculum', level: 'Key Stage 4', mode: 'Online', min: 1000, max: 2000 },
-  { curriculum: 'British Curriculum', level: 'Key Stage 4', mode: 'In-person', min: 2000, max: 3000 },
-  { curriculum: 'British Curriculum', level: 'Key Stage 5', mode: 'Online', min: 1000, max: 2000 },
-  { curriculum: 'British Curriculum', level: 'Key Stage 5', mode: 'In-person', min: 2000, max: 3000 },
+  // British Curriculum - Key Stage 1-2 (Primary)
+  // Rate: Online KES 1,000 | In-person KES 1,500
+  { curriculum: 'British Curriculum', level: 'Key Stage 1', mode: 'Online', min: 1000, max: 1000 },
+  { curriculum: 'British Curriculum', level: 'Key Stage 1', mode: 'In-person', min: 1500, max: 1500 },
+  { curriculum: 'British Curriculum', level: 'Key Stage 2', mode: 'Online', min: 1000, max: 1000 },
+  { curriculum: 'British Curriculum', level: 'Key Stage 2', mode: 'In-person', min: 1500, max: 1500 },
   
-  // British Curriculum - IGCSE
-  { curriculum: 'British Curriculum', level: 'IGCSE', mode: 'Online', min: 1000, max: 2000 },
-  { curriculum: 'British Curriculum', level: 'IGCSE', mode: 'In-person', min: 2000, max: 4000 },
+  // British Curriculum - Key Stage 3-4 (Year 7-10, Lower IGCSE)
+  // Rate: Online KES 1,500 | In-person KES 2,000
+  { curriculum: 'British Curriculum', level: 'Key Stage 3', mode: 'Online', min: 1500, max: 1500 },
+  { curriculum: 'British Curriculum', level: 'Key Stage 3', mode: 'In-person', min: 2000, max: 2000 },
+  { curriculum: 'British Curriculum', level: 'Key Stage 4', mode: 'Online', min: 1500, max: 1500 },
+  { curriculum: 'British Curriculum', level: 'Key Stage 4', mode: 'In-person', min: 2000, max: 2000 },
   
-  // British Curriculum - A-Levels
-  { curriculum: 'British Curriculum', level: 'A-Levels', mode: 'Online', min: 1500, max: 3000 },
-  { curriculum: 'British Curriculum', level: 'A-Levels', mode: 'In-person', min: 2500, max: 4000 },
+  // British Curriculum - IGCSE (Year 10-11, Core Subjects)
+  // Rate: Online KES 2,000 | In-person KES 2,500
+  { curriculum: 'British Curriculum', level: 'IGCSE', mode: 'Online', min: 2000, max: 2000 },
+  { curriculum: 'British Curriculum', level: 'IGCSE', mode: 'In-person', min: 2500, max: 2500 },
+  
+  // British Curriculum - A-Levels (Year 12-13)
+  // Rate: Online KES 2,000 | In-person KES 2,500
+  { curriculum: 'British Curriculum', level: 'A-Levels', mode: 'Online', min: 2000, max: 2000 },
+  { curriculum: 'British Curriculum', level: 'A-Levels', mode: 'In-person', min: 2500, max: 2500 },
+  { curriculum: 'British Curriculum', level: 'Key Stage 5', mode: 'Online', min: 2000, max: 2000 },
+  { curriculum: 'British Curriculum', level: 'Key Stage 5', mode: 'In-person', min: 2500, max: 2500 },
 ];
 
 /**
