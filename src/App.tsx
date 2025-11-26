@@ -22,7 +22,8 @@ const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const StudentSignup = lazy(() => import("./pages/StudentSignup"));
 const TutorSignup = lazy(() => import("./pages/TutorSignup"));
 const BecomeATutor = lazy(() => import("./pages/BecomeATutor"));
-const StudentDashboard = lazy(() => import("./pages/NewStudentDashboard"));
+const StudentDashboard = lazy(() => import("./pages/StudentDashboard"));
+const RedesignedStudentDashboard = lazy(() => import("./pages/RedesignedStudentDashboard"));
 const TutorDashboard = lazy(() => import("./pages/TutorDashboard"));
 const AdminDashboardRedesigned = lazy(() => import("./pages/AdminDashboard-Redesigned"));
 const BookConsultation = lazy(() => import("./pages/BookConsultation"));
@@ -79,7 +80,8 @@ const App = () => {
                 <Route path="/student-signup" element={<StudentSignup />} />
                 <Route path="/tutor-signup" element={<TutorSignup />} />
                 <Route path="/become-a-tutor" element={<BecomeATutor />} />
-                <Route path="/student/dashboard" element={<StudentDashboard />} />
+                <Route path="/student/dashboard" element={<RedesignedStudentDashboard />} />
+                <Route path="/student/dashboard-old" element={<StudentDashboard />} />
                 <Route path="/tutor/dashboard" element={<TutorDashboard />} />
                 <Route path="/tutor/availability" element={<TutorAvailability />} />
             <Route path="/tutor-profile-setup" element={<TutorProfileSetup />} />
