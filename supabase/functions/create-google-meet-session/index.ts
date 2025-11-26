@@ -74,7 +74,11 @@ serve(async (req) => {
         if (!refreshResponse.ok) {
           const error = await refreshResponse.text();
           console.error('Token refresh failed:', error);
-          throw new Error('Failed to refresh central calendar access token');
+          // Don't break the booking flow – just skip Meet creation
+          return new Response(
+            JSON.stringify({ message: 'calendar_token_refresh_failed' }),
+            { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
         }
 
         const tokens = await refreshResponse.json();
@@ -142,7 +146,11 @@ serve(async (req) => {
     if (!calendarResponse.ok) {
       const error = await calendarResponse.text();
       console.error('Calendar event creation failed:', error);
-      throw new Error('Failed to create calendar event');
+      // Don't fail the whole request – return a soft error
+      return new Response(
+        JSON.stringify({ message: 'calendar_event_creation_failed' }),
+        { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
     }
 
     const calendarEvent = await calendarResponse.json();
