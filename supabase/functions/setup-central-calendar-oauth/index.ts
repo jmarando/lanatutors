@@ -91,7 +91,7 @@ serve(async (req) => {
     }
 
     // Handle OAuth initiation
-    const redirectUri = `${Deno.env.get('SUPABASE_URL')}/functions/v1/google-calendar-oauth/callback`;
+    const redirectUri = `${Deno.env.get('SUPABASE_URL')}/functions/v1/setup-central-calendar-oauth/callback`;
     
     // Get the app origin from the request body
     const { appOrigin: requestedOrigin } = await req.json();
