@@ -19,6 +19,7 @@ interface LearningPlanInquiryRequest {
   gradeLevel: string;
   curriculum?: string;
   subjects: string[];
+  lastExamPerformance?: string;
   challenges?: string;
   preferredSessions?: number;
   inquiryId: string;
@@ -40,6 +41,7 @@ const handler = async (req: Request): Promise<Response> => {
       gradeLevel,
       curriculum,
       subjects,
+      lastExamPerformance,
       challenges,
       preferredSessions,
       inquiryId,
@@ -71,6 +73,7 @@ const handler = async (req: Request): Promise<Response> => {
       <ul>
         <li><strong>Subjects Needed:</strong> ${subjects.join(", ")}</li>
         ${preferredSessions ? `<li><strong>Preferred Sessions:</strong> ${preferredSessions}</li>` : ""}
+        ${lastExamPerformance ? `<li><strong>Last Exam Performance:</strong> ${lastExamPerformance}</li>` : ""}
         ${challenges ? `<li><strong>Challenges & Goals:</strong> ${challenges}</li>` : ""}
       </ul>
       
