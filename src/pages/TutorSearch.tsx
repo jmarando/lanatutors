@@ -35,8 +35,18 @@ const TutorSearch = () => {
   const [selectedLocation, setSelectedLocation] = useState("all");
   const [tutors, setTutors] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showLearningPlanDialog, setShowLearningPlanDialog] = useState(false);
   // Safety: ensure any legacy references to `sortBy` won't crash the page
   const [sortBy, setSortBy] = useState<string>("relevance");
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('action') === 'request-plan') {
+      setShowLearningPlanDialog(true);
+      // Clean up URL
+      navigate('/tutors', { replace: true });
+    }
+  }, []);
 
   useEffect(() => {
     fetchTutors();
@@ -286,16 +296,14 @@ const TutorSearch = () => {
                 Create Custom Package
               </Button>
               <Button 
-                onClick={() => {
-                  const user = supabase.auth.getUser();
-                  user.then(({ data }) => {
-                    if (!data.user) {
-                      toast.error("Please sign in to request a learning plan");
-                      navigate('/login');
-                    } else {
-                      navigate('/tutors?action=request-plan');
-                    }
-                  });
+                onClick={async () => {
+                  const { data } = await supabase.auth.getUser();
+                  if (!data.user) {
+                    toast.error("Please sign in to request a learning plan");
+                    navigate('/login');
+                  } else {
+                    setShowLearningPlanDialog(true);
+                  }
                 }}
                 size="lg"
                 variant="outline"
@@ -457,6 +465,40 @@ const TutorSearch = () => {
           </div>
         )}
       </div>
+
+      {/* Learning Plan Request Dialog */}
+      <Dialog open={showLearningPlanDialog} onOpenChange={setShowLearningPlanDialog}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Request a Custom Learning Plan</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4">
+            <Card className="bg-primary/5 border-primary/20">
+              <CardContent className="p-4">
+                <p className="text-sm text-muted-foreground">
+                  Tell us about your learning needs, and we'll match you with the perfect tutor(s) who will create a personalized learning plan for your child.
+                </p>
+              </CardContent>
+            </Card>
+            
+            <div className="text-sm text-muted-foreground space-y-2">
+              <p>To request a learning plan, please:</p>
+              <ol className="list-decimal list-inside space-y-1 ml-2">
+                <li>Browse the tutors below and select one that fits your needs</li>
+                <li>Click "View Profile" on their card</li>
+                <li>Click "Request Learning Plan" on their profile page</li>
+              </ol>
+            </div>
+
+            <Button 
+              onClick={() => setShowLearningPlanDialog(false)}
+              className="w-full"
+            >
+              Browse Tutors
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>;
 };
 export default TutorSearch;
