@@ -71,3 +71,13 @@ verify_jwt = false
 
 [functions.test-send-booking-email]
 verify_jwt = false
+
+[functions.create-google-classroom]
+verify_jwt = true
+
+[functions.fetch-student-classrooms]
+verify_jwt = true
+
+[functions.create-booking-with-meet]
+verify_jwt = false
+
