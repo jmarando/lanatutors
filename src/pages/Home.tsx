@@ -530,6 +530,96 @@ const Home = () => {
         </div>
       </section>
 
+      {/* FAQ Section for Students */}
+      <section className="py-20 px-6 bg-muted/30">
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center mb-12">
+            <h2 className="text-4xl font-bold mb-4">Student FAQs</h2>
+            <p className="text-lg text-muted-foreground">
+              Common questions from parents and students
+            </p>
+          </div>
+          <div className="space-y-4">
+            {[
+              {
+                q: "How do I book a session?",
+                a: "Browse our tutor profiles, select a tutor that matches your needs, and choose from their available time slots. You can book single sessions or create custom packages."
+              },
+              {
+                q: "What payment methods do you accept?",
+                a: "We accept M-Pesa and card payments. All payments are processed securely through our platform with instant confirmation."
+              },
+              {
+                q: "Can I get a refund if I'm not satisfied?",
+                a: "Yes, we offer a satisfaction guarantee. If you're not happy with your first session, contact us within 24 hours for a full refund."
+              },
+              {
+                q: "Are the tutors verified?",
+                a: "Absolutely. Every tutor undergoes a rigorous verification process including background checks, credential verification, and teaching assessments. Only the top 15% of applicants are accepted."
+              },
+              {
+                q: "Can I switch tutors?",
+                a: "Yes, you can switch tutors at any time. Simply browse our tutor profiles and book with a different educator that better fits your needs."
+              },
+              {
+                q: "What if I need to cancel or reschedule?",
+                a: "You can cancel or reschedule up to 24 hours before your session with no penalty. Cancellations within 24 hours may forfeit the session fee."
+              }
+            ].map((faq, index) => (
+              <Card key={index} className="p-6 hover:shadow-md transition-shadow">
+                <h3 className="font-bold text-lg mb-2">{faq.q}</h3>
+                <p className="text-muted-foreground">{faq.a}</p>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* FAQ Section for Tutors */}
+      <section className="py-20 px-6">
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center mb-12">
+            <h2 className="text-4xl font-bold mb-4">Tutor FAQs</h2>
+            <p className="text-lg text-muted-foreground">
+              Everything tutors need to know
+            </p>
+          </div>
+          <div className="space-y-4">
+            {[
+              {
+                q: "How much can I earn as a tutor?",
+                a: "Tutors keep 70% of their session fees with monthly payouts. Rates vary by subject, curriculum, and experience level, with most tutors earning between KES 1,000 to KES 3,000 per hour."
+              },
+              {
+                q: "How do I get paid?",
+                a: "Payments are processed monthly within the first 5 business days. We pay directly to your M-Pesa or bank account. You'll receive a detailed payment statement each month."
+              },
+              {
+                q: "What are the requirements to become a tutor?",
+                a: "You must be a verified teacher from a recognized Kenyan school, have relevant teaching credentials, pass our background check, and demonstrate strong subject knowledge through our assessment process."
+              },
+              {
+                q: "Can I set my own schedule?",
+                a: "Yes! You have complete control over your availability. Set your own hours and decide which time slots to make available for bookings."
+              },
+              {
+                q: "What subjects can I teach?",
+                a: "We support all CBC, IGCSE, American, and 8-4-4 curriculum subjects. You can teach multiple subjects and set different rates for each."
+              },
+              {
+                q: "How does the booking process work?",
+                a: "Students browse your profile and book directly from your available slots. You'll receive instant notifications via email when a session is booked. Meeting links are generated automatically."
+              }
+            ].map((faq, index) => (
+              <Card key={index} className="p-6 hover:shadow-md transition-shadow">
+                <h3 className="font-bold text-lg mb-2">{faq.q}</h3>
+                <p className="text-muted-foreground">{faq.a}</p>
+              </Card>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* CTA Section */}
       <section className="bg-secondary/30">
         <div className="max-w-7xl mx-auto px-6 py-16">
@@ -598,10 +688,9 @@ const Home = () => {
             <div>
               <h4 className="font-bold mb-4">Support</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><Link to="#">Help Center</Link></li>
-                <li><Link to="#">Contact Us</Link></li>
-                <li><Link to="#">Safety Guidelines</Link></li>
-                <li><Link to="/privacy-policy">Privacy Policy</Link></li>
+                <li><a href="#about" className="hover:text-primary transition-colors">About Us</a></li>
+                <li><a href="https://wa.me/254725252542" target="_blank" rel="noopener noreferrer" className="hover:text-primary transition-colors">Contact Us</a></li>
+                <li><Link to="/privacy-policy" className="hover:text-primary transition-colors">Privacy Policy</Link></li>
               </ul>
             </div>
           </div>
