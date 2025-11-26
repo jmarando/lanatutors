@@ -148,7 +148,7 @@ serve(async (req) => {
       console.log('Payment completed successfully')
 
       // If this is for a booking, update the booking status
-      if (payment.reference_id && payment.payment_type === 'booking') {
+      if (payment.reference_id && (payment.payment_type === 'booking' || payment.payment_type === 'tutor_booking_deposit')) {
         const { error: bookingError } = await supabase
           .from('bookings')
           .update({ status: 'confirmed' })

@@ -68,8 +68,8 @@ const StudentDashboard = () => {
       .from('bookings')
       .select(`
         *,
-        availability_slot:availability_slot_id(start_time, end_time),
-        tutor:tutor_id(full_name)
+        availability_slot:tutor_availability!availability_slot_id(start_time, end_time),
+        tutor:profiles!tutor_id(full_name)
       `)
       .eq('student_id', userId)
       .order('created_at', { ascending: false });
@@ -84,6 +84,8 @@ const StudentDashboard = () => {
       return;
     }
 
+    console.log('Fetched bookings:', bookings);
+
     if (bookings) {
       const now = new Date();
       const upcoming = bookings.filter(b => {
@@ -94,6 +96,9 @@ const StudentDashboard = () => {
         const slotTime = new Date((b.availability_slot as any)?.start_time);
         return slotTime <= now || b.status === 'cancelled';
       });
+      
+      console.log('Upcoming bookings:', upcoming);
+      console.log('Past bookings:', past);
       
       setUpcomingBookings(upcoming);
       setPastBookings(past);
