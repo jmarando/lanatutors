@@ -30,7 +30,7 @@ export function StudentSidebar() {
 
   return (
     <Sidebar className={isCollapsed ? "w-14" : "w-60"}>
-      <SidebarContent>
+      <SidebarContent className="pt-8">
         <SidebarGroup>
           <SidebarGroupLabel className={isCollapsed ? "opacity-0" : ""}>
             Student Dashboard
