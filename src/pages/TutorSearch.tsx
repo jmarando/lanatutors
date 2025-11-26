@@ -26,6 +26,7 @@ import tutor5 from "@/assets/tutor-5.jpg";
 import tutor6 from "@/assets/tutor-6.jpg";
 import calvinProfilePhoto from "@/assets/calvin-profile.png";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { GeneralLearningPlanRequest } from "@/components/GeneralLearningPlanRequest";
 const TutorSearch = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
@@ -296,15 +297,7 @@ const TutorSearch = () => {
                 Create Custom Package
               </Button>
               <Button 
-                onClick={async () => {
-                  const { data } = await supabase.auth.getUser();
-                  if (!data.user) {
-                    toast.error("Please sign in to request a learning plan");
-                    navigate('/login');
-                  } else {
-                    setShowLearningPlanDialog(true);
-                  }
-                }}
+                onClick={() => setShowLearningPlanDialog(true)}
                 size="lg"
                 variant="outline"
                 className="gap-2"
@@ -472,31 +465,10 @@ const TutorSearch = () => {
           <DialogHeader>
             <DialogTitle>Request a Custom Learning Plan</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4">
-            <Card className="bg-primary/5 border-primary/20">
-              <CardContent className="p-4">
-                <p className="text-sm text-muted-foreground">
-                  Tell us about your learning needs, and we'll match you with the perfect tutor(s) who will create a personalized learning plan for your child.
-                </p>
-              </CardContent>
-            </Card>
-            
-            <div className="text-sm text-muted-foreground space-y-2">
-              <p>To request a learning plan, please:</p>
-              <ol className="list-decimal list-inside space-y-1 ml-2">
-                <li>Browse the tutors below and select one that fits your needs</li>
-                <li>Click "View Profile" on their card</li>
-                <li>Click "Request Learning Plan" on their profile page</li>
-              </ol>
-            </div>
-
-            <Button 
-              onClick={() => setShowLearningPlanDialog(false)}
-              className="w-full"
-            >
-              Browse Tutors
-            </Button>
-          </div>
+          <GeneralLearningPlanRequest
+            onClose={() => setShowLearningPlanDialog(false)}
+            onSubmitSuccess={() => setShowLearningPlanDialog(false)}
+          />
         </DialogContent>
       </Dialog>
     </div>;
