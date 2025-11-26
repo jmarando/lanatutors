@@ -78,20 +78,110 @@ const handler = async (req: Request): Promise<Response> => {
       console.log(`Sending email to student: ${studentEmail}`);
       
       const studentEmailHtml = `
-        <h1>Booking Confirmation</h1>
-        <p>Dear ${studentProfile?.full_name || 'Parent'},</p>
-        <p>Your tutoring session has been confirmed!</p>
-        <h2>Booking Details:</h2>
-        <ul>
-          <li><strong>Subject:</strong> ${booking.subject}</li>
-          <li><strong>Date:</strong> ${formattedDate}</li>
-          <li><strong>Time:</strong> ${formattedTime} EAT</li>
-          <li><strong>Type:</strong> ${booking.class_type}</li>
-          <li><strong>Amount:</strong> ${booking.currency || 'KES'} ${booking.amount}</li>
-          <li><strong>Meeting Link:</strong> <a href="${finalMeetingLink}">${finalMeetingLink}</a></li>
-        </ul>
-        <p>Click the meeting link above to join your session at the scheduled time.</p>
-        <p>Best regards,<br>LANA Tutors Team</p>
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <style>
+            body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif; background-color: #f5f5f5; margin: 0; padding: 20px; }
+            .container { max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; }
+            .header { background-color: #D95436; color: white; padding: 30px; text-align: center; }
+            .header h1 { margin: 0; font-size: 28px; font-weight: 600; }
+            .checkmark { font-size: 24px; margin-right: 8px; }
+            .content { padding: 30px; }
+            .greeting { color: #333333; font-size: 16px; margin-bottom: 20px; }
+            .section { background-color: #FFF5F5; border-left: 4px solid #D95436; padding: 20px; margin: 20px 0; border-radius: 4px; }
+            .section-title { color: #D95436; font-size: 18px; font-weight: 600; margin: 0 0 15px 0; display: flex; align-items: center; }
+            .section-icon { margin-right: 8px; }
+            .detail-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #FEE; }
+            .detail-row:last-child { border-bottom: none; }
+            .detail-label { color: #666666; font-size: 14px; }
+            .detail-value { color: #333333; font-size: 14px; font-weight: 500; }
+            .payment-section { background-color: #FFFBEB; border-left: 4px solid: #F59E0B; padding: 20px; margin: 20px 0; border-radius: 4px; }
+            .payment-title { color: #F59E0B; font-size: 18px; font-weight: 600; margin: 0 0 15px 0; }
+            .meeting-button { display: inline-block; background-color: #D95436; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; margin: 20px 0; font-weight: 600; }
+            .footer { padding: 20px 30px; background-color: #f9f9f9; color: #666666; font-size: 12px; text-align: center; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <h1><span class="checkmark">✓</span> Booking Confirmed!</h1>
+            </div>
+            <div class="content">
+              <p class="greeting">Hi ${studentProfile?.full_name || 'Parent'},</p>
+              <p>Great news! Your tutoring session has been successfully booked and confirmed. We're excited to support your learning journey! 🎓</p>
+              
+              <div class="section">
+                <h2 class="section-title"><span class="section-icon">📚</span> Session Details</h2>
+                <div class="detail-row">
+                  <span class="detail-label">Subject:</span>
+                  <span class="detail-value">${booking.subject}</span>
+                </div>
+                <div class="detail-row">
+                  <span class="detail-label">Tutor:</span>
+                  <span class="detail-value">${tutorProfile?.email?.split('@')[0] || 'Your Tutor'}</span>
+                </div>
+                <div class="detail-row">
+                  <span class="detail-label">Date & Time:</span>
+                  <span class="detail-value">${formattedDate} at ${formattedTime}</span>
+                </div>
+                <div class="detail-row">
+                  <span class="detail-label">Duration:</span>
+                  <span class="detail-value">1 hour</span>
+                </div>
+                <div class="detail-row">
+                  <span class="detail-label">Class Type:</span>
+                  <span class="detail-value">${booking.class_type === 'physical' ? '📍 Physical' : '💻 Online'}</span>
+                </div>
+              </div>
+
+              <div class="payment-section">
+                <h2 class="payment-title">💰 Payment Summary</h2>
+                <div class="detail-row">
+                  <span class="detail-label">Total Amount:</span>
+                  <span class="detail-value">${booking.currency || 'KES'} ${booking.amount}</span>
+                </div>
+                ${booking.payment_option === 'deposit' && booking.deposit_paid ? `
+                <div class="detail-row">
+                  <span class="detail-label">✓ Deposit Paid:</span>
+                  <span class="detail-value">${booking.currency || 'KES'} ${booking.deposit_paid}</span>
+                </div>
+                ${booking.balance_due ? `
+                <div class="detail-row">
+                  <span class="detail-label">Balance Due:</span>
+                  <span class="detail-value">${booking.currency || 'KES'} ${booking.balance_due}</span>
+                </div>
+                ` : ''}
+                ` : `
+                <div style="background-color: #D1FAE5; padding: 12px; border-radius: 4px; margin-top: 10px; border-left: 3px solid #10B981;">
+                  <span style="color: #065F46; font-weight: 600;">✓ Fully Paid!</span> Your session is completely paid for. See you there!
+                </div>
+                `}
+              </div>
+
+              ${booking.class_type === 'online' ? `
+              <div style="text-align: center; margin: 30px 0;">
+                <a href="${finalMeetingLink}" class="meeting-button">Join Online Session</a>
+                <p style="color: #666666; font-size: 14px; margin-top: 10px;">Click the button above to join your session at the scheduled time</p>
+              </div>
+              ` : `
+              <div style="background-color: #EDE9FE; border-left: 4px solid: #8B5CF6; padding: 20px; margin: 20px 0; border-radius: 4px;">
+                <h2 style="color: #8B5CF6; font-size: 18px; font-weight: 600; margin: 0 0 10px 0;">📍 Physical Session Location</h2>
+                <p style="color: #666666; font-size: 14px; margin: 0;">This is a physical session. Your tutor will contact you shortly to confirm the meeting location and any additional details.</p>
+              </div>
+              `}
+
+              <p style="color: #666666; font-size: 14px; margin-top: 30px;">If you have any questions or need to reschedule, please contact us at <a href="mailto:info@lanatutors.africa" style="color: #D95436;">info@lanatutors.africa</a></p>
+            </div>
+            <div class="footer">
+              <p style="margin: 0 0 5px 0; font-weight: 600; color: #D95436;">LANA Tutors</p>
+              <p style="margin: 0;">Supporting your learning journey, one session at a time.</p>
+            </div>
+          </div>
+        </body>
+        </html>
       `;
 
       const studentEmailResponse = await fetch("https://api.resend.com/emails", {
@@ -117,20 +207,90 @@ const handler = async (req: Request): Promise<Response> => {
       console.log(`Sending email to tutor: ${tutorProfile?.email}`);
       
       const tutorEmailHtml = `
-        <h1>New Booking Notification</h1>
-        <p>Dear Tutor,</p>
-        <p>You have a new tutoring session booked!</p>
-        <h2>Session Details:</h2>
-        <ul>
-          <li><strong>Student:</strong> ${studentProfile?.full_name || 'Student'}</li>
-          <li><strong>Subject:</strong> ${booking.subject}</li>
-          <li><strong>Date:</strong> ${formattedDate}</li>
-          <li><strong>Time:</strong> ${formattedTime} EAT</li>
-          <li><strong>Type:</strong> ${booking.class_type}</li>
-          <li><strong>Meeting Link:</strong> <a href="${finalMeetingLink}">${finalMeetingLink}</a></li>
-        </ul>
-        <p>Please prepare for this session and join using the meeting link at the scheduled time.</p>
-        <p>Best regards,<br>LANA Tutors Team</p>
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+          <style>
+            body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif; background-color: #f5f5f5; margin: 0; padding: 20px; }
+            .container { max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; }
+            .header { background-color: #D95436; color: white; padding: 30px; text-align: center; }
+            .header h1 { margin: 0; font-size: 28px; font-weight: 600; }
+            .bell-icon { font-size: 24px; margin-right: 8px; }
+            .content { padding: 30px; }
+            .greeting { color: #333333; font-size: 16px; margin-bottom: 20px; }
+            .section { background-color: #FFF5F5; border-left: 4px solid #D95436; padding: 20px; margin: 20px 0; border-radius: 4px; }
+            .section-title { color: #D95436; font-size: 18px; font-weight: 600; margin: 0 0 15px 0; display: flex; align-items: center; }
+            .section-icon { margin-right: 8px; }
+            .detail-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #FEE; }
+            .detail-row:last-child { border-bottom: none; }
+            .detail-label { color: #666666; font-size: 14px; }
+            .detail-value { color: #333333; font-size: 14px; font-weight: 500; }
+            .meeting-button { display: inline-block; background-color: #D95436; color: white; padding: 12px 30px; text-decoration: none; border-radius: 6px; margin: 20px 0; font-weight: 600; }
+            .footer { padding: 20px 30px; background-color: #f9f9f9; color: #666666; font-size: 12px; text-align: center; }
+            .highlight-box { background-color: #DBEAFE; border-left: 4px solid #3B82F6; padding: 15px; border-radius: 4px; margin: 20px 0; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="header">
+              <h1><span class="bell-icon">🔔</span> New Booking!</h1>
+            </div>
+            <div class="content">
+              <p class="greeting">Dear Tutor,</p>
+              <p>Great news! You have a new tutoring session booked. Here are the details:</p>
+              
+              <div class="section">
+                <h2 class="section-title"><span class="section-icon">📚</span> Session Details</h2>
+                <div class="detail-row">
+                  <span class="detail-label">Student:</span>
+                  <span class="detail-value">${studentProfile?.full_name || 'Student'}</span>
+                </div>
+                <div class="detail-row">
+                  <span class="detail-label">Subject:</span>
+                  <span class="detail-value">${booking.subject}</span>
+                </div>
+                <div class="detail-row">
+                  <span class="detail-label">Date & Time:</span>
+                  <span class="detail-value">${formattedDate} at ${formattedTime}</span>
+                </div>
+                <div class="detail-row">
+                  <span class="detail-label">Duration:</span>
+                  <span class="detail-value">1 hour</span>
+                </div>
+                <div class="detail-row">
+                  <span class="detail-label">Class Type:</span>
+                  <span class="detail-value">${booking.class_type === 'physical' ? '📍 Physical' : '💻 Online'}</span>
+                </div>
+              </div>
+
+              ${booking.class_type === 'online' ? `
+              <div style="text-align: center; margin: 30px 0;">
+                <a href="${finalMeetingLink}" class="meeting-button">Join Online Session</a>
+                <p style="color: #666666; font-size: 14px; margin-top: 10px;">Use this link to start the session at the scheduled time</p>
+              </div>
+              ` : `
+              <div class="highlight-box">
+                <p style="color: #1E40AF; font-weight: 600; margin: 0 0 8px 0;">📍 Physical Session</p>
+                <p style="color: #666666; font-size: 14px; margin: 0;">Please contact the student/parent to confirm the meeting location and any additional details for this in-person session.</p>
+              </div>
+              `}
+
+              <div class="highlight-box">
+                <p style="color: #1E40AF; font-weight: 600; margin: 0 0 8px 0;">💡 Preparation Tips</p>
+                <p style="color: #666666; font-size: 14px; margin: 0;">• Review the subject material before the session<br>• Test your internet connection and equipment (for online sessions)<br>• Be ready 5 minutes before the scheduled time<br>• Bring any teaching materials or resources you'll need</p>
+              </div>
+
+              <p style="color: #666666; font-size: 14px; margin-top: 30px;">If you need to reschedule or have any questions, please contact us at <a href="mailto:info@lanatutors.africa" style="color: #D95436;">info@lanatutors.africa</a></p>
+            </div>
+            <div class="footer">
+              <p style="margin: 0 0 5px 0; font-weight: 600; color: #D95436;">LANA Tutors</p>
+              <p style="margin: 0;">Thank you for being part of our tutoring community!</p>
+            </div>
+          </div>
+        </body>
+        </html>
       `;
 
       const tutorEmailResponse = await fetch("https://api.resend.com/emails", {

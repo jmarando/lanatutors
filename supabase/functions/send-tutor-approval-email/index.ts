@@ -49,7 +49,7 @@ const handler = async (req: Request): Promise<Response> => {
                 <table role="presentation" style="max-width: 600px; width: 100%; background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
                   <!-- Header -->
                   <tr>
-                    <td style="padding: 40px 40px 30px; text-align: center; background: linear-gradient(135deg, #ed2644 0%, #c91d39 100%); border-radius: 8px 8px 0 0;">
+                     <td style="padding: 40px 40px 30px; text-align: center; background: linear-gradient(135deg, #D95436 0%, #c73420 100%); border-radius: 8px 8px 0 0;">
                       <h1 style="color: #ffffff; margin: 0; font-size: 28px; font-weight: bold;">🎉 Congratulations! You're Approved!</h1>
                     </td>
                   </tr>
@@ -64,15 +64,15 @@ const handler = async (req: Request): Promise<Response> => {
                       <!-- Success Box -->
                       <table role="presentation" style="width: 100%; margin: 30px 0; background: linear-gradient(135deg, #fef2f2 0%, #ffe5e8 100%); border-radius: 8px;">
                         <tr>
-                          <td style="padding: 24px; border-left: 4px solid #ed2644;">
-                            <h2 style="color: #ed2644; margin: 0 0 12px; font-size: 20px;">🎉 What This Means</h2>
+                          <td style="padding: 24px; border-left: 4px solid #D95436;">
+                            <h2 style="color: #D95436; margin: 0 0 12px; font-size: 20px;">🎉 What This Means</h2>
                             <p style="margin: 0; color: #666666; font-size: 15px; line-height: 1.6;">You are now officially an approved Lana Tutors tutor! You're joining Kenya's leading tutoring platform where quality education meets passionate educators.</p>
                           </td>
                         </tr>
                       </table>
                       
                       <!-- Next Steps -->
-                      <h2 style="color: #ed2644; margin: 30px 0 20px; font-size: 22px;">Next Steps - Complete Your Profile</h2>
+                      <h2 style="color: #D95436; margin: 30px 0 20px; font-size: 22px;">Next Steps - Complete Your Profile</h2>
                       
                       ${tempPassword ? `
                       <div style="background-color: #fef3c7; border-left: 4px solid #f59e0b; padding: 20px; margin: 0 0 24px; border-radius: 8px;">
@@ -102,7 +102,7 @@ const handler = async (req: Request): Promise<Response> => {
                       <table role="presentation" style="width: 100%; margin: 40px 0;">
                         <tr>
                           <td align="center">
-                            <a href="${signupUrl}" style="display: inline-block; background-color: #ed2644; color: #ffffff; padding: 16px 40px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px; box-shadow: 0 4px 12px rgba(237, 38, 68, 0.3);">
+                            <a href="${signupUrl}" style="display: inline-block; background-color: #D95436; color: #ffffff; padding: 16px 40px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px; box-shadow: 0 4px 12px rgba(217, 84, 54, 0.3);">
                               Complete Your Profile Now
                             </a>
                           </td>
@@ -110,7 +110,7 @@ const handler = async (req: Request): Promise<Response> => {
                       </table>
                       
                       <!-- Important Info -->
-                      <h2 style="color: #ed2644; margin: 30px 0 20px; font-size: 20px;">Important Information</h2>
+                      <h2 style="color: #D95436; margin: 30px 0 20px; font-size: 20px;">Important Information</h2>
                       
                       <table role="presentation" style="width: 100%; margin: 20px 0; background-color: #fffbeb; border-radius: 8px; border-left: 4px solid #f59e0b;">
                         <tr>
@@ -122,7 +122,7 @@ const handler = async (req: Request): Promise<Response> => {
                       </table>
                       
                       <!-- Earnings -->
-                      <h2 style="color: #ed2644; margin: 30px 0 15px; font-size: 20px;">What You'll Earn</h2>
+                      <h2 style="color: #D95436; margin: 30px 0 15px; font-size: 20px;">What You'll Earn</h2>
                       <ul style="margin: 0 0 30px; padding-left: 24px; color: #666666; font-size: 15px; line-height: 1.8;">
                         <li style="margin-bottom: 8px;">Set your own hourly rate (KES 2,000 - 6,000)</li>
                         <li style="margin-bottom: 8px;">Earn 70% of your set rate (we retain 30% service fee)</li>
@@ -130,8 +130,8 @@ const handler = async (req: Request): Promise<Response> => {
                         <li>Weekly payouts directly to your M-Pesa</li>
                       </ul>
                       
-                      <h2 style="color: #ed2644; margin: 30px 0 15px; font-size: 20px;">Need Help?</h2>
-                      <p style="margin: 0 0 30px; color: #666666; font-size: 15px; line-height: 1.6;">If you have any questions while setting up your profile, our team is here to help at <a href="mailto:info@lanatutors.africa" style="color: #ed2644; text-decoration: none;">info@lanatutors.africa</a>.</p>
+                      <h2 style="color: #D95436; margin: 30px 0 15px; font-size: 20px;">Need Help?</h2>
+                      <p style="margin: 0 0 30px; color: #666666; font-size: 15px; line-height: 1.6;">If you have any questions while setting up your profile, our team is here to help at <a href="mailto:info@lanatutors.africa" style="color: #D95436; text-decoration: none;">info@lanatutors.africa</a>.</p>
                       
                       <p style="margin: 30px 0 10px; color: #666666; font-size: 15px; line-height: 1.6;">We're excited to have you on board and can't wait to see you make an impact on students' lives!</p>
                       
