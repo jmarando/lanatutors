@@ -507,36 +507,6 @@ export const BookingCalendar = ({
   };
 
 
-  const handleStripePayment = async (bookingId: string, depositAmount: number, balanceDue: number) => {
-    try {
-      // Create Stripe checkout session
-      const { data, error } = await supabase.functions.invoke("create-stripe-checkout", {
-        body: {
-          amount: Math.round(depositAmount * 100), // Convert to cents
-          bookingId,
-          successUrl: `${window.location.origin}/student/dashboard?payment=success`,
-          cancelUrl: `${window.location.origin}/tutors/${tutorId}?payment=cancelled`,
-        },
-      });
-
-      if (error) {
-        await supabase.from("bookings").delete().eq("id", bookingId);
-        throw error;
-      }
-
-      // Redirect to Stripe Checkout
-      if (data?.url) {
-        window.location.href = data.url;
-      }
-    } catch (error: any) {
-      console.error("Stripe payment error:", error);
-      toast({
-        title: "Payment failed",
-        description: error.message,
-        variant: "destructive",
-      });
-    }
-  };
 
   const resetForm = () => {
     setSubject("");
@@ -1042,7 +1012,7 @@ export const BookingCalendar = ({
                           <p>• Enter your M-Pesa PIN to complete the purchase</p>
                         </>
                       ) : (
-                        <p>• You'll be redirected to secure Stripe checkout</p>
+                        <p>• You'll be redirected to secure payment</p>
                       )}
                     </>
                   ) : paymentOption === 'full' ? (
@@ -1054,7 +1024,7 @@ export const BookingCalendar = ({
                           <p>• Enter your M-Pesa PIN to complete the payment</p>
                         </>
                       ) : (
-                        <p>• You'll be redirected to secure Stripe checkout</p>
+                        <p>• You'll be redirected to secure payment</p>
                       )}
                     </>
                   ) : (
@@ -1067,7 +1037,7 @@ export const BookingCalendar = ({
                           <p>• Enter your M-Pesa PIN to complete the deposit</p>
                         </>
                       ) : (
-                        <p>• You'll be redirected to secure Stripe checkout</p>
+                        <p>• You'll be redirected to secure payment</p>
                       )}
                     </>
                   )}
