@@ -436,6 +436,14 @@ const TutorSearch = () => {
                         Subjects: {tutor.subjects.slice(0, 3).join(", ")}
                         {tutor.subjects.length > 3 ? "…" : ""}
                       </p>
+                      {tutor.curriculum && tutor.curriculum.length > 0 && (
+                        <p className="mt-1 text-xs text-muted-foreground">
+                          Curricula: {tutor.curriculum.join(", ")}
+                        </p>
+                      )}
+                      <p className="mt-1 text-xs font-semibold text-primary">
+                        Online: KES {tutor.hourlyRate.toLocaleString()}/hr
+                      </p>
                     </div>
                   </div>
                   <Button
