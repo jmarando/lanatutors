@@ -442,7 +442,7 @@ const TutorSearch = () => {
                         </p>
                       )}
                       <p className="mt-1 text-xs font-semibold text-primary">
-                        <span className="font-semibold">Online:</span> KES {tutor.hourlyRate.toLocaleString()}/hr
+                        <span className="font-semibold">Online:</span> From KES {tutor.hourlyRate.toLocaleString()}/hr
                       </p>
                     </div>
                   </div>
