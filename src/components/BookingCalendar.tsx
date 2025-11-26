@@ -451,7 +451,7 @@ export const BookingCalendar = ({
             body: {
               amount: Math.round(amountToPay),
               description,
-              paymentType: paymentOption === 'package' ? "package_purchase" : "tutor_booking_deposit",
+              paymentType: paymentOption === 'package' ? "package_purchase" : "booking",
               referenceId: paymentOption === 'package' ? packagePurchaseId : booking.id,
               callbackUrl: window.location.origin + '/payment-callback',
               phoneNumber: phoneNumber,
