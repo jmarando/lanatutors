@@ -476,12 +476,7 @@ const NewStudentDashboard = () => {
                           <Button 
                             variant="outline" 
                             className="gap-2"
-                            onClick={() => {
-                              toast({
-                                title: "Payment Required",
-                                description: `Please pay the balance of KES ${booking.balance_due.toFixed(0)} to confirm your booking`,
-                              });
-                            }}
+                            onClick={() => navigate(`/pay-balance?bookingId=${booking.id}`)}
                           >
                             Pay Balance
                             <ChevronRight className="w-4 h-4" />

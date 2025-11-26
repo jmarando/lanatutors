@@ -29,6 +29,7 @@ const BookConsultation = lazy(() => import("./pages/BookConsultation"));
 const HolidayPackages = lazy(() => import("./pages/HolidayPackages"));
 const AdminHolidayPackages = lazy(() => import("./pages/AdminHolidayPackages"));
 const MultiTutorPackage = lazy(() => import("./pages/MultiTutorPackage"));
+const PayBalance = lazy(() => import("./pages/PayBalance"));
 
 const NotFound = lazy(() => import("./pages/NotFound"));
 const TestEmail = lazy(() => import("./pages/TestEmail"));
@@ -94,6 +95,7 @@ const App = () => {
                 <Route path="/holiday-packages" element={<HolidayPackages />} />
                 <Route path="/admin/holiday-packages" element={<AdminHolidayPackages />} />
                 <Route path="/multi-tutor-package" element={<MultiTutorPackage />} />
+                <Route path="/pay-balance" element={<PayBalance />} />
                 <Route path="/privacy-policy" element={<PrivacyPolicy />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
