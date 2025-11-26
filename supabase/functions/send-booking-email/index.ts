@@ -80,7 +80,7 @@ const handler = async (req: Request): Promise<Response> => {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          from: 'LANA Tutors <bookings@lanatutors.africa>',
+          from: 'LANA Tutors <info@lanatutors.africa>',
           to: [booking.student.email],
           subject: 'Booking Confirmation - LANA Tutors',
           html: studentEmailHtml,
@@ -114,7 +114,7 @@ const handler = async (req: Request): Promise<Response> => {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          from: 'LANA Tutors <bookings@lanatutors.africa>',
+          from: 'LANA Tutors <info@lanatutors.africa>',
           to: [booking.tutor.email],
           subject: 'New Booking - LANA Tutors',
           html: tutorEmailHtml,

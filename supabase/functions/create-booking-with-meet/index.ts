@@ -36,126 +36,141 @@ serve(async (req) => {
 
     if (bookingError) throw bookingError;
 
-    // Get Google Calendar credentials from central config
-    const { data: calendarConfig, error: configError } = await supabase
-      .from("central_calendar_config")
-      .select("*")
-      .limit(1)
-      .single();
+    let meetingLink = "Will be shared soon";
+    
+    // Try to create Google Meet link, but don't fail if it doesn't work
+    try {
+      // Get Google Calendar credentials from central config
+      const { data: calendarConfig, error: configError } = await supabase
+        .from("central_calendar_config")
+        .select("*")
+        .limit(1)
+        .single();
 
-    if (configError || !calendarConfig?.google_oauth_token) {
-      console.error("No Google Calendar configured");
-      return new Response(
-        JSON.stringify({ error: "Calendar not configured" }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      if (!configError && calendarConfig?.google_oauth_token) {
+        // Check if token needs refresh
+        let accessToken = calendarConfig.google_oauth_token;
+        const expiresAt = new Date(calendarConfig.google_token_expires_at || 0);
+        
+        if (expiresAt <= new Date()) {
+          const refreshResponse = await fetch("https://oauth2.googleapis.com/token", {
+            method: "POST",
+            headers: { "Content-Type": "application/x-www-form-urlencoded" },
+            body: new URLSearchParams({
+              client_id: Deno.env.get("GOOGLE_CLIENT_ID")!,
+              client_secret: Deno.env.get("GOOGLE_CLIENT_SECRET")!,
+              refresh_token: calendarConfig.google_refresh_token!,
+              grant_type: "refresh_token",
+            }),
+          });
+
+          if (refreshResponse.ok) {
+            const refreshData = await refreshResponse.json();
+            accessToken = refreshData.access_token;
+
+            await supabase
+              .from("central_calendar_config")
+              .update({
+                google_oauth_token: accessToken,
+                google_token_expires_at: new Date(Date.now() + refreshData.expires_in * 1000).toISOString(),
+              })
+              .eq("id", calendarConfig.id);
+          } else {
+            console.error("Token refresh failed, skipping Google Meet creation");
+          }
+        }
+
+        // Create Google Calendar event with Meet link
+        const startTime = new Date(booking.slot.start_time);
+        const endTime = new Date(booking.slot.end_time);
+
+        const calendarEvent = {
+          summary: `${booking.subject} - ${booking.student.full_name}`,
+          description: `Tutoring session for ${booking.subject}\nTutor: ${booking.tutor.email}\nStudent: ${booking.student.full_name}`,
+          start: {
+            dateTime: startTime.toISOString(),
+            timeZone: "Africa/Nairobi",
+          },
+          end: {
+            dateTime: endTime.toISOString(),
+            timeZone: "Africa/Nairobi",
+          },
+          attendees: [
+            { email: booking.student.email },
+            { email: booking.tutor.email },
+          ],
+          conferenceData: {
+            createRequest: {
+              requestId: `booking-${bookingId}`,
+              conferenceSolutionKey: { type: "hangoutsMeet" },
+            },
+          },
+          reminders: {
+            useDefault: false,
+            overrides: [
+              { method: "email", minutes: 1440 },
+              { method: "popup", minutes: 30 },
+            ],
+          },
+        };
+
+        const calendarResponse = await fetch(
+          "https://www.googleapis.com/calendar/v3/calendars/primary/events?conferenceDataVersion=1",
+          {
+            method: "POST",
+            headers: {
+              Authorization: `Bearer ${accessToken}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(calendarEvent),
+          }
+        );
+
+        if (calendarResponse.ok) {
+          const eventData = await calendarResponse.json();
+          meetingLink = eventData.hangoutLink || meetingLink;
+
+          // Update booking with meeting link
+          await supabase
+            .from("bookings")
+            .update({ meeting_link: meetingLink })
+            .eq("id", bookingId);
+          
+          console.log("Google Meet link created successfully:", meetingLink);
+        } else {
+          console.error("Calendar API error:", await calendarResponse.text());
+        }
+      } else {
+        console.log("No Google Calendar configured, skipping Meet link creation");
+      }
+    } catch (meetError) {
+      console.error("Error creating Google Meet link:", meetError);
+      console.log("Continuing with email sending anyway...");
     }
 
-    // Check if token needs refresh
-    let accessToken = calendarConfig.google_oauth_token;
-    const expiresAt = new Date(calendarConfig.google_token_expires_at || 0);
-    
-    if (expiresAt <= new Date()) {
-      const refreshResponse = await fetch("https://oauth2.googleapis.com/token", {
-        method: "POST",
-        headers: { "Content-Type": "application/x-www-form-urlencoded" },
-        body: new URLSearchParams({
-          client_id: Deno.env.get("GOOGLE_CLIENT_ID")!,
-          client_secret: Deno.env.get("GOOGLE_CLIENT_SECRET")!,
-          refresh_token: calendarConfig.google_refresh_token!,
-          grant_type: "refresh_token",
-        }),
+    // Always send emails, even if Google Meet creation failed
+    try {
+      await supabase.functions.invoke("send-booking-email", {
+        body: { 
+          bookingId,
+          meetingLink,
+          recipientType: "student",
+        },
       });
 
-      const refreshData = await refreshResponse.json();
-      accessToken = refreshData.access_token;
-
-      await supabase
-        .from("central_calendar_config")
-        .update({
-          google_oauth_token: accessToken,
-          google_token_expires_at: new Date(Date.now() + refreshData.expires_in * 1000).toISOString(),
-        })
-        .eq("id", calendarConfig.id);
-    }
-
-    // Create Google Calendar event with Meet link
-    const startTime = new Date(booking.slot.start_time);
-    const endTime = new Date(booking.slot.end_time);
-
-    const calendarEvent = {
-      summary: `${booking.subject} - ${booking.student.full_name}`,
-      description: `Tutoring session for ${booking.subject}\nTutor: ${booking.tutor.email}\nStudent: ${booking.student.full_name}`,
-      start: {
-        dateTime: startTime.toISOString(),
-        timeZone: "Africa/Nairobi",
-      },
-      end: {
-        dateTime: endTime.toISOString(),
-        timeZone: "Africa/Nairobi",
-      },
-      attendees: [
-        { email: booking.student.email },
-        { email: booking.tutor.email },
-      ],
-      conferenceData: {
-        createRequest: {
-          requestId: `booking-${bookingId}`,
-          conferenceSolutionKey: { type: "hangoutsMeet" },
+      await supabase.functions.invoke("send-booking-email", {
+        body: { 
+          bookingId,
+          meetingLink,
+          recipientType: "tutor",
         },
-      },
-      reminders: {
-        useDefault: false,
-        overrides: [
-          { method: "email", minutes: 1440 },
-          { method: "popup", minutes: 30 },
-        ],
-      },
-    };
-
-    const calendarResponse = await fetch(
-      "https://www.googleapis.com/calendar/v3/calendars/primary/events?conferenceDataVersion=1",
-      {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${accessToken}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(calendarEvent),
-      }
-    );
-
-    if (!calendarResponse.ok) {
-      throw new Error(`Calendar API error: ${await calendarResponse.text()}`);
+      });
+      
+      console.log("Confirmation emails sent successfully");
+    } catch (emailError) {
+      console.error("Error sending emails:", emailError);
+      // Don't throw - the booking is still confirmed
     }
-
-    const eventData = await calendarResponse.json();
-    const meetingLink = eventData.hangoutLink;
-
-    // Update booking with meeting link
-    const { error: updateError } = await supabase
-      .from("bookings")
-      .update({ meeting_link: meetingLink })
-      .eq("id", bookingId);
-
-    if (updateError) throw updateError;
-
-    // Send emails to student and tutor
-    await supabase.functions.invoke("send-booking-email", {
-      body: { 
-        bookingId,
-        meetingLink,
-        recipientType: "student",
-      },
-    });
-
-    await supabase.functions.invoke("send-booking-email", {
-      body: { 
-        bookingId,
-        meetingLink,
-        recipientType: "tutor",
-      },
-    });
 
     return new Response(
       JSON.stringify({ success: true, meetingLink }),
