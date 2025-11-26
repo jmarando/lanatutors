@@ -206,32 +206,11 @@ export const MultiTutorPackageBuilder = () => {
 
       if (paymentError) throw paymentError;
 
-      // Initiate payment
-      const { data: pesapalData, error: pesapalError } = await supabase.functions.invoke(
-        "initiate-pesapal-payment",
-        {
-          body: {
-            amount: amountToPay,
-            currency: "KES",
-            description: `Multi-tutor package: ${totals.totalSessions} sessions across ${cart.length} subjects`,
-            callbackUrl: `${window.location.origin}/payment-callback`,
-            paymentType: "package_purchase",
-            referenceId: payment.id,
-            phoneNumber: currentUser.phone || "0000000000",
-          },
-        }
-      );
-
-      if (pesapalError) throw pesapalError;
-
-      if (pesapalData?.redirect_url) {
-        // Clear cart before redirecting to payment
-        setCart([]);
-        localStorage.removeItem(CART_STORAGE_KEY);
-        window.location.href = pesapalData.redirect_url;
-      } else {
-        throw new Error("Failed to get payment URL");
-      }
+      // Redirect to invoice preview page instead of directly to Pesapal
+      // Clear cart before redirecting
+      setCart([]);
+      localStorage.removeItem(CART_STORAGE_KEY);
+      window.location.href = `/invoice-preview?type=package&packageId=${payment.id}`;
     } catch (error: any) {
       console.error("Checkout error:", error);
       toast.error(error.message || "Failed to process checkout. Please try again.");

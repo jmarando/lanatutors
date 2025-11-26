@@ -102,23 +102,8 @@ export default function PayBalance() {
         return;
       }
 
-      const { data, error } = await supabase.functions.invoke("initiate-pesapal-payment", {
-        body: {
-          amount: booking.balance_due,
-          currency: booking.currency || "KES",
-          description: `Balance payment for ${booking.subject} session`,
-          phoneNumber: profile.phone_number,
-          paymentType: "booking_balance",
-          referenceId: bookingId,
-          callbackUrl: window.location.origin + "/payment-callback",
-        },
-      });
-
-      if (error) throw error;
-
-      if (data.redirect_url) {
-        window.location.href = data.redirect_url;
-      }
+      // Redirect to invoice preview page
+      window.location.href = `/invoice-preview?type=balance&bookingId=${bookingId}`;
     } catch (error) {
       console.error("Error initiating payment:", error);
       toast({
