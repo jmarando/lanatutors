@@ -380,75 +380,8 @@ const NewStudentDashboard = () => {
 
         </div>
 
-        {/* Active Packages */}
-        {activePackages.length > 0 && (
-          <Card className="mb-8 border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-transparent">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Package className="w-5 h-5 text-primary" />
-                Your Active Packages
-              </CardTitle>
-              <p className="text-sm text-muted-foreground">Use your package credits to book sessions</p>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {activePackages.map((pkg) => (
-                  <Card key={pkg.id} className="bg-background">
-                    <CardContent className="p-6">
-                      <div className="flex items-start justify-between mb-4">
-                        <div>
-                          <h3 className="font-bold text-lg mb-1">{pkg.package_offers?.name || "Package"}</h3>
-                          <p className="text-sm text-muted-foreground">{pkg.package_offers?.description || ""}</p>
-                          <p className="text-sm text-muted-foreground mt-1">
-                            with {pkg.tutorName || "Tutor"}
-                          </p>
-                        </div>
-                        <Badge className="bg-primary">
-                          {pkg.sessions_remaining} Left
-                        </Badge>
-                      </div>
-                      
-                      <div className="space-y-2 mb-4">
-                        <div className="flex justify-between text-sm">
-                          <span>Sessions Used</span>
-                          <span className="font-medium">{pkg.sessions_used}/{pkg.total_sessions}</span>
-                        </div>
-                        <Progress 
-                          value={(pkg.sessions_used / pkg.total_sessions) * 100} 
-                          className="h-2"
-                        />
-                      </div>
-
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-muted-foreground">
-                          Expires {format(new Date(pkg.expires_at), "MMM d, yyyy")}
-                        </span>
-                        <Link to="/tutors">
-                          <Button size="sm" className="gap-2">
-                            Book Session
-                            <ArrowRight className="w-4 h-4" />
-                          </Button>
-                        </Link>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        )}
-
-        {/* Holiday Packages Section */}
-        <div className="mb-8">
-          <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
-            <Sparkles className="w-6 h-6 text-primary" />
-            December Revision Packages
-          </h2>
-          <StudentHolidayPackages />
-        </div>
-
-        {/* Main Content */}
-        <Tabs defaultValue="upcoming" className="space-y-6">
+        {/* Main Content - Upcoming & Past Sessions */}
+        <Tabs defaultValue="upcoming" className="space-y-6 mb-8">
           <TabsList className="grid w-full grid-cols-2 max-w-md">
             <TabsTrigger value="upcoming" className="gap-2">
               <Calendar className="w-4 h-4" />
@@ -621,6 +554,73 @@ const NewStudentDashboard = () => {
             )}
           </TabsContent>
         </Tabs>
+
+        {/* Active Packages */}
+        {activePackages.length > 0 && (
+          <Card className="mt-8 border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-transparent">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Package className="w-5 h-5 text-primary" />
+                Your Active Packages
+              </CardTitle>
+              <p className="text-sm text-muted-foreground">Use your package credits to book sessions</p>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {activePackages.map((pkg) => (
+                  <Card key={pkg.id} className="bg-background">
+                    <CardContent className="p-6">
+                      <div className="flex items-start justify-between mb-4">
+                        <div>
+                          <h3 className="font-bold text-lg mb-1">{pkg.package_offers?.name || "Package"}</h3>
+                          <p className="text-sm text-muted-foreground">{pkg.package_offers?.description || ""}</p>
+                          <p className="text-sm text-muted-foreground mt-1">
+                            with {pkg.tutorName || "Tutor"}
+                          </p>
+                        </div>
+                        <Badge className="bg-primary">
+                          {pkg.sessions_remaining} Left
+                        </Badge>
+                      </div>
+                      
+                      <div className="space-y-2 mb-4">
+                        <div className="flex justify-between text-sm">
+                          <span>Sessions Used</span>
+                          <span className="font-medium">{pkg.sessions_used}/{pkg.total_sessions}</span>
+                        </div>
+                        <Progress 
+                          value={(pkg.sessions_used / pkg.total_sessions) * 100} 
+                          className="h-2"
+                        />
+                      </div>
+
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-muted-foreground">
+                          Expires {format(new Date(pkg.expires_at), "MMM d, yyyy")}
+                        </span>
+                        <Link to="/tutors">
+                          <Button size="sm" className="gap-2">
+                            Book Session
+                            <ArrowRight className="w-4 h-4" />
+                          </Button>
+                        </Link>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Holiday Packages Section */}
+        <div className="mt-8">
+          <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
+            <Sparkles className="w-6 h-6 text-primary" />
+            December Revision Packages
+          </h2>
+          <StudentHolidayPackages />
+        </div>
 
         {/* CTA Section */}
         <Card className="mt-8 bg-gradient-to-br from-primary to-primary/80 text-white border-0">
