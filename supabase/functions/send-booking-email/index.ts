@@ -84,117 +84,191 @@ const handler = async (req: Request): Promise<Response> => {
           <meta charset="utf-8">
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
         </head>
-        <body style="margin: 0; padding: 0; background-color: #f5f5f5; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;">
-          <div style="max-width: 600px; margin: 40px auto; background-color: #ffffff;">
-            
-            <!-- Header -->
-            <div style="background-color: #D95436; color: #ffffff; padding: 40px 30px; text-align: center;">
-              <div style="font-size: 32px; margin-bottom: 8px;">✓</div>
-              <h1 style="margin: 0; font-size: 32px; font-weight: 600; letter-spacing: -0.5px;">Booking Confirmed!</h1>
-            </div>
-            
-            <!-- Content -->
-            <div style="padding: 0 30px 40px 30px;">
-              
-              <!-- Greeting -->
-              <div style="padding: 30px 0 20px 0;">
-                <p style="margin: 0 0 8px 0; font-size: 18px; font-weight: 600; color: #1a1a1a;">Hi ${studentProfile?.full_name || 'Parent'},</p>
-                <p style="margin: 0; font-size: 15px; line-height: 1.6; color: #4a4a4a;">Great news! Your tutoring session has been successfully booked and confirmed. We're excited to support your learning journey! 🎓</p>
-              </div>
-              
-              <!-- Session Details Section -->
-              <div style="background: linear-gradient(135deg, #FFF5F5 0%, #FFE8E8 100%); padding: 24px; border-radius: 12px; margin: 24px 0;">
-                <div style="display: flex; align-items: center; margin-bottom: 16px;">
-                  <span style="font-size: 20px; margin-right: 8px;">📚</span>
-                  <h2 style="margin: 0; font-size: 18px; font-weight: 600; color: #D95436;">Session Details</h2>
-                </div>
-                <table style="width: 100%; border-collapse: collapse;">
+        <body style="margin: 0; padding: 0; background-color: #f5f5f5; font-family: Arial, sans-serif;">
+          <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color: #f5f5f5;">
+            <tr>
+              <td align="center" style="padding: 40px 20px;">
+                <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="600" style="background-color: #ffffff; max-width: 600px;">
+                  
+                  <!-- Header -->
                   <tr>
-                    <td style="padding: 10px 0; border-bottom: 1px solid #FFD6D6; font-size: 14px; color: #666666; width: 40%;">Subject:</td>
-                    <td style="padding: 10px 0; border-bottom: 1px solid #FFD6D6; font-size: 14px; color: #1a1a1a; font-weight: 500; text-align: right;">${booking.subject}</td>
+                    <td align="center" style="background-color: #D95436; padding: 40px 30px;">
+                      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+                        <tr>
+                          <td align="center" style="font-size: 32px; color: #ffffff; padding-bottom: 8px;">✓</td>
+                        </tr>
+                        <tr>
+                          <td align="center" style="font-size: 32px; font-weight: 600; color: #ffffff; letter-spacing: -0.5px;">Booking Confirmed!</td>
+                        </tr>
+                      </table>
+                    </td>
                   </tr>
+                  
+                  <!-- Content -->
                   <tr>
-                    <td style="padding: 10px 0; border-bottom: 1px solid #FFD6D6; font-size: 14px; color: #666666;">Tutor:</td>
-                    <td style="padding: 10px 0; border-bottom: 1px solid #FFD6D6; font-size: 14px; color: #1a1a1a; font-weight: 500; text-align: right;">${tutorProfile?.email?.split('@')[0] || 'Your Tutor'}</td>
+                    <td style="padding: 30px;">
+                      
+                      <!-- Greeting -->
+                      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+                        <tr>
+                          <td style="padding-bottom: 8px; font-size: 18px; font-weight: 600; color: #1a1a1a;">Hi ${studentProfile?.full_name || 'Parent'},</td>
+                        </tr>
+                        <tr>
+                          <td style="padding-bottom: 20px; font-size: 15px; line-height: 1.6; color: #4a4a4a;">Great news! Your tutoring session has been successfully booked and confirmed. We're excited to support your learning journey! 🎓</td>
+                        </tr>
+                      </table>
+                      
+                      <!-- Session Details -->
+                      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color: #FFF5F5; border-radius: 12px; margin: 24px 0;">
+                        <tr>
+                          <td style="padding: 24px;">
+                            <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+                              <tr>
+                                <td style="padding-bottom: 16px; font-size: 18px; font-weight: 600; color: #D95436;">📚 Session Details</td>
+                              </tr>
+                              <tr>
+                                <td>
+                                  <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+                                    <tr>
+                                      <td style="padding: 10px 0; border-bottom: 1px solid #FFD6D6; font-size: 14px; color: #666666; width: 40%;">Subject:</td>
+                                      <td style="padding: 10px 0; border-bottom: 1px solid #FFD6D6; font-size: 14px; color: #1a1a1a; font-weight: 500; text-align: right;">${booking.subject}</td>
+                                    </tr>
+                                    <tr>
+                                      <td style="padding: 10px 0; border-bottom: 1px solid #FFD6D6; font-size: 14px; color: #666666;">Tutor:</td>
+                                      <td style="padding: 10px 0; border-bottom: 1px solid #FFD6D6; font-size: 14px; color: #1a1a1a; font-weight: 500; text-align: right;">Calvins Onuko</td>
+                                    </tr>
+                                    <tr>
+                                      <td style="padding: 10px 0; border-bottom: 1px solid #FFD6D6; font-size: 14px; color: #666666;">Date & Time:</td>
+                                      <td style="padding: 10px 0; border-bottom: 1px solid #FFD6D6; font-size: 14px; color: #1a1a1a; font-weight: 500; text-align: right;">${formattedDate} at ${formattedTime}</td>
+                                    </tr>
+                                    <tr>
+                                      <td style="padding: 10px 0; border-bottom: 1px solid #FFD6D6; font-size: 14px; color: #666666;">Duration:</td>
+                                      <td style="padding: 10px 0; border-bottom: 1px solid #FFD6D6; font-size: 14px; color: #1a1a1a; font-weight: 500; text-align: right;">1 hour</td>
+                                    </tr>
+                                    <tr>
+                                      <td style="padding: 10px 0; font-size: 14px; color: #666666;">Class Type:</td>
+                                      <td style="padding: 10px 0; font-size: 14px; color: #1a1a1a; font-weight: 500; text-align: right;">${booking.class_type === 'physical' ? '📍 Physical' : '💻 Online'}</td>
+                                    </tr>
+                                  </table>
+                                </td>
+                              </tr>
+                            </table>
+                          </td>
+                        </tr>
+                      </table>
+                      
+                      <!-- Payment Summary -->
+                      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color: #FFFBEB; border-radius: 12px; margin: 24px 0;">
+                        <tr>
+                          <td style="padding: 24px;">
+                            <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+                              <tr>
+                                <td style="padding-bottom: 16px; font-size: 18px; font-weight: 600; color: #D97706;">💰 Payment Summary</td>
+                              </tr>
+                              <tr>
+                                <td>
+                                  <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+                                    <tr>
+                                      <td style="padding: 10px 0; border-bottom: 1px solid #FDE68A; font-size: 14px; color: #78350f;">Total Amount:</td>
+                                      <td style="padding: 10px 0; border-bottom: 1px solid #FDE68A; font-size: 16px; color: #1a1a1a; font-weight: 600; text-align: right;">${booking.currency || 'KES'} ${booking.amount}</td>
+                                    </tr>
+                                    ${booking.payment_option === 'deposit' && booking.deposit_paid ? `
+                                    <tr>
+                                      <td style="padding: 10px 0; font-size: 14px; color: #78350f;">✓ Deposit Paid:</td>
+                                      <td style="padding: 10px 0; font-size: 14px; color: #15803d; font-weight: 600; text-align: right;">${booking.currency || 'KES'} ${booking.deposit_paid}</td>
+                                    </tr>
+                                    ${booking.balance_due ? `
+                                    <tr>
+                                      <td style="padding: 10px 0; font-size: 14px; color: #78350f;">Balance Due:</td>
+                                      <td style="padding: 10px 0; font-size: 14px; color: #1a1a1a; font-weight: 500; text-align: right;">${booking.currency || 'KES'} ${booking.balance_due}</td>
+                                    </tr>
+                                    ` : ''}
+                                    ` : `
+                                    <tr>
+                                      <td colspan="2" style="padding: 16px; background-color: #D1FAE5; border-radius: 8px; margin-top: 16px;">
+                                        <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+                                          <tr>
+                                            <td style="font-size: 14px; color: #065F46; font-weight: 600;">✓ Fully Paid! Your session is completely paid for. See you there!</td>
+                                          </tr>
+                                        </table>
+                                      </td>
+                                    </tr>
+                                    `}
+                                  </table>
+                                </td>
+                              </tr>
+                            </table>
+                          </td>
+                        </tr>
+                      </table>
+                      
+                      ${booking.class_type === 'online' ? `
+                      <!-- Join Button -->
+                      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin: 32px 0;">
+                        <tr>
+                          <td align="center">
+                            <a href="${finalMeetingLink}" style="display: inline-block; background-color: #D95436; color: #ffffff; text-decoration: none; padding: 16px 48px; border-radius: 10px; font-size: 16px; font-weight: 600;">Join Online Session</a>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td align="center" style="padding-top: 12px; font-size: 13px; color: #666666;">Click the button above to join your session at the scheduled time</td>
+                        </tr>
+                      </table>
+                      ` : `
+                      <!-- Physical Location -->
+                      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color: #EDE9FE; border-radius: 12px; margin: 24px 0;">
+                        <tr>
+                          <td style="padding: 24px;">
+                            <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+                              <tr>
+                                <td style="padding-bottom: 12px; font-size: 18px; font-weight: 600; color: #7C3AED;">📍 Physical Session Location</td>
+                              </tr>
+                              <tr>
+                                <td style="font-size: 14px; line-height: 1.6; color: #5B21B6;">This is a physical session. Your tutor will contact you shortly to confirm the meeting location and any additional details.</td>
+                              </tr>
+                            </table>
+                          </td>
+                        </tr>
+                      </table>
+                      `}
+                      
+                      <!-- Reschedule Button -->
+                      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin: 24px 0;">
+                        <tr>
+                          <td align="center">
+                            <a href="mailto:info@lanatutors.africa?subject=Reschedule Request - ${booking.subject} on ${formattedDate}&body=Hi Lana Tutors Team,%0D%0A%0D%0AI would like to reschedule my ${booking.subject} session currently scheduled for ${formattedDate} at ${formattedTime}.%0D%0A%0D%0ABooking ID: ${bookingId}%0D%0A%0D%0APlease let me know available alternative times.%0D%0A%0D%0AThank you!" style="display: inline-block; background-color: #ffffff; color: #D95436; text-decoration: none; padding: 12px 32px; border-radius: 8px; font-size: 14px; font-weight: 600; border: 2px solid #D95436;">Need to Reschedule?</a>
+                          </td>
+                        </tr>
+                      </table>
+                      
+                      <!-- Help -->
+                      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin-top: 32px; padding-top: 24px; border-top: 1px solid #e5e5e5;">
+                        <tr>
+                          <td style="font-size: 13px; line-height: 1.6; color: #666666;">If you have any questions, please contact us at <a href="mailto:info@lanatutors.africa" style="color: #D95436; text-decoration: none;">info@lanatutors.africa</a></td>
+                        </tr>
+                      </table>
+                      
+                    </td>
                   </tr>
+                  
+                  <!-- Footer -->
                   <tr>
-                    <td style="padding: 10px 0; border-bottom: 1px solid #FFD6D6; font-size: 14px; color: #666666;">Date & Time:</td>
-                    <td style="padding: 10px 0; border-bottom: 1px solid #FFD6D6; font-size: 14px; color: #1a1a1a; font-weight: 500; text-align: right;">${formattedDate}<br>${formattedTime}</td>
+                    <td style="background-color: #f9f9f9; padding: 24px 30px; text-align: center; border-top: 1px solid #e5e5e5;">
+                      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+                        <tr>
+                          <td align="center" style="padding-bottom: 4px; font-size: 14px; font-weight: 600; color: #D95436;">Lana Tutors</td>
+                        </tr>
+                        <tr>
+                          <td align="center" style="font-size: 12px; color: #999999;">Supporting your learning journey, one session at a time.</td>
+                        </tr>
+                      </table>
+                    </td>
                   </tr>
-                  <tr>
-                    <td style="padding: 10px 0; border-bottom: 1px solid #FFD6D6; font-size: 14px; color: #666666;">Duration:</td>
-                    <td style="padding: 10px 0; border-bottom: 1px solid #FFD6D6; font-size: 14px; color: #1a1a1a; font-weight: 500; text-align: right;">Until ${slot ? new Date(slot.end_time).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', timeZone: 'Africa/Nairobi' }) : '02:00 PM'}</td>
-                  </tr>
-                  <tr>
-                    <td style="padding: 10px 0; font-size: 14px; color: #666666;">Class Type:</td>
-                    <td style="padding: 10px 0; font-size: 14px; color: #1a1a1a; font-weight: 500; text-align: right;">${booking.class_type === 'physical' ? '📍 Physical' : '💻 Online'}</td>
-                  </tr>
+                  
                 </table>
-              </div>
-              
-              <!-- Payment Summary Section -->
-              <div style="background: linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 100%); padding: 24px; border-radius: 12px; margin: 24px 0;">
-                <div style="display: flex; align-items: center; margin-bottom: 16px;">
-                  <span style="font-size: 20px; margin-right: 8px;">💰</span>
-                  <h2 style="margin: 0; font-size: 18px; font-weight: 600; color: #D97706;">Payment Summary</h2>
-                </div>
-                <table style="width: 100%; border-collapse: collapse;">
-                  <tr>
-                    <td style="padding: 10px 0; border-bottom: 1px solid #FDE68A; font-size: 14px; color: #78350f;">Total Amount:</td>
-                    <td style="padding: 10px 0; border-bottom: 1px solid #FDE68A; font-size: 16px; color: #1a1a1a; font-weight: 600; text-align: right;">${booking.currency || 'KES'} ${booking.amount}</td>
-                  </tr>
-                  ${booking.payment_option === 'deposit' && booking.deposit_paid ? `
-                  <tr>
-                    <td style="padding: 10px 0; font-size: 14px; color: #78350f;">✓ Deposit Paid:</td>
-                    <td style="padding: 10px 0; font-size: 14px; color: #15803d; font-weight: 600; text-align: right;">${booking.currency || 'KES'} ${booking.deposit_paid}</td>
-                  </tr>
-                  ${booking.balance_due ? `
-                  <tr>
-                    <td style="padding: 10px 0; font-size: 14px; color: #78350f;">Balance Due:</td>
-                    <td style="padding: 10px 0; font-size: 14px; color: #1a1a1a; font-weight: 500; text-align: right;">${booking.currency || 'KES'} ${booking.balance_due}</td>
-                  </tr>
-                  ` : ''}
-                  ` : ''}
-                </table>
-                
-                ${booking.payment_option !== 'deposit' ? `
-                <div style="background-color: #D1FAE5; border-left: 4px solid #10B981; padding: 16px; border-radius: 8px; margin-top: 16px;">
-                  <p style="margin: 0; font-size: 14px; color: #065F46; font-weight: 600;">✓ Fully Paid! Your session is completely paid for. See you there!</p>
-                </div>
-                ` : ''}
-              </div>
-              
-              ${booking.class_type === 'online' ? `
-              <!-- Online Session Button -->
-              <div style="text-align: center; margin: 32px 0;">
-                <a href="${finalMeetingLink}" style="display: inline-block; background: linear-gradient(135deg, #D95436 0%, #c73420 100%); color: #ffffff; text-decoration: none; padding: 16px 48px; border-radius: 10px; font-size: 16px; font-weight: 600; box-shadow: 0 4px 14px rgba(217, 84, 54, 0.4);">Join Online Session</a>
-                <p style="margin: 12px 0 0 0; font-size: 13px; color: #666666;">Click the button above to join your session at the scheduled time</p>
-              </div>
-              ` : `
-              <!-- Physical Session Location -->
-              <div style="background: linear-gradient(135deg, #EDE9FE 0%, #DDD6FE 100%); padding: 24px; border-radius: 12px; margin: 24px 0;">
-                <div style="display: flex; align-items: center; margin-bottom: 12px;">
-                  <span style="font-size: 20px; margin-right: 8px;">📍</span>
-                  <h2 style="margin: 0; font-size: 18px; font-weight: 600; color: #7C3AED;">Physical Session Location</h2>
-                </div>
-                <p style="margin: 0; font-size: 14px; line-height: 1.6; color: #5B21B6;">This is a physical session. Your tutor will contact you shortly to confirm the meeting location and any additional details.</p>
-              </div>
-              `}
-              
-              <!-- Help Section -->
-              <div style="margin-top: 32px; padding-top: 24px; border-top: 1px solid #e5e5e5;">
-                <p style="margin: 0; font-size: 13px; line-height: 1.6; color: #666666;">If you have any questions or need to reschedule, please contact us at <a href="mailto:info@lanatutors.africa" style="color: #D95436; text-decoration: none; font-weight: 500;">info@lanatutors.africa</a></p>
-              </div>
-              
-            </div>
-            
-            <!-- Footer -->
-            <div style="background-color: #f9f9f9; padding: 24px 30px; text-align: center; border-top: 1px solid #e5e5e5;">
-              <p style="margin: 0 0 4px 0; font-size: 14px; font-weight: 600; color: #D95436;">Lana Tutors</p>
-              <p style="margin: 0; font-size: 12px; color: #999999;">Supporting your learning journey, one session at a time.</p>
-            </div>
-            
-          </div>
+              </td>
+            </tr>
+          </table>
         </body>
         </html>
       `;
@@ -228,93 +302,158 @@ const handler = async (req: Request): Promise<Response> => {
           <meta charset="utf-8">
           <meta name="viewport" content="width=device-width, initial-scale=1.0">
         </head>
-        <body style="margin: 0; padding: 0; background-color: #f5f5f5; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Helvetica Neue', Arial, sans-serif;">
-          <div style="max-width: 600px; margin: 40px auto; background-color: #ffffff;">
-            
-            <!-- Header -->
-            <div style="background-color: #D95436; color: #ffffff; padding: 40px 30px; text-align: center;">
-              <div style="font-size: 32px; margin-bottom: 8px;">🔔</div>
-              <h1 style="margin: 0; font-size: 32px; font-weight: 600; letter-spacing: -0.5px;">New Booking!</h1>
-            </div>
-            
-            <!-- Content -->
-            <div style="padding: 0 30px 40px 30px;">
-              
-              <!-- Greeting -->
-              <div style="padding: 30px 0 20px 0;">
-                <p style="margin: 0 0 8px 0; font-size: 18px; font-weight: 600; color: #1a1a1a;">Dear Tutor,</p>
-                <p style="margin: 0; font-size: 15px; line-height: 1.6; color: #4a4a4a;">Great news! You have a new tutoring session booked. Here are the details:</p>
-              </div>
-              
-              <!-- Session Details Section -->
-              <div style="background: linear-gradient(135deg, #FFF5F5 0%, #FFE8E8 100%); padding: 24px; border-radius: 12px; margin: 24px 0;">
-                <div style="display: flex; align-items: center; margin-bottom: 16px;">
-                  <span style="font-size: 20px; margin-right: 8px;">📚</span>
-                  <h2 style="margin: 0; font-size: 18px; font-weight: 600; color: #D95436;">Session Details</h2>
-                </div>
-                <table style="width: 100%; border-collapse: collapse;">
+        <body style="margin: 0; padding: 0; background-color: #f5f5f5; font-family: Arial, sans-serif;">
+          <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color: #f5f5f5;">
+            <tr>
+              <td align="center" style="padding: 40px 20px;">
+                <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="600" style="background-color: #ffffff; max-width: 600px;">
+                  
+                  <!-- Header -->
                   <tr>
-                    <td style="padding: 10px 0; border-bottom: 1px solid #FFD6D6; font-size: 14px; color: #666666; width: 40%;">Student:</td>
-                    <td style="padding: 10px 0; border-bottom: 1px solid #FFD6D6; font-size: 14px; color: #1a1a1a; font-weight: 500; text-align: right;">${studentProfile?.full_name || 'Student'}</td>
+                    <td align="center" style="background-color: #D95436; padding: 40px 30px;">
+                      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+                        <tr>
+                          <td align="center" style="font-size: 32px; color: #ffffff; padding-bottom: 8px;">🔔</td>
+                        </tr>
+                        <tr>
+                          <td align="center" style="font-size: 32px; font-weight: 600; color: #ffffff; letter-spacing: -0.5px;">New Booking!</td>
+                        </tr>
+                      </table>
+                    </td>
                   </tr>
+                  
+                  <!-- Content -->
                   <tr>
-                    <td style="padding: 10px 0; border-bottom: 1px solid #FFD6D6; font-size: 14px; color: #666666;">Subject:</td>
-                    <td style="padding: 10px 0; border-bottom: 1px solid #FFD6D6; font-size: 14px; color: #1a1a1a; font-weight: 500; text-align: right;">${booking.subject}</td>
+                    <td style="padding: 30px;">
+                      
+                      <!-- Greeting -->
+                      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+                        <tr>
+                          <td style="padding-bottom: 8px; font-size: 18px; font-weight: 600; color: #1a1a1a;">Dear Tutor,</td>
+                        </tr>
+                        <tr>
+                          <td style="padding-bottom: 20px; font-size: 15px; line-height: 1.6; color: #4a4a4a;">Great news! You have a new tutoring session booked. Here are the details:</td>
+                        </tr>
+                      </table>
+                      
+                      <!-- Session Details -->
+                      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color: #FFF5F5; border-radius: 12px; margin: 24px 0;">
+                        <tr>
+                          <td style="padding: 24px;">
+                            <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+                              <tr>
+                                <td style="padding-bottom: 16px; font-size: 18px; font-weight: 600; color: #D95436;">📚 Session Details</td>
+                              </tr>
+                              <tr>
+                                <td>
+                                  <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+                                    <tr>
+                                      <td style="padding: 10px 0; border-bottom: 1px solid #FFD6D6; font-size: 14px; color: #666666; width: 40%;">Student:</td>
+                                      <td style="padding: 10px 0; border-bottom: 1px solid #FFD6D6; font-size: 14px; color: #1a1a1a; font-weight: 500; text-align: right;">${studentProfile?.full_name || 'Student'}</td>
+                                    </tr>
+                                    <tr>
+                                      <td style="padding: 10px 0; border-bottom: 1px solid #FFD6D6; font-size: 14px; color: #666666;">Subject:</td>
+                                      <td style="padding: 10px 0; border-bottom: 1px solid #FFD6D6; font-size: 14px; color: #1a1a1a; font-weight: 500; text-align: right;">${booking.subject}</td>
+                                    </tr>
+                                    <tr>
+                                      <td style="padding: 10px 0; border-bottom: 1px solid #FFD6D6; font-size: 14px; color: #666666;">Date & Time:</td>
+                                      <td style="padding: 10px 0; border-bottom: 1px solid #FFD6D6; font-size: 14px; color: #1a1a1a; font-weight: 500; text-align: right;">${formattedDate} at ${formattedTime}</td>
+                                    </tr>
+                                    <tr>
+                                      <td style="padding: 10px 0; border-bottom: 1px solid #FFD6D6; font-size: 14px; color: #666666;">Duration:</td>
+                                      <td style="padding: 10px 0; border-bottom: 1px solid #FFD6D6; font-size: 14px; color: #1a1a1a; font-weight: 500; text-align: right;">1 hour</td>
+                                    </tr>
+                                    <tr>
+                                      <td style="padding: 10px 0; font-size: 14px; color: #666666;">Class Type:</td>
+                                      <td style="padding: 10px 0; font-size: 14px; color: #1a1a1a; font-weight: 500; text-align: right;">${booking.class_type === 'physical' ? '📍 Physical' : '💻 Online'}</td>
+                                    </tr>
+                                  </table>
+                                </td>
+                              </tr>
+                            </table>
+                          </td>
+                        </tr>
+                      </table>
+                      
+                      ${booking.class_type === 'online' ? `
+                      <!-- Join Button -->
+                      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin: 32px 0;">
+                        <tr>
+                          <td align="center">
+                            <a href="${finalMeetingLink}" style="display: inline-block; background-color: #D95436; color: #ffffff; text-decoration: none; padding: 16px 48px; border-radius: 10px; font-size: 16px; font-weight: 600;">Join Online Session</a>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td align="center" style="padding-top: 12px; font-size: 13px; color: #666666;">Use this link to start the session at the scheduled time</td>
+                        </tr>
+                      </table>
+                      ` : `
+                      <!-- Physical Session Info -->
+                      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color: #DBEAFE; border-radius: 12px; margin: 24px 0;">
+                        <tr>
+                          <td style="padding: 20px;">
+                            <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+                              <tr>
+                                <td style="padding-bottom: 8px; font-size: 14px; font-weight: 600; color: #1E40AF;">📍 Physical Session</td>
+                              </tr>
+                              <tr>
+                                <td style="font-size: 13px; line-height: 1.6; color: #1E3A8A;">Please contact the student/parent to confirm the meeting location and any additional details for this in-person session.</td>
+                              </tr>
+                            </table>
+                          </td>
+                        </tr>
+                      </table>
+                      `}
+                      
+                      <!-- Preparation Tips -->
+                      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color: #F0FDF4; border-radius: 12px; margin: 24px 0;">
+                        <tr>
+                          <td style="padding: 20px;">
+                            <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+                              <tr>
+                                <td style="padding-bottom: 12px; font-size: 14px; font-weight: 600; color: #15803D;">💡 Preparation Tips</td>
+                              </tr>
+                              <tr>
+                                <td style="font-size: 13px; line-height: 1.8; color: #166534;">
+                                  • Review the subject material before the session<br>
+                                  • Test your internet connection and equipment (for online sessions)<br>
+                                  • Be ready 5 minutes before the scheduled time<br>
+                                  • Bring any teaching materials or resources you'll need
+                                </td>
+                              </tr>
+                            </table>
+                          </td>
+                        </tr>
+                      </table>
+                      
+                      <!-- Help -->
+                      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="margin-top: 32px; padding-top: 24px; border-top: 1px solid #e5e5e5;">
+                        <tr>
+                          <td style="font-size: 13px; line-height: 1.6; color: #666666;">If you need to reschedule or have any questions, please contact us at <a href="mailto:info@lanatutors.africa" style="color: #D95436; text-decoration: none;">info@lanatutors.africa</a></td>
+                        </tr>
+                      </table>
+                      
+                    </td>
                   </tr>
+                  
+                  <!-- Footer -->
                   <tr>
-                    <td style="padding: 10px 0; border-bottom: 1px solid #FFD6D6; font-size: 14px; color: #666666;">Date & Time:</td>
-                    <td style="padding: 10px 0; border-bottom: 1px solid #FFD6D6; font-size: 14px; color: #1a1a1a; font-weight: 500; text-align: right;">${formattedDate}<br>${formattedTime}</td>
+                    <td style="background-color: #f9f9f9; padding: 24px 30px; text-align: center; border-top: 1px solid #e5e5e5;">
+                      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+                        <tr>
+                          <td align="center" style="padding-bottom: 4px; font-size: 14px; font-weight: 600; color: #D95436;">Lana Tutors</td>
+                        </tr>
+                        <tr>
+                          <td align="center" style="font-size: 12px; color: #999999;">Thank you for being part of our tutoring community!</td>
+                        </tr>
+                      </table>
+                    </td>
                   </tr>
-                  <tr>
-                    <td style="padding: 10px 0; border-bottom: 1px solid #FFD6D6; font-size: 14px; color: #666666;">Duration:</td>
-                    <td style="padding: 10px 0; border-bottom: 1px solid #FFD6D6; font-size: 14px; color: #1a1a1a; font-weight: 500; text-align: right;">Until ${slot ? new Date(slot.end_time).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', timeZone: 'Africa/Nairobi' }) : '02:00 PM'}</td>
-                  </tr>
-                  <tr>
-                    <td style="padding: 10px 0; font-size: 14px; color: #666666;">Class Type:</td>
-                    <td style="padding: 10px 0; font-size: 14px; color: #1a1a1a; font-weight: 500; text-align: right;">${booking.class_type === 'physical' ? '📍 Physical' : '💻 Online'}</td>
-                  </tr>
+                  
                 </table>
-              </div>
-              
-              ${booking.class_type === 'online' ? `
-              <!-- Online Session Button -->
-              <div style="text-align: center; margin: 32px 0;">
-                <a href="${finalMeetingLink}" style="display: inline-block; background: linear-gradient(135deg, #D95436 0%, #c73420 100%); color: #ffffff; text-decoration: none; padding: 16px 48px; border-radius: 10px; font-size: 16px; font-weight: 600; box-shadow: 0 4px 14px rgba(217, 84, 54, 0.4);">Join Online Session</a>
-                <p style="margin: 12px 0 0 0; font-size: 13px; color: #666666;">Use this link to start the session at the scheduled time</p>
-              </div>
-              ` : `
-              <!-- Physical Session Info -->
-              <div style="background: linear-gradient(135deg, #DBEAFE 0%, #BFDBFE 100%); padding: 20px; border-radius: 12px; margin: 24px 0;">
-                <p style="margin: 0 0 8px 0; font-size: 14px; font-weight: 600; color: #1E40AF;">📍 Physical Session</p>
-                <p style="margin: 0; font-size: 13px; line-height: 1.6; color: #1E3A8A;">Please contact the student/parent to confirm the meeting location and any additional details for this in-person session.</p>
-              </div>
-              `}
-              
-              <!-- Preparation Tips -->
-              <div style="background: linear-gradient(135deg, #F0FDF4 0%, #DCFCE7 100%); padding: 20px; border-radius: 12px; margin: 24px 0;">
-                <p style="margin: 0 0 12px 0; font-size: 14px; font-weight: 600; color: #15803D;">💡 Preparation Tips</p>
-                <ul style="margin: 0; padding-left: 20px; font-size: 13px; line-height: 1.8; color: #166534;">
-                  <li>Review the subject material before the session</li>
-                  <li>Test your internet connection and equipment (for online sessions)</li>
-                  <li>Be ready 5 minutes before the scheduled time</li>
-                  <li>Bring any teaching materials or resources you'll need</li>
-                </ul>
-              </div>
-              
-              <!-- Help Section -->
-              <div style="margin-top: 32px; padding-top: 24px; border-top: 1px solid #e5e5e5;">
-                <p style="margin: 0; font-size: 13px; line-height: 1.6; color: #666666;">If you need to reschedule or have any questions, please contact us at <a href="mailto:info@lanatutors.africa" style="color: #D95436; text-decoration: none; font-weight: 500;">info@lanatutors.africa</a></p>
-              </div>
-              
-            </div>
-            
-            <!-- Footer -->
-            <div style="background-color: #f9f9f9; padding: 24px 30px; text-align: center; border-top: 1px solid #e5e5e5;">
-              <p style="margin: 0 0 4px 0; font-size: 14px; font-weight: 600; color: #D95436;">Lana Tutors</p>
-              <p style="margin: 0; font-size: 12px; color: #999999;">Thank you for being part of our tutoring community!</p>
-            </div>
-            
-          </div>
+              </td>
+            </tr>
+          </table>
         </body>
         </html>
       `;
