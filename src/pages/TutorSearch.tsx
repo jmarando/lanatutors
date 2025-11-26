@@ -433,16 +433,16 @@ const TutorSearch = () => {
                       <h3 className="font-semibold text-lg">{tutor.name}</h3>
                       <p className="text-sm text-muted-foreground">{tutor.school}</p>
                       <p className="mt-2 text-xs text-muted-foreground">
-                        Subjects: {tutor.subjects.slice(0, 3).join(", ")}
+                        <span className="font-semibold">Subjects:</span> {tutor.subjects.slice(0, 3).join(", ")}
                         {tutor.subjects.length > 3 ? "…" : ""}
                       </p>
                       {tutor.curriculum && tutor.curriculum.length > 0 && (
                         <p className="mt-1 text-xs text-muted-foreground">
-                          Curricula: {tutor.curriculum.join(", ")}
+                          <span className="font-semibold">Curricula:</span> {tutor.curriculum.join(", ")}
                         </p>
                       )}
                       <p className="mt-1 text-xs font-semibold text-primary">
-                        Online: KES {tutor.hourlyRate.toLocaleString()}/hr
+                        <span className="font-semibold">Online:</span> KES {tutor.hourlyRate.toLocaleString()}/hr
                       </p>
                     </div>
                   </div>
