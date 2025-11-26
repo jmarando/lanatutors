@@ -83,9 +83,12 @@ export default function TestBookingEmail() {
                   Sending Email...
                 </>
               ) : (
-                "Send Booking Confirmation Email"
+                "Send Booking Confirmation Email (Student & Tutor)"
               )}
             </Button>
+            <p className="text-xs text-muted-foreground text-center">
+              This will send confirmation emails to both the student and the tutor (Calvins)
+            </p>
 
             {result && (
               <Card className="bg-muted">
