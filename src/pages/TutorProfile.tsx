@@ -703,12 +703,14 @@ const TutorProfile = () => {
                         size="lg"
                         onClick={() => handleBookingTypeSelect('single')}
                       >
-                        <div className="flex items-center justify-between w-full gap-4">
+                        <div className="flex items-center justify-between w-full gap-3 flex-wrap sm:flex-nowrap text-left">
                           <span className="flex items-center gap-2 text-base font-semibold shrink-0">
                             <BookOpen className="w-5 h-5" />
                             Single Session
                           </span>
-                          <span className="font-bold text-lg whitespace-nowrap">KES {currentRate.toLocaleString()}</span>
+                          <span className="font-bold text-base sm:text-lg whitespace-nowrap">
+                            KES {currentRate.toLocaleString()}
+                          </span>
                         </div>
                       </Button>
 
@@ -718,7 +720,7 @@ const TutorProfile = () => {
                         size="lg"
                         onClick={() => handleBookingTypeSelect('double')}
                       >
-                        <div className="flex items-center justify-between w-full gap-4">
+                        <div className="flex items-center justify-between w-full gap-3 flex-wrap sm:flex-nowrap text-left">
                           <div className="flex flex-col items-start gap-1.5 shrink-0">
                             <span className="flex items-center gap-2 text-base font-semibold">
                               <BookOpen className="w-5 h-5" />
@@ -726,7 +728,9 @@ const TutorProfile = () => {
                             </span>
                             <Badge variant="secondary" className="text-xs">Save 5%</Badge>
                           </div>
-                          <span className="font-bold text-lg whitespace-nowrap">KES {Math.round(currentRate * 2 * 0.95).toLocaleString()}</span>
+                          <span className="font-bold text-base sm:text-lg whitespace-nowrap">
+                            KES {Math.round(currentRate * 2 * 0.95).toLocaleString()}
+                          </span>
                         </div>
                       </Button>
                     </div>
