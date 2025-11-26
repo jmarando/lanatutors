@@ -202,6 +202,15 @@ export const BookingCalendar = ({
       return;
     }
 
+    if (!tutorUserId) {
+      toast({
+        title: "Error",
+        description: "Tutor information not loaded. Please refresh the page.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     // Validate location for in-person sessions
     if (selectedClassType === 'in-person' && !selectedLocation) {
       toast({
@@ -314,7 +323,7 @@ export const BookingCalendar = ({
         .from("bookings")
         .insert({
           student_id: user.id,
-          tutor_id: tutorId,
+          tutor_id: tutorUserId,
           availability_slot_id: selectedSlot.id,
           subject: subject.trim(),
           notes: notesWithTier,
