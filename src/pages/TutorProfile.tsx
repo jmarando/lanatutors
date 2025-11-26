@@ -779,16 +779,16 @@ const TutorProfile = () => {
                   <div className="space-y-4">
                     {/* Direct Session Booking */}
                     <Button 
-                      className="w-full group hover:shadow-lg transition-all h-auto py-4"
+                      className="w-full group hover:shadow-lg transition-all h-auto py-5"
                       size="lg"
                       onClick={() => handleBookingTypeSelect('single')}
                     >
-                      <div className="flex items-center justify-between w-full gap-3">
+                      <div className="flex flex-col items-center justify-center w-full gap-2">
                         <span className="flex items-center gap-2 text-base font-semibold">
                           <BookOpen className="w-5 h-5 shrink-0" />
                           <span>Book a Session</span>
                         </span>
-                        <span className="font-bold text-base whitespace-nowrap">
+                        <span className="font-bold text-base">
                           From KES {currentRate.toLocaleString()}/hr
                         </span>
                       </div>
