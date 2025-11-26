@@ -49,7 +49,7 @@ const handler = async (req: Request): Promise<Response> => {
                 <table role="presentation" style="max-width: 600px; width: 100%; background-color: #ffffff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
                   <!-- Header -->
                   <tr>
-                    <td style="padding: 40px 40px 30px; text-align: center; background: linear-gradient(135deg, #ed2644 0%, #c91d39 100%); border-radius: 8px 8px 0 0;">
+                     <td style="padding: 40px 40px 30px; text-align: center; background: linear-gradient(135deg, #D95436 0%, #c73420 100%); border-radius: 8px 8px 0 0;">
                       <h1 style="color: #ffffff; margin: 0; font-size: 28px; font-weight: bold;">🎉 Your Profile is Live!</h1>
                     </td>
                   </tr>
@@ -72,7 +72,7 @@ const handler = async (req: Request): Promise<Response> => {
                       </table>
                       
                       <!-- Action Steps -->
-                      <h2 style="color: #ed2644; margin: 30px 0 20px; font-size: 22px;">📅 Set Your Availability</h2>
+                      <h2 style="color: #D95436; margin: 30px 0 20px; font-size: 22px;">📅 Set Your Availability</h2>
                       
                       <p style="margin: 0 0 20px; color: #666666; font-size: 15px; line-height: 1.6;">To start receiving bookings, you need to:</p>
                       
@@ -86,7 +86,7 @@ const handler = async (req: Request): Promise<Response> => {
                       <table role="presentation" style="width: 100%; margin: 30px 0;">
                         <tr>
                           <td align="center">
-                            <a href="${tutorHubUrl}" style="display: inline-block; padding: 16px 40px; background: linear-gradient(135deg, #ed2644 0%, #c91d39 100%); color: #ffffff; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px; box-shadow: 0 4px 12px rgba(237, 38, 68, 0.3);">
+                            <a href="${tutorHubUrl}" style="display: inline-block; padding: 16px 40px; background: linear-gradient(135deg, #D95436 0%, #c73420 100%); color: #ffffff; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 16px; box-shadow: 0 4px 12px rgba(217, 84, 54, 0.3);">
                               Access Tutor Hub →
                             </a>
                           </td>
@@ -110,7 +110,7 @@ const handler = async (req: Request): Promise<Response> => {
                       </table>
                       
                       <!-- Tips Section -->
-                      <h2 style="color: #ed2644; margin: 30px 0 20px; font-size: 22px;">💡 Pro Tips for Success</h2>
+                      <h2 style="color: #D95436; margin: 30px 0 20px; font-size: 22px;">💡 Pro Tips for Success</h2>
                       
                       <ul style="margin: 0 0 30px; padding-left: 24px; color: #666666; font-size: 15px; line-height: 1.8;">
                         <li style="margin-bottom: 8px;"><strong>Set regular hours:</strong> Students prefer tutors with consistent availability</li>
@@ -126,7 +126,7 @@ const handler = async (req: Request): Promise<Response> => {
                             <h3 style="color: #1e40af; margin: 0 0 12px; font-size: 18px;">Need Help?</h3>
                             <p style="margin: 0; color: #666666; font-size: 15px; line-height: 1.6;">
                               If you have any questions or need assistance, we're here to help! Contact us at 
-                              <a href="mailto:info@lanatutors.africa" style="color: #ed2644; text-decoration: none; font-weight: bold;">info@lanatutors.africa</a>
+                              <a href="mailto:info@lanatutors.africa" style="color: #D95436; text-decoration: none; font-weight: bold;">info@lanatutors.africa</a>
                             </p>
                           </td>
                         </tr>
@@ -148,7 +148,7 @@ const handler = async (req: Request): Promise<Response> => {
                     <td style="padding: 30px 40px; background-color: #f9fafb; border-radius: 0 0 8px 8px; text-align: center;">
                       <p style="margin: 0; color: #9ca3af; font-size: 13px; line-height: 1.6;">
                         © 2025 Lana Tutors. All rights reserved.<br>
-                        <a href="https://lanatutors.africa" style="color: #ed2644; text-decoration: none;">lanatutors.africa</a>
+                        <a href="https://lanatutors.africa" style="color: #D95436; text-decoration: none;">lanatutors.africa</a>
                       </p>
                     </td>
                   </tr>
