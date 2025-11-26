@@ -66,11 +66,7 @@ const StudentDashboard = () => {
   const fetchBookings = async (userId: string) => {
     const { data: bookings, error } = await supabase
       .from('bookings')
-      .select(`
-        *,
-        availability_slot:tutor_availability!availability_slot_id(start_time, end_time),
-        tutor:profiles!tutor_id(full_name)
-      `)
+      .select('*')
       .eq('student_id', userId)
       .order('created_at', { ascending: false });
 
@@ -87,18 +83,8 @@ const StudentDashboard = () => {
     console.log('Fetched bookings:', bookings);
 
     if (bookings) {
-      const now = new Date();
-      const upcoming = bookings.filter(b => {
-        const slotTime = new Date((b.availability_slot as any)?.start_time);
-        return slotTime > now && b.status !== 'cancelled';
-      });
-      const past = bookings.filter(b => {
-        const slotTime = new Date((b.availability_slot as any)?.start_time);
-        return slotTime <= now || b.status === 'cancelled';
-      });
-      
-      console.log('Upcoming bookings:', upcoming);
-      console.log('Past bookings:', past);
+      const upcoming = bookings.filter(b => b.status === 'confirmed');
+      const past = bookings.filter(b => b.status !== 'confirmed');
       
       setUpcomingBookings(upcoming);
       setPastBookings(past);
@@ -251,11 +237,7 @@ Continue practicing the concepts learned today and reach out if you need clarifi
             {/* Upcoming Classes */}
             {upcomingBookings.length > 0 ? (
               upcomingBookings.map((booking) => {
-                const slot = booking.availability_slot as any;
-                const tutor = booking.tutor as any;
-                const startTime = new Date(slot?.start_time);
-                const now = new Date();
-                const daysUntil = Math.ceil((startTime.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+                const createdAt = new Date(booking.created_at);
                 
                 return (
                   <Card key={booking.id} className="bg-[hsl(188,75%,40%)] border-0 text-white">
@@ -266,29 +248,21 @@ Continue practicing the concepts learned today and reach out if you need clarifi
                           <p className="text-white/90">{booking.subject}</p>
                         </div>
                         <Badge className="bg-white text-[hsl(188,75%,40%)] hover:bg-white/90">
-                          {daysUntil === 0 ? 'Today' : `in ${daysUntil} day${daysUntil !== 1 ? 's' : ''}`}
+                          Confirmed
                         </Badge>
                       </div>
                       
-                      <div className="flex items-center gap-3 mb-6">
-                        <Avatar className="h-12 w-12">
-                          <AvatarFallback className="bg-white/20 text-white">
-                            {tutor?.full_name?.split(' ').map((n: string) => n[0]).join('')}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <p className="font-semibold">{tutor?.full_name}</p>
-                          <p className="text-sm text-white/80">
-                            {startTime.toLocaleDateString('en-US', { 
-                              month: 'short', 
-                              day: 'numeric', 
-                              year: 'numeric' 
-                            })} at {startTime.toLocaleTimeString('en-US', { 
-                              hour: '2-digit', 
-                              minute: '2-digit' 
-                            })}
-                          </p>
-                        </div>
+                      <div className="mb-4 text-sm text-white/80">
+                        <p>
+                          Scheduled on {createdAt.toLocaleDateString('en-US', { 
+                            month: 'short', 
+                            day: 'numeric', 
+                            year: 'numeric' 
+                          })} at {createdAt.toLocaleTimeString('en-US', { 
+                            hour: '2-digit', 
+                            minute: '2-digit' 
+                          })}
+                        </p>
                       </div>
 
                       {booking.meeting_link ? (
