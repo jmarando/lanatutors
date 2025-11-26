@@ -13,7 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 const RedesignedStudentDashboard = () => {
   const navigate = useNavigate();
-  const [currentTab, setCurrentTab] = useState("overview");
+  const [currentTab, setCurrentTab] = useState("classes");
 
   useEffect(() => {
     // Check authentication
@@ -41,8 +41,6 @@ const RedesignedStudentDashboard = () => {
 
   const renderTabContent = () => {
     switch (currentTab) {
-      case "overview":
-        return <StudentOverviewTab />;
       case "classes":
         return <StudentClassesTab />;
       case "classrooms":
@@ -52,7 +50,7 @@ const RedesignedStudentDashboard = () => {
       case "messages":
         return <MessagesTabPlaceholder />;
       default:
-        return <StudentOverviewTab />;
+        return <StudentClassesTab />;
     }
   };
 
