@@ -699,7 +699,7 @@ const TutorProfile = () => {
                     {/* Direct Session Booking */}
                     <div className="space-y-3">
                       <Button 
-                        className="w-full group hover:shadow-lg transition-all h-auto py-4"
+                        className="w-full group hover:shadow-lg transition-all h-auto py-4 whitespace-normal text-wrap"
                         size="lg"
                         onClick={() => handleBookingTypeSelect('single')}
                       >
@@ -716,7 +716,7 @@ const TutorProfile = () => {
 
                       <Button 
                         variant="outline" 
-                        className="w-full group hover:bg-accent/50 transition-all h-auto py-4"
+                        className="w-full group hover:bg-accent/50 transition-all h-auto py-4 whitespace-normal text-wrap"
                         size="lg"
                         onClick={() => handleBookingTypeSelect('double')}
                       >
@@ -738,60 +738,60 @@ const TutorProfile = () => {
                     <Separator className="my-5" />
 
                     {/* Custom Package Builder */}
-                    <Button 
-                      variant="outline"
-                      className="w-full bg-primary/5 border-primary/30 hover:bg-primary/10 hover:border-primary h-auto py-5 text-foreground"
-                      size="lg"
-                      onClick={async () => {
-                        const { data: { user } } = await supabase.auth.getUser();
-                        if (!user) {
-                          showToast({
-                            title: "Please Sign In",
-                            description: "You need to sign in to create a package",
-                            variant: "destructive",
-                          });
-                          navigate(`/login?redirect=${encodeURIComponent(window.location.pathname)}`);
-                          return;
-                        }
-                        setIsCustomPackageOpen(true);
-                      }}
-                    >
-                      <div className="flex flex-col items-center gap-2 w-full">
-                        <div className="flex items-center gap-2">
-                          <Sparkles className="w-5 h-5 text-primary" />
-                          <span className="font-semibold text-base text-foreground">Create Custom Package</span>
+                      <Button 
+                        variant="outline"
+                        className="w-full bg-primary/5 border-primary/30 hover:bg-primary/10 hover:border-primary h-auto py-5 text-foreground whitespace-normal text-wrap"
+                        size="lg"
+                        onClick={async () => {
+                          const { data: { user } } = await supabase.auth.getUser();
+                          if (!user) {
+                            showToast({
+                              title: "Please Sign In",
+                              description: "You need to sign in to create a package",
+                              variant: "destructive",
+                            });
+                            navigate(`/login?redirect=${encodeURIComponent(window.location.pathname)}`);
+                            return;
+                          }
+                          setIsCustomPackageOpen(true);
+                        }}
+                      >
+                        <div className="flex flex-col items-center gap-2 w-full">
+                          <div className="flex items-center gap-2">
+                            <Sparkles className="w-5 h-5 text-primary" />
+                            <span className="font-semibold text-base text-foreground">Create Custom Package</span>
+                          </div>
+                          <span className="text-sm text-muted-foreground">Choose sessions & subject yourself</span>
                         </div>
-                        <span className="text-sm text-muted-foreground">Choose sessions & subject yourself</span>
-                      </div>
-                    </Button>
+                      </Button>
 
                     {/* Learning Plan Request */}
-                    <Button 
-                      variant="outline"
-                      className="w-full bg-accent/5 border-accent/30 hover:bg-accent/10 hover:border-accent h-auto py-5 text-foreground"
-                      size="lg"
-                      onClick={async () => {
-                        const { data: { user } } = await supabase.auth.getUser();
-                        if (!user) {
-                          showToast({
-                            title: "Please Sign In",
-                            description: "You need to sign in to request a learning plan",
-                            variant: "destructive",
-                          });
-                          navigate(`/login?redirect=${encodeURIComponent(window.location.pathname)}`);
-                          return;
-                        }
-                        setIsLearningPlanOpen(true);
-                      }}
-                    >
-                      <div className="flex flex-col items-center gap-2 w-full">
-                        <div className="flex items-center gap-2">
-                          <Users className="w-5 h-5 text-accent" />
-                          <span className="font-semibold text-base text-foreground">Request Learning Plan</span>
+                      <Button 
+                        variant="outline"
+                        className="w-full bg-accent/5 border-accent/30 hover:bg-accent/10 hover:border-accent h-auto py-5 text-foreground whitespace-normal text-wrap"
+                        size="lg"
+                        onClick={async () => {
+                          const { data: { user } } = await supabase.auth.getUser();
+                          if (!user) {
+                            showToast({
+                              title: "Please Sign In",
+                              description: "You need to sign in to request a learning plan",
+                              variant: "destructive",
+                            });
+                            navigate(`/login?redirect=${encodeURIComponent(window.location.pathname)}`);
+                            return;
+                          }
+                          setIsLearningPlanOpen(true);
+                        }}
+                      >
+                        <div className="flex flex-col items-center gap-2 w-full">
+                          <div className="flex items-center gap-2">
+                            <Users className="w-5 h-5 text-accent" />
+                            <span className="font-semibold text-base text-foreground">Request Learning Plan</span>
+                          </div>
+                          <span className="text-sm text-muted-foreground">Let {tutor.name} design a plan for you</span>
                         </div>
-                        <span className="text-sm text-muted-foreground">Let {tutor.name} design a plan for you</span>
-                      </div>
-                    </Button>
+                      </Button>
 
                   </div>
                 </CardContent>
