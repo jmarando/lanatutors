@@ -110,6 +110,7 @@ export default function PayBalance() {
           phoneNumber: profile.phone_number,
           paymentType: "booking_balance",
           referenceId: bookingId,
+          callbackUrl: window.location.origin + "/payment-callback",
         },
       });
 

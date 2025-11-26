@@ -214,16 +214,10 @@ export const MultiTutorPackageBuilder = () => {
             amount: amountToPay,
             currency: "KES",
             description: `Multi-tutor package: ${totals.totalSessions} sessions across ${cart.length} subjects`,
-            callback_url: `${window.location.origin}/payment/callback`,
-            notification_id: currentUser.email,
-            billing_address: {
-              email_address: currentUser.email,
-              phone_number: currentUser.phone || "0000000000",
-              country_code: "KE",
-              first_name: currentUser.name.split(" ")[0] || "Student",
-              last_name: currentUser.name.split(" ").slice(1).join(" ") || "",
-            },
-            paymentId: payment.id,
+            callbackUrl: `${window.location.origin}/payment-callback`,
+            paymentType: "package_purchase",
+            referenceId: payment.id,
+            phoneNumber: currentUser.phone || "0000000000",
           },
         }
       );
