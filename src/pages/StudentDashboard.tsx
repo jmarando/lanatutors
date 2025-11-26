@@ -33,24 +33,72 @@ const StudentDashboard = () => {
   const [selectedClassId, setSelectedClassId] = useState<string>("");
   const [hasAccess, setHasAccess] = useState(false);
   const [userId, setUserId] = useState<string | null>(null);
-
-  const upcomingClass = {
-    subject: "Mathematics: Algebra II",
-    tutor: "Sarah Wanjiru",
-    date: "10/10/2025 at 09:32 AM",
-    meetLink: "https://meet.google.com/abc-defg-hij",
-    daysUntil: "in 1 day"
-  };
+  const [upcomingBookings, setUpcomingBookings] = useState<any[]>([]);
+  const [pastBookings, setPastBookings] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [userName, setUserName] = useState<string>("Student");
 
   useEffect(() => {
     const getUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
         setUserId(user.id);
+        
+        // Get user profile name
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('full_name')
+          .eq('id', user.id)
+          .single();
+        
+        if (profile?.full_name) {
+          setUserName(profile.full_name);
+        }
+        
+        // Fetch bookings
+        await fetchBookings(user.id);
       }
+      setLoading(false);
     };
     getUser();
   }, []);
+
+  const fetchBookings = async (userId: string) => {
+    const { data: bookings, error } = await supabase
+      .from('bookings')
+      .select(`
+        *,
+        availability_slot:availability_slot_id(start_time, end_time),
+        tutor:tutor_id(full_name)
+      `)
+      .eq('student_id', userId)
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Error fetching bookings:', error);
+      toast({
+        title: "Error",
+        description: "Failed to load your bookings",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (bookings) {
+      const now = new Date();
+      const upcoming = bookings.filter(b => {
+        const slotTime = new Date((b.availability_slot as any)?.start_time);
+        return slotTime > now && b.status !== 'cancelled';
+      });
+      const past = bookings.filter(b => {
+        const slotTime = new Date((b.availability_slot as any)?.start_time);
+        return slotTime <= now || b.status === 'cancelled';
+      });
+      
+      setUpcomingBookings(upcoming);
+      setPastBookings(past);
+    }
+  };
 
   const pastClasses = [
     { 
@@ -99,14 +147,6 @@ const StudentDashboard = () => {
       unread: true 
     }
   ];
-
-  const handleJoinClass = () => {
-    window.open(upcomingClass.meetLink, '_blank');
-    toast({
-      title: "Opening Google Meet",
-      description: "Joining your class session...",
-    });
-  };
 
   const handleGenerateSummary = (subject: string) => {
     setSelectedClass(subject);
@@ -191,134 +231,169 @@ Continue practicing the concepts learned today and reach out if you need clarifi
       <div className="max-w-7xl mx-auto px-6 py-8">
         {/* Welcome Section */}
         <div className="mb-8">
-          <h1 className="text-4xl font-bold mb-2">Welcome back, Sarah!</h1>
+          <h1 className="text-4xl font-bold mb-2">Welcome back, {userName}!</h1>
           <p className="text-muted-foreground">Here's a summary of your learning journey.</p>
         </div>
 
+        {loading ? (
+          <div className="text-center py-12">
+            <p className="text-muted-foreground">Loading your bookings...</p>
+          </div>
+        ) : (
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Left Column - Main Content */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Upcoming Class - Teal Card */}
-            <Card className="bg-[hsl(188,75%,40%)] border-0 text-white">
-              <CardContent className="p-6">
-                <div className="flex items-start justify-between mb-4">
-                  <div>
-                    <h2 className="text-2xl font-bold mb-1">Upcoming Class</h2>
-                    <p className="text-white/90">{upcomingClass.subject}</p>
-                  </div>
-                  <Badge className="bg-white text-[hsl(188,75%,40%)] hover:bg-white/90">
-                    {upcomingClass.daysUntil}
-                  </Badge>
-                </div>
+            {/* Upcoming Classes */}
+            {upcomingBookings.length > 0 ? (
+              upcomingBookings.map((booking) => {
+                const slot = booking.availability_slot as any;
+                const tutor = booking.tutor as any;
+                const startTime = new Date(slot?.start_time);
+                const now = new Date();
+                const daysUntil = Math.ceil((startTime.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
                 
-                <div className="flex items-center gap-3 mb-6">
-                  <Avatar className="h-12 w-12">
-                    <AvatarFallback className="bg-white/20 text-white">
-                      {upcomingClass.tutor.split(' ').map(n => n[0]).join('')}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div>
-                    <p className="font-semibold">{upcomingClass.tutor}</p>
-                    <p className="text-sm text-white/80">{upcomingClass.date}</p>
-                  </div>
-                </div>
+                return (
+                  <Card key={booking.id} className="bg-[hsl(188,75%,40%)] border-0 text-white">
+                    <CardContent className="p-6">
+                      <div className="flex items-start justify-between mb-4">
+                        <div>
+                          <h2 className="text-2xl font-bold mb-1">Upcoming Class</h2>
+                          <p className="text-white/90">{booking.subject}</p>
+                        </div>
+                        <Badge className="bg-white text-[hsl(188,75%,40%)] hover:bg-white/90">
+                          {daysUntil === 0 ? 'Today' : `in ${daysUntil} day${daysUntil !== 1 ? 's' : ''}`}
+                        </Badge>
+                      </div>
+                      
+                      <div className="flex items-center gap-3 mb-6">
+                        <Avatar className="h-12 w-12">
+                          <AvatarFallback className="bg-white/20 text-white">
+                            {tutor?.full_name?.split(' ').map((n: string) => n[0]).join('')}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <p className="font-semibold">{tutor?.full_name}</p>
+                          <p className="text-sm text-white/80">
+                            {startTime.toLocaleDateString('en-US', { 
+                              month: 'short', 
+                              day: 'numeric', 
+                              year: 'numeric' 
+                            })} at {startTime.toLocaleTimeString('en-US', { 
+                              hour: '2-digit', 
+                              minute: '2-digit' 
+                            })}
+                          </p>
+                        </div>
+                      </div>
 
-                <Button 
-                  onClick={handleJoinClass}
-                  className="w-full bg-white text-[hsl(188,75%,40%)] hover:bg-white/90"
-                >
-                  <Video className="w-4 h-4 mr-2" />
-                  Join Class
-                </Button>
-              </CardContent>
-            </Card>
+                      {booking.meeting_link ? (
+                        <Button 
+                          onClick={() => window.open(booking.meeting_link, '_blank')}
+                          className="w-full bg-white text-[hsl(188,75%,40%)] hover:bg-white/90"
+                        >
+                          <Video className="w-4 h-4 mr-2" />
+                          Join Class
+                        </Button>
+                      ) : (
+                        <div className="bg-white/10 rounded-lg p-3 text-sm">
+                          <p className="text-white/90">Meeting link will be available closer to the session time.</p>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                );
+              })
+            ) : (
+              <Card>
+                <CardContent className="p-6 text-center">
+                  <p className="text-muted-foreground mb-4">No upcoming classes scheduled</p>
+                  <Link to="/tutors">
+                    <Button>Find a Tutor</Button>
+                  </Link>
+                </CardContent>
+              </Card>
+            )}
 
             {/* Past Classes */}
             <Card>
               <CardHeader>
                 <CardTitle>Past Classes</CardTitle>
-                <p className="text-sm text-muted-foreground">Review your previous sessions and generate AI summaries.</p>
+                <p className="text-sm text-muted-foreground">Review your previous sessions.</p>
               </CardHeader>
               <CardContent>
-                {/* Mobile View - Cards */}
-                <div className="md:hidden space-y-4">
-                  {pastClasses.map((classItem, idx) => (
-                    <div key={idx} className="border rounded-lg p-4 space-y-3">
-                      <div>
-                        <h3 className="font-semibold text-base mb-1">{classItem.subject}</h3>
-                        <p className="text-sm text-muted-foreground">{classItem.tutor}</p>
-                        <p className="text-sm text-muted-foreground">{classItem.date}</p>
-                      </div>
-                      <div className="flex flex-wrap gap-2">
-                        <Button 
-                          variant="outline" 
-                          size="sm"
-                          className="flex-1"
-                          onClick={() => handleGenerateSummary(classItem.subject)}
-                        >
-                          <Sparkles className="w-4 h-4 mr-1" />
-                          Summary
-                        </Button>
-                        {classItem.hasRecording && (
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            className="flex-1"
-                            onClick={() => handleWatchRecording(classItem.subject, classItem.id)}
-                          >
-                            <Lock className="w-3 h-3 mr-1" />
-                            Recording
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                {/* Desktop View - Table */}
-                <div className="hidden md:block overflow-x-auto">
-                  <table className="w-full">
-                    <thead className="border-b">
-                      <tr className="text-left text-sm text-muted-foreground">
-                        <th className="pb-3 font-medium w-[30%]">Subject</th>
-                        <th className="pb-3 font-medium w-[25%]">Tutor</th>
-                        <th className="pb-3 font-medium w-[20%]">Date</th>
-                        <th className="pb-3 font-medium text-right w-[25%]">Actions</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {pastClasses.map((classItem, idx) => (
-                        <tr key={idx} className="border-b last:border-0">
-                          <td className="py-4 font-medium break-words">{classItem.subject}</td>
-                          <td className="py-4 text-muted-foreground break-words">{classItem.tutor}</td>
-                          <td className="py-4 text-muted-foreground whitespace-nowrap">{classItem.date}</td>
-                          <td className="py-4">
-                            <div className="flex items-center justify-end gap-2">
-                              <Button 
-                                variant="outline" 
-                                size="sm"
-                                onClick={() => handleGenerateSummary(classItem.subject)}
-                              >
-                                <Sparkles className="w-4 h-4 mr-1" />
-                                Summary
-                              </Button>
-                              {classItem.hasRecording && (
-                                <Button 
-                                  variant="outline" 
-                                  size="sm"
-                                  onClick={() => handleWatchRecording(classItem.subject, classItem.id)}
-                                >
-                                  <Lock className="w-3 h-3 mr-1" />
-                                  Recording
-                                </Button>
-                              )}
+                {pastBookings.length === 0 ? (
+                  <p className="text-center text-muted-foreground py-4">No past classes yet</p>
+                ) : (
+                  <>
+                    {/* Mobile View - Cards */}
+                    <div className="md:hidden space-y-4">
+                      {pastBookings.map((booking) => {
+                        const slot = booking.availability_slot as any;
+                        const tutor = booking.tutor as any;
+                        const startTime = new Date(slot?.start_time);
+                        
+                        return (
+                          <div key={booking.id} className="border rounded-lg p-4 space-y-3">
+                            <div>
+                              <h3 className="font-semibold text-base mb-1">{booking.subject}</h3>
+                              <p className="text-sm text-muted-foreground">{tutor?.full_name}</p>
+                              <p className="text-sm text-muted-foreground">
+                                {startTime.toLocaleDateString('en-US', { 
+                                  month: 'short', 
+                                  day: 'numeric', 
+                                  year: 'numeric' 
+                                })}
+                              </p>
                             </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
+                            <Badge variant={booking.status === 'confirmed' ? 'default' : 'secondary'}>
+                              {booking.status}
+                            </Badge>
+                          </div>
+                        );
+                      })}
+                    </div>
+
+                    {/* Desktop View - Table */}
+                    <div className="hidden md:block overflow-x-auto">
+                      <table className="w-full">
+                        <thead className="border-b">
+                          <tr className="text-left text-sm text-muted-foreground">
+                            <th className="pb-3 font-medium w-[30%]">Subject</th>
+                            <th className="pb-3 font-medium w-[25%]">Tutor</th>
+                            <th className="pb-3 font-medium w-[25%]">Date</th>
+                            <th className="pb-3 font-medium w-[20%]">Status</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {pastBookings.map((booking) => {
+                            const slot = booking.availability_slot as any;
+                            const tutor = booking.tutor as any;
+                            const startTime = new Date(slot?.start_time);
+                            
+                            return (
+                              <tr key={booking.id} className="border-b last:border-0">
+                                <td className="py-4 font-medium break-words">{booking.subject}</td>
+                                <td className="py-4 text-muted-foreground break-words">{tutor?.full_name}</td>
+                                <td className="py-4 text-muted-foreground whitespace-nowrap">
+                                  {startTime.toLocaleDateString('en-US', { 
+                                    month: 'short', 
+                                    day: 'numeric', 
+                                    year: 'numeric' 
+                                  })}
+                                </td>
+                                <td className="py-4">
+                                  <Badge variant={booking.status === 'confirmed' ? 'default' : 'secondary'}>
+                                    {booking.status}
+                                  </Badge>
+                                </td>
+                              </tr>
+                            );
+                          })}
+                        </tbody>
+                      </table>
+                    </div>
+                  </>
+                )}
               </CardContent>
             </Card>
           </div>
@@ -369,6 +444,7 @@ Continue practicing the concepts learned today and reach out if you need clarifi
             </Card>
           </div>
         </div>
+        )}
 
         {/* AI Summary Dialog */}
         <Dialog open={summaryDialogOpen} onOpenChange={setSummaryDialogOpen}>
