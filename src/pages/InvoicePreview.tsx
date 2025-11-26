@@ -9,7 +9,7 @@ import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
-import lanaLogo from "@/assets/lana-tutors-logo-hd.png";
+import lanaLogo from "@/assets/lana-tutors-invoice-logo.png";
 
 export default function InvoicePreview() {
   const [searchParams] = useSearchParams();
@@ -268,7 +268,7 @@ export default function InvoicePreview() {
                   Expert tutoring for CBC, IGCSE, A-Levels & more. Empowering students to achieve their academic goals with personalized learning.
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  📧 info@lanatutors.africa | 📱 WhatsApp: +254 700 000 000
+                  📧 info@lanatutors.africa
                 </p>
               </div>
             </div>
