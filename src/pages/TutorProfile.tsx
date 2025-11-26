@@ -234,6 +234,11 @@ const TutorProfile = () => {
   };
 
   const getCurrentRate = () => {
+    // Use the Standard tier rate (lowest rate) for display
+    const standardTier = pricingTiers.find(t => t.tier_name === "Standard");
+    if (standardTier) {
+      return Number(standardTier.online_hourly_rate) || 0;
+    }
     return Number(tutor?.hourlyRate) || 0;
   };
 
@@ -785,7 +790,7 @@ const TutorProfile = () => {
                             Single Session
                           </span>
                           <span className="font-bold text-base sm:text-lg whitespace-nowrap">
-                            KES {currentRate.toLocaleString()}
+                            From KES {currentRate.toLocaleString()}/hr
                           </span>
                         </div>
                       </Button>
@@ -805,7 +810,7 @@ const TutorProfile = () => {
                             <Badge variant="secondary" className="text-xs">Save 5%</Badge>
                           </div>
                           <span className="font-bold text-base sm:text-lg whitespace-nowrap">
-                            KES {Math.round(currentRate * 2 * 0.95).toLocaleString()}
+                            From KES {Math.round(currentRate * 2 * 0.95).toLocaleString()}/2 hrs
                           </span>
                         </div>
                       </Button>
