@@ -6,6 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Loader2, CreditCard } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
+// Pay balance page for completing booking payments
 export default function PayBalance() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
