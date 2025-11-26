@@ -66,6 +66,8 @@ export type Database = {
           availability_slot_id: string
           balance_due: number | null
           class_type: string | null
+          classroom_id: string | null
+          classroom_link: string | null
           created_at: string | null
           currency: string | null
           deposit_paid: number | null
@@ -87,6 +89,8 @@ export type Database = {
           availability_slot_id: string
           balance_due?: number | null
           class_type?: string | null
+          classroom_id?: string | null
+          classroom_link?: string | null
           created_at?: string | null
           currency?: string | null
           deposit_paid?: number | null
@@ -108,6 +112,8 @@ export type Database = {
           availability_slot_id?: string
           balance_due?: number | null
           class_type?: string | null
+          classroom_id?: string | null
+          classroom_link?: string | null
           created_at?: string | null
           currency?: string | null
           deposit_paid?: number | null

@@ -162,12 +162,55 @@ serve(async (req) => {
       console.log("Continuing with email sending anyway...");
     }
 
-    // Always send emails, even if Google Meet creation failed
+    // Create Google Classroom for this booking
+    let classroomLink = "";
+    try {
+      const { data: studentData } = await supabase
+        .from("profiles")
+        .select("full_name")
+        .eq("id", booking.student_id)
+        .maybeSingle();
+
+      const { data: tutorData } = await supabase
+        .from("tutor_profiles")
+        .select("email")
+        .eq("user_id", booking.tutor_id)
+        .maybeSingle();
+
+      const { data: studentAuth } = await supabase.auth.admin.getUserById(booking.student_id);
+      const studentEmail = studentAuth?.user?.email || "";
+      const studentName = studentData?.full_name || "Student";
+      const tutorEmail = tutorData?.email || "";
+
+      if (studentEmail && tutorEmail) {
+        const classroomResponse = await supabase.functions.invoke("create-google-classroom", {
+          body: {
+            bookingId,
+            tutorName: tutorEmail.split("@")[0],
+            tutorEmail,
+            studentName,
+            studentEmail,
+            subject: booking.subject,
+          },
+        });
+
+        if (classroomResponse.data?.classroomLink) {
+          classroomLink = classroomResponse.data.classroomLink;
+          console.log("Google Classroom created successfully:", classroomLink);
+        }
+      }
+    } catch (classroomError) {
+      console.error("Error creating Google Classroom:", classroomError);
+      console.log("Continuing without classroom...");
+    }
+
+    // Always send emails, even if Google Meet or Classroom creation failed
     try {
       await supabase.functions.invoke("send-booking-email", {
         body: { 
           bookingId,
           meetingLink,
+          classroomLink,
           recipientType: "student",
         },
       });
@@ -176,6 +219,7 @@ serve(async (req) => {
         body: { 
           bookingId,
           meetingLink,
+          classroomLink,
           recipientType: "tutor",
         },
       });
