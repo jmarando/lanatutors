@@ -29,6 +29,7 @@ export const GeneralLearningPlanRequest = ({
     studentName: "",
     gradeLevel: "",
     curriculum: "",
+    lastExamPerformance: "",
     currentChallenges: "",
     preferredSessions: 0,
   });
@@ -109,6 +110,7 @@ export const GeneralLearningPlanRequest = ({
           gradeLevel: formData.gradeLevel,
           curriculum: formData.curriculum,
           subjects: selectedSubjects,
+          lastExamPerformance: formData.lastExamPerformance,
           challenges: formData.currentChallenges,
           preferredSessions: formData.preferredSessions,
         },
@@ -259,6 +261,21 @@ export const GeneralLearningPlanRequest = ({
               </Select>
             </div>
           </div>
+        </div>
+
+        {/* Last Exam Performance */}
+        <div>
+          <Label htmlFor="lastExamPerformance">Last Exam Performance (Optional)</Label>
+          <Textarea
+            id="lastExamPerformance"
+            value={formData.lastExamPerformance}
+            onChange={(e) => setFormData({ ...formData, lastExamPerformance: e.target.value })}
+            placeholder="e.g., Math: 65%, English: 78%, Science: 70%"
+            rows={2}
+          />
+          <p className="text-xs text-muted-foreground mt-1">
+            Share your child's recent exam results to help create a more targeted plan
+          </p>
         </div>
 
         {/* Subjects Selection */}
