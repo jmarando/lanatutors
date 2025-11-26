@@ -951,6 +951,7 @@ const TutorProfile = () => {
             studentName={currentUser?.name || ""}
             hourlyRate={currentRate}
             tutorSubjects={tutor.subjects}
+            tutorCurriculum={tutor.curriculum}
             onBookingComplete={() => {
               setIsBookingOpen(false);
               toast.success("Booking confirmed!");
