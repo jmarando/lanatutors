@@ -32,9 +32,9 @@ serve(async (req) => {
       throw new Error('Unauthorized')
     }
 
-    const { amount, description, referenceId, paymentType, callbackUrl, phoneNumber } = await req.json()
+    const { amount, description, referenceId, paymentType, callbackUrl, phoneNumber, currency } = await req.json()
 
-    console.log('Initiating payment - Amount:', amount, 'Type:', paymentType, 'Phone:', phoneNumber)
+    console.log('Initiating payment - Amount:', amount, 'Currency:', currency || 'KES', 'Type:', paymentType, 'Phone:', phoneNumber)
 
     // Step 1: Get Pesapal access token
     const consumerKey = Deno.env.get('PESAPAL_CONSUMER_KEY')
@@ -96,7 +96,7 @@ serve(async (req) => {
     
     const orderRequest = {
       id: merchantReference,
-      currency: 'KES',
+      currency: currency || 'KES',
       amount: parseFloat(amount),
       description: description || 'Payment',
       callback_url: baseCallbackUrl,
@@ -166,10 +166,11 @@ serve(async (req) => {
       .insert({
         user_id: user.id,
         amount: parseFloat(amount),
+        currency: currency || 'KES',
         status: 'pending',
         payment_type: paymentType || 'booking',
         reference_id: referenceId,
-        phone_number: '', // Pesapal doesn't require phone upfront
+        phone_number: phoneNumber || '',
         pesapal_order_tracking_id: orderData.order_tracking_id,
         pesapal_merchant_reference: merchantReference,
         redirect_url: orderData.redirect_url,
@@ -185,7 +186,7 @@ serve(async (req) => {
       )
     }
 
-    console.log('Payment record created:', payment.id)
+    console.log('Payment record created:', payment.id, 'for user:', user.id, 'Amount:', amount, currency || 'KES')
 
     return new Response(
       JSON.stringify({

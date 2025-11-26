@@ -201,20 +201,35 @@ serve(async (req) => {
 
       // Handle booking balance payment
       if (payment.reference_id && payment.payment_type === 'booking_balance') {
-        const { data: booking } = await supabase
+        console.log('Processing balance payment for booking:', payment.reference_id)
+        
+        const { data: booking, error: bookingFetchError } = await supabase
           .from('bookings')
-          .select('amount, deposit_paid')
+          .select('amount, deposit_paid, student_id, subject')
           .eq('id', payment.reference_id)
           .single();
 
-        if (booking) {
-          await supabase
+        if (bookingFetchError) {
+          console.error('Error fetching booking for balance payment:', bookingFetchError)
+        } else if (booking) {
+          const { error: updateError } = await supabase
             .from('bookings')
             .update({ 
               balance_due: 0,
-              deposit_paid: booking.amount
+              deposit_paid: booking.amount,
+              status: 'confirmed'
             })
             .eq('id', payment.reference_id);
+
+          if (updateError) {
+            console.error('Error updating booking balance:', updateError)
+          } else {
+            console.log('Balance payment completed - Booking:', payment.reference_id, 
+                       'User:', payment.user_id, 
+                       'Amount:', payment.amount,
+                       'Currency:', payment.currency || 'KES',
+                       'Timestamp:', new Date().toISOString())
+          }
         }
       }
 

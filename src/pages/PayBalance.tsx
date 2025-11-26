@@ -41,15 +41,19 @@ export default function PayBalance() {
 
       const { data, error } = await supabase
         .from("bookings")
-        .select(`
-          *,
-          tutor_profile:tutor_profiles!tutor_id(*)
-        `)
+        .select("*")
         .eq("id", bookingId)
         .eq("student_id", user.id)
         .single();
 
-      if (error) throw error;
+      if (error) {
+        console.error("Error fetching booking:", error);
+        throw error;
+      }
+
+      if (!data) {
+        throw new Error("Booking not found");
+      }
 
       if (!data.balance_due || data.balance_due <= 0) {
         toast({
