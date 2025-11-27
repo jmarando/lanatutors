@@ -34,6 +34,7 @@ interface BookingCalendarProps {
   tutorSubjects?: string[];
   tutorLocations?: string[];
   tutorCurriculum?: string[];
+  tutorTeachingMode?: string[];
   onBookingComplete?: () => void;
   classType?: 'online' | 'in-person';
   isTrialSession?: boolean;
@@ -66,6 +67,7 @@ export const BookingCalendar = ({
   tutorSubjects = [],
   tutorLocations = [],
   tutorCurriculum = [],
+  tutorTeachingMode = [],
   onBookingComplete,
   classType = 'online',
   isTrialSession = false,
@@ -622,7 +624,7 @@ export const BookingCalendar = ({
               {!isTrialSession && (
                 <div>
                   <Label className="text-sm font-medium mb-2 block">Class Type *</Label>
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className={`grid ${tutorTeachingMode.includes('In-Person') ? 'grid-cols-2' : 'grid-cols-1'} gap-3`}>
                     <button
                       type="button"
                       className={`p-4 rounded-lg border-2 transition-all text-left ${
@@ -642,25 +644,27 @@ export const BookingCalendar = ({
                         <li>✓ Virtual whiteboard</li>
                       </ul>
                     </button>
-                    <button
-                      type="button"
-                      className={`p-4 rounded-lg border-2 transition-all text-left ${
-                        selectedClassType === 'in-person' 
-                          ? 'border-primary bg-primary/5' 
-                          : 'border-border hover:border-primary/50'
-                      } ${paymentInitiated ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
-                      onClick={() => !paymentInitiated && setSelectedClassType('in-person')}
-                      disabled={paymentInitiated}
-                    >
-                      <div className="font-semibold mb-1">
-                        In-Person - KES {(hourlyRate * 1.3).toFixed(0)}/hr
-                      </div>
-                      <ul className="text-xs text-muted-foreground space-y-1">
-                        <li>✓ Face-to-face learning</li>
-                        <li>✓ Hands-on guidance</li>
-                        <li>✓ Physical materials</li>
-                      </ul>
-                    </button>
+                    {tutorTeachingMode.includes('In-Person') && (
+                      <button
+                        type="button"
+                        className={`p-4 rounded-lg border-2 transition-all text-left ${
+                          selectedClassType === 'in-person' 
+                            ? 'border-primary bg-primary/5' 
+                            : 'border-border hover:border-primary/50'
+                        } ${paymentInitiated ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                        onClick={() => !paymentInitiated && setSelectedClassType('in-person')}
+                        disabled={paymentInitiated}
+                      >
+                        <div className="font-semibold mb-1">
+                          In-Person - KES {(hourlyRate * 1.3).toFixed(0)}/hr
+                        </div>
+                        <ul className="text-xs text-muted-foreground space-y-1">
+                          <li>✓ Face-to-face learning</li>
+                          <li>✓ Hands-on guidance</li>
+                          <li>✓ Physical materials</li>
+                        </ul>
+                      </button>
+                    )}
                   </div>
                 </div>
               )}
