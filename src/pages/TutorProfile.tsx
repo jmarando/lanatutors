@@ -119,14 +119,20 @@ const TutorProfile = () => {
     }
 
     // Fetch the user profile to get name and avatar
-    const { data: userProfile } = await supabase
+    console.log('Fetching profile for user_id:', tutorProfile.user_id);
+    const { data: userProfile, error: profileError } = await supabase
       .from("profiles")
       .select("full_name, avatar_url")
       .eq("id", tutorProfile.user_id)
       .maybeSingle();
 
+    console.log('User profile data:', userProfile);
+    console.log('Profile fetch error:', profileError);
+
     // Only use real uploaded avatar, no AI fallback photos
     const photoUrl = userProfile?.avatar_url || null;
+
+    console.log('Setting tutor name to:', userProfile?.full_name || tutorProfile.email?.split('@')[0] || "Tutor");
 
     setTutor({
       id: tutorProfile.id,
