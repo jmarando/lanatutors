@@ -199,7 +199,7 @@ export const BookingCalendar = ({
   };
 
   const fetchAvailableSlots = async () => {
-    if (!selectedDate) return;
+    if (!selectedDate || !tutorUserId) return;
 
     const startOfDay = new Date(selectedDate);
     startOfDay.setHours(0, 0, 0, 0);
@@ -211,8 +211,6 @@ export const BookingCalendar = ({
       .from("tutor_availability")
       .select("*")
       .eq("tutor_id", tutorUserId as string)
-      .eq("is_booked", false)
-      .or("slot_type.is.null,slot_type.eq.available")
       .gte("start_time", startOfDay.toISOString())
       .lte("start_time", endOfDay.toISOString())
       .order("start_time");
@@ -222,7 +220,32 @@ export const BookingCalendar = ({
       return;
     }
 
-    setAvailableSlots(data || []);
+    const slots = data || [];
+
+    // Build blocked intervals for overlap checks
+    const blockedIntervals = slots
+      .filter((s: any) => s.slot_type === "blocked")
+      .map((s: any) => ({
+        start: new Date(s.start_time).getTime(),
+        end: new Date(s.end_time).getTime(),
+      }));
+
+    const overlaps = (aStart: number, aEnd: number, bStart: number, bEnd: number) =>
+      Math.max(aStart, bStart) < Math.min(aEnd, bEnd);
+
+    // Start from all non-booked, available slots
+    const candidateAvailable = slots.filter((s: any) =>
+      !s.is_booked && (s.slot_type === null || s.slot_type === "available")
+    );
+
+    // Remove any available slots that overlap a blocked interval
+    const filtered = candidateAvailable.filter((s: any) => {
+      const sStart = new Date(s.start_time).getTime();
+      const sEnd = new Date(s.end_time).getTime();
+      return !blockedIntervals.some((b) => overlaps(sStart, sEnd, b.start, b.end));
+    });
+
+    setAvailableSlots(filtered);
   };
 
   const fetchMonthSlots = async () => {
