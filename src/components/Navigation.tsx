@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Menu, LogOut, MessageCircle, Globe } from "lucide-react";
+import { Menu, LogOut, MessageCircle, Globe, ChevronDown, User } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -135,6 +135,7 @@ const Navigation = () => {
                   <PopoverTrigger asChild>
                     <Button variant="ghost" size="sm" className="hover-scale max-w-[150px]">
                       <span className="truncate text-sm">{user.email}</span>
+                      <ChevronDown className="w-3 h-3 ml-1 opacity-60" />
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-[200px] p-3" align="end">
@@ -152,6 +153,12 @@ const Navigation = () => {
                         <Link to="/student/dashboard" onClick={() => setOpen(false)}>
                           <Button variant="ghost" size="sm" className="w-full justify-start">
                             Dashboard
+                          </Button>
+                        </Link>
+                        <Link to="/profile-settings" onClick={() => setOpen(false)}>
+                          <Button variant="ghost" size="sm" className="w-full justify-start">
+                            <User className="w-4 h-4 mr-2" />
+                            Profile Settings
                           </Button>
                         </Link>
                       </div>
@@ -195,6 +202,12 @@ const Navigation = () => {
                   <Link to="/student/dashboard" onClick={() => setOpen(false)}>
                     <Button variant="ghost" className="w-full justify-start">
                       Dashboard
+                    </Button>
+                  </Link>
+                  <Link to="/profile-settings" onClick={() => setOpen(false)}>
+                    <Button variant="ghost" className="w-full justify-start">
+                      <User className="w-4 h-4 mr-2" />
+                      Profile Settings
                     </Button>
                   </Link>
                   <div>
