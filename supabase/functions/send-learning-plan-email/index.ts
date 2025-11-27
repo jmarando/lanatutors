@@ -16,6 +16,7 @@ interface LearningPlanEmailRequest {
   totalSessions: number;
   totalPrice: number;
   validityDays: number;
+  personalMessage?: string;
   subjects: Array<{
     name: string;
     sessions: number;
@@ -38,6 +39,7 @@ const handler = async (req: Request): Promise<Response> => {
       totalSessions,
       totalPrice,
       validityDays,
+      personalMessage,
       subjects,
     }: LearningPlanEmailRequest = await req.json();
 
@@ -96,9 +98,21 @@ const handler = async (req: Request): Promise<Response> => {
                         Hi ${parentName},
                       </p>
                       
-                      <p style="margin: 0 0 20px 0; font-size: 16px; line-height: 1.6; color: #374151;">
-                        Great news! Your tutor has created a personalized learning plan for <strong>${studentName}</strong>.
-                      </p>
+                      ${personalMessage ? `
+                        <table role="presentation" style="width: 100%; margin: 0 0 30px 0; background-color: #fef2f2; border-left: 4px solid #dc2626; border-radius: 4px;">
+                          <tr>
+                            <td style="padding: 20px;">
+                              <p style="margin: 0; font-size: 16px; line-height: 1.6; color: #374151; white-space: pre-wrap;">
+${personalMessage}
+                              </p>
+                            </td>
+                          </tr>
+                        </table>
+                      ` : `
+                        <p style="margin: 0 0 20px 0; font-size: 16px; line-height: 1.6; color: #374151;">
+                          Great news! Your tutor has created a personalized learning plan for <strong>${studentName}</strong>.
+                        </p>
+                      `}
 
                       <!-- Plan Title -->
                       <table role="presentation" style="width: 100%; margin: 30px 0; border: 2px solid #dc2626; border-radius: 8px;">
