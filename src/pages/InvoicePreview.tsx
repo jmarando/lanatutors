@@ -144,7 +144,9 @@ export default function InvoicePreview() {
         .eq("id", user.id)
         .single();
 
-      if (!profile?.phone_number) {
+      if (profile?.phone_number) {
+        setPhoneNumber(profile.phone_number);
+      } else {
         setNeedsPhoneNumber(true);
       }
     } catch (error) {
