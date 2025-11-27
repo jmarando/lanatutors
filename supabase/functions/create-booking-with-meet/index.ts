@@ -16,13 +16,33 @@ serve(async (req) => {
   }
 
   try {
+    // Verify authentication
+    const authHeader = req.headers.get('Authorization');
+    if (!authHeader) {
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized - No authorization header' }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
     const { bookingId }: BookingRequest = await req.json();
 
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Fetch booking details (no FK relationships used)
+    // Verify the authenticated user
+    const token = authHeader.replace('Bearer ', '');
+    const { data: { user }, error: authError } = await supabase.auth.getUser(token);
+
+    if (authError || !user) {
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized - Invalid token' }),
+        { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    // Fetch booking details
     const { data: booking, error: bookingError } = await supabase
       .from("bookings")
       .select("*")
@@ -30,6 +50,14 @@ serve(async (req) => {
       .single();
 
     if (bookingError) throw bookingError;
+
+    // Verify the user owns this booking
+    if (booking.student_id !== user.id) {
+      return new Response(
+        JSON.stringify({ error: 'Unauthorized - You do not own this booking' }),
+        { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
 
     let meetingLink = "Will be shared soon";
     
