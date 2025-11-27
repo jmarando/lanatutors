@@ -21,6 +21,7 @@ import { formatConsultationDate, formatToEAT, formatFullDateTime } from "@/utils
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { TutorSignupList } from "@/components/admin/TutorSignupList";
+import { StudentList } from "@/components/admin/StudentList";
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -35,6 +36,7 @@ const AdminDashboard = () => {
   const [learningPlanRequests, setLearningPlanRequests] = useState<any[]>([]);
   const [dashboardMetrics, setDashboardMetrics] = useState<any>(null);
   const [timeRange, setTimeRange] = useState<'7days' | '30days' | '90days'>('30days');
+  const [activeTab, setActiveTab] = useState('dashboard');
   const [interviewFilter, setInterviewFilter] = useState<'all' | 'scheduled' | 'passed' | 'failed'>('all');
   const [editingNote, setEditingNote] = useState<string | null>(null);
   const [noteContent, setNoteContent] = useState("");
@@ -351,16 +353,18 @@ Yehtu Tutors`
         .select('*')
         .gte('created_at', startDate.toISOString());
 
-      // Fetch all profiles (students)
-      const { data: students } = await supabase
-        .from('profiles')
-        .select('*')
+      // Fetch only student profiles (those with 'student' role in user_roles)
+      const { data: studentRoles } = await supabase
+        .from('user_roles')
+        .select('user_id, created_at')
+        .eq('role', 'student')
         .gte('created_at', startDate.toISOString());
 
-      // Total counts
+      // Total counts - only users with student role
       const { count: totalStudents } = await supabase
-        .from('profiles')
-        .select('*', { count: 'exact', head: true });
+        .from('user_roles')
+        .select('*', { count: 'exact', head: true })
+        .eq('role', 'student');
 
       const { count: totalTutors } = await supabase
         .from('tutor_profiles')
@@ -392,7 +396,7 @@ Yehtu Tutors`
 
       const consultationsTrend = groupByDay(consultations || []);
       const bookingsTrend = groupByDay(bookings || []);
-      const studentsTrend = groupByDay(students || []);
+      const studentsTrend = groupByDay(studentRoles || []);
       const tutorsTrend = groupByDay(tutors || []);
 
       // Revenue trend
@@ -412,7 +416,7 @@ Yehtu Tutors`
         totalTutors,
         totalConsultations,
         totalBookings,
-        newStudents: students?.length || 0,
+        newStudents: studentRoles?.length || 0,
         newTutors: tutors?.length || 0,
         newConsultations: consultations?.length || 0,
         newBookings: bookings?.length || 0,
@@ -1062,7 +1066,7 @@ The Lana Team`;
           <p className="text-muted-foreground">Overview of your tutoring platform</p>
         </div>
 
-        <Tabs defaultValue="dashboard" className="space-y-6">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <TabsList className="grid w-full grid-cols-5 lg:w-auto">
             <TabsTrigger value="dashboard">
               Overview
@@ -1119,6 +1123,10 @@ The Lana Team`;
               <GraduationCap className="h-4 w-4 mr-2" />
               Tutor Signups
             </TabsTrigger>
+            <TabsTrigger value="students">
+              <Users className="h-4 w-4 mr-2" />
+              Students
+            </TabsTrigger>
           </TabsList>
 
           {/* Dashboard Tab */}
@@ -1148,7 +1156,10 @@ The Lana Team`;
               <>
                 {/* Key Metrics Cards */}
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-                  <Card>
+                  <Card 
+                    className="cursor-pointer hover:shadow-lg transition-shadow"
+                    onClick={() => setActiveTab('students')}
+                  >
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                       <CardTitle className="text-sm font-medium">Total Students</CardTitle>
                       <Users className="h-4 w-4 text-muted-foreground" />
@@ -1170,7 +1181,10 @@ The Lana Team`;
                     </CardContent>
                   </Card>
 
-                  <Card>
+                  <Card 
+                    className="cursor-pointer hover:shadow-lg transition-shadow"
+                    onClick={() => setActiveTab('tutor-signups')}
+                  >
                     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
                       <CardTitle className="text-sm font-medium">Active Tutors</CardTitle>
                       <GraduationCap className="h-4 w-4 text-muted-foreground" />
@@ -2299,6 +2313,11 @@ The Lana Team`;
       {/* Tutor Signups Tab */}
       <TabsContent value="tutor-signups">
         <TutorSignupList />
+      </TabsContent>
+
+      {/* Students Tab */}
+      <TabsContent value="students">
+        <StudentList />
       </TabsContent>
     </Tabs>
 
