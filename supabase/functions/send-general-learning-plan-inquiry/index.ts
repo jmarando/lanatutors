@@ -21,6 +21,8 @@ interface GeneralLearningPlanInquiryRequest {
   lastExamPerformance?: string;
   challenges?: string;
   preferredSessions?: number;
+  desiredDurationWeeks?: number;
+  availableTimePerWeek?: string;
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -52,6 +54,8 @@ const handler = async (req: Request): Promise<Response> => {
       lastExamPerformance,
       challenges,
       preferredSessions,
+      desiredDurationWeeks,
+      availableTimePerWeek,
     }: GeneralLearningPlanInquiryRequest = await req.json();
 
     console.log("Sending general learning plan inquiry to LANA team");
@@ -78,6 +82,8 @@ const handler = async (req: Request): Promise<Response> => {
       <h2>Request Details</h2>
       <ul>
         <li><strong>Subjects Needed:</strong> ${subjects.join(", ")}</li>
+        ${desiredDurationWeeks ? `<li><strong>Desired Duration:</strong> ${desiredDurationWeeks} weeks</li>` : ""}
+        ${availableTimePerWeek ? `<li><strong>Available Time/Week:</strong> ${availableTimePerWeek}</li>` : ""}
         ${preferredSessions ? `<li><strong>Preferred Sessions:</strong> ${preferredSessions}</li>` : ""}
         ${lastExamPerformance ? `<li><strong>Last Exam Performance:</strong> ${lastExamPerformance}</li>` : ""}
         ${challenges ? `<li><strong>Challenges & Goals:</strong> ${challenges}</li>` : ""}
@@ -87,7 +93,7 @@ const handler = async (req: Request): Promise<Response> => {
       <p>Please:</p>
       <ol>
         <li>Review this request and match the student with appropriate tutor(s)</li>
-        <li>Create a personalized learning plan with subject breakdown and pricing</li>
+        <li>Create a personalized learning plan with subject breakdown ${desiredDurationWeeks ? `over ${desiredDurationWeeks} weeks with 2-3 sessions/week` : "and pricing"}</li>
         <li>Reply to ${parentEmail} with the custom plan within 24 hours</li>
       </ol>
       
