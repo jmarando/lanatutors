@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { 
@@ -19,12 +18,11 @@ import {
   FileText,
   CalendarDays,
   Edit,
-  BookOpen,
   LogOut
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { format, isToday, isThisWeek, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from "date-fns";
+import { format, isToday, isThisWeek, startOfMonth, endOfMonth } from "date-fns";
 import { GoogleCalendarConnect } from "@/components/GoogleCalendarConnect";
 import { TutorCalendarOverview } from "@/components/TutorCalendarOverview";
 import { TutorWeeklyCalendar } from "@/components/TutorWeeklyCalendar";
@@ -40,7 +38,6 @@ const TutorDashboard = () => {
   const [bookings, setBookings] = useState<any[]>([]);
   const [payments, setPayments] = useState<any[]>([]);
   const [reviews, setReviews] = useState<any[]>([]);
-  const [activeTab, setActiveTab] = useState("today");
   const [learningPlansOpen, setLearningPlansOpen] = useState(false);
   const [progressOpen, setProgressOpen] = useState(false);
 
@@ -52,14 +49,12 @@ const TutorDashboard = () => {
     try {
       const { data: { user: authUser } } = await supabase.auth.getUser();
       if (!authUser) {
-        // Not signed in - redirect to application
         navigate("/become-a-tutor");
         return;
       }
 
       setUser(authUser);
 
-      // Fetch profile
       const { data: profileData } = await supabase
         .from("profiles")
         .select("*")
@@ -68,7 +63,6 @@ const TutorDashboard = () => {
 
       setProfile(profileData);
 
-      // Fetch tutor profile
       const { data: tutorData, error: tutorError } = await supabase
         .from("tutor_profiles")
         .select("*")
@@ -85,13 +79,11 @@ const TutorDashboard = () => {
       setTutorProfile(tutorData);
 
       if (!tutorData) {
-        // User is signed in but not a tutor - redirect to application
         toast.error("You don't have a tutor profile. Please apply to become a tutor.");
         navigate("/become-a-tutor");
         return;
       }
 
-      // Fetch bookings with student info
       const { data: bookingsData } = await supabase
         .from("bookings")
         .select(`
@@ -104,7 +96,6 @@ const TutorDashboard = () => {
 
       setBookings(bookingsData || []);
 
-      // Fetch payments
       if (bookingsData) {
         const bookingIds = bookingsData.map(b => b.id);
         const { data: paymentsData } = await supabase
@@ -117,7 +108,6 @@ const TutorDashboard = () => {
         setPayments(paymentsData || []);
       }
 
-      // Fetch reviews
       const { data: reviewsData } = await supabase
         .from("tutor_reviews")
         .select(`
@@ -143,7 +133,6 @@ const TutorDashboard = () => {
     navigate("/");
   };
 
-  // Calculate earnings AFTER 30% commission
   const COMMISSION_RATE = 0.30;
   const calculateNetEarnings = (gross: number) => gross * (1 - COMMISSION_RATE);
 
@@ -163,7 +152,6 @@ const TutorDashboard = () => {
   const thisMonthGross = thisMonthPayments.reduce((sum, p) => sum + Number(p.amount), 0);
   const thisMonthNet = calculateNetEarnings(thisMonthGross);
 
-  // Filter upcoming bookings
   const now = new Date();
   const upcomingBookings = bookings.filter(b => 
     new Date(b.tutor_availability.start_time) > now
@@ -189,421 +177,364 @@ const TutorDashboard = () => {
 
   return (
     <div className="min-h-screen bg-[image:var(--gradient-page)]">
-      {/* Dashboard Header */}
-      <div className="border-b bg-background">
+      {/* Compact Header */}
+      <div className="border-b bg-background sticky top-0 z-10 shadow-sm">
         <div className="max-w-7xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-xl font-semibold">Tutor Dashboard</h2>
-            <Button variant="outline" onClick={handleLogout}>
-              <LogOut className="w-4 h-4 mr-2" />
-              Sign Out
-            </Button>
-          </div>
-          <div className="flex flex-wrap gap-3">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => navigate("/tutor-onboarding-guide")}
-            >
-              <BookOpen className="w-4 h-4 mr-2" />
-              Onboarding Guide
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => navigate("/tutor-profile-edit")}
-            >
-              <Edit className="w-4 h-4 mr-2" />
-              Edit Profile
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => navigate("/tutor/availability")}
-            >
-              <Calendar className="w-4 h-4 mr-2" />
-              Manage Availability
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setLearningPlansOpen(true)}
-            >
-              <FileText className="w-4 h-4 mr-2" />
-              Learning Plans
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setProgressOpen(true)}
-            >
-              <TrendingUp className="w-4 h-4 mr-2" />
-              Student Progress
-            </Button>
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-xl font-semibold">Tutor Hub</h2>
+              <p className="text-sm text-muted-foreground">Welcome back, {profile?.full_name}</p>
+            </div>
+            <div className="flex items-center gap-3">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate("/tutor-profile-edit")}
+              >
+                <Edit className="w-4 h-4 mr-2" />
+                Profile
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate("/tutor/availability")}
+              >
+                <Calendar className="w-4 h-4 mr-2" />
+                Availability
+              </Button>
+              <Button variant="outline" size="sm" onClick={handleLogout}>
+                <LogOut className="w-4 h-4 mr-2" />
+                Sign Out
+              </Button>
+            </div>
           </div>
         </div>
       </div>
 
-      <div className="max-w-7xl mx-auto px-6 py-12">
-        {/* Welcome Section */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold mb-2">
-            Welcome back, {profile?.full_name || "Tutor"}!
-          </h1>
-          <p className="text-muted-foreground">Here's your tutoring overview</p>
-        </div>
-
+      <div className="max-w-7xl mx-auto px-6 py-8">
         {/* Calendar Connection Alert */}
         {!tutorProfile?.google_calendar_connected && (
           <Card className="mb-6 border-orange-200 bg-orange-50">
-            <CardContent className="p-6 flex items-start gap-4">
+            <CardContent className="p-4 flex items-start gap-4">
               <AlertCircle className="w-5 h-5 text-orange-600 mt-0.5" />
               <div className="flex-1">
                 <h3 className="font-semibold text-orange-900 mb-1">Connect Your Google Calendar</h3>
                 <p className="text-sm text-orange-700">
-                  Connect your calendar to automatically sync bookings and generate Google Meet links for online sessions.
+                  Connect your calendar to automatically sync bookings and generate Google Meet links.
                 </p>
               </div>
             </CardContent>
           </Card>
         )}
 
-        {/* Google Calendar Connection or Weekly Calendar */}
-        <div className="mb-8">
-          {tutorProfile?.google_calendar_connected ? (
-            <TutorWeeklyCalendar tutorId={user?.id} />
-          ) : (
-            <GoogleCalendarConnect 
-              tutorId={tutorProfile?.id}
-              isConnected={tutorProfile?.google_calendar_connected}
-              calendarEmail={tutorProfile?.google_calendar_email}
-            />
-          )}
-        </div>
-
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground mb-1">This Week (Net)</p>
-                  <p className="text-2xl font-bold text-primary">
-                    KES {thisWeekNet.toLocaleString()}
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Gross: KES {thisWeekGross.toLocaleString()}
-                  </p>
-                </div>
-                <DollarSign className="w-10 h-10 text-primary/20" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground mb-1">This Month (Net)</p>
-                  <p className="text-2xl font-bold text-accent">
-                    KES {thisMonthNet.toLocaleString()}
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    Gross: KES {thisMonthGross.toLocaleString()}
-                  </p>
-                </div>
-                <TrendingUp className="w-10 h-10 text-accent/20" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground mb-1">Total Sessions</p>
-                  <p className="text-2xl font-bold">{bookings.length}</p>
-                </div>
-                <Users className="w-10 h-10 text-muted-foreground/20" />
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-muted-foreground mb-1">Rating</p>
-                  <div className="flex items-center gap-2">
-                    <p className="text-2xl font-bold">
-                      {Number(tutorProfile?.rating || 0).toFixed(1)}
-                    </p>
-                    <Star className="w-5 h-5 fill-yellow-500 text-yellow-500" />
-                  </div>
-                  <p className="text-xs text-muted-foreground mt-1">
-                    {tutorProfile?.total_reviews || 0} reviews
-                  </p>
-                </div>
-                <Star className="w-10 h-10 text-yellow-400/20" />
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Earnings Note */}
-        <Card className="mb-8 bg-muted/50">
-          <CardContent className="p-4">
-            <p className="text-sm text-muted-foreground">
-              <strong>Note:</strong> All earnings shown are net amounts (after Lana's 30% commission). 
-              Gross amounts are shown in smaller text for reference.
-            </p>
-          </CardContent>
-        </Card>
-
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="w-full justify-start overflow-x-auto flex-nowrap">
-            <TabsTrigger value="today" className="whitespace-nowrap">
-              <CalendarDays className="w-4 h-4 mr-2" />
-              Today ({todaySessions.length})
-            </TabsTrigger>
-            <TabsTrigger value="week" className="whitespace-nowrap">
-              <Clock className="w-4 h-4 mr-2" />
-              This Week ({thisWeekSessions.length})
-            </TabsTrigger>
-            <TabsTrigger value="all" className="whitespace-nowrap">
-              <Calendar className="w-4 h-4 mr-2" />
-              All Upcoming ({upcomingBookings.length})
-            </TabsTrigger>
-            <TabsTrigger value="calendar" className="whitespace-nowrap">
-              <Calendar className="w-4 h-4 mr-2" />
-              Calendar
-            </TabsTrigger>
-            <TabsTrigger value="reviews" className="whitespace-nowrap">
-              <Star className="w-4 h-4 mr-2" />
-              Reviews ({reviews.length})
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="today" className="space-y-4">
-            {todaySessions.length === 0 ? (
-              <Card>
-                <CardContent className="p-12 text-center">
-                  <Calendar className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
-                  <p className="text-muted-foreground">No sessions scheduled for today</p>
-                </CardContent>
-              </Card>
-            ) : (
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <Clock className="w-5 h-5 text-primary" />
-                    Today's Schedule
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          {/* Main Content - 2 columns */}
+          <div className="lg:col-span-2 space-y-6">
+            {/* Next Session - Prominent */}
+            {todaySessions.length > 0 && (
+              <Card className="border-primary/50 shadow-lg">
+                <CardHeader className="pb-3">
+                  <CardTitle className="flex items-center gap-2 text-primary">
+                    <Clock className="w-5 h-5" />
+                    Next Session
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Time</TableHead>
-                        <TableHead>Student</TableHead>
-                        <TableHead>Subject</TableHead>
-                        <TableHead>Type</TableHead>
-                        <TableHead>Amount</TableHead>
-                        <TableHead>Action</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {todaySessions.map((booking) => (
-                        <TableRow key={booking.id}>
-                          <TableCell>
-                            <div className="text-sm">
-                              <div className="font-semibold">
-                                {format(new Date(booking.tutor_availability.start_time), "h:mm a")}
-                              </div>
-                              <div className="text-muted-foreground text-xs">
-                                {format(new Date(booking.tutor_availability.end_time), "h:mm a")}
-                              </div>
+                  {(() => {
+                    const nextSession = todaySessions[0];
+                    const sessionTime = new Date(nextSession.tutor_availability.start_time);
+                    const minutesUntil = Math.floor((sessionTime.getTime() - now.getTime()) / (1000 * 60));
+                    const isStartingSoon = minutesUntil <= 15 && minutesUntil >= 0;
+                    
+                    return (
+                      <div className="space-y-4">
+                        <div className="flex items-start justify-between">
+                          <div className="space-y-2">
+                            <div className="flex items-center gap-3">
+                              <Badge className="text-lg px-3 py-1">
+                                {format(sessionTime, "h:mm a")} - {format(new Date(nextSession.tutor_availability.end_time), "h:mm a")}
+                              </Badge>
+                              {isStartingSoon && (
+                                <Badge variant="destructive" className="animate-pulse">
+                                  Starting in {minutesUntil} min
+                                </Badge>
+                              )}
                             </div>
-                          </TableCell>
-                          <TableCell className="font-semibold">
-                            {booking.profiles?.full_name || "Unknown"}
-                          </TableCell>
-                          <TableCell>{booking.subject}</TableCell>
-                          <TableCell>
-                            <Badge variant="secondary">{booking.class_type}</Badge>
-                          </TableCell>
-                          <TableCell>
-                            <div className="text-sm">
-                              <div className="font-semibold text-green-600">
-                                KES {calculateNetEarnings(Number(booking.amount)).toFixed(0)}
-                              </div>
-                              <div className="text-xs text-muted-foreground">
-                                Gross: {Number(booking.amount).toFixed(0)}
-                              </div>
+                            <div>
+                              <p className="text-2xl font-bold">{nextSession.subject}</p>
+                              <p className="text-muted-foreground">
+                                Student: {nextSession.profiles?.full_name || "Unknown"}
+                              </p>
                             </div>
-                          </TableCell>
-                          <TableCell>
-                            {booking.meeting_link ? (
-                              <Button size="sm" onClick={() => window.open(booking.meeting_link, '_blank')}>
-                                <Video className="w-4 h-4 mr-2" />
-                                Join
-                              </Button>
-                            ) : (
-                              <Badge variant="outline">In-Person</Badge>
-                            )}
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </CardContent>
-              </Card>
-            )}
-          </TabsContent>
-
-          <TabsContent value="week" className="space-y-4">
-            {thisWeekSessions.length === 0 ? (
-              <Card>
-                <CardContent className="p-12 text-center">
-                  <Calendar className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
-                  <p className="text-muted-foreground">No sessions scheduled this week</p>
-                </CardContent>
-              </Card>
-            ) : (
-              thisWeekSessions.map((booking) => (
-                <Card key={booking.id}>
-                  <CardContent className="p-6">
-                    <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
-                      <div className="flex-1">
-                        <h3 className="font-bold text-lg mb-1">{booking.subject}</h3>
-                        <p className="text-sm text-muted-foreground mb-2">
-                          Student: {booking.profiles?.full_name || "Unknown"}
-                        </p>
-                        <div className="flex flex-wrap items-center gap-2 text-sm">
-                          <Badge variant="outline">
-                            {format(new Date(booking.tutor_availability.start_time), "EEE, MMM d")}
-                          </Badge>
-                          <Badge variant="outline">
-                            {format(new Date(booking.tutor_availability.start_time), "h:mm a")} - 
-                            {format(new Date(booking.tutor_availability.end_time), "h:mm a")}
-                          </Badge>
-                          <Badge variant="secondary">{booking.class_type}</Badge>
-                          <Badge className="bg-green-600">
-                            Net: KES {calculateNetEarnings(Number(booking.amount)).toFixed(0)}
-                          </Badge>
+                            <div className="flex items-center gap-2">
+                              <Badge variant="secondary">{nextSession.class_type}</Badge>
+                              <Badge className="bg-green-600">
+                                KES {calculateNetEarnings(Number(nextSession.amount)).toFixed(0)}
+                              </Badge>
+                            </div>
+                          </div>
                         </div>
-                        {booking.notes && (
-                          <p className="text-xs text-muted-foreground mt-2">
-                            Notes: {booking.notes}
+                        {nextSession.meeting_link ? (
+                          <Button 
+                            size="lg" 
+                            className="w-full"
+                            onClick={() => window.open(nextSession.meeting_link, '_blank')}
+                          >
+                            <Video className="w-5 h-5 mr-2" />
+                            Join Session Now
+                          </Button>
+                        ) : (
+                          <Button size="lg" variant="outline" className="w-full" disabled>
+                            Meeting link will be shared soon
+                          </Button>
+                        )}
+                        {nextSession.notes && (
+                          <p className="text-sm text-muted-foreground">
+                            <strong>Notes:</strong> {nextSession.notes}
                           </p>
                         )}
                       </div>
-                      {booking.meeting_link && (
-                        <Button onClick={() => window.open(booking.meeting_link, '_blank')}>
-                          <Video className="w-4 h-4 mr-2" />
-                          Join Session
-                        </Button>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              ))
-            )}
-          </TabsContent>
-
-          <TabsContent value="all" className="space-y-4">
-            {upcomingBookings.length === 0 ? (
-              <Card>
-                <CardContent className="p-12 text-center">
-                  <Calendar className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
-                  <p className="text-muted-foreground mb-4">No upcoming sessions</p>
-                  <Button onClick={() => navigate("/tutor/availability")}>
-                    Set Your Availability
-                  </Button>
+                    );
+                  })()}
                 </CardContent>
               </Card>
-            ) : (
-              upcomingBookings.map((booking) => (
-                <Card key={booking.id}>
-                  <CardContent className="p-6">
-                    <div className="flex flex-col sm:flex-row items-start justify-between gap-4">
-                      <div className="flex-1">
-                        <h3 className="font-bold text-lg mb-1">{booking.subject}</h3>
-                        <p className="text-sm text-muted-foreground mb-2">
-                          Student: {booking.profiles?.full_name || "Unknown"}
-                        </p>
-                        <div className="flex flex-wrap items-center gap-2 text-sm">
-                          <Badge variant="outline">
-                            {format(new Date(booking.tutor_availability.start_time), "MMM d, yyyy")}
-                          </Badge>
-                          <Badge variant="outline">
-                            {format(new Date(booking.tutor_availability.start_time), "h:mm a")} - 
-                            {format(new Date(booking.tutor_availability.end_time), "h:mm a")}
-                          </Badge>
-                          <Badge variant="secondary">{booking.class_type}</Badge>
-                          <Badge className="bg-green-600">
-                            Net: KES {calculateNetEarnings(Number(booking.amount)).toFixed(0)}
-                          </Badge>
+            )}
+
+            {/* Today's Full Schedule */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <CalendarDays className="w-5 h-5" />
+                  Today's Schedule ({todaySessions.length})
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {todaySessions.length === 0 ? (
+                  <div className="text-center py-8">
+                    <Calendar className="w-12 h-12 mx-auto mb-3 text-muted-foreground/50" />
+                    <p className="text-muted-foreground">No sessions scheduled for today</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {todaySessions.map((booking, index) => (
+                      index === 0 ? null : (
+                        <Card key={booking.id}>
+                          <CardContent className="p-4">
+                            <div className="flex items-center justify-between gap-4">
+                              <div className="flex-1">
+                                <div className="flex items-center gap-3 mb-2">
+                                  <Badge variant="outline" className="font-mono">
+                                    {format(new Date(booking.tutor_availability.start_time), "h:mm a")}
+                                  </Badge>
+                                  <span className="font-semibold">{booking.subject}</span>
+                                </div>
+                                <p className="text-sm text-muted-foreground">
+                                  {booking.profiles?.full_name} • {booking.class_type} • KES {calculateNetEarnings(Number(booking.amount)).toFixed(0)}
+                                </p>
+                              </div>
+                              {booking.meeting_link && (
+                                <Button size="sm" onClick={() => window.open(booking.meeting_link, '_blank')}>
+                                  <Video className="w-4 h-4 mr-2" />
+                                  Join
+                                </Button>
+                              )}
+                            </div>
+                          </CardContent>
+                        </Card>
+                      )
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+
+            {/* Weekly Calendar */}
+            <div>
+              {tutorProfile?.google_calendar_connected ? (
+                <TutorWeeklyCalendar tutorId={user?.id} />
+              ) : (
+                <GoogleCalendarConnect 
+                  tutorId={tutorProfile?.id}
+                  isConnected={tutorProfile?.google_calendar_connected}
+                  calendarEmail={tutorProfile?.google_calendar_email}
+                />
+              )}
+            </div>
+
+            {/* Tabs for secondary content */}
+            <Tabs defaultValue="upcoming" className="space-y-4">
+              <TabsList className="w-full">
+                <TabsTrigger value="upcoming" className="flex-1">
+                  This Week ({thisWeekSessions.length})
+                </TabsTrigger>
+                <TabsTrigger value="calendar" className="flex-1">
+                  Calendar
+                </TabsTrigger>
+                <TabsTrigger value="reviews" className="flex-1">
+                  Reviews ({reviews.length})
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="upcoming" className="space-y-3">
+                {thisWeekSessions.length === 0 ? (
+                  <Card>
+                    <CardContent className="py-12 text-center">
+                      <Calendar className="w-12 h-12 mx-auto mb-3 text-muted-foreground/50" />
+                      <p className="text-muted-foreground">No upcoming sessions this week</p>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  thisWeekSessions.map((booking) => (
+                    <Card key={booking.id}>
+                      <CardContent className="p-4">
+                        <div className="flex items-center justify-between gap-4">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-3 mb-2">
+                              <Badge variant="outline">
+                                {format(new Date(booking.tutor_availability.start_time), "EEE, MMM d")}
+                              </Badge>
+                              <Badge variant="outline" className="font-mono">
+                                {format(new Date(booking.tutor_availability.start_time), "h:mm a")}
+                              </Badge>
+                            </div>
+                            <div className="font-semibold">{booking.subject}</div>
+                            <p className="text-sm text-muted-foreground">
+                              {booking.profiles?.full_name} • {booking.class_type}
+                            </p>
+                          </div>
+                          {booking.meeting_link && (
+                            <Button size="sm" variant="outline" onClick={() => window.open(booking.meeting_link, '_blank')}>
+                              <Video className="w-4 h-4 mr-2" />
+                              Join
+                            </Button>
+                          )}
                         </div>
-                      </div>
-                      {booking.meeting_link && (
-                        <Button onClick={() => window.open(booking.meeting_link, '_blank')}>
-                          <Video className="w-4 h-4 mr-2" />
-                          Join Session
-                        </Button>
-                      )}
-                    </div>
-                  </CardContent>
-                </Card>
-              ))
-            )}
-          </TabsContent>
+                      </CardContent>
+                    </Card>
+                  ))
+                )}
+              </TabsContent>
 
-          <TabsContent value="calendar">
-            <TutorCalendarOverview tutorId={user?.id} />
-          </TabsContent>
+              <TabsContent value="calendar">
+                <TutorCalendarOverview tutorId={tutorProfile?.id} />
+              </TabsContent>
 
-          <TabsContent value="reviews" className="space-y-4">
-            {reviews.length === 0 ? (
-              <Card>
-                <CardContent className="p-12 text-center">
-                  <Star className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
-                  <p className="text-muted-foreground">No reviews yet</p>
-                </CardContent>
-              </Card>
-            ) : (
-              reviews.map((review) => (
-                <Card key={review.id}>
-                  <CardContent className="p-6">
-                    <div className="flex items-start justify-between mb-3">
-                      <div>
-                        <p className="font-semibold">{review.profiles?.full_name || "Student"}</p>
-                        <p className="text-xs text-muted-foreground">
-                          {format(new Date(review.created_at), "MMM d, yyyy")}
-                        </p>
-                      </div>
-                      <div className="flex gap-1">
-                        {[...Array(5)].map((_, i) => (
-                          <Star
-                            key={i}
-                            className={`w-4 h-4 ${
-                              i < review.rating 
-                                ? "fill-yellow-500 text-yellow-500" 
-                                : "text-muted-foreground/30"
-                            }`}
-                          />
-                        ))}
-                      </div>
+              <TabsContent value="reviews" className="space-y-4">
+                {reviews.length === 0 ? (
+                  <Card>
+                    <CardContent className="py-12 text-center">
+                      <Star className="w-12 h-12 mx-auto mb-3 text-muted-foreground/50" />
+                      <p className="text-muted-foreground">No reviews yet</p>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  reviews.map((review) => (
+                    <Card key={review.id}>
+                      <CardContent className="p-4">
+                        <div className="flex items-start justify-between mb-2">
+                          <div>
+                            <p className="font-semibold">{review.profiles?.full_name || "Student"}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {format(new Date(review.created_at), "MMM d, yyyy")}
+                            </p>
+                          </div>
+                          <div className="flex gap-1">
+                            {[...Array(5)].map((_, i) => (
+                              <Star
+                                key={i}
+                                className={`w-4 h-4 ${
+                                  i < review.rating 
+                                    ? "fill-yellow-500 text-yellow-500" 
+                                    : "text-muted-foreground/30"
+                                }`}
+                              />
+                            ))}
+                          </div>
+                        </div>
+                        {review.comment && (
+                          <p className="text-sm text-muted-foreground">{review.comment}</p>
+                        )}
+                      </CardContent>
+                    </Card>
+                  ))
+                )}
+              </TabsContent>
+            </Tabs>
+          </div>
+
+          {/* Sidebar - Stats and Actions */}
+          <div className="space-y-6">
+            {/* Quick Stats */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Earnings & Stats</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div>
+                  <p className="text-sm text-muted-foreground">This Week (Net)</p>
+                  <p className="text-2xl font-bold text-primary">
+                    KES {thisWeekNet.toLocaleString()}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Gross: KES {thisWeekGross.toLocaleString()}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-sm text-muted-foreground">This Month (Net)</p>
+                  <p className="text-2xl font-bold text-accent">
+                    KES {thisMonthNet.toLocaleString()}
+                  </p>
+                  <p className="text-xs text-muted-foreground">
+                    Gross: KES {thisMonthGross.toLocaleString()}
+                  </p>
+                </div>
+                <div className="flex items-center justify-between pt-4 border-t">
+                  <div>
+                    <p className="text-sm text-muted-foreground">Total Sessions</p>
+                    <p className="text-xl font-bold">{bookings.length}</p>
+                  </div>
+                  <div>
+                    <p className="text-sm text-muted-foreground">Rating</p>
+                    <div className="flex items-center gap-1">
+                      <p className="text-xl font-bold">
+                        {Number(tutorProfile?.rating || 0).toFixed(1)}
+                      </p>
+                      <Star className="w-4 h-4 fill-yellow-500 text-yellow-500" />
                     </div>
-                    {review.comment && (
-                      <p className="text-sm text-muted-foreground">{review.comment}</p>
-                    )}
-                  </CardContent>
-                </Card>
-              ))
-            )}
-          </TabsContent>
-        </Tabs>
+                  </div>
+                </div>
+                <p className="text-xs text-muted-foreground pt-2 border-t">
+                  Net earnings shown after 30% commission
+                </p>
+              </CardContent>
+            </Card>
+
+            {/* Quick Actions */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base">Quick Actions</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                <Button 
+                  variant="outline" 
+                  className="w-full justify-start"
+                  onClick={() => setLearningPlansOpen(true)}
+                >
+                  <FileText className="w-4 h-4 mr-2" />
+                  Learning Plans
+                </Button>
+                <Button 
+                  variant="outline" 
+                  className="w-full justify-start"
+                  onClick={() => setProgressOpen(true)}
+                >
+                  <TrendingUp className="w-4 h-4 mr-2" />
+                  Student Progress
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
       </div>
 
       {/* Learning Plans Dialog */}
