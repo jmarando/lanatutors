@@ -139,7 +139,8 @@ const TutorProfile = () => {
       experience: tutorProfile.experience_years || 0,
       rating: tutorProfile.rating || 0,
       reviews: tutorProfile.total_reviews || 0,
-      education: tutorProfile.qualifications || [],
+      education: tutorProfile.education || [],
+      qualifications: tutorProfile.qualifications || [],
       graduationYear: tutorProfile.graduation_year,
       school: tutorProfile.current_institution || "Not specified",
       curriculum: tutorProfile.curriculum || [],
@@ -491,11 +492,11 @@ const TutorProfile = () => {
                     </p>
                     
                     <div className="space-y-2">
-                      {tutor.education && tutor.education.length > 0 && (
+                      {tutor.qualifications && tutor.qualifications.length > 0 && (
                         <div className="flex items-start gap-2 text-sm">
                           <GraduationCap className="w-4 h-4 mt-0.5 text-primary shrink-0" />
                           <div className="space-y-0.5">
-                            {tutor.education.map((qual: string, index: number) => (
+                            {tutor.qualifications.map((qual: string, index: number) => (
                               <div key={index} className="text-muted-foreground">
                                 {qual}
                               </div>
@@ -557,9 +558,7 @@ const TutorProfile = () => {
             )}
 
             {/* Education */}
-            {Array.isArray(tutor.teachingExperience) && tutor.teachingExperience.filter((exp: any) =>
-              exp && (exp.degree || exp.field || exp.graduationYear) && !exp.role
-            ).length > 0 && (
+            {Array.isArray(tutor.education) && tutor.education.length > 0 && (
               <Card className="border-border/50">
                 <CardContent className="p-6">
                   <div className="flex items-center gap-2 mb-4">
@@ -567,30 +566,28 @@ const TutorProfile = () => {
                     <h2 className="font-bold text-lg">Education</h2>
                   </div>
                   <div className="space-y-3">
-                    {tutor.teachingExperience
-                      .filter((exp: any) => exp && (exp.degree || exp.field || exp.graduationYear) && !exp.role)
-                      .map((entry: any, index: number) => (
-                        <div key={index} className="flex items-start gap-3 p-3 rounded-lg bg-muted/50">
-                          <School className="w-5 h-5 text-primary mt-0.5 shrink-0" />
-                          <div className="flex-1 min-w-0">
-                            <p className="font-semibold text-foreground">
-                              {entry.degree || "Degree"}
+                    {tutor.education.map((entry: any, index: number) => (
+                      <div key={index} className="flex items-start gap-3 p-3 rounded-lg bg-muted/50">
+                        <School className="w-5 h-5 text-primary mt-0.5 shrink-0" />
+                        <div className="flex-1 min-w-0">
+                          <p className="font-semibold text-foreground">
+                            {entry.degree || "Degree"}
+                          </p>
+                          {entry.field && (
+                            <p className="text-sm text-muted-foreground">
+                              {entry.field}
                             </p>
-                            {entry.field && (
-                              <p className="text-sm text-muted-foreground">
-                                {entry.field}
-                              </p>
-                            )}
-                            {(entry.institution || entry.graduationYear) && (
-                              <div className="flex items-center gap-2 mt-1 text-sm text-muted-foreground">
-                                {entry.institution && <span>{entry.institution}</span>}
-                                {entry.institution && entry.graduationYear && <span>•</span>}
-                                {entry.graduationYear && <span>Class of {entry.graduationYear}</span>}
-                              </div>
-                            )}
-                          </div>
+                          )}
+                          {(entry.institution || entry.graduationYear) && (
+                            <div className="flex items-center gap-2 mt-1 text-sm text-muted-foreground">
+                              {entry.institution && <span>{entry.institution}</span>}
+                              {entry.institution && entry.graduationYear && <span>•</span>}
+                              {entry.graduationYear && <span>Class of {entry.graduationYear}</span>}
+                            </div>
+                          )}
                         </div>
-                      ))}
+                      </div>
+                    ))}
                   </div>
                 </CardContent>
               </Card>
