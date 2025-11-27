@@ -1001,7 +1001,7 @@ export const BookingCalendar = ({
 
                   {/* Payment Method Section */}
                   <>
-                    <div>
+                    <div className="space-y-2">
                       <Label className="text-sm font-medium mb-2 block">Payment Method *</Label>
                       <Tabs value={paymentMethod} onValueChange={(v) => setPaymentMethod(v as 'mpesa' | 'card')} className="w-full">
                         <TabsList className="grid w-full grid-cols-2">
@@ -1015,6 +1015,18 @@ export const BookingCalendar = ({
                           </TabsTrigger>
                         </TabsList>
                       </Tabs>
+                      
+                      {/* Payment Flow Explanation */}
+                      <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-900 rounded-lg p-3">
+                        <p className="text-xs text-blue-900 dark:text-blue-200 font-medium mb-1">
+                          📋 Payment Process
+                        </p>
+                        <p className="text-xs text-blue-800 dark:text-blue-300">
+                          {paymentMethod === 'mpesa' 
+                            ? "You'll review your invoice, then receive an M-Pesa prompt on your phone to complete payment" 
+                            : "You'll review your invoice, then be redirected to a secure payment page to enter your card details"}
+                        </p>
+                      </div>
                     </div>
 
                     {paymentMethod === 'mpesa' && (
