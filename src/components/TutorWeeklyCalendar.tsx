@@ -6,6 +6,7 @@ import { format, addDays, startOfWeek, isSameDay, parseISO } from "date-fns";
 import { Loader2, Calendar, Clock, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import { SessionDetailsDialog } from "@/components/tutor/SessionDetailsDialog";
 
 interface TutorWeeklyCalendarProps {
   tutorId: string;
@@ -16,6 +17,8 @@ export const TutorWeeklyCalendar = ({ tutorId }: TutorWeeklyCalendarProps) => {
   const [availability, setAvailability] = useState<any[]>([]);
   const [bookings, setBookings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedBooking, setSelectedBooking] = useState<any>(null);
+  const [dialogOpen, setDialogOpen] = useState(false);
 
   useEffect(() => {
     fetchWeeklyData();
@@ -129,9 +132,13 @@ export const TutorWeeklyCalendar = ({ tutorId }: TutorWeeklyCalendarProps) => {
                 <div className="space-y-1">
                   {/* Bookings */}
                   {dayBookings.map((booking) => (
-                    <div 
+                    <button
                       key={booking.id}
-                      className="bg-primary/10 border border-primary/20 rounded px-2 py-1 text-xs"
+                      onClick={() => {
+                        setSelectedBooking(booking);
+                        setDialogOpen(true);
+                      }}
+                      className="w-full bg-primary/10 border border-primary/20 rounded px-2 py-1 text-xs hover:bg-primary/20 transition-colors cursor-pointer text-left"
                     >
                       <div className="flex items-center gap-1 text-primary font-medium">
                         <CheckCircle2 className="w-3 h-3" />
@@ -140,7 +147,10 @@ export const TutorWeeklyCalendar = ({ tutorId }: TutorWeeklyCalendarProps) => {
                       <div className="text-foreground/70 truncate mt-0.5">
                         {booking.subject}
                       </div>
-                    </div>
+                      <div className="text-foreground/50 truncate text-[10px] mt-0.5">
+                        {booking.profiles?.full_name}
+                      </div>
+                    </button>
                   ))}
 
                   {/* Available Slots */}
@@ -178,7 +188,7 @@ export const TutorWeeklyCalendar = ({ tutorId }: TutorWeeklyCalendarProps) => {
         <div className="mt-4 flex items-center gap-4 text-sm text-muted-foreground">
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded bg-primary/10 border border-primary/20" />
-            <span>Booked</span>
+            <span>Booked (click for details)</span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded bg-muted border border-border" />
@@ -190,6 +200,12 @@ export const TutorWeeklyCalendar = ({ tutorId }: TutorWeeklyCalendarProps) => {
           </div>
         </div>
       </CardContent>
+
+      <SessionDetailsDialog
+        booking={selectedBooking}
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+      />
     </Card>
   );
 };
