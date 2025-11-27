@@ -13,6 +13,8 @@ interface Subject {
   name: string;
   sessions: number;
   rate: number;
+  sessionsPerWeek?: number;
+  weeks?: number;
 }
 
 interface CreateLearningPlanFormProps {
@@ -35,6 +37,8 @@ export const CreateLearningPlanForm = ({
       name,
       sessions: inquiry.preferred_sessions ? Math.floor(inquiry.preferred_sessions / inquiry.subjects_needed.length) : 4,
       rate: 1500,
+      sessionsPerWeek: 2,
+      weeks: inquiry.desired_duration_weeks || 4,
     })) || []
   );
   const [discount, setDiscount] = useState(0);
@@ -42,7 +46,7 @@ export const CreateLearningPlanForm = ({
   const [notes, setNotes] = useState("");
 
   const addSubject = () => {
-    setSubjects([...subjects, { name: "", sessions: 1, rate: 1500 }]);
+    setSubjects([...subjects, { name: "", sessions: 1, rate: 1500, sessionsPerWeek: 2, weeks: inquiry.desired_duration_weeks || 4 }]);
   };
 
   const removeSubject = (index: number) => {
@@ -52,6 +56,14 @@ export const CreateLearningPlanForm = ({
   const updateSubject = (index: number, field: keyof Subject, value: any) => {
     const updated = [...subjects];
     updated[index] = { ...updated[index], [field]: value };
+    
+    // Auto-calculate total sessions when sessionsPerWeek or weeks changes
+    if (field === 'sessionsPerWeek' || field === 'weeks') {
+      const sessionsPerWeek = field === 'sessionsPerWeek' ? value : updated[index].sessionsPerWeek || 2;
+      const weeks = field === 'weeks' ? value : updated[index].weeks || 4;
+      updated[index].sessions = sessionsPerWeek * weeks;
+    }
+    
     setSubjects(updated);
   };
 
@@ -244,8 +256,8 @@ export const CreateLearningPlanForm = ({
           {subjects.map((subject, index) => (
             <Card key={index}>
               <CardContent className="p-4">
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-                  <div className="md:col-span-2">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3 mb-3">
+                  <div className="md:col-span-3">
                     <Label className="text-xs">Subject</Label>
                     <Input
                       value={subject.name}
@@ -254,42 +266,74 @@ export const CreateLearningPlanForm = ({
                       required
                     />
                   </div>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
                   <div>
-                    <Label className="text-xs">Sessions</Label>
+                    <Label className="text-xs">Sessions/Week</Label>
+                    <Input
+                      type="number"
+                      min="1"
+                      max="7"
+                      value={subject.sessionsPerWeek || 2}
+                      onChange={(e) => updateSubject(index, "sessionsPerWeek", parseInt(e.target.value) || 2)}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs">Weeks</Label>
+                    <Input
+                      type="number"
+                      min="1"
+                      value={subject.weeks || 4}
+                      onChange={(e) => updateSubject(index, "weeks", parseInt(e.target.value) || 4)}
+                      required
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-xs">Total Sessions</Label>
                     <Input
                       type="number"
                       min="1"
                       value={subject.sessions}
                       onChange={(e) => updateSubject(index, "sessions", parseInt(e.target.value) || 1)}
                       required
+                      className="bg-muted/50"
                     />
                   </div>
                   <div>
                     <Label className="text-xs">Rate/Session (KES)</Label>
-                    <div className="flex gap-2">
-                      <Input
-                        type="number"
-                        min="1"
-                        value={subject.rate}
-                        onChange={(e) => updateSubject(index, "rate", parseInt(e.target.value) || 1500)}
-                        required
-                      />
-                      {subjects.length > 1 && (
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => removeSubject(index)}
-                        >
-                          <Trash2 className="w-4 h-4 text-destructive" />
-                        </Button>
-                      )}
-                    </div>
+                    <Input
+                      type="number"
+                      min="1"
+                      value={subject.rate}
+                      onChange={(e) => updateSubject(index, "rate", parseInt(e.target.value) || 1500)}
+                      required
+                    />
+                  </div>
+                  <div className="flex items-end">
+                    {subjects.length > 1 && (
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => removeSubject(index)}
+                        className="w-full"
+                      >
+                        <Trash2 className="w-4 h-4 text-destructive" />
+                      </Button>
+                    )}
                   </div>
                 </div>
-                <p className="text-xs text-muted-foreground mt-2">
-                  Subtotal: KES {(subject.sessions * subject.rate).toLocaleString()}
-                </p>
+                
+                <div className="mt-3 p-2 bg-muted/30 rounded text-xs">
+                  <p className="text-muted-foreground">
+                    Schedule: <strong>{subject.sessionsPerWeek || 2} sessions/week</strong> × <strong>{subject.weeks || 4} weeks</strong> = {subject.sessions} total sessions
+                  </p>
+                  <p className="text-muted-foreground mt-1">
+                    Subtotal: <strong>KES {(subject.sessions * subject.rate).toLocaleString()}</strong>
+                  </p>
+                </div>
               </CardContent>
             </Card>
           ))}
