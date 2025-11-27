@@ -32,6 +32,8 @@ export const GeneralLearningPlanRequest = ({
     lastExamPerformance: "",
     currentChallenges: "",
     preferredSessions: 0,
+    desiredDurationWeeks: 0,
+    availableTimePerWeek: "",
   });
   const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
   const allSubjects = getAllSubjects();
@@ -113,6 +115,8 @@ export const GeneralLearningPlanRequest = ({
           lastExamPerformance: formData.lastExamPerformance,
           challenges: formData.currentChallenges,
           preferredSessions: formData.preferredSessions,
+          desiredDurationWeeks: formData.desiredDurationWeeks,
+          availableTimePerWeek: formData.availableTimePerWeek,
         },
       });
 
@@ -329,6 +333,64 @@ export const GeneralLearningPlanRequest = ({
           <p className="text-xs text-muted-foreground mt-1">
             Not sure? Leave blank and our team will recommend based on your needs
           </p>
+        </div>
+
+        {/* Duration and Time Availability */}
+        <div className="space-y-3">
+          <h4 className="font-semibold text-sm">Learning Schedule</h4>
+          
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <Label htmlFor="desiredDurationWeeks">
+                Duration (weeks) *
+              </Label>
+              <Select
+                value={formData.desiredDurationWeeks?.toString() || ""}
+                onValueChange={(value) => setFormData({ ...formData, desiredDurationWeeks: parseInt(value) })}
+                required
+              >
+                <SelectTrigger id="desiredDurationWeeks">
+                  <SelectValue placeholder="Select duration" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="2">2 weeks</SelectItem>
+                  <SelectItem value="4">4 weeks (1 month)</SelectItem>
+                  <SelectItem value="6">6 weeks</SelectItem>
+                  <SelectItem value="8">8 weeks (2 months)</SelectItem>
+                  <SelectItem value="12">12 weeks (3 months)</SelectItem>
+                  <SelectItem value="16">16 weeks (4 months)</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground mt-1">
+                How long you want tutoring to last
+              </p>
+            </div>
+
+            <div>
+              <Label htmlFor="availableTimePerWeek">
+                Available Time Per Week
+              </Label>
+              <Select
+                value={formData.availableTimePerWeek}
+                onValueChange={(value) => setFormData({ ...formData, availableTimePerWeek: value })}
+              >
+                <SelectTrigger id="availableTimePerWeek">
+                  <SelectValue placeholder="Select time" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="1-2 hours">1-2 hours/week</SelectItem>
+                  <SelectItem value="3-4 hours">3-4 hours/week</SelectItem>
+                  <SelectItem value="5-6 hours">5-6 hours/week</SelectItem>
+                  <SelectItem value="7-8 hours">7-8 hours/week</SelectItem>
+                  <SelectItem value="9-10 hours">9-10 hours/week</SelectItem>
+                  <SelectItem value="10+ hours">10+ hours/week</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground mt-1">
+                How much time student has at home for tutoring
+              </p>
+            </div>
+          </div>
         </div>
 
         {/* Actions */}

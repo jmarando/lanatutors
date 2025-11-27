@@ -173,9 +173,36 @@ export const CreateLearningPlanForm = ({
                 <p className="font-medium">{inquiry.curriculum}</p>
               </div>
             )}
+            {inquiry.desired_duration_weeks && (
+              <div>
+                <span className="text-muted-foreground">Desired Duration:</span>
+                <p className="font-medium">{inquiry.desired_duration_weeks} weeks</p>
+              </div>
+            )}
+            {inquiry.available_time_per_week && (
+              <div>
+                <span className="text-muted-foreground">Available Time/Week:</span>
+                <p className="font-medium">{inquiry.available_time_per_week}</p>
+              </div>
+            )}
           </div>
         </CardContent>
       </Card>
+
+      {/* Schedule Guidance */}
+      {inquiry.desired_duration_weeks && (
+        <Card className="bg-primary/5 border-primary/20">
+          <CardContent className="p-4">
+            <h4 className="font-semibold text-sm mb-2">📅 Schedule Planning Tip</h4>
+            <p className="text-xs text-muted-foreground">
+              The parent wants tutoring for <strong>{inquiry.desired_duration_weeks} weeks</strong>
+              {inquiry.available_time_per_week && ` with ${inquiry.available_time_per_week} available`}.
+              Consider recommending 2-3 sessions per week spread across subjects. 
+              For example: {inquiry.desired_duration_weeks} weeks × 2 sessions/week = {inquiry.desired_duration_weeks * 2} total sessions.
+            </p>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Plan Title */}
       <div>

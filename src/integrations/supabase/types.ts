@@ -1054,9 +1054,11 @@ export type Database = {
       }
       tutor_inquiries: {
         Row: {
+          available_time_per_week: string | null
           created_at: string | null
           current_challenges: string | null
           curriculum: string | null
+          desired_duration_weeks: number | null
           grade_level: string
           id: string
           parent_email: string
@@ -1072,9 +1074,11 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          available_time_per_week?: string | null
           created_at?: string | null
           current_challenges?: string | null
           curriculum?: string | null
+          desired_duration_weeks?: number | null
           grade_level: string
           id?: string
           parent_email: string
@@ -1090,9 +1094,11 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          available_time_per_week?: string | null
           created_at?: string | null
           current_challenges?: string | null
           curriculum?: string | null
+          desired_duration_weeks?: number | null
           grade_level?: string
           id?: string
           parent_email?: string

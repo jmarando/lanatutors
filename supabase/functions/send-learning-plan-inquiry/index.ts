@@ -23,6 +23,8 @@ interface LearningPlanInquiryRequest {
   lastExamPerformance?: string;
   challenges?: string;
   preferredSessions?: number;
+  desiredDurationWeeks?: number;
+  availableTimePerWeek?: string;
   inquiryId: string;
 }
 
@@ -57,6 +59,8 @@ const handler = async (req: Request): Promise<Response> => {
       lastExamPerformance,
       challenges,
       preferredSessions,
+      desiredDurationWeeks,
+      availableTimePerWeek,
       inquiryId,
     }: LearningPlanInquiryRequest = await req.json();
 
@@ -144,9 +148,21 @@ const handler = async (req: Request): Promise<Response> => {
               </div>
               <table style="width: 100%; border-collapse: collapse;">
                 <tr>
-                  <td style="padding: 10px 0; ${preferredSessions || lastExamPerformance || challenges ? 'border-bottom: 1px solid #BFDBFE;' : ''} font-size: 14px; color: #1E3A8A; width: 40%;">Subjects:</td>
-                  <td style="padding: 10px 0; ${preferredSessions || lastExamPerformance || challenges ? 'border-bottom: 1px solid #BFDBFE;' : ''} font-size: 14px; color: #1a1a1a; font-weight: 500; text-align: right;">${subjects.join(", ")}</td>
+                  <td style="padding: 10px 0; ${preferredSessions || lastExamPerformance || challenges || desiredDurationWeeks || availableTimePerWeek ? 'border-bottom: 1px solid #BFDBFE;' : ''} font-size: 14px; color: #1E3A8A; width: 40%;">Subjects:</td>
+                  <td style="padding: 10px 0; ${preferredSessions || lastExamPerformance || challenges || desiredDurationWeeks || availableTimePerWeek ? 'border-bottom: 1px solid #BFDBFE;' : ''} font-size: 14px; color: #1a1a1a; font-weight: 500; text-align: right;">${subjects.join(", ")}</td>
                 </tr>
+                ${desiredDurationWeeks ? `
+                <tr>
+                  <td style="padding: 10px 0; ${preferredSessions || lastExamPerformance || challenges || availableTimePerWeek ? 'border-bottom: 1px solid #BFDBFE;' : ''} font-size: 14px; color: #1E3A8A;">Desired Duration:</td>
+                  <td style="padding: 10px 0; ${preferredSessions || lastExamPerformance || challenges || availableTimePerWeek ? 'border-bottom: 1px solid #BFDBFE;' : ''} font-size: 14px; color: #1a1a1a; font-weight: 500; text-align: right;">${desiredDurationWeeks} weeks</td>
+                </tr>
+                ` : ''}
+                ${availableTimePerWeek ? `
+                <tr>
+                  <td style="padding: 10px 0; ${preferredSessions || lastExamPerformance || challenges ? 'border-bottom: 1px solid #BFDBFE;' : ''} font-size: 14px; color: #1E3A8A;">Available Time/Week:</td>
+                  <td style="padding: 10px 0; ${preferredSessions || lastExamPerformance || challenges ? 'border-bottom: 1px solid #BFDBFE;' : ''} font-size: 14px; color: #1a1a1a; font-weight: 500; text-align: right;">${availableTimePerWeek}</td>
+                </tr>
+                ` : ''}
                 ${preferredSessions ? `
                 <tr>
                   <td style="padding: 10px 0; ${lastExamPerformance || challenges ? 'border-bottom: 1px solid #BFDBFE;' : ''} font-size: 14px; color: #1E3A8A;">Preferred Sessions:</td>
@@ -176,12 +192,12 @@ const handler = async (req: Request): Promise<Response> => {
                 <span style="font-size: 20px; margin-right: 8px;">📝</span>
                 <h2 style="margin: 0; font-size: 18px; font-weight: 600; color: #D97706;">Next Steps</h2>
               </div>
-              <p style="margin: 0 0 16px 0; font-size: 14px; line-height: 1.6; color: #78350f;">Please review this request and create a personalized learning plan for ${studentName}. Reply directly to <strong>${parentEmail}</strong> with:</p>
+              <p style="margin: 0 0 16px 0; font-size: 14px; line-height: 1.6; color: #78350f;">Please review this request and create a personalized learning plan for ${studentName}. ${desiredDurationWeeks ? `The parent wants tutoring for ${desiredDurationWeeks} weeks${availableTimePerWeek ? ` with ${availableTimePerWeek} available` : ''}. Consider recommending 2-3 sessions per week across subjects.` : ''} Reply directly to <strong>${parentEmail}</strong> with:</p>
               <ol style="margin: 0; padding-left: 20px; font-size: 14px; line-height: 1.8; color: #78350f;">
-                <li>A breakdown of subjects and recommended number of sessions per subject</li>
+                <li>A breakdown of subjects and recommended sessions per week across the ${desiredDurationWeeks || ''} week period</li>
                 <li>Total package price with any applicable discounts</li>
                 <li>Your teaching approach and how you'll address the student's needs</li>
-                <li>Proposed schedule or availability</li>
+                <li>Proposed weekly schedule (e.g., Mon/Wed Math, Tue/Thu English)</li>
               </ol>
               <div style="background-color: #FEF3C7; border-left: 4px solid #F59E0B; padding: 16px; border-radius: 8px; margin-top: 16px;">
                 <p style="margin: 0; font-size: 13px; color: #92400E; font-weight: 600;">⏱️ Please respond within 24 hours to maintain excellent parent communication.</p>
