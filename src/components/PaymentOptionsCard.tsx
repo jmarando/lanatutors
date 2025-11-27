@@ -32,6 +32,7 @@ interface PaymentOptionsCardProps {
   onPackageSelect: (pkg: PackageOffer | null) => void;
   onExistingPackageSelect: (pkg: PackagePurchase | null) => void;
   disabled?: boolean;
+  tutorId?: string;
 }
 
 export const PaymentOptionsCard = ({
@@ -46,8 +47,10 @@ export const PaymentOptionsCard = ({
   selectedExistingPackage,
   onPackageSelect,
   onExistingPackageSelect,
-  disabled = false
+  disabled = false,
+  tutorId
 }: PaymentOptionsCardProps) => {
+  const depositPercentage = tutorId === '4d9426d7-7294-492a-a2e9-4b1642ba1954' ? '1%' : '30%';
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -125,7 +128,7 @@ export const PaymentOptionsCard = ({
                 </div>
                 <div>
                   <div className="font-semibold flex items-center gap-2">
-                    Pay Deposit (30%)
+                    Pay Deposit ({depositPercentage})
                     {paymentOption === 'deposit' && (
                       <Check className="w-4 h-4 text-primary" />
                     )}
