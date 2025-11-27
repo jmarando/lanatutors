@@ -599,9 +599,11 @@ const TutorProfileEdit = () => {
               <Alert>
                 <AlertCircle className="h-4 w-4" />
                 <AlertDescription>
-                  <strong>Rate Guidelines:</strong><br />
+                  <strong>Rate Guidelines (for Online Sessions):</strong><br />
                   • CBC, 8-4-4, British Year 1-10: KES 1,000 - 2,000/hr<br />
-                  • IGCSE Year 11, A-Levels: KES 1,500 - 3,000/hr
+                  • IGCSE Year 11, A-Levels: KES 1,500 - 3,000/hr<br />
+                  <br />
+                  <em>Note: In-person rates are automatically 50% more than your online rates.</em>
                 </AlertDescription>
               </Alert>
 
@@ -702,7 +704,7 @@ const TutorProfileEdit = () => {
 
                           <div>
                             <Label htmlFor={`rate-${key}`} className="text-sm">
-                              Hourly Rate (KES) *
+                              Online Hourly Rate (KES) *
                             </Label>
                             <Input
                               id={`rate-${key}`}
@@ -722,12 +724,17 @@ const TutorProfileEdit = () => {
                               className="mt-1"
                             />
                             {formData.curriculumLevelRates[key] && (
-                              <p className="text-sm text-muted-foreground mt-1">
-                                KES {Math.round(Number(formData.curriculumLevelRates[key])).toLocaleString()} per hour
-                              </p>
+                              <>
+                                <p className="text-sm text-muted-foreground mt-1">
+                                  <strong>Online:</strong> KES {Math.round(Number(formData.curriculumLevelRates[key])).toLocaleString()} per hour
+                                </p>
+                                <p className="text-sm text-muted-foreground">
+                                  <strong>In-Person:</strong> KES {Math.round(Number(formData.curriculumLevelRates[key]) * 1.5).toLocaleString()} per hour
+                                </p>
+                              </>
                             )}
                             <p className="text-xs text-muted-foreground mt-1">
-                              Recommended: {rangeText}
+                              Recommended online rate: {rangeText}
                             </p>
                           </div>
                         </div>
