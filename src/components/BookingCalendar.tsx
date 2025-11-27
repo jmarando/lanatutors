@@ -570,27 +570,57 @@ export const BookingCalendar = ({
     onBookingComplete?.();
   };
 
-  // Get availability status for a given date
+  // Get availability status for a given date (used for calendar dots)
   const getDateStatus = (date: Date) => {
     const dayStart = new Date(date);
     dayStart.setHours(0, 0, 0, 0);
     const dayEnd = new Date(date);
     dayEnd.setHours(23, 59, 59, 999);
 
-    const daySlots = monthSlots.filter(slot => {
+    const daySlots = monthSlots.filter((slot) => {
       const slotStart = new Date(slot.start_time);
       return slotStart >= dayStart && slotStart <= dayEnd;
     });
 
     if (daySlots.length === 0) return null;
 
-    const hasBooked = daySlots.some(s => s.is_booked);
-    const hasBlocked = daySlots.some(s => s.slot_type === "blocked");
-    const hasAvailable = daySlots.some(s => (s.slot_type === "available" || !s.slot_type) && !s.is_booked);
+    // Mirror the full-day block and overlap logic used for availableSlots
+    const blockedIntervals = daySlots
+      .filter((s: any) => s.slot_type === "blocked")
+      .map((s: any) => ({
+        start: new Date(s.start_time).getTime(),
+        end: new Date(s.end_time).getTime(),
+      }));
 
-    if (hasBooked && !hasAvailable) return "fully-booked";
-    if (hasBlocked && !hasAvailable) return "unavailable";
-    if (hasAvailable) return "available";
+    const totalBlockedHours = blockedIntervals.reduce((sum, b) => {
+      return sum + (b.end - b.start) / (1000 * 60 * 60);
+    }, 0);
+
+    const hasFullDayBlock = totalBlockedHours >= 10; // same threshold as fetchAvailableSlots
+
+    const overlaps = (aStart: number, aEnd: number, bStart: number, bEnd: number) =>
+      Math.max(aStart, bStart) < Math.min(aEnd, bEnd);
+
+    const candidateAvailable = daySlots.filter((s: any) =>
+      !s.is_booked && (s.slot_type === null || s.slot_type === "available")
+    );
+
+    const filteredAvailable = candidateAvailable.filter((s: any) => {
+      const sStart = new Date(s.start_time).getTime();
+      const sEnd = new Date(s.end_time).getTime();
+      return !blockedIntervals.some((b) => overlaps(sStart, sEnd, b.start, b.end));
+    });
+
+    const hasAnyAvailable = !hasFullDayBlock && filteredAvailable.length > 0;
+    const hasBooked = daySlots.some((s) => s.is_booked);
+    const hasBlocked = daySlots.some((s) => s.slot_type === "blocked");
+
+    if (hasAnyAvailable) return "available";
+
+    // No effective availability left on this day
+    if (hasBooked && !hasBlocked) return "fully-booked";
+    if (hasBlocked || hasFullDayBlock || hasBooked) return "unavailable";
+
     return null;
   };
 
