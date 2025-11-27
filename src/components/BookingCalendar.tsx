@@ -167,6 +167,10 @@ export const BookingCalendar = ({
     fetchExistingPackages();
   }, [tutorId]);
 
+  const effectiveRate = curriculumSpecificRate !== null ? curriculumSpecificRate : hourlyRate;
+  const onlineRateDisplay = effectiveRate.toLocaleString();
+  const inPersonRateDisplay = Math.round(effectiveRate * 1.5).toLocaleString();
+
   const fetchPackageOffers = async () => {
     const { data } = await supabase
       .from("package_offers")
@@ -636,7 +640,7 @@ export const BookingCalendar = ({
                       disabled={paymentInitiated}
                     >
                       <div className="font-semibold mb-1">
-                        Online - KES {hourlyRate}/hr
+                        Online - KES {onlineRateDisplay}/hr
                       </div>
                       <ul className="text-xs text-muted-foreground space-y-1">
                         <li>✓ Session recordings</li>
@@ -656,7 +660,7 @@ export const BookingCalendar = ({
                         disabled={paymentInitiated}
                       >
                         <div className="font-semibold mb-1">
-                          In-Person - KES {(hourlyRate * 1.3).toFixed(0)}/hr
+                          In-Person - KES {inPersonRateDisplay}/hr
                         </div>
                         <ul className="text-xs text-muted-foreground space-y-1">
                           <li>✓ Face-to-face learning</li>
