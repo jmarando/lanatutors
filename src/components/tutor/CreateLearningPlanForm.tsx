@@ -122,6 +122,7 @@ export const CreateLearningPlanForm = ({
           totalSessions,
           totalPrice,
           validityDays,
+          personalMessage: notes,
           subjects: subjects.map(s => ({
             name: s.name,
             sessions: s.sessions,
@@ -185,6 +186,22 @@ export const CreateLearningPlanForm = ({
           onChange={(e) => setTitle(e.target.value)}
           required
         />
+      </div>
+
+      {/* Personal Message */}
+      <div>
+        <Label htmlFor="notes">Personal Message to Parent</Label>
+        <Textarea
+          id="notes"
+          value={notes}
+          onChange={(e) => setNotes(e.target.value)}
+          placeholder="Write a personal introduction that will appear at the top of the email. For example: 'Hi [Parent Name], I'm excited to work with [Student Name]! Here's the customized learning plan I've prepared...'"
+          rows={4}
+          className="resize-none"
+        />
+        <p className="text-xs text-muted-foreground mt-1">
+          This message will appear at the beginning of the email sent to the parent
+        </p>
       </div>
 
       {/* Subjects */}
@@ -276,18 +293,6 @@ export const CreateLearningPlanForm = ({
             required
           />
         </div>
-      </div>
-
-      {/* Notes */}
-      <div>
-        <Label htmlFor="notes">Additional Notes (Optional)</Label>
-        <Textarea
-          id="notes"
-          value={notes}
-          onChange={(e) => setNotes(e.target.value)}
-          placeholder="Any additional information for the parent..."
-          rows={3}
-        />
       </div>
 
       {/* Summary */}
