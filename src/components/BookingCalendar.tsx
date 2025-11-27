@@ -12,7 +12,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { format, isSameDay } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, CreditCard, Smartphone } from "lucide-react";
+import { Loader2, CreditCard, Smartphone, FileText } from "lucide-react";
 import { PaymentOptionsCard } from "./PaymentOptionsCard";
 import { NAIROBI_LOCATIONS } from "@/utils/locationData";
 import { getLevelsForCurriculum } from "@/utils/curriculumData";
@@ -282,7 +282,7 @@ export const BookingCalendar = ({
     setMonthSlots(data || []);
   };
 
-  const handleBookSlot = async () => {
+  const handleBookSlot = async (showInvoice: boolean = false) => {
     if (!selectedSlot || !subject.trim() || !curriculum.trim() || !level.trim()) {
       toast({
         title: "Missing information",
@@ -523,12 +523,55 @@ export const BookingCalendar = ({
         return;
       }
 
-      // For paid options (deposit, full, or new package), redirect to invoice preview
-      const invoiceUrl = paymentOption === 'package'
-        ? `/invoice-preview?type=package&packageId=${packagePurchaseId}`
-        : `/invoice-preview?type=booking&bookingId=${booking.id}`;
-      
-      window.location.href = invoiceUrl;
+      // For paid options - either show invoice preview or go directly to payment
+      if (showInvoice) {
+        // Route 1: Generate invoice and pay (via invoice preview page)
+        const invoiceUrl = paymentOption === 'package'
+          ? `/invoice-preview?type=package&packageId=${packagePurchaseId}`
+          : `/invoice-preview?type=booking&bookingId=${booking.id}`;
+        
+        window.location.href = invoiceUrl;
+      } else {
+        // Route 2: Direct payment (skip invoice preview, go straight to Pesapal)
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) throw new Error("Not authenticated");
+
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("phone_number")
+          .eq("id", user.id)
+          .single();
+
+        const phoneNum = profile?.phone_number || "";
+
+        const description = paymentOption === 'package'
+          ? `${selectedPackage?.session_count} session package`
+          : `${subject.trim()} tutoring session`;
+
+        const amountToPay = paymentOption === 'package' 
+          ? totalAmount
+          : paymentOption === 'full' 
+            ? totalAmount 
+            : depositAmount;
+
+        const { data: paymentData, error: paymentError } = await supabase.functions.invoke("initiate-pesapal-payment", {
+          body: {
+            amount: Math.round(amountToPay),
+            currency: "KES",
+            description,
+            phoneNumber: phoneNum,
+            paymentType: paymentOption === 'package' ? "package_purchase" : "booking",
+            referenceId: paymentOption === 'package' ? packagePurchaseId : booking.id,
+            callbackUrl: window.location.origin + "/payment-callback",
+          },
+        });
+
+        if (paymentError) throw paymentError;
+
+        if (paymentData?.redirect_url) {
+          window.location.href = paymentData.redirect_url;
+        }
+      }
     } catch (error: any) {
       console.error("Error booking slot:", error);
       toast({
@@ -991,40 +1034,50 @@ export const BookingCalendar = ({
                       💳 You'll be redirected to Pesapal, our secure payment partner, to complete your payment with M-Pesa, Card, or other payment methods.
                     </p>
                   </div>
-                </>
+                 </>
               )}
 
-              <div className="text-sm space-y-1 bg-muted/50 p-3 rounded">
-                {isTrialSession ? (
-                  <div>
-                    <p className="font-semibold text-primary">🎉 FREE 30-Minute Consultation</p>
-                    <p className="text-xs text-muted-foreground mt-1">
-                      No payment required - this is a complimentary chemistry session to check compatibility
-                    </p>
-                  </div>
-                ) : paymentInitiated ? (
-                  <p className="text-amber-600">⏳ Waiting for payment confirmation...</p>
-                ) : null}
-              </div>
+              <div className="space-y-2">
+                <Button 
+                  onClick={() => handleBookSlot(false)} 
+                  disabled={loading || paymentInitiated} 
+                  className="w-full"
+                >
+                  {loading ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      {isTrialSession ? "Booking..." : "Processing..."}
+                    </>
+                  ) : paymentInitiated ? (
+                    "Waiting for Payment..."
+                  ) : isTrialSession ? (
+                    "Confirm Free Trial"
+                  ) : (
+                    "Proceed to Payment"
+                  )}
+                </Button>
 
-              <Button 
-                onClick={handleBookSlot} 
-                disabled={loading || paymentInitiated} 
-                className="w-full"
-              >
-                {loading ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    {isTrialSession ? "Booking..." : "Processing..."}
-                  </>
-                ) : paymentInitiated ? (
-                  "Waiting for Payment..."
-                ) : isTrialSession ? (
-                  "Confirm Free Trial"
-                ) : (
-                  "Proceed to Payment"
+                {!isTrialSession && !selectedExistingPackage && (
+                  <Button 
+                    onClick={() => handleBookSlot(true)}
+                    disabled={loading || paymentInitiated} 
+                    variant="outline"
+                    className="w-full"
+                  >
+                    {loading ? (
+                      <>
+                        <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                        Processing...
+                      </>
+                    ) : (
+                      <>
+                        <FileText className="w-4 h-4 mr-2" />
+                        Generate Invoice & Pay
+                      </>
+                    )}
+                  </Button>
                 )}
-              </Button>
+              </div>
 
               {!paymentInitiated && !isTrialSession && (
                 <div className="text-xs text-muted-foreground space-y-1">
