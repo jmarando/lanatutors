@@ -741,16 +741,42 @@ Yehtu Tutors`
         .select(`
           *,
           tutor_availability(start_time, end_time),
-          profiles!bookings_student_id_fkey(full_name, phone_number),
-          tutor_profiles!bookings_tutor_id_fkey(
-            id,
-            profiles!tutor_profiles_user_id_fkey(full_name)
-          )
+          profiles!bookings_student_id_fkey(full_name, phone_number)
         `)
         .order("created_at", { ascending: false });
 
       if (error) throw error;
-      setTutoringBookings(data || []);
+
+      // Enrich with tutor names
+      const enrichedBookings = await Promise.all(
+        (data || []).map(async (booking) => {
+          // Get tutor profile
+          const { data: tutorProfile } = await supabase
+            .from("tutor_profiles")
+            .select("user_id")
+            .eq("id", booking.tutor_id)
+            .maybeSingle();
+
+          // Get tutor name from profiles
+          let tutorName = "Unknown";
+          if (tutorProfile?.user_id) {
+            const { data: profile } = await supabase
+              .from("profiles")
+              .select("full_name")
+              .eq("id", tutorProfile.user_id)
+              .maybeSingle();
+            
+            tutorName = profile?.full_name || "Unknown";
+          }
+
+          return {
+            ...booking,
+            tutor_name: tutorName,
+          };
+        })
+      );
+
+      setTutoringBookings(enrichedBookings);
     } catch (error: any) {
       console.error("Error fetching tutoring bookings:", error);
       toast.error("Failed to load tutoring bookings");
@@ -2183,7 +2209,7 @@ The Lana Team`;
                     <div>
                       <p className="text-sm text-muted-foreground mb-1">Tutor</p>
                       <p className="font-medium">
-                        {booking.tutor_profiles?.profiles?.full_name || 'Unknown'}
+                        {booking.tutor_name || 'Unknown'}
                       </p>
                     </div>
                     <div>
