@@ -118,19 +118,24 @@ const TutorProfile = () => {
       return;
     }
 
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("*")
-      .eq("id", tutorProfile.user_id)
-      .single();
+    const { data: publicProfile } = await supabase
+      .from("public_tutor_profiles")
+      .select("id, full_name, avatar_url, curriculum")
+      .eq("id", tutorProfile.id)
+      .maybeSingle();
 
     // Only use real uploaded avatar, no AI fallback photos
-    const photoUrl = profile?.avatar_url || null;
+    const photoUrl = publicProfile?.avatar_url || null;
 
     setTutor({
       id: tutorProfile.id,
-      name: profile?.full_name || "Tutor",
-      photo: profile?.full_name?.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2) || "T",
+      name: publicProfile?.full_name || "Tutor",
+      photo: (publicProfile?.full_name || "Tutor")
+        .split(" ")
+        .map((n: string) => n[0])
+        .join("")
+        .toUpperCase()
+        .slice(0, 2),
       photoUrl,
       email: tutorProfile.email,
       subjects: tutorProfile.subjects || [],
@@ -143,7 +148,7 @@ const TutorProfile = () => {
       qualifications: tutorProfile.qualifications || [],
       graduationYear: tutorProfile.graduation_year,
       school: tutorProfile.current_institution || "Not specified",
-      curriculum: tutorProfile.curriculum || [],
+      curriculum: publicProfile?.curriculum || tutorProfile.curriculum || [],
       teachingMode: tutorProfile.teaching_mode || [],
       teachingLevels: tutorProfile.teaching_levels || [],
       teachingLocation: tutorProfile.teaching_location || "",
