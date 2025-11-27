@@ -4,14 +4,15 @@ import {
   Search, 
   Calendar, 
   Video, 
-  Award,
   CheckCircle2,
   Clock,
   MessageCircle,
   TrendingUp,
   Users,
   MapPin,
-  PhoneCall
+  PhoneCall,
+  BookOpen,
+  Award
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { SEO } from "@/components/SEO";
@@ -21,7 +22,7 @@ const HowItWorks = () => {
     {
       icon: PhoneCall,
       title: "1. Book Free Consultation",
-      description: "Start with a complimentary 30-minute consultation with our education experts to understand your needs and goals.",
+      description: "Start with a complimentary consultation to understand your learning needs and goals.",
       details: [
         "Discuss your student's learning challenges and objectives",
         "Get personalized tutor recommendations",
@@ -31,46 +32,35 @@ const HowItWorks = () => {
     },
     {
       icon: Search,
-      title: "2. Get Matched with Perfect Tutor",
-      description: "We'll connect you with verified tutors from Kenya's top schools who specialize in your subject areas.",
+      title: "2. Find Your Perfect Tutor",
+      description: "Browse verified tutors from Kenya's top schools who specialize in your subject areas.",
       details: [
-        "Access 500+ tutors from Alliance, Starehe, Kenya High, and more",
-        "View detailed profiles with qualifications and experience",
-        "Read verified reviews from other students and parents",
+        "Filter by subject, curriculum (CBC, IGCSE, American, 8-4-4), and level",
+        "View detailed profiles with qualifications and teaching experience",
+        "Check tutor availability and teaching locations",
         "Choose between online or in-person sessions"
       ]
     },
     {
       icon: Calendar,
-      title: "3. Schedule Your Sessions",
-      description: "Book one-time or recurring sessions at times that work for you. Choose online video calls or in-person tutoring.",
+      title: "3. Book Your Sessions",
+      description: "Select time slots that work for you and complete secure payment via M-Pesa or card.",
       details: [
-        "Flexible scheduling - online sessions 7 days a week, 6 AM to 10 PM",
-        "In-person sessions at agreed locations in Nairobi and major towns",
-        "Instant booking confirmation via SMS and email",
-        "Set up weekly or bi-weekly recurring lessons"
+        "Choose single sessions or multi-session packages",
+        "Book one-time lessons or set up recurring weekly classes",
+        "Get instant confirmation via SMS and email",
+        "Receive Google Meet link or in-person meeting location"
       ]
     },
     {
       icon: Video,
       title: "4. Attend & Learn",
-      description: "Join online sessions via Google Meet or meet your tutor in person. Get personalized 1-on-1 attention.",
+      description: "Join your tutoring sessions online via Google Meet or meet your tutor in person.",
       details: [
-        "Online: No downloads required - works in your browser",
-        "In-Person: Safe, verified tutors at convenient locations",
-        "Interactive learning with whiteboards and materials",
-        "Flexible learning mode - switch between online and in-person"
-      ]
-    },
-    {
-      icon: Award,
-      title: "5. Track Progress & Improve",
-      description: "Monitor your improvement with session summaries, assignments, and progress reports.",
-      details: [
-        "AI-generated session summaries after each class",
-        "Homework assignments and practice materials",
-        "Track performance improvements over time",
-        "Rate and review your tutor to help the community"
+        "Online: Join from browser - no downloads required",
+        "In-Person: Meet at agreed locations across Nairobi",
+        "Interactive 1-on-1 learning with digital whiteboards",
+        "Access Google Classroom for materials and assignments"
       ]
     }
   ];
@@ -78,36 +68,36 @@ const HowItWorks = () => {
   const paymentSteps = [
     {
       number: "1",
-      title: "Select Session Duration",
-      description: "Choose 1 hour, 2 hours, or custom duration based on your needs"
+      title: "Select Your Sessions",
+      description: "Choose how many hours you'd like to book with your tutor"
     },
     {
       number: "2",
-      title: "Pay via M-Pesa",
-      description: "Enter your phone number and approve the payment prompt on your phone"
+      title: "Pay Securely",
+      description: "Pay via M-Pesa or card - enter your phone number and approve the prompt"
     },
     {
       number: "3",
-      title: "Instant Confirmation",
-      description: "Receive booking confirmation and Google Meet link immediately"
+      title: "Start Learning",
+      description: "Receive instant confirmation with Google Meet link and class details"
     }
   ];
 
   const features = [
     {
       icon: CheckCircle2,
-      title: "Quality Guaranteed",
-      text: "All tutors verified from recognized Kenyan schools with thorough background checks"
+      title: "Verified Tutors",
+      text: "All tutors verified from recognized Kenyan schools with background checks"
     },
     {
       icon: MapPin,
-      title: "Online & In-Person",
-      text: "Choose the learning mode that works best - online video or face-to-face sessions"
+      title: "Flexible Location",
+      text: "Choose online video sessions or in-person tutoring across Nairobi"
     },
     {
       icon: Clock,
-      title: "Flexible Scheduling",
-      text: "Online sessions available 7 days a week, 6 AM to 10 PM. In-person by arrangement"
+      title: "Your Schedule",
+      text: "Book sessions at times that work for you - flexible and convenient"
     },
     {
       icon: MessageCircle,
@@ -116,32 +106,32 @@ const HowItWorks = () => {
     },
     {
       icon: TrendingUp,
-      title: "Proven Results",
-      text: "Students see average grade improvement of 2 levels within 3 months"
+      title: "Track Progress",
+      text: "Monitor improvement with session summaries and progress reports"
     },
     {
-      icon: Users,
-      title: "Expert Support",
-      text: "Dedicated support team to help you every step of your learning journey"
+      icon: BookOpen,
+      title: "All Curricula",
+      text: "Support for CBC, IGCSE, American, 8-4-4, and international curricula"
     }
   ];
 
   return (
     <div className="min-h-screen bg-[image:var(--gradient-page)]">
       <SEO 
-        title="How It Works - Online Tutoring Process"
-        description="Learn how to get started with Lana. Book a free consultation, browse verified tutors, schedule sessions, and start learning. Simple online booking and M-Pesa payment."
-        keywords="how online tutoring works, book tutor Kenya, tutoring process, M-Pesa tutor payment"
+        title="How It Works - Online & In-Person Tutoring Kenya"
+        description="Learn how to get started with Lana Tutors. Book a free consultation, find verified tutors, schedule sessions, and start learning. Simple M-Pesa payment."
+        keywords="how online tutoring works, book tutor Kenya, tutoring process, M-Pesa tutor payment, online learning Kenya"
       />
       
       {/* Hero Section */}
       <section>
         <div className="max-w-7xl mx-auto px-6 py-16 text-center">
           <h1 className="text-4xl md:text-5xl font-bold mb-6">
-            How Lana Works
+            How Lana Tutors Works
           </h1>
           <p className="text-xl text-muted-foreground max-w-3xl mx-auto mb-8">
-            Getting started is simple. Book a free consultation, get matched with expert tutors, and choose between convenient online or in-person sessions.
+            Finding the perfect tutor is simple. Book a free consultation, browse expert tutors, and start learning online or in-person.
           </p>
           <div className="flex flex-col sm:flex-row gap-4 justify-center">
             <Link to="/book-consultation">
@@ -201,7 +191,10 @@ const HowItWorks = () => {
       {/* Payment Process */}
       <section className="bg-secondary/30">
         <div className="max-w-7xl mx-auto px-6 py-16">
-          <h2 className="text-3xl font-bold text-center mb-12">Simple M-Pesa Payment</h2>
+          <h2 className="text-3xl font-bold text-center mb-4">Simple & Secure Payment</h2>
+          <p className="text-center text-muted-foreground mb-12 max-w-2xl mx-auto">
+            Book and pay in minutes using M-Pesa or credit/debit card. All payments are secure and instant.
+          </p>
           <div className="grid md:grid-cols-3 gap-8">
             {paymentSteps.map((step, index) => (
               <Card key={index}>
@@ -215,20 +208,20 @@ const HowItWorks = () => {
               </Card>
             ))}
           </div>
-          <p className="text-center text-muted-foreground mt-8">
-            No credit cards needed. Pay securely with M-Pesa - Kenya's most trusted mobile money platform.
-          </p>
         </div>
       </section>
 
       {/* Features Grid */}
       <section className="max-w-7xl mx-auto px-6 py-16">
-        <h2 className="text-3xl font-bold text-center mb-12">What Makes Us Different</h2>
+        <h2 className="text-3xl font-bold text-center mb-4">Why Choose Lana Tutors</h2>
+        <p className="text-center text-muted-foreground mb-12 max-w-2xl mx-auto">
+          Trusted by hundreds of students and parents across Kenya for quality tutoring
+        </p>
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
           {features.map((feature, index) => {
             const Icon = feature.icon;
             return (
-              <Card key={index} className="text-center">
+              <Card key={index} className="text-center hover:shadow-lg transition-shadow">
                 <CardContent className="p-6">
                   <Icon className="w-10 h-10 text-primary mx-auto mb-3" />
                   <h3 className="font-bold mb-2">{feature.title}</h3>
@@ -243,7 +236,7 @@ const HowItWorks = () => {
       {/* CTA Section */}
       <section className="bg-gradient-to-r from-primary to-primary/90 text-primary-foreground">
         <div className="max-w-7xl mx-auto px-6 py-16 text-center">
-          <h2 className="text-3xl font-bold mb-4">Ready to Get Started?</h2>
+          <h2 className="text-3xl font-bold mb-4">Ready to Start Learning?</h2>
           <p className="text-xl mb-8 opacity-90">
             Book a free consultation today and discover how we can help your student excel
           </p>
@@ -255,12 +248,12 @@ const HowItWorks = () => {
             </Link>
             <Link to="/tutors">
               <Button size="lg" variant="outline" className="text-lg px-8 bg-transparent hover:bg-white/10 border-white text-white">
-                Browse Tutors
+                Find Your Tutor
               </Button>
             </Link>
           </div>
           <p className="mt-6 text-sm opacity-75">
-            No credit card required • Online & In-Person Sessions Available
+            No credit card required • Free Consultation • Flexible Scheduling
           </p>
         </div>
       </section>

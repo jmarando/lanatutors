@@ -244,7 +244,7 @@ const TutorSearch = () => {
               <Card className="border-border/50">
                 <CardContent className="p-6">
                   <h2 className="text-xl font-semibold mb-4">How It Works</h2>
-                  <div className="grid md:grid-cols-5 gap-4 text-left">
+                  <div className="grid md:grid-cols-4 gap-4 text-left">
                     <div className="flex flex-col items-start">
                       <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mb-3">
                         <SlidersHorizontal className="w-5 h-5 text-primary" />
@@ -263,48 +263,19 @@ const TutorSearch = () => {
                       <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mb-3">
                         <CalendarIcon className="w-5 h-5 text-primary" />
                       </div>
-                      <h3 className="font-semibold mb-1">3. Book or Request</h3>
-                      <p className="text-sm text-muted-foreground">Book lessons directly, request a custom learning plan, or build a package</p>
+                      <h3 className="font-semibold mb-1">3. Book Session</h3>
+                      <p className="text-sm text-muted-foreground">Select available time slots and book your tutoring sessions directly</p>
                     </div>
                     <div className="flex flex-col items-start">
                       <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mb-3">
                         <CheckCircle className="w-5 h-5 text-primary" />
                       </div>
                       <h3 className="font-semibold mb-1">4. Start Learning</h3>
-                      <p className="text-sm text-muted-foreground">Confirm payment and begin your tutoring sessions</p>
-                    </div>
-                    <div className="flex flex-col items-start">
-                      <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mb-3">
-                        <Sparkles className="w-5 h-5 text-primary" />
-                      </div>
-                      <h3 className="font-semibold mb-1">5. Custom Options</h3>
-                      <p className="text-sm text-muted-foreground">You can also create custom packages or request learning plans across multiple tutors and subjects</p>
+                      <p className="text-sm text-muted-foreground">Confirm payment and begin your tutoring sessions online or in-person</p>
                     </div>
                   </div>
                 </CardContent>
               </Card>
-            </div>
-
-            {/* Action Buttons */}
-            <div className="flex flex-wrap gap-4 justify-center">
-              <Button 
-                onClick={() => navigate('/multi-tutor-package')}
-                size="lg"
-                variant="default"
-                className="gap-2"
-              >
-                <Sparkles className="w-5 h-5" />
-                Create Custom Package
-              </Button>
-              <Button 
-                onClick={() => setShowLearningPlanDialog(true)}
-                size="lg"
-                variant="outline"
-                className="gap-2"
-              >
-                <Award className="w-5 h-5" />
-                Request Learning Plan
-              </Button>
             </div>
           </div>
 
