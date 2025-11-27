@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Video, ExternalLink, Calendar, DollarSign } from "lucide-react";
+import { Video, ExternalLink, Calendar, DollarSign, CalendarClock } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -139,6 +139,31 @@ export function StudentClassesTab() {
                               Pay Balance
                             </Button>
                           )}
+                          <Button
+                            variant="outline"
+                            onClick={() => {
+                              const subject = encodeURIComponent('Reschedule Request - Booking #' + booking.id.substring(0, 8));
+                              const body = encodeURIComponent(
+                                `Hello Lana Tutors,\n\n` +
+                                `I would like to reschedule my upcoming class.\n\n` +
+                                `Booking Details:\n` +
+                                `- Booking ID: ${booking.id}\n` +
+                                `- Subject: ${booking.subject}\n` +
+                                `- Current Date: ${new Date(booking.created_at).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}\n` +
+                                `- Current Time: ${new Date(booking.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', timeZone: 'Africa/Nairobi' })} EAT\n\n` +
+                                `Preferred new date/time:\n` +
+                                `[Please specify your preferred date and time]\n\n` +
+                                `Reason for rescheduling:\n` +
+                                `[Please provide a brief reason]\n\n` +
+                                `Thank you!`
+                              );
+                              window.location.href = `mailto:info@lanatutors.africa?subject=${subject}&body=${body}`;
+                            }}
+                            className="w-full sm:w-auto"
+                          >
+                            <CalendarClock className="w-4 h-4 mr-2" />
+                            Reschedule
+                          </Button>
                           {booking.meeting_link && (
                             <Button
                               onClick={() => window.open(booking.meeting_link, '_blank')}
