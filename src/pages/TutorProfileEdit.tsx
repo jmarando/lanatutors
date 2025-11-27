@@ -332,7 +332,11 @@ const TutorProfileEdit = () => {
   };
 
   const handleSave = async () => {
-    if (!tutorId || !userId) return;
+    if (!tutorId || !userId) {
+      console.error("Missing tutorId or userId", { tutorId, userId });
+      toast.error("Session error. Please refresh and try again.");
+      return;
+    }
 
     // Validation
     if (!formData.bio?.trim()) {
@@ -366,39 +370,51 @@ const TutorProfileEdit = () => {
 
       // Upload new photo if selected
       if (photoFile) {
-        const fileExt = photoFile.name.split('.').pop();
-        const fileName = `${userId}-${Date.now()}.${fileExt}`;
-        const { error: uploadError } = await supabase.storage
-          .from('avatars')
-          .upload(fileName, photoFile, { upsert: true });
+        try {
+          console.log("Starting photo upload...", { userId, fileName: photoFile.name });
+          const fileExt = photoFile.name.split('.').pop();
+          const fileName = `${userId}-${Date.now()}.${fileExt}`;
+          
+          const { data: uploadData, error: uploadError } = await supabase.storage
+            .from('avatars')
+            .upload(fileName, photoFile, { upsert: true });
 
-        if (uploadError) {
-          console.error("Photo upload error:", uploadError);
-          throw new Error(`Failed to upload photo: ${uploadError.message}`);
+          if (uploadError) {
+            console.error("Photo upload error:", uploadError);
+            throw new Error(`Failed to upload photo: ${uploadError.message}`);
+          }
+
+          console.log("Photo uploaded successfully:", uploadData);
+
+          const { data: { publicUrl } } = supabase.storage
+            .from('avatars')
+            .getPublicUrl(fileName);
+
+          avatarUrl = publicUrl;
+          console.log("Got public URL:", publicUrl);
+
+          const { error: profileUpdateError } = await supabase
+            .from("profiles")
+            .update({ avatar_url: avatarUrl })
+            .eq("id", userId);
+
+          if (profileUpdateError) {
+            console.error("Profile avatar update error:", profileUpdateError);
+            throw new Error(`Failed to update profile photo in database: ${profileUpdateError.message}`);
+          }
+
+          console.log("Profile avatar updated successfully");
+          setFormData(prev => ({ ...prev, avatarUrl }));
+          setPhotoPreview(avatarUrl);
+        } catch (photoError: any) {
+          console.error("Photo upload failed:", photoError);
+          toast.error(`Photo upload failed: ${photoError.message}. Continuing with other updates...`);
+          // Continue with profile update even if photo fails
         }
-
-        const { data: { publicUrl } } = supabase.storage
-          .from('avatars')
-          .getPublicUrl(fileName);
-
-        avatarUrl = publicUrl;
-
-        const { error: profileUpdateError } = await supabase
-          .from("profiles")
-          .update({ avatar_url: avatarUrl })
-          .eq("id", userId);
-
-        if (profileUpdateError) {
-          console.error("Profile update error:", profileUpdateError);
-          throw new Error(`Failed to update profile photo: ${profileUpdateError.message}`);
-        }
-
-        // Update form state to reflect new avatar
-        setFormData(prev => ({ ...prev, avatarUrl }));
-        setPhotoPreview(avatarUrl);
       }
 
       // Update tutor profile
+      console.log("Updating tutor profile...", { tutorId });
       const { error: profileError } = await supabase
         .from("tutor_profiles")
         .update({
@@ -421,27 +437,48 @@ const TutorProfileEdit = () => {
         })
         .eq("id", tutorId);
 
-      if (profileError) throw profileError;
+      if (profileError) {
+        console.error("Tutor profile update error:", profileError);
+        throw new Error(`Failed to update profile: ${profileError.message}`);
+      }
+      console.log("Tutor profile updated successfully");
 
       // Delete existing pricing tiers and tier assignments
-      await supabase
+      console.log("Deleting existing tier assignments...");
+      const { error: deleteAssignmentsError } = await supabase
         .from("curriculum_level_tier_assignments")
         .delete()
         .eq("tutor_id", tutorId);
+      
+      if (deleteAssignmentsError) {
+        console.error("Failed to delete tier assignments:", deleteAssignmentsError);
+        throw new Error(`Failed to delete tier assignments: ${deleteAssignmentsError.message}`);
+      }
 
-      await supabase
+      console.log("Deleting existing pricing tiers...");
+      const { error: deleteTiersError } = await supabase
         .from("tutor_pricing_tiers")
         .delete()
         .eq("tutor_id", tutorId);
+      
+      if (deleteTiersError) {
+        console.error("Failed to delete pricing tiers:", deleteTiersError);
+        throw new Error(`Failed to delete pricing tiers: ${deleteTiersError.message}`);
+      }
 
       // Create new pricing tiers and assignments
       const tierMap = new Map<string, string>();
 
+      console.log("Creating new pricing tiers...");
       for (const [key, rateStr] of Object.entries(formData.curriculumLevelRates)) {
         const rate = toNumber(rateStr);
-        if (rate <= 0) continue;
+        if (rate <= 0) {
+          console.warn(`Skipping rate for ${key} (rate is ${rate})`);
+          continue;
+        }
 
         const tierName = `${key}-tier`;
+        console.log(`Creating tier: ${tierName} with rate ${rate}`);
         const { data: newTier, error: tierError } = await supabase
           .from("tutor_pricing_tiers")
           .insert({
@@ -452,18 +489,27 @@ const TutorProfileEdit = () => {
           .select("id")
           .single();
 
-        if (tierError) throw tierError;
+        if (tierError) {
+          console.error(`Failed to create tier ${tierName}:`, tierError);
+          throw new Error(`Failed to create pricing tier: ${tierError.message}`);
+        }
+        console.log(`Created tier ${tierName} with id:`, newTier.id);
         tierMap.set(key, newTier.id);
       }
 
       // Create tier assignments
+      console.log("Creating tier assignments...");
       for (const [curriculum, levels] of Object.entries(curriculumLevels)) {
         for (const level of levels) {
           const key = `${curriculum}-${level}`;
           const tierId = tierMap.get(key);
-          if (!tierId) continue;
+          if (!tierId) {
+            console.warn(`No tier ID found for ${key}, skipping assignment`);
+            continue;
+          }
 
-          await supabase
+          console.log(`Creating assignment for ${curriculum}-${level} with tier ${tierId}`);
+          const { error: assignmentError } = await supabase
             .from("curriculum_level_tier_assignments")
             .insert({
               tutor_id: tutorId,
@@ -471,10 +517,16 @@ const TutorProfileEdit = () => {
               level,
               tier_id: tierId,
             });
+
+          if (assignmentError) {
+            console.error(`Failed to create assignment for ${key}:`, assignmentError);
+            throw new Error(`Failed to create tier assignment: ${assignmentError.message}`);
+          }
         }
       }
 
       // Calculate average rate for base hourly_rate field
+      console.log("Calculating average rate...");
       const rates = Object.values(formData.curriculumLevelRates)
         .map(r => toNumber(r))
         .filter(r => r > 0);
@@ -482,16 +534,29 @@ const TutorProfileEdit = () => {
         ? rates.reduce((sum, r) => sum + r, 0) / rates.length
         : 0;
 
-      await supabase
+      console.log("Updating base hourly rate:", avgRate);
+      const { error: rateUpdateError } = await supabase
         .from("tutor_profiles")
         .update({ hourly_rate: avgRate })
         .eq("id", tutorId);
 
+      if (rateUpdateError) {
+        console.error("Failed to update hourly rate:", rateUpdateError);
+        throw new Error(`Failed to update hourly rate: ${rateUpdateError.message}`);
+      }
+
+      console.log("Profile update complete!");
       toast.success("Profile updated successfully!");
       navigate("/tutor/dashboard");
     } catch (error: any) {
       console.error("Error updating profile:", error);
-      toast.error(error.message || "Failed to update profile");
+      console.error("Error details:", {
+        message: error.message,
+        code: error.code,
+        details: error.details,
+        hint: error.hint
+      });
+      toast.error(error.message || "Failed to update profile. Please check the console for details.");
     } finally {
       setSaving(false);
     }
