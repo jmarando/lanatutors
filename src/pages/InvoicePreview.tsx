@@ -10,6 +10,8 @@ import { format } from "date-fns";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import lanaLogo from "@/assets/lana-tutors-invoice-logo.png";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 export default function InvoicePreview() {
   const [searchParams] = useSearchParams();
@@ -24,6 +26,8 @@ export default function InvoicePreview() {
   const [processing, setProcessing] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const [invoiceData, setInvoiceData] = useState<any>(null);
+  const [phoneNumber, setPhoneNumber] = useState("");
+  const [needsPhoneNumber, setNeedsPhoneNumber] = useState(false);
   const invoiceRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -132,6 +136,17 @@ export default function InvoicePreview() {
           expiresAt: packagePurchase.expires_at,
         });
       }
+
+      // Check if user has a phone number
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("phone_number")
+        .eq("id", user.id)
+        .single();
+
+      if (!profile?.phone_number) {
+        setNeedsPhoneNumber(true);
+      }
     } catch (error) {
       console.error("Error fetching invoice:", error);
       toast({
@@ -200,13 +215,32 @@ export default function InvoicePreview() {
         .eq("id", user.id)
         .single();
 
-      if (!profile?.phone_number) {
-        toast({
-          title: "Phone number required",
-          description: "Please add a phone number to your profile",
-          variant: "destructive",
-        });
-        return;
+      let finalPhoneNumber = profile?.phone_number;
+
+      // If no phone number in profile, check if user entered one
+      if (!finalPhoneNumber) {
+        if (!phoneNumber.trim()) {
+          setNeedsPhoneNumber(true);
+          toast({
+            title: "Phone number required",
+            description: "Please enter your phone number to proceed",
+            variant: "destructive",
+          });
+          setProcessing(false);
+          return;
+        }
+        
+        // Save phone number to profile
+        const { error: updateError } = await supabase
+          .from("profiles")
+          .update({ phone_number: phoneNumber.trim() })
+          .eq("id", user.id);
+
+        if (updateError) {
+          console.error("Error saving phone number:", updateError);
+        }
+        
+        finalPhoneNumber = phoneNumber.trim();
       }
 
       const description = type === "package"
@@ -218,7 +252,7 @@ export default function InvoicePreview() {
           amount: Math.round(invoiceData.amountToPay),
           currency: invoiceData.currency,
           description,
-          phoneNumber: profile.phone_number,
+          phoneNumber: finalPhoneNumber,
           paymentType: type === "balance" ? "booking_balance" : type === "package" ? "package_purchase" : "booking",
           referenceId: type === "package" ? invoiceData.packageId : invoiceData.bookingId,
           callbackUrl: window.location.origin + "/payment-callback",
@@ -444,6 +478,23 @@ export default function InvoicePreview() {
               You will be redirected to Pesapal to complete your payment securely.
             </p>
           </div>
+
+          {needsPhoneNumber && (
+            <div className="space-y-2 pt-2">
+              <Label htmlFor="phone">Phone Number (for payment confirmation)</Label>
+              <Input
+                id="phone"
+                type="tel"
+                placeholder="e.g. 0712345678 or +254712345678"
+                value={phoneNumber}
+                onChange={(e) => setPhoneNumber(e.target.value)}
+                className="w-full"
+              />
+              <p className="text-xs text-muted-foreground">
+                Enter your M-Pesa number or phone for payment confirmation
+              </p>
+            </div>
+          )}
         </CardContent>
         </div>
 
