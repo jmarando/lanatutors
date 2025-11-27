@@ -292,36 +292,37 @@ export default function InvoicePreview() {
     <div className="min-h-screen bg-gradient-to-b from-primary/5 to-background flex items-center justify-center p-4">
       <Card className="w-full max-w-2xl">
         <div ref={invoiceRef}>
-          <CardHeader className="text-center border-b">
-            {/* Logo and Branding */}
-            <div className="flex flex-col items-center mb-6">
+          <CardHeader className="text-center border-b bg-gradient-to-b from-background to-muted/20">
+            {/* Clean Header with Logo */}
+            <div className="flex flex-col items-center py-8">
               <img 
                 src={lanaLogo} 
                 alt="Lana Tutors" 
-                className="h-16 mb-4"
+                className="h-20 mb-6"
               />
-              <div className="text-center space-y-1">
-                <h3 className="text-sm font-medium text-muted-foreground">LANA TUTORS</h3>
-                <p className="text-xs text-muted-foreground max-w-md">
-                  Expert tutoring for CBC, IGCSE, A-Levels & more. Empowering students to achieve their academic goals with personalized learning.
+              <div className="text-center space-y-2 max-w-lg">
+                <p className="text-sm text-muted-foreground leading-relaxed">
+                  Expert tutoring for CBC, IGCSE, A-Levels & more
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  📧 info@lanatutors.africa
+                  info@lanatutors.africa
                 </p>
               </div>
             </div>
 
-            <Separator className="mb-6" />
+            <Separator className="my-6" />
 
-            <div className="flex justify-center mb-4">
-              <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center">
-                <FileText className="w-8 h-8 text-primary" />
+            <div className="flex flex-col items-center gap-4 pb-6">
+              <div className="w-14 h-14 bg-primary/10 rounded-full flex items-center justify-center">
+                <FileText className="w-7 h-7 text-primary" />
+              </div>
+              <div className="space-y-2">
+                <CardTitle className="text-3xl font-bold">Payment Invoice</CardTitle>
+                <CardDescription className="text-base">
+                  Review your booking details before completing payment
+                </CardDescription>
               </div>
             </div>
-            <CardTitle className="text-2xl">Payment Invoice</CardTitle>
-            <CardDescription>
-              Review your booking details before completing payment
-            </CardDescription>
           </CardHeader>
 
           <CardContent className="space-y-6 pt-6">
