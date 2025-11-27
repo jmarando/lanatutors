@@ -34,6 +34,7 @@ const MultiTutorPackage = lazy(() => import("./pages/MultiTutorPackage"));
 const PayBalance = lazy(() => import("./pages/PayBalance"));
 const InvoicePreview = lazy(() => import("./pages/InvoicePreview"));
 const ProfileSettings = lazy(() => import("./pages/ProfileSettings"));
+const LearningPlanView = lazy(() => import("./pages/LearningPlanView"));
 
 const NotFound = lazy(() => import("./pages/NotFound"));
 const TestEmail = lazy(() => import("./pages/TestEmail"));
@@ -112,7 +113,8 @@ const App = () => {
                 <Route path="/pay-balance" element={<PayBalance />} />
                 <Route path="/invoice-preview" element={<InvoicePreview />} />
                 <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-                <Route path="/profile-settings" element={<ProfileSettings />} />
+              <Route path="/profile-settings" element={<ProfileSettings />} />
+              <Route path="/learning-plan/:planId" element={<LearningPlanView />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>

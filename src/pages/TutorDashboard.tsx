@@ -23,6 +23,7 @@ import { GoogleCalendarConnect } from "@/components/GoogleCalendarConnect";
 import { TutorCalendarOverview } from "@/components/TutorCalendarOverview";
 import { TutorWeeklyCalendar } from "@/components/TutorWeeklyCalendar";
 import { StudentProgressTracker } from "@/components/StudentProgressTracker";
+import { LearningPlanRequests } from "@/components/tutor/LearningPlanRequests";
 
 const TutorDashboard = () => {
   const navigate = useNavigate();
@@ -330,6 +331,9 @@ const TutorDashboard = () => {
             <TabsTrigger value="calendar">
               Calendar
             </TabsTrigger>
+            <TabsTrigger value="learning-plans">
+              Learning Plans
+            </TabsTrigger>
             <TabsTrigger value="progress">
               Student Progress
             </TabsTrigger>
@@ -515,6 +519,10 @@ const TutorDashboard = () => {
 
           <TabsContent value="calendar">
             <TutorCalendarOverview tutorId={user?.id} />
+          </TabsContent>
+
+          <TabsContent value="learning-plans">
+            {tutorProfile && <LearningPlanRequests tutorProfileId={tutorProfile.id} />}
           </TabsContent>
 
           <TabsContent value="progress">
