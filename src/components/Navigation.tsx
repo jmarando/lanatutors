@@ -93,7 +93,7 @@ const Navigation = () => {
 
   return (
     <nav className="bg-background sticky top-0 z-50 border-0">
-      <div className="max-w-7xl mx-auto px-6 py-1 flex items-center justify-center gap-8">
+      <div className="max-w-7xl mx-auto px-6 py-1 flex items-center justify-between gap-8">
         <Link to="/" className="flex items-center flex-shrink-0" aria-label="Lana Tutors Home">
           <div className="overflow-hidden" style={{ clipPath: 'inset(0 0 0 2px)' }}>
             <img 
