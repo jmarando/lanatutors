@@ -234,11 +234,18 @@ const TutorProfile = () => {
   };
 
   const getCurrentRate = () => {
-    // Use the Standard tier rate (lowest rate) for display
-    const standardTier = pricingTiers.find(t => t.tier_name === "Standard");
-    if (standardTier) {
-      return Number(standardTier.online_hourly_rate) || 0;
+    // Use the lowest configured tier rate as the "from" price
+    if (pricingTiers && pricingTiers.length > 0) {
+      const tierRates = pricingTiers
+        .map((t: any) => Number(t.online_hourly_rate) || 0)
+        .filter((r: number) => r > 0);
+
+      if (tierRates.length > 0) {
+        return Math.min(...tierRates);
+      }
     }
+
+    // Fallback to legacy base hourly_rate
     return Number(tutor?.hourlyRate) || 0;
   };
 
@@ -430,7 +437,7 @@ const TutorProfile = () => {
     <div className="min-h-screen bg-[image:var(--gradient-page)]">
       <SEO 
         title={`${tutor.name} - ${tutor.subjects.join(", ")} Tutor`}
-        description={`Book tutoring sessions with ${tutor.name}, an experienced ${tutor.subjects.join(", ")} tutor from ${tutor.school}. ${tutor.rating} star rating with ${tutor.reviews} reviews. KES ${tutor.hourlyRate}/hour.`}
+        description={`Book tutoring sessions with ${tutor.name}, an experienced ${tutor.subjects.join(", ")} tutor from ${tutor.school}. ${tutor.rating} star rating with ${tutor.reviews} reviews. From KES ${currentRate.toLocaleString()}/hour for online sessions.`}
         keywords={`${tutor.subjects.join(", ")}, Kenya tutor, ${tutor.school}, online tutoring`}
         structuredData={tutorSchema}
       />

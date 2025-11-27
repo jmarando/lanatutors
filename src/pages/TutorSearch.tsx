@@ -109,12 +109,19 @@ const TutorSearch = () => {
 
         // Get pricing tiers for this tutor
         const tiers = tiersByTutor.get(tp.id) || [];
-        const standardTier = tiers.find(t => t.tier_name.toLowerCase() === 'standard');
-        const advancedTier = tiers.find(t => t.tier_name.toLowerCase() === 'advanced');
 
-        // Use standard tier as base rate, fallback to legacy hourly_rate
-        const hourlyRate = standardTier ? Number(standardTier.online_hourly_rate) : Number(tp.hourly_rate) || 2500;
-        const hourlyRateMax = advancedTier ? Number(advancedTier.online_hourly_rate) : hourlyRate;
+        // Compute min and max rates from any tiers configured for this tutor
+        const tierRates = tiers
+          .map((t: any) => Number(t.online_hourly_rate) || 0)
+          .filter((r: number) => r > 0);
+
+        const hourlyRate = tierRates.length
+          ? Math.min(...tierRates)
+          : (Number(tp.hourly_rate) || 2500);
+
+        const hourlyRateMax = tierRates.length
+          ? Math.max(...tierRates)
+          : hourlyRate;
 
         // Only show real uploaded avatars, no AI fallback photos
         const uploadedAvatar = prof?.avatar_url;
