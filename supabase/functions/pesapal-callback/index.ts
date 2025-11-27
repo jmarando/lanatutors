@@ -160,9 +160,16 @@ serve(async (req) => {
           console.log('Booking confirmed')
 
           // Create Google Meet link and send emails
-          await supabase.functions.invoke('create-booking-with-meet', {
+          console.log('Invoking create-booking-with-meet for booking:', payment.reference_id);
+          const meetResponse = await supabase.functions.invoke('create-booking-with-meet', {
             body: { bookingId: payment.reference_id }
           });
+          
+          if (meetResponse.error) {
+            console.error('Error from create-booking-with-meet:', meetResponse.error);
+          } else {
+            console.log('create-booking-with-meet completed successfully');
+          }
 
           // Send WhatsApp if phone number exists
           const { data: booking } = await supabase

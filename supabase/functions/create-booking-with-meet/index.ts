@@ -233,8 +233,10 @@ serve(async (req) => {
     }
 
     // Always send emails, even if Google Meet or Classroom creation failed
+    console.log('Attempting to send booking emails for:', bookingId);
     try {
-      await supabase.functions.invoke("send-booking-email", {
+      console.log('Sending student email...');
+      const studentEmailResponse = await supabase.functions.invoke("send-booking-email", {
         body: { 
           bookingId,
           meetingLink,
@@ -242,8 +244,15 @@ serve(async (req) => {
           recipientType: "student",
         },
       });
+      
+      if (studentEmailResponse.error) {
+        console.error('Student email error:', studentEmailResponse.error);
+      } else {
+        console.log('Student email sent successfully');
+      }
 
-      await supabase.functions.invoke("send-booking-email", {
+      console.log('Sending tutor email...');
+      const tutorEmailResponse = await supabase.functions.invoke("send-booking-email", {
         body: { 
           bookingId,
           meetingLink,
@@ -252,9 +261,15 @@ serve(async (req) => {
         },
       });
       
-      console.log("Confirmation emails sent successfully");
+      if (tutorEmailResponse.error) {
+        console.error('Tutor email error:', tutorEmailResponse.error);
+      } else {
+        console.log('Tutor email sent successfully');
+      }
+      
+      console.log("Confirmation emails process completed");
     } catch (emailError) {
-      console.error("Error sending emails:", emailError);
+      console.error("Critical error sending emails:", emailError);
       // Don't throw - the booking is still confirmed
     }
 
