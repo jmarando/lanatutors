@@ -131,25 +131,34 @@ const Navigation = () => {
           <div className="flex items-center gap-3 whitespace-nowrap">
             {user ? (
               <>
-                <span className="text-sm text-muted-foreground max-w-[120px] truncate">{user.email}</span>
-                <Button variant="outline" size="sm" onClick={handleSignOut} className="hover-scale whitespace-nowrap">
-                  <LogOut className="w-4 h-4 mr-2" />
-                  Sign Out
-                </Button>
                 <Popover>
                   <PopoverTrigger asChild>
-                    <Button variant="ghost" size="sm" className="hover-scale" title="Change Currency">
-                      <Globe className="w-4 h-4" />
+                    <Button variant="ghost" size="sm" className="hover-scale max-w-[150px]">
+                      <span className="truncate text-sm">{user.email}</span>
                     </Button>
                   </PopoverTrigger>
                   <PopoverContent className="w-[200px] p-3" align="end">
-                    <div className="space-y-2">
-                      <label className="text-xs font-medium">Currency</label>
-                      <CurrencySelector
-                        value={selectedCurrency}
-                        onChange={handleCurrencyChange}
-                        className="w-full"
-                      />
+                    <div className="space-y-3">
+                      <div className="text-xs text-muted-foreground truncate">{user.email}</div>
+                      <div className="space-y-2">
+                        <label className="text-xs font-medium">Currency</label>
+                        <CurrencySelector
+                          value={selectedCurrency}
+                          onChange={handleCurrencyChange}
+                          className="w-full"
+                        />
+                      </div>
+                      <div className="pt-2 border-t space-y-2">
+                        <Link to="/student/dashboard" onClick={() => setOpen(false)}>
+                          <Button variant="ghost" size="sm" className="w-full justify-start">
+                            Dashboard
+                          </Button>
+                        </Link>
+                      </div>
+                      <Button variant="outline" size="sm" onClick={handleSignOut} className="w-full">
+                        <LogOut className="w-4 h-4 mr-2" />
+                        Sign Out
+                      </Button>
                     </div>
                   </PopoverContent>
                 </Popover>
@@ -181,13 +190,21 @@ const Navigation = () => {
           <SheetContent side="right" className="w-[300px]">
             <div className="flex flex-col gap-6 mt-8">
               {user && (
-                <div className="pb-4 border-b">
-                  <label className="text-xs text-muted-foreground mb-2 block">Currency</label>
-                  <CurrencySelector
-                    value={selectedCurrency}
-                    onChange={handleCurrencyChange}
-                    className="w-full"
-                  />
+                <div className="pb-4 border-b space-y-3">
+                  <div className="text-xs text-muted-foreground px-2">{user.email}</div>
+                  <Link to="/student/dashboard" onClick={() => setOpen(false)}>
+                    <Button variant="ghost" className="w-full justify-start">
+                      Dashboard
+                    </Button>
+                  </Link>
+                  <div>
+                    <label className="text-xs text-muted-foreground mb-2 block px-2">Currency</label>
+                    <CurrencySelector
+                      value={selectedCurrency}
+                      onChange={handleCurrencyChange}
+                      className="w-full"
+                    />
+                  </div>
                 </div>
               )}
               {navLinks.map((link) => (
@@ -210,13 +227,10 @@ const Navigation = () => {
                 <span>Chat on WhatsApp</span>
               </a>
               {user ? (
-                <>
-                  <span className="text-sm text-muted-foreground px-2">{user.email}</span>
-                  <Button variant="outline" className="w-full" onClick={handleSignOut}>
-                    <LogOut className="w-4 h-4 mr-2" />
-                    Sign Out
-                  </Button>
-                </>
+                <Button variant="outline" className="w-full" onClick={handleSignOut}>
+                  <LogOut className="w-4 h-4 mr-2" />
+                  Sign Out
+                </Button>
               ) : (
                 <>
                   <Link to="/login" onClick={() => setOpen(false)}>

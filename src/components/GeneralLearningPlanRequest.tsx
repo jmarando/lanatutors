@@ -92,7 +92,7 @@ export const GeneralLearningPlanRequest = ({
       return;
     }
 
-    if (!formData.parentName || !formData.parentEmail || !formData.studentName || !formData.gradeLevel) {
+    if (!formData.parentName || !formData.parentEmail || !formData.studentName || !formData.gradeLevel || !formData.curriculum) {
       toast.error("Please fill in all required fields");
       return;
     }
@@ -201,7 +201,7 @@ export const GeneralLearningPlanRequest = ({
               className="bg-muted cursor-not-allowed"
             />
             <p className="text-xs text-muted-foreground mt-1">
-              Update your phone number in your profile settings if needed
+              To update your phone number, click your email in the top menu and select "Profile Settings"
             </p>
           </div>
         </div>
@@ -223,6 +223,26 @@ export const GeneralLearningPlanRequest = ({
 
           <div className="grid grid-cols-2 gap-3">
             <div>
+              <Label htmlFor="curriculum">Curriculum *</Label>
+              <Select
+                value={formData.curriculum}
+                onValueChange={(value) => setFormData({ ...formData, curriculum: value })}
+                required
+              >
+                <SelectTrigger id="curriculum">
+                  <SelectValue placeholder="Select curriculum" />
+                </SelectTrigger>
+                <SelectContent>
+                  {curricula.map((curr) => (
+                    <SelectItem key={curr} value={curr}>
+                      {curr}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
               <Label htmlFor="gradeLevel">Grade Level *</Label>
               <Select
                 value={formData.gradeLevel}
@@ -236,25 +256,6 @@ export const GeneralLearningPlanRequest = ({
                   {gradeLevels.map((grade) => (
                     <SelectItem key={grade} value={grade}>
                       {grade}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div>
-              <Label htmlFor="curriculum">Curriculum (Optional)</Label>
-              <Select
-                value={formData.curriculum}
-                onValueChange={(value) => setFormData({ ...formData, curriculum: value })}
-              >
-                <SelectTrigger id="curriculum">
-                  <SelectValue placeholder="Select curriculum" />
-                </SelectTrigger>
-                <SelectContent>
-                  {curricula.map((curr) => (
-                    <SelectItem key={curr} value={curr}>
-                      {curr}
                     </SelectItem>
                   ))}
                 </SelectContent>
