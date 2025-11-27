@@ -230,11 +230,12 @@ export const BookingCalendar = ({
         end: new Date(s.end_time).getTime(),
       }));
 
-    // If there is a full-day block (>= 10 hours), treat the whole day as unavailable
-    const hasFullDayBlock = blockedIntervals.some((b) => {
-      const hours = (b.end - b.start) / (1000 * 60 * 60);
-      return hours >= 10; // our full-day blocks are 8 AM - 8 PM (12h)
-    });
+    // If total blocked time for the day is >= 10 hours, treat the whole day as unavailable
+    const totalBlockedHours = blockedIntervals.reduce((sum, b) => {
+      return sum + (b.end - b.start) / (1000 * 60 * 60);
+    }, 0);
+
+    const hasFullDayBlock = totalBlockedHours >= 10; // our working day is roughly 8 AM - 8 PM
 
     if (hasFullDayBlock) {
       setAvailableSlots([]);
