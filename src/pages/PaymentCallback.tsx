@@ -18,9 +18,6 @@ export default function PaymentCallback() {
                                searchParams.get("orderTrackingId") ||
                                searchParams.get("order_tracking_id");
 
-      console.log("Payment callback received with OrderTrackingId:", orderTrackingId);
-      console.log("All URL params:", Object.fromEntries(searchParams.entries()));
-
       if (!orderTrackingId) {
         console.error("No OrderTrackingId found in URL");
         setStatus("error");
@@ -53,8 +50,6 @@ export default function PaymentCallback() {
             continue;
           }
 
-          console.log("Payment status from function:", payment);
-
           // If payment is completed, process accordingly
           if (payment.status === "completed") {
             // Handle package purchases with recurring slots
@@ -63,7 +58,6 @@ export default function PaymentCallback() {
                 await supabase.functions.invoke("block-recurring-slots", {
                   body: { packagePurchaseId: payment.reference_id },
                 });
-                console.log("Recurring slots blocking initiated");
               } catch (error) {
                 console.error("Error blocking recurring slots:", error);
                 // Continue anyway - slots can be manually blocked later

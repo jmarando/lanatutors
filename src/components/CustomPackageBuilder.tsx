@@ -173,7 +173,6 @@ export const CustomPackageBuilder = ({
         throw new Error("Failed to save cart to storage");
       }
 
-      console.log("Cart saved successfully:", cart);
       toast.success(`Added ${selectedSubjects.length} subject(s) to cart`);
       
       // Close modal first

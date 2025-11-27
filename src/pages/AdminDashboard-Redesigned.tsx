@@ -278,7 +278,6 @@ Yehtu Tutors`
           table: 'tutor_applications'
         },
         (payload) => {
-          console.log('Application change detected:', payload);
           fetchPendingApplications();
           fetchInterviewRecords();
         }
@@ -483,15 +482,11 @@ Yehtu Tutors`
   };
 
   const fetchPendingApplications = async () => {
-    console.log("Fetching applications...");
     const { data, error } = await supabase
       .from("tutor_applications")
       .select("*")
       .eq("status", "pending")
       .order("created_at", { ascending: false });
-
-    console.log("Applications data:", data);
-    console.log("Applications error:", error);
 
     if (error) {
       console.error("Error fetching applications:", error);
@@ -662,15 +657,9 @@ Yehtu Tutors`
     passed: boolean,
     notes?: string
   ) => {
-    console.log("handleInterviewResult called with:", { applicationId, passed, notes });
-    console.log("pendingApplications:", pendingApplications);
-    console.log("interviewRecords:", interviewRecords);
-    
     // Try finding in both arrays
     const application = pendingApplications.find(app => app.id === applicationId) || 
                        interviewRecords.find(app => app.id === applicationId);
-    
-    console.log("Found application:", application);
     
     if (!application) {
       console.error("Application not found with ID:", applicationId);

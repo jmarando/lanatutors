@@ -393,7 +393,6 @@ export const BookingCalendar = ({
       if (bookingError) throw bookingError;
 
       // Try to create Google Meet session for all bookings (optional)
-      console.log("Creating Google Meet session...");
       let meetData = null;
       try {
         const { data, error: meetError } = await supabase.functions.invoke(
@@ -416,7 +415,6 @@ export const BookingCalendar = ({
           console.error("Failed to create Google Meet session:", meetError);
         } else {
           meetData = data;
-          console.log("Google Meet session created:", meetData);
         }
       } catch (error) {
         console.error("Error creating Google Meet session:", error);
