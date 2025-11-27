@@ -1037,32 +1037,56 @@ const TutorProfileEdit = () => {
             <CardHeader>
               <CardTitle>Profile Photo</CardTitle>
               <CardDescription>
-                Upload a professional photo of yourself
+                {photoPreview 
+                  ? "Your current profile photo. Would you like to change it?"
+                  : "Upload a professional photo of yourself"}
               </CardDescription>
             </CardHeader>
-            <CardContent className="space-y-4">
-              {photoPreview && (
-                <div className="flex justify-center">
-                  <img
-                    src={photoPreview}
-                    alt="Profile preview"
-                    className="w-48 h-48 object-cover rounded-full"
-                  />
+            <CardContent className="space-y-6">
+              {photoPreview ? (
+                <div className="space-y-4">
+                  <div className="flex justify-center">
+                    <img
+                      src={photoPreview}
+                      alt="Your profile photo"
+                      className="w-48 h-48 object-cover rounded-full border-4 border-primary/20"
+                    />
+                  </div>
+                  <div className="flex justify-center">
+                    <Button onClick={() => document.getElementById('photo-upload')?.click()} variant="outline">
+                      <Upload className="h-4 w-4 mr-2" />
+                      Change Photo
+                    </Button>
+                  </div>
+                  <p className="text-sm text-center text-muted-foreground">
+                    Profiles with photos perform better! Upload a professional photo (max 5MB)
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <div className="flex justify-center">
+                    <div className="w-48 h-48 rounded-full bg-muted flex items-center justify-center">
+                      <Upload className="h-12 w-12 text-muted-foreground" />
+                    </div>
+                  </div>
+                  <div className="flex justify-center">
+                    <Button onClick={() => document.getElementById('photo-upload')?.click()}>
+                      <Upload className="h-4 w-4 mr-2" />
+                      Upload Photo
+                    </Button>
+                  </div>
+                  <p className="text-sm text-center text-muted-foreground">
+                    Profiles with photos perform better! Upload a professional photo (max 5MB)
+                  </p>
                 </div>
               )}
-              <div className="flex justify-center">
-                <Button onClick={() => document.getElementById('photo-upload')?.click()}>
-                  <Upload className="h-4 w-4 mr-2" />
-                  {photoPreview ? 'Change Photo' : 'Upload Photo'}
-                </Button>
-                <input
-                  id="photo-upload"
-                  type="file"
-                  accept="image/*"
-                  className="hidden"
-                  onChange={handlePhotoChange}
-                />
-              </div>
+              <input
+                id="photo-upload"
+                type="file"
+                accept="image/*"
+                className="hidden"
+                onChange={handlePhotoChange}
+              />
             </CardContent>
           </Card>
         </TabsContent>
