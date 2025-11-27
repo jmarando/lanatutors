@@ -8,7 +8,6 @@ import { StudentClassroomsTab } from "@/components/student/StudentClassroomsTab"
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
-import { MessageSquare } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 const RedesignedStudentDashboard = () => {
@@ -47,8 +46,6 @@ const RedesignedStudentDashboard = () => {
         return <StudentClassroomsTab />;
       case "progress":
         return <ProgressTabPlaceholder />;
-      case "messages":
-        return <MessagesTabPlaceholder />;
       default:
         return <StudentClassesTab />;
     }
@@ -123,65 +120,5 @@ function ProgressTabPlaceholder() {
   );
 }
 
-function MessagesTabPlaceholder() {
-  const messages = [
-    { 
-      from: "David Kamau", 
-      message: "Great work on the assignment! Just a few notes on problem 3...", 
-      time: "2 hours ago",
-      unread: true 
-    },
-    { 
-      from: "Sarah Wanjiru", 
-      message: "Our session for tomorrow is confirmed. See you then!", 
-      time: "5 hours ago",
-      unread: false 
-    },
-    { 
-      from: "Jane Muthoni", 
-      message: "I've rescheduled our class to 5 PM. Please confirm.", 
-      time: "1 day ago",
-      unread: true 
-    }
-  ];
-
-  return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-3xl font-bold mb-2">Messages</h2>
-        <p className="text-muted-foreground">Communicate with your tutors.</p>
-      </div>
-
-      <Card>
-        <CardContent className="p-0">
-          <div className="divide-y">
-            {messages.map((msg, idx) => (
-              <div 
-                key={idx} 
-                className="flex items-start gap-4 p-4 hover:bg-muted/50 transition-colors cursor-pointer"
-              >
-                {msg.unread && (
-                  <div className="w-2 h-2 rounded-full bg-primary mt-2 flex-shrink-0" />
-                )}
-                <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center flex-shrink-0">
-                  <MessageSquare className="w-5 h-5 text-muted-foreground" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center justify-between mb-1">
-                    <p className={`font-semibold ${msg.unread ? 'text-foreground' : 'text-muted-foreground'}`}>
-                      {msg.from}
-                    </p>
-                    <span className="text-xs text-muted-foreground">{msg.time}</span>
-                  </div>
-                  <p className="text-sm text-muted-foreground truncate">{msg.message}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
-    </div>
-  );
-}
 
 export default RedesignedStudentDashboard;

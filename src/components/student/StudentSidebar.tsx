@@ -1,4 +1,4 @@
-import { Home, BookOpen, GraduationCap, TrendingUp, MessageSquare, Calendar } from "lucide-react";
+import { Home, BookOpen, GraduationCap, TrendingUp, Calendar } from "lucide-react";
 import { useLocation } from "react-router-dom";
 
 import {
@@ -17,7 +17,6 @@ const menuItems = [
   { title: "My Classes", path: "classes", icon: Calendar },
   { title: "Classrooms", path: "classrooms", icon: GraduationCap },
   { title: "Progress", path: "progress", icon: TrendingUp },
-  { title: "Messages", path: "messages", icon: MessageSquare },
 ];
 
 export function StudentSidebar() {
