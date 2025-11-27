@@ -15,6 +15,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { GroupedBookingCard } from "./GroupedBookingCard";
 
 export function StudentClassesTab() {
   const { toast } = useToast();
@@ -173,95 +174,31 @@ export function StudentClassesTab() {
             </Card>
           ) : (
             <div className="grid gap-4">
-              {upcomingBookings.map((booking) => {
-                const slotTime = booking.tutor_availability?.start_time 
-                  ? new Date(booking.tutor_availability.start_time)
-                  : new Date(booking.created_at);
-                const balanceDue = booking.balance_due || 0;
-                
-                return (
-                  <Card key={booking.id} className="border-l-4 border-l-primary hover:shadow-lg transition-shadow">
-                    <CardContent className="p-6">
-                      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
-                        <div className="flex-1 space-y-2">
-                          <div className="flex items-center gap-2 mb-2">
-                            <h3 className="text-2xl font-bold">{booking.subject}</h3>
-                            <Badge className="bg-primary">Confirmed</Badge>
-                          </div>
-                          
-                          <div className="space-y-1">
-                            <div className="flex items-center gap-2 text-muted-foreground">
-                              <Calendar className="w-4 h-4" />
-                              <p className="text-base font-medium">
-                                {format(slotTime, 'EEEE, MMMM d, yyyy')}
-                              </p>
-                            </div>
-                            <p className="text-sm text-muted-foreground ml-6">
-                              {format(slotTime, 'hh:mm a')} EAT
-                            </p>
-                          </div>
+              {(() => {
+                // Group bookings by booking_group_id OR package_purchase_id
+                // This allows both new grouped bookings and package-based bookings to be displayed together
+                const groupedBookings: Record<string, any[]> = upcomingBookings.reduce((groups: Record<string, any[]>, booking) => {
+                  // Priority: booking_group_id > package_purchase_id > individual booking id
+                  const groupId = booking.booking_group_id 
+                    || (booking.package_purchase_id ? `pkg_${booking.package_purchase_id}` : null)
+                    || booking.id;
+                  
+                  if (!groups[groupId]) {
+                    groups[groupId] = [];
+                  }
+                  groups[groupId].push(booking);
+                  return groups;
+                }, {});
 
-                          {balanceDue > 0 && (
-                            <Badge variant="outline" className="text-xs mt-2">
-                              Balance Due: {booking.currency || 'KES'} {balanceDue.toLocaleString()}
-                            </Badge>
-                          )}
-                        </div>
-                        
-                        <div className="flex flex-col gap-2 min-w-[160px]">
-                          {booking.meeting_link && (
-                            <Button
-                              onClick={() => window.open(booking.meeting_link, '_blank')}
-                              className="w-full"
-                              size="lg"
-                            >
-                              <Video className="w-4 h-4 mr-2" />
-                              Join Class
-                            </Button>
-                          )}
-                          
-                          {balanceDue > 0 && (
-                            <Button
-                              variant="outline"
-                              onClick={() => navigate(`/pay-balance/${booking.id}`)}
-                              className="w-full"
-                            >
-                              <DollarSign className="w-4 h-4 mr-2" />
-                              Pay Balance
-                            </Button>
-                          )}
-                          
-                          <Button
-                            variant="outline"
-                            onClick={() => {
-                              const subject = encodeURIComponent('Reschedule Request');
-                              const body = encodeURIComponent(
-                                `Booking ID: ${booking.id}\nSubject: ${booking.subject}\nCurrent Date/Time: ${format(slotTime, 'EEEE, MMMM d, yyyy')} at ${format(slotTime, 'hh:mm a')} EAT\n\nPreferred New Date/Time:\n\nReason for Rescheduling:`
-                              );
-                              window.location.href = `mailto:info@lanatutors.africa?subject=${subject}&body=${body}`;
-                            }}
-                            className="w-full"
-                          >
-                            <CalendarClock className="w-4 h-4 mr-2" />
-                            Reschedule
-                          </Button>
-                          
-                          {booking.classroom_link && (
-                            <Button
-                              variant="outline"
-                              onClick={() => window.open(booking.classroom_link, '_blank')}
-                              className="w-full"
-                            >
-                              <ExternalLink className="w-4 h-4 mr-2" />
-                              Classroom
-                            </Button>
-                          )}
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                );
-              })}
+                // Render each group
+                return (Object.values(groupedBookings) as any[][]).map((groupBookings) => (
+                  <GroupedBookingCard 
+                    key={groupBookings[0].booking_group_id || groupBookings[0].package_purchase_id || groupBookings[0].id}
+                    bookings={groupBookings}
+                    isUpcoming={true}
+                  />
+                ));
+              })()}
             </div>
           )}
         </TabsContent>
