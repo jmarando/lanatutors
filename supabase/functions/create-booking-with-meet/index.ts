@@ -104,7 +104,7 @@ serve(async (req) => {
     const { data: tutorProfile } = await supabase
       .from("tutor_profiles")
       .select("email")
-      .eq("id", booking.tutor_id)
+      .eq("user_id", booking.tutor_id)
       .maybeSingle();
 
     const studentName = studentProfile?.full_name || "Student";
