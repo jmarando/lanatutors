@@ -32,6 +32,7 @@ const AdminDashboard = () => {
   const [pendingReviews, setPendingReviews] = useState<any[]>([]);
   const [consultationBookings, setConsultationBookings] = useState<any[]>([]);
   const [tutoringBookings, setTutoringBookings] = useState<any[]>([]);
+  const [learningPlanRequests, setLearningPlanRequests] = useState<any[]>([]);
   const [dashboardMetrics, setDashboardMetrics] = useState<any>(null);
   const [timeRange, setTimeRange] = useState<'7days' | '30days' | '90days'>('30days');
   const [interviewFilter, setInterviewFilter] = useState<'all' | 'scheduled' | 'passed' | 'failed'>('all');
@@ -315,6 +316,7 @@ Yehtu Tutors`
     fetchPendingReviews();
     fetchConsultationBookings();
     fetchTutoringBookings();
+    fetchLearningPlanRequests();
     setLoading(false);
   };
 
@@ -755,6 +757,63 @@ Yehtu Tutors`
     }
   };
 
+  const fetchLearningPlanRequests = async () => {
+    try {
+      // Fetch tutor-specific inquiries
+      const { data: tutorInquiries, error: tutorError } = await supabase
+        .from("tutor_inquiries")
+        .select(`
+          *,
+          tutor_profiles!inner(id, user_id)
+        `)
+        .order("created_at", { ascending: false });
+
+      if (tutorError) throw tutorError;
+
+      // Fetch general learning plan requests
+      const { data: generalRequests, error: generalError } = await supabase
+        .from("expert_consultation_requests")
+        .select("*")
+        .order("created_at", { ascending: false });
+
+      if (generalError) throw generalError;
+
+      // Enrich tutor inquiries with tutor names
+      const enrichedTutorInquiries = await Promise.all(
+        (tutorInquiries || []).map(async (inquiry) => {
+          const { data: tutorProfile } = await supabase
+            .from("profiles")
+            .select("full_name")
+            .eq("id", inquiry.tutor_profiles?.user_id)
+            .maybeSingle();
+          
+          return {
+            ...inquiry,
+            type: 'tutor_specific',
+            tutor_name: tutorProfile?.full_name || "Unknown Tutor",
+          };
+        })
+      );
+
+      // Format general requests
+      const formattedGeneralRequests = (generalRequests || []).map((request) => ({
+        ...request,
+        type: 'general',
+        tutor_name: 'LANA Team Assignment',
+      }));
+
+      // Combine and sort by created_at
+      const combined = [...enrichedTutorInquiries, ...formattedGeneralRequests].sort(
+        (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      );
+
+      setLearningPlanRequests(combined);
+    } catch (error: any) {
+      console.error("Error fetching learning plan requests:", error);
+      toast.error("Failed to load learning plan requests");
+    }
+  };
+
   const handleEditNote = (bookingId: string, currentNote: string) => {
     setEditingNote(bookingId);
     setNoteContent(currentNote || "");
@@ -1014,6 +1073,13 @@ The Lana Team`;
               Consultations
               {consultationBookings.length > 0 && (
                 <Badge className="ml-2 bg-teal-600">{consultationBookings.length}</Badge>
+              )}
+            </TabsTrigger>
+            <TabsTrigger value="learning-plans" className="relative">
+              <FileText className="h-4 w-4 mr-2" />
+              Learning Plans
+              {learningPlanRequests.filter(r => r.status === 'pending').length > 0 && (
+                <Badge className="ml-2 bg-orange-600">{learningPlanRequests.filter(r => r.status === 'pending').length}</Badge>
               )}
             </TabsTrigger>
             <TabsTrigger value="bookings" className="relative">
@@ -1909,8 +1975,159 @@ The Lana Team`;
             )}
       </TabsContent>
 
+      {/* Learning Plan Requests Tab */}
+      <TabsContent value="learning-plans" className="space-y-4">
+        <div className="bg-muted/50 border rounded-lg p-4 mb-4">
+          <h3 className="font-semibold mb-2">Learning Plan Request Journey</h3>
+          <p className="text-sm text-muted-foreground">
+            Track parent inquiries for custom learning plans - both tutor-specific and general requests sent to the LANA team.
+          </p>
+        </div>
+
+        {learningPlanRequests.length === 0 ? (
+          <Card>
+            <CardContent className="p-8 text-center text-muted-foreground">
+              No learning plan requests yet.
+            </CardContent>
+          </Card>
+        ) : (
+          learningPlanRequests.map((request) => (
+            <Card key={request.id} className={`hover:shadow-lg transition-shadow ${
+              request.status === 'pending' ? 'border-l-4 border-l-orange-500' :
+              request.status === 'contacted' ? 'border-l-4 border-l-blue-500' :
+              request.status === 'converted' ? 'border-l-4 border-l-green-500' : ''
+            }`}>
+              <CardHeader>
+                <div className="flex items-start justify-between">
+                  <div className="flex-1">
+                    <CardTitle className="text-2xl flex items-center gap-2">
+                      <User className="h-5 w-5" />
+                      {request.type === 'tutor_specific' ? request.student_name : `${request.parent_name}'s Request`}
+                      <Badge variant="outline" className="ml-2">
+                        {request.type === 'tutor_specific' ? 'Tutor-Specific' : 'General Inquiry'}
+                      </Badge>
+                    </CardTitle>
+                    <p className="text-muted-foreground mt-1">
+                      Parent: {request.parent_name}
+                    </p>
+                    {request.type === 'tutor_specific' && (
+                      <p className="text-sm text-muted-foreground">
+                        For Tutor: {request.tutor_name}
+                      </p>
+                    )}
+                  </div>
+                  <div className="flex flex-col gap-2 items-end">
+                    <Badge className={
+                      request.status === 'pending' ? 'bg-orange-500' :
+                      request.status === 'contacted' ? 'bg-blue-500' :
+                      request.status === 'converted' ? 'bg-green-500' : 'bg-gray-500'
+                    }>
+                      {request.status || 'pending'}
+                    </Badge>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2 text-sm">
+                      <Calendar className="h-4 w-4 text-muted-foreground" />
+                      <span className="font-medium">Requested:</span>
+                      <span>{new Date(request.created_at).toLocaleDateString('en-US', {
+                        month: 'long',
+                        day: 'numeric',
+                        year: 'numeric'
+                      })}</span>
+                    </div>
+                    
+                    <div className="flex items-center gap-2 text-sm">
+                      <Mail className="h-4 w-4 text-muted-foreground" />
+                      <span className="font-medium">Email:</span>
+                      <a href={`mailto:${request.parent_email || request.email}`} className="text-primary hover:underline">
+                        {request.parent_email || request.email}
+                      </a>
+                    </div>
+
+                    <div className="flex items-center gap-2 text-sm">
+                      <Phone className="h-4 w-4 text-muted-foreground" />
+                      <span className="font-medium">Phone:</span>
+                      <a href={`tel:${request.parent_phone || request.phone_number}`} className="text-primary hover:underline">
+                        {request.parent_phone || request.phone_number}
+                      </a>
+                    </div>
+                  </div>
+
+                  <div className="space-y-3">
+                    <div className="flex items-center gap-2 text-sm">
+                      <BookOpen className="h-4 w-4 text-muted-foreground" />
+                      <span className="font-medium">Grade:</span>
+                      <span>{request.grade_level || request.grade_levels?.join(', ')}</span>
+                    </div>
+
+                    <div className="flex items-start gap-2 text-sm">
+                      <FileText className="h-4 w-4 text-muted-foreground mt-0.5" />
+                      <div>
+                        <span className="font-medium">Subjects:</span>
+                        <div className="flex flex-wrap gap-1 mt-1">
+                          {(request.subjects_needed || request.subjects_of_interest || []).map((subject: string, idx: number) => (
+                            <Badge key={idx} variant="outline" className="text-xs">
+                              {subject}
+                            </Badge>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+
+                    {request.type === 'tutor_specific' && request.preferred_sessions && (
+                      <div className="flex items-center gap-2 text-sm">
+                        <Clock className="h-4 w-4 text-muted-foreground" />
+                        <span className="font-medium">Sessions:</span>
+                        <span>{request.preferred_sessions} sessions preferred</span>
+                      </div>
+                    )}
+
+                    {request.type === 'general' && request.number_of_children && (
+                      <div className="flex items-center gap-2 text-sm">
+                        <Users className="h-4 w-4 text-muted-foreground" />
+                        <span className="font-medium">Children:</span>
+                        <span>{request.number_of_children}</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {(request.current_challenges || request.additional_notes) && (
+                  <div className="bg-muted/30 p-3 rounded-lg">
+                    <p className="text-sm font-medium mb-1">Additional Notes:</p>
+                    <p className="text-sm text-muted-foreground whitespace-pre-wrap">
+                      {request.current_challenges || request.additional_notes}
+                    </p>
+                  </div>
+                )}
+
+                {request.type === 'general' && request.package_preferences && (
+                  <div className="bg-primary/5 p-3 rounded-lg">
+                    <p className="text-sm font-medium mb-1">Package Preferences:</p>
+                    <p className="text-sm text-muted-foreground">
+                      {request.package_preferences}
+                    </p>
+                  </div>
+                )}
+
+                {request.preferred_contact && (
+                  <div className="flex items-center gap-2 text-sm pt-2 border-t">
+                    <span className="font-medium">Preferred Contact:</span>
+                    <Badge variant="secondary">{request.preferred_contact}</Badge>
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          ))
+        )}
+      </TabsContent>
+
       {/* Tutoring Bookings Tab */}
-      <TabsContent value="bookings" className="space-y-4">
+      <TabsContent value="bookings" className="space-y-4">(
         <div className="flex justify-between items-center mb-4">
           <div>
             <h2 className="text-2xl font-bold">Tutoring Session Bookings</h2>
