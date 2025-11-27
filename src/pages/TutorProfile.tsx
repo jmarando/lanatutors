@@ -136,6 +136,7 @@ const TutorProfile = () => {
 
     setTutor({
       id: tutorProfile.id,
+      userId: tutorProfile.user_id,
       name: userProfile?.full_name || tutorProfile.email?.split('@')[0] || "Tutor",
       photo: (userProfile?.full_name || "Tutor")
         .split(" ")
@@ -1173,6 +1174,7 @@ const TutorProfile = () => {
           
           <CustomPackageBuilder
             tutorId={tutor.id}
+            availabilityTutorId={tutor.userId}
             tutorName={tutor.name}
             tutorEmail={tutor.email}
             tutorSubjects={tutor.subjects}

@@ -12,7 +12,8 @@ import { useNavigate } from "react-router-dom";
 import { RecurringSlotSelector } from "./RecurringSlotSelector";
 
 interface CustomPackageBuilderProps {
-  tutorId: string;
+  tutorId: string; // tutor_profiles.id for package ownership
+  availabilityTutorId: string; // auth user id for availability slots
   tutorName: string;
   tutorEmail: string;
   tutorSubjects: string[];
@@ -36,6 +37,7 @@ interface SchedulePreference {
 
 export const CustomPackageBuilder = ({
   tutorId,
+  availabilityTutorId,
   tutorName,
   tutorEmail,
   tutorSubjects,
@@ -521,7 +523,7 @@ export const CustomPackageBuilder = ({
               {showScheduleOptions && schedulePreference.mode === 'schedule_now' && (
                 <div className="space-y-4 pt-3 border-t">
                   <RecurringSlotSelector
-                    tutorId={tutorId}
+                    tutorUserId={availabilityTutorId}
                     onSlotsSelected={handleSlotsSelected}
                     selectedSlots={schedulePreference.recurringSlotIds || []}
                   />

@@ -17,13 +17,13 @@ interface AvailabilitySlot {
 }
 
 interface RecurringSlotSelectorProps {
-  tutorId: string;
+  tutorUserId: string;
   onSlotsSelected: (slots: string[]) => void;
   selectedSlots: string[];
 }
 
 export const RecurringSlotSelector = ({ 
-  tutorId, 
+  tutorUserId, 
   onSlotsSelected,
   selectedSlots 
 }: RecurringSlotSelectorProps) => {
@@ -42,7 +42,7 @@ export const RecurringSlotSelector = ({
     if (selectedDate) {
       fetchAvailability(selectedDate);
     }
-  }, [selectedDate, tutorId]);
+  }, [selectedDate, tutorUserId]);
 
   const fetchAvailability = async (date: Date) => {
     setLoading(true);
@@ -56,7 +56,7 @@ export const RecurringSlotSelector = ({
       const { data, error } = await supabase
         .from("tutor_availability")
         .select("*")
-        .eq("tutor_id", tutorId)
+        .eq("tutor_id", tutorUserId)
         .gte("start_time", startOfDay.toISOString())
         .lte("start_time", endOfDay.toISOString())
         .order("start_time", { ascending: true });
