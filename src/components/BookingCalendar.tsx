@@ -326,6 +326,14 @@ export const BookingCalendar = ({
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
+      // Save phone number to profile if provided (for M-Pesa payments)
+      if (!isTrialSession && paymentMethod === 'mpesa' && phoneNumber) {
+        await supabase
+          .from("profiles")
+          .update({ phone_number: phoneNumber.trim() })
+          .eq("id", user.id);
+      }
+
       // For trial sessions, always 30 minutes and free
       let duration, totalAmount, depositAmount, balanceDue;
       
