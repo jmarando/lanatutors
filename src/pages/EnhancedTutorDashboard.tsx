@@ -71,8 +71,7 @@ const EnhancedTutorDashboard = () => {
       .from("bookings")
       .select(`
         *,
-        tutor_availability!inner(start_time, end_time),
-        profiles!bookings_student_id_fkey(full_name)
+        tutor_availability!inner(start_time, end_time)
       `)
       .eq("tutor_id", authUser.id)
       .order("created_at", { ascending: false });
@@ -95,10 +94,7 @@ const EnhancedTutorDashboard = () => {
     // Fetch reviews
     const { data: reviewsData } = await supabase
       .from("tutor_reviews")
-      .select(`
-        *,
-        profiles!tutor_reviews_student_id_fkey(full_name)
-      `)
+      .select("*")
       .eq("tutor_id", tutorData.id)
       .eq("is_approved", true)
       .order("created_at", { ascending: false })
@@ -223,7 +219,7 @@ const EnhancedTutorDashboard = () => {
                       <div className="flex-1">
                         <h3 className="font-bold text-lg mb-1">{booking.subject}</h3>
                         <p className="text-sm text-muted-foreground mb-2">
-                          Student: {booking.profiles?.full_name || "Unknown"}
+                          Booking ID: {booking.id.slice(0, 8)}
                         </p>
                         <div className="flex flex-wrap items-center gap-2 text-sm">
                           <Badge variant="outline">
@@ -275,7 +271,7 @@ const EnhancedTutorDashboard = () => {
                   <CardContent className="p-6">
                     <div className="flex items-start justify-between mb-3">
                       <div>
-                        <p className="font-semibold">{review.profiles?.full_name || "Student"}</p>
+                        <p className="font-semibold">Student</p>
                         <p className="text-xs text-muted-foreground">
                           {format(new Date(review.created_at), "MMM d, yyyy")}
                         </p>
