@@ -14,7 +14,12 @@ import {
   TrendingUp,
   Clock,
   Loader2,
-  AlertCircle
+  AlertCircle,
+  FileText,
+  CalendarDays,
+  Edit,
+  BookOpen,
+  LogOut
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -34,6 +39,7 @@ const TutorDashboard = () => {
   const [bookings, setBookings] = useState<any[]>([]);
   const [payments, setPayments] = useState<any[]>([]);
   const [reviews, setReviews] = useState<any[]>([]);
+  const [activeTab, setActiveTab] = useState("today");
 
   useEffect(() => {
     fetchTutorData();
@@ -182,20 +188,54 @@ const TutorDashboard = () => {
     <div className="min-h-screen bg-[image:var(--gradient-page)]">
       {/* Dashboard Header */}
       <div className="border-b bg-background">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <h2 className="text-xl font-semibold">Tutor Dashboard</h2>
-          <div className="flex items-center gap-4">
-            <Button variant="ghost" onClick={() => navigate("/tutor-onboarding-guide")}>
+        <div className="max-w-7xl mx-auto px-6 py-4">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-xl font-semibold">Tutor Dashboard</h2>
+            <Button variant="outline" onClick={handleLogout}>
+              <LogOut className="w-4 h-4 mr-2" />
+              Sign Out
+            </Button>
+          </div>
+          <div className="flex flex-wrap gap-3">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate("/tutor-onboarding-guide")}
+            >
+              <BookOpen className="w-4 h-4 mr-2" />
               Onboarding Guide
             </Button>
-            <Button variant="ghost" onClick={() => navigate("/tutor-profile-edit")}>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate("/tutor-profile-edit")}
+            >
+              <Edit className="w-4 h-4 mr-2" />
               Edit Profile
             </Button>
-            <Button variant="ghost" onClick={() => navigate("/tutor/availability")}>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => navigate("/tutor/availability")}
+            >
+              <Calendar className="w-4 h-4 mr-2" />
               Manage Availability
             </Button>
-            <Button variant="outline" onClick={handleLogout}>
-              Logout
+            <Button
+              variant={activeTab === "learning-plans" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setActiveTab("learning-plans")}
+            >
+              <FileText className="w-4 h-4 mr-2" />
+              Learning Plans
+            </Button>
+            <Button
+              variant={activeTab === "progress" ? "default" : "outline"}
+              size="sm"
+              onClick={() => setActiveTab("progress")}
+            >
+              <TrendingUp className="w-4 h-4 mr-2" />
+              Student Progress
             </Button>
           </div>
         </div>
@@ -317,27 +357,26 @@ const TutorDashboard = () => {
           </CardContent>
         </Card>
 
-        <Tabs defaultValue="today" className="space-y-6">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <TabsList className="w-full justify-start overflow-x-auto flex-nowrap">
             <TabsTrigger value="today" className="whitespace-nowrap">
+              <CalendarDays className="w-4 h-4 mr-2" />
               Today ({todaySessions.length})
             </TabsTrigger>
             <TabsTrigger value="week" className="whitespace-nowrap">
+              <Clock className="w-4 h-4 mr-2" />
               This Week ({thisWeekSessions.length})
             </TabsTrigger>
             <TabsTrigger value="all" className="whitespace-nowrap">
+              <Calendar className="w-4 h-4 mr-2" />
               All Upcoming ({upcomingBookings.length})
             </TabsTrigger>
             <TabsTrigger value="calendar" className="whitespace-nowrap">
+              <Calendar className="w-4 h-4 mr-2" />
               Calendar
             </TabsTrigger>
-            <TabsTrigger value="learning-plans" className="whitespace-nowrap">
-              Learning Plans
-            </TabsTrigger>
-            <TabsTrigger value="progress" className="whitespace-nowrap">
-              Student Progress
-            </TabsTrigger>
             <TabsTrigger value="reviews" className="whitespace-nowrap">
+              <Star className="w-4 h-4 mr-2" />
               Reviews ({reviews.length})
             </TabsTrigger>
           </TabsList>
