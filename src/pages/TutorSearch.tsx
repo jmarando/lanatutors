@@ -40,6 +40,7 @@ const TutorSearch = () => {
   // Safety: ensure any legacy references to `sortBy` won't crash the page
   const [sortBy, setSortBy] = useState<string>("relevance");
 
+  // Restore filter state from URL parameters
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     if (params.get('action') === 'request-plan') {
@@ -47,6 +48,19 @@ const TutorSearch = () => {
       // Clean up URL
       navigate('/tutors', { replace: true });
     }
+    
+    // Restore filters from URL
+    const query = params.get('query');
+    const curriculum = params.get('curriculum');
+    const level = params.get('level');
+    const subject = params.get('subject');
+    const location = params.get('location');
+    
+    if (query) setSearchQuery(query);
+    if (curriculum) setSelectedCurriculum(curriculum);
+    if (level) setSelectedTeachingLevel(level);
+    if (subject) setSelectedSubject(subject);
+    if (location) setSelectedLocation(location);
   }, []);
 
   useEffect(() => {
@@ -420,8 +434,11 @@ const TutorSearch = () => {
                   <Button
                     onClick={() => {
                       const params = new URLSearchParams();
+                      if (searchQuery) params.set("query", searchQuery);
                       if (selectedCurriculum !== "all") params.set("curriculum", selectedCurriculum);
                       if (selectedTeachingLevel !== "all") params.set("level", selectedTeachingLevel);
+                      if (selectedSubject !== "all") params.set("subject", selectedSubject);
+                      if (selectedLocation !== "all") params.set("location", selectedLocation);
                       const qs = params.toString();
                       // Use slug if available, otherwise fall back to ID
                       const profilePath = tutor.profileSlug || tutor.id;

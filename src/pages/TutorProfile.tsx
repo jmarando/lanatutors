@@ -438,7 +438,26 @@ const TutorProfile = () => {
       <div className="max-w-7xl mx-auto px-6 py-12">
         <Button
           variant="ghost"
-          onClick={() => navigate('/tutors')}
+          onClick={() => {
+            // Preserve filter state from URL when navigating back
+            const params = new URLSearchParams(window.location.search);
+            const filterParams = new URLSearchParams();
+            
+            const query = params.get('query');
+            const curriculum = params.get('curriculum');
+            const level = params.get('level');
+            const subject = params.get('subject');
+            const location = params.get('location');
+            
+            if (query) filterParams.set('query', query);
+            if (curriculum) filterParams.set('curriculum', curriculum);
+            if (level) filterParams.set('level', level);
+            if (subject) filterParams.set('subject', subject);
+            if (location) filterParams.set('location', location);
+            
+            const backUrl = filterParams.toString() ? `/tutors?${filterParams.toString()}` : '/tutors';
+            navigate(backUrl);
+          }}
           className="mb-6 hover:bg-accent"
         >
           <ArrowLeft className="mr-2 h-4 w-4" />
