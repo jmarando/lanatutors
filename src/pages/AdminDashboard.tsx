@@ -361,10 +361,19 @@ Yehtu Tutors`
         .gte('created_at', startDate.toISOString());
 
       // Total counts - only users with student role
-      const { count: totalStudents } = await supabase
+      const { data: totalStudentIds } = await supabase
         .from('user_roles')
-        .select('*', { count: 'exact', head: true })
+        .select('user_id')
         .eq('role', 'student');
+
+      // Count actual profiles for students (excludes deleted users)
+      const studentIds = totalStudentIds?.map(r => r.user_id) || [];
+      const { count: totalStudents } = studentIds.length > 0
+        ? await supabase
+            .from('profiles')
+            .select('*', { count: 'exact', head: true })
+            .in('id', studentIds)
+        : { count: 0 };
 
       const { count: totalTutors } = await supabase
         .from('tutor_profiles')
@@ -1067,7 +1076,7 @@ The Lana Team`;
         </div>
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5 lg:w-auto">
+          <TabsList className="flex flex-wrap w-full gap-2">
             <TabsTrigger value="dashboard">
               Overview
             </TabsTrigger>
