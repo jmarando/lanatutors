@@ -63,7 +63,42 @@ export const RecurringSlotSelector = ({
 
       if (error) throw error;
 
-      setAvailableSlots(data || []);
+      const allSlots = data || [];
+
+      // Filter using the same logic as BookingCalendar
+      const blockedIntervals = allSlots
+        .filter((s: any) => s.slot_type === "blocked")
+        .map((s: any) => ({
+          start: new Date(s.start_time).getTime(),
+          end: new Date(s.end_time).getTime(),
+        }));
+
+      const totalBlockedHours = blockedIntervals.reduce((sum, b) => {
+        return sum + (b.end - b.start) / (1000 * 60 * 60);
+      }, 0);
+
+      const hasFullDayBlock = totalBlockedHours >= 10;
+
+      if (hasFullDayBlock) {
+        setAvailableSlots([]);
+        setLoading(false);
+        return;
+      }
+
+      const overlaps = (aStart: number, aEnd: number, bStart: number, bEnd: number) =>
+        Math.max(aStart, bStart) < Math.min(aEnd, bEnd);
+
+      const candidateAvailable = allSlots.filter((s: any) =>
+        !s.is_booked && (s.slot_type === null || s.slot_type === "available")
+      );
+
+      const filteredAvailable = candidateAvailable.filter((s: any) => {
+        const sStart = new Date(s.start_time).getTime();
+        const sEnd = new Date(s.end_time).getTime();
+        return !blockedIntervals.some((b) => overlaps(sStart, sEnd, b.start, b.end));
+      });
+
+      setAvailableSlots(filteredAvailable);
     } catch (error) {
       console.error("Error fetching availability:", error);
       toast.error("Failed to load availability");
