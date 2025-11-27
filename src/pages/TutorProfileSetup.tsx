@@ -907,18 +907,22 @@ useEffect(() => {
       if (tiersError) throw tiersError;
 
       // Create tier assignments linking each curriculum-level to its tier
+      // Only create assignments where a tier was actually created (has a valid rate)
       const assignments = Object.entries(curriculumLevels).flatMap(([curriculum, levels]) =>
         levels.map(level => {
           const key = `${curriculum}-${level}`;
           const tier = tiers.find(t => t.tier_name === key);
           
+          // Only return if tier exists (rate was entered)
+          if (!tier) return null;
+          
           return {
             tutor_id: tutorProfileId,
             curriculum,
             level,
-            tier_id: tier?.id
+            tier_id: tier.id
           };
-        })
+        }).filter((assignment): assignment is { tutor_id: string; curriculum: string; level: string; tier_id: string } => assignment !== null)
       );
 
       if (assignments.length > 0) {
