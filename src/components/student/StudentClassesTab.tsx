@@ -3,10 +3,17 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Video, ExternalLink, Calendar, DollarSign, CalendarClock } from "lucide-react";
+import { Video, ExternalLink, Calendar, DollarSign, CalendarClock, Sparkles, Loader2 } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 export function StudentClassesTab() {
   const { toast } = useToast();
@@ -14,6 +21,10 @@ export function StudentClassesTab() {
   const [upcomingBookings, setUpcomingBookings] = useState<any[]>([]);
   const [pastBookings, setPastBookings] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [summaryDialog, setSummaryDialog] = useState(false);
+  const [generatingSummary, setGeneratingSummary] = useState(false);
+  const [currentSummary, setCurrentSummary] = useState("");
+  const [currentBooking, setCurrentBooking] = useState<any>(null);
 
   useEffect(() => {
     const fetchBookings = async () => {
@@ -47,6 +58,44 @@ export function StudentClassesTab() {
     };
     fetchBookings();
   }, []);
+
+  const generateAISummary = async (booking: any) => {
+    setCurrentBooking(booking);
+    setSummaryDialog(true);
+    setGeneratingSummary(true);
+    setCurrentSummary("");
+
+    try {
+      const createdAt = new Date(booking.created_at);
+      const formattedDate = createdAt.toLocaleDateString('en-US', {
+        month: 'long',
+        day: 'numeric',
+        year: 'numeric'
+      });
+
+      const { data, error } = await supabase.functions.invoke("generate-session-summary", {
+        body: {
+          subject: booking.subject,
+          date: formattedDate,
+          duration: "1 hour"
+        }
+      });
+
+      if (error) throw error;
+
+      setCurrentSummary(data.summary);
+    } catch (error: any) {
+      console.error("Error generating summary:", error);
+      toast({
+        title: "Error",
+        description: "Failed to generate AI summary. Please try again.",
+        variant: "destructive"
+      });
+      setSummaryDialog(false);
+    } finally {
+      setGeneratingSummary(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -234,16 +283,26 @@ export function StudentClassesTab() {
                               <Badge variant="secondary">{booking.status}</Badge>
                             </td>
                             <td className="py-4">
-                              {booking.classroom_link && (
+                              <div className="flex items-center gap-2">
                                 <Button
                                   variant="ghost"
                                   size="sm"
-                                  onClick={() => window.open(booking.classroom_link, '_blank')}
+                                  onClick={() => generateAISummary(booking)}
                                 >
-                                  <ExternalLink className="w-4 h-4 mr-2" />
-                                  View
+                                  <Sparkles className="w-4 h-4 mr-2" />
+                                  AI Summary
                                 </Button>
-                              )}
+                                {booking.classroom_link && (
+                                  <Button
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => window.open(booking.classroom_link, '_blank')}
+                                  >
+                                    <ExternalLink className="w-4 h-4 mr-2" />
+                                    Classroom
+                                  </Button>
+                                )}
+                              </div>
                             </td>
                           </tr>
                         );
@@ -256,6 +315,33 @@ export function StudentClassesTab() {
           )}
         </TabsContent>
       </Tabs>
+
+      {/* AI Summary Dialog */}
+      <Dialog open={summaryDialog} onOpenChange={setSummaryDialog}>
+        <DialogContent className="max-w-2xl">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Sparkles className="w-5 h-5 text-primary" />
+              AI Session Summary
+            </DialogTitle>
+            <DialogDescription>
+              {currentBooking && `${currentBooking.subject} - ${new Date(currentBooking.created_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}`}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="py-4">
+            {generatingSummary ? (
+              <div className="flex flex-col items-center justify-center py-8 gap-4">
+                <Loader2 className="w-8 h-8 animate-spin text-primary" />
+                <p className="text-sm text-muted-foreground">Generating your session summary...</p>
+              </div>
+            ) : (
+              <div className="prose prose-sm max-w-none">
+                <p className="text-foreground leading-relaxed whitespace-pre-wrap">{currentSummary}</p>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

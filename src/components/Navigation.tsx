@@ -138,7 +138,7 @@ const Navigation = () => {
                       <ChevronDown className="w-3 h-3 ml-1 opacity-60" />
                     </Button>
                   </PopoverTrigger>
-                  <PopoverContent className="w-[200px] p-3" align="end">
+                  <PopoverContent className="w-[200px] p-3 z-[100]" align="end">
                     <div className="space-y-3">
                       <div className="text-xs text-muted-foreground truncate">{user.email}</div>
                       <div className="space-y-2">

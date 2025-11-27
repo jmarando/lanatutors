@@ -11,18 +11,33 @@ serve(async (req) => {
   }
 
   try {
-    const { transcript, subject, tutorName, studentName } = await req.json();
-
-    if (!transcript) {
-      throw new Error('Transcript is required');
-    }
+    const { transcript, subject, tutorName, studentName, date, duration } = await req.json();
 
     const LOVABLE_API_KEY = Deno.env.get('LOVABLE_API_KEY');
     if (!LOVABLE_API_KEY) {
       throw new Error('LOVABLE_API_KEY is not configured');
     }
 
-    const systemPrompt = `You are an expert educational assistant creating detailed, actionable session summaries for tutoring sessions.
+    let systemPrompt: string;
+    let userPrompt: string;
+
+    // Check if this is a simple summary request (no transcript) or detailed summary (with transcript)
+    if (!transcript && date && duration) {
+      // Simple encouraging summary for past sessions
+      systemPrompt = `You are an educational assistant that creates concise, helpful summaries of tutoring sessions. 
+Your summaries should be positive, encouraging, and highlight key learning points.`;
+
+      userPrompt = `Generate a brief, encouraging summary for a ${subject} tutoring session that took place on ${date} and lasted ${duration}. 
+
+Include:
+- A welcoming opening statement
+- 2-3 key topics that were likely covered in this subject
+- A brief motivational closing about continued learning
+
+Keep it under 150 words, positive, and student-focused.`;
+    } else if (transcript) {
+      // Detailed summary from transcript
+      systemPrompt = `You are an expert educational assistant creating detailed, actionable session summaries for tutoring sessions.
 Focus on:
 1. Key concepts covered
 2. Learning objectives achieved
@@ -32,12 +47,12 @@ Focus on:
 
 Format the summary with clear sections using markdown.`;
 
-    const userPrompt = `Generate a comprehensive tutoring session summary from this transcript:
+      userPrompt = `Generate a comprehensive tutoring session summary from this transcript:
 
 **Session Details:**
 - Subject: ${subject}
-- Tutor: ${tutorName}
-- Student: ${studentName}
+- Tutor: ${tutorName || 'Tutor'}
+- Student: ${studentName || 'Student'}
 
 **Transcript:**
 ${transcript}
@@ -48,6 +63,9 @@ Please create a detailed summary including:
 - Main Takeaways (numbered list)
 - Action Items for the student
 - Recommended next steps`;
+    } else {
+      throw new Error('Either transcript or (date and duration) must be provided');
+    }
 
     const response = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
       method: 'POST',
