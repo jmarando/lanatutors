@@ -669,6 +669,89 @@ export const BookingCalendar = ({
 
           {selectedSlot && (
             <div className="space-y-4 pt-4 border-t">
+              <div>
+                <Label className="text-sm font-medium mb-2 block">Curriculum *</Label>
+                {tutorCurriculum && tutorCurriculum.length > 0 ? (
+                  <Select 
+                    value={curriculum} 
+                    onValueChange={(val) => {
+                      setCurriculum(val);
+                      setLevel(""); // Reset level when curriculum changes
+                    }} 
+                    disabled={paymentInitiated}
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select curriculum" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-background z-50">
+                      {tutorCurriculum.map((curr) => (
+                        <SelectItem key={curr} value={curr}>
+                          {curr}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <Input
+                    placeholder="e.g., CBC, IGCSE, 8-4-4"
+                    value={curriculum}
+                    onChange={(e) => {
+                      setCurriculum(e.target.value);
+                      setLevel(""); // Reset level when curriculum changes
+                    }}
+                    disabled={paymentInitiated}
+                  />
+                )}
+              </div>
+
+              {curriculum && (
+                <div>
+                  <Label className="text-sm font-medium mb-2 block">Level/Grade *</Label>
+                  <Select value={level} onValueChange={setLevel} disabled={paymentInitiated}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select level/grade" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-background z-50 max-h-[300px]">
+                      {getLevelsForCurriculum(curriculum).map((lvl) => (
+                        <SelectItem key={lvl.value} value={lvl.value}>
+                          {lvl.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  {curriculumSpecificRate !== null && curriculum && level && (
+                    <p className="text-sm font-semibold text-primary mt-2">
+                      Rate for {curriculum} - {level}: KES {curriculumSpecificRate.toLocaleString()}/hr
+                    </p>
+                  )}
+                </div>
+              )}
+
+              <div>
+                <Label className="text-sm font-medium mb-2 block">Subject *</Label>
+                {tutorSubjects && tutorSubjects.length > 0 ? (
+                  <Select value={subject} onValueChange={setSubject} disabled={paymentInitiated}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a subject" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-background z-50">
+                      {tutorSubjects.map((subj) => (
+                        <SelectItem key={subj} value={subj}>
+                          {subj}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                ) : (
+                  <Input
+                    placeholder="e.g., Mathematics - Algebra"
+                    value={subject}
+                    onChange={(e) => setSubject(e.target.value)}
+                    disabled={paymentInitiated}
+                  />
+                )}
+              </div>
+
               {!isTrialSession && (
                 <div>
                   <Label className="text-sm font-medium mb-2 block">Class Type *</Label>
@@ -797,89 +880,6 @@ export const BookingCalendar = ({
                 </div>
               )}
 
-
-              <div>
-                <Label className="text-sm font-medium mb-2 block">Curriculum *</Label>
-                {tutorCurriculum && tutorCurriculum.length > 0 ? (
-                  <Select 
-                    value={curriculum} 
-                    onValueChange={(val) => {
-                      setCurriculum(val);
-                      setLevel(""); // Reset level when curriculum changes
-                    }} 
-                    disabled={paymentInitiated}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select curriculum" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-background z-50">
-                      {tutorCurriculum.map((curr) => (
-                        <SelectItem key={curr} value={curr}>
-                          {curr}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                ) : (
-                  <Input
-                    placeholder="e.g., CBC, IGCSE, 8-4-4"
-                    value={curriculum}
-                    onChange={(e) => {
-                      setCurriculum(e.target.value);
-                      setLevel(""); // Reset level when curriculum changes
-                    }}
-                    disabled={paymentInitiated}
-                  />
-                )}
-              </div>
-
-              {curriculum && (
-                <div>
-                  <Label className="text-sm font-medium mb-2 block">Level/Grade *</Label>
-                  <Select value={level} onValueChange={setLevel} disabled={paymentInitiated}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select level/grade" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-background z-50 max-h-[300px]">
-                      {getLevelsForCurriculum(curriculum).map((lvl) => (
-                        <SelectItem key={lvl.value} value={lvl.value}>
-                          {lvl.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  {curriculumSpecificRate !== null && curriculum && level && (
-                    <p className="text-sm font-semibold text-primary mt-2">
-                      Rate for {curriculum} - {level}: KES {curriculumSpecificRate.toLocaleString()}/hr
-                    </p>
-                  )}
-                </div>
-              )}
-
-              <div>
-                <Label className="text-sm font-medium mb-2 block">Subject *</Label>
-                {tutorSubjects && tutorSubjects.length > 0 ? (
-                  <Select value={subject} onValueChange={setSubject} disabled={paymentInitiated}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a subject" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-background z-50">
-                      {tutorSubjects.map((subj) => (
-                        <SelectItem key={subj} value={subj}>
-                          {subj}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                ) : (
-                  <Input
-                    placeholder="e.g., Mathematics - Algebra"
-                    value={subject}
-                    onChange={(e) => setSubject(e.target.value)}
-                    disabled={paymentInitiated}
-                  />
-                )}
-              </div>
 
               <div>
                 <Label className="text-sm font-medium mb-2 block">Notes (Optional)</Label>
