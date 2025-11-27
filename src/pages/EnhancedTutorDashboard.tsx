@@ -73,7 +73,7 @@ const EnhancedTutorDashboard = () => {
         *,
         tutor_availability!inner(start_time, end_time)
       `)
-      .eq("tutor_id", tutorData.id)
+      .eq("tutor_id", authUser.id)
       .order("created_at", { ascending: false });
 
     setBookings(bookingsData || []);

@@ -99,7 +99,7 @@ const TutorDashboard = () => {
           tutor_availability!inner(start_time, end_time),
           profiles!bookings_student_id_fkey(full_name)
         `)
-        .eq("tutor_id", tutorData.id)
+        .eq("tutor_id", authUser.id)
         .order("created_at", { ascending: false });
 
       setBookings(bookingsData || []);
