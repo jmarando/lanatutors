@@ -230,6 +230,17 @@ export const BookingCalendar = ({
         end: new Date(s.end_time).getTime(),
       }));
 
+    // If there is a full-day block (>= 10 hours), treat the whole day as unavailable
+    const hasFullDayBlock = blockedIntervals.some((b) => {
+      const hours = (b.end - b.start) / (1000 * 60 * 60);
+      return hours >= 10; // our full-day blocks are 8 AM - 8 PM (12h)
+    });
+
+    if (hasFullDayBlock) {
+      setAvailableSlots([]);
+      return;
+    }
+
     const overlaps = (aStart: number, aEnd: number, bStart: number, bEnd: number) =>
       Math.max(aStart, bStart) < Math.min(aEnd, bEnd);
 
@@ -247,7 +258,6 @@ export const BookingCalendar = ({
 
     setAvailableSlots(filtered);
   };
-
   const fetchMonthSlots = async () => {
     if (!selectedDate) return;
 
