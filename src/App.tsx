@@ -3,7 +3,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { lazy, Suspense } from "react";
+import { lazy, Suspense, useMemo } from "react";
 import Navigation from "./components/Navigation";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
@@ -48,9 +48,17 @@ const TutorOnboardingGuide = lazy(() => import("./pages/TutorOnboardingGuide"));
 const TutorGuidePrintable = lazy(() => import("./pages/TutorGuidePrintable"));
 const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
 
-const queryClient = new QueryClient();
-
 const App = () => {
+  // Create QueryClient inside component with memoization to prevent recreation on re-renders
+  const queryClient = useMemo(() => new QueryClient({
+    defaultOptions: {
+      queries: {
+        refetchOnWindowFocus: false,
+        retry: 1,
+      },
+    },
+  }), []);
+
   return (
     <ErrorBoundary>
       <QueryClientProvider client={queryClient}>
