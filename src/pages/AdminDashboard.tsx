@@ -1156,10 +1156,16 @@ The Lana Team`;
                     <CardContent>
                       <div className="text-2xl font-bold">{dashboardMetrics.totalStudents || 0}</div>
                       <p className="text-xs text-muted-foreground">
-                        <span className="text-green-600 flex items-center gap-1">
-                          <ArrowUpRight className="h-3 w-3" />
-                          {dashboardMetrics.newStudents} new
-                        </span>
+                        {dashboardMetrics.newStudents > 0 ? (
+                          <span className="text-green-600 flex items-center gap-1">
+                            <ArrowUpRight className="h-3 w-3" />
+                            {dashboardMetrics.newStudents} new in period
+                          </span>
+                        ) : (
+                          <span className="flex items-center gap-1">
+                            No new registrations in period
+                          </span>
+                        )}
                       </p>
                     </CardContent>
                   </Card>
@@ -1172,10 +1178,16 @@ The Lana Team`;
                     <CardContent>
                       <div className="text-2xl font-bold">{dashboardMetrics.totalTutors || 0}</div>
                       <p className="text-xs text-muted-foreground">
-                        <span className="text-green-600 flex items-center gap-1">
-                          <ArrowUpRight className="h-3 w-3" />
-                          {dashboardMetrics.newTutors} new
-                        </span>
+                        {dashboardMetrics.newTutors > 0 ? (
+                          <span className="text-green-600 flex items-center gap-1">
+                            <ArrowUpRight className="h-3 w-3" />
+                            {dashboardMetrics.newTutors} verified in period
+                          </span>
+                        ) : (
+                          <span className="flex items-center gap-1">
+                            No new verifications in period
+                          </span>
+                        )}
                       </p>
                     </CardContent>
                   </Card>
@@ -1186,9 +1198,13 @@ The Lana Team`;
                       <DollarSign className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                      <div className="text-2xl font-bold">KES {dashboardMetrics.totalRevenue?.toLocaleString() || 0}</div>
+                      <div className="text-2xl font-bold">
+                        KES {(dashboardMetrics.totalRevenue || 0).toLocaleString('en-KE', { minimumFractionDigits: 0, maximumFractionDigits: 0 })}
+                      </div>
                       <p className="text-xs text-muted-foreground">
-                        {dashboardMetrics.totalBookings || 0} bookings
+                        {dashboardMetrics.totalBookings > 0 
+                          ? `From ${dashboardMetrics.totalBookings} completed bookings`
+                          : 'No revenue in period'}
                       </p>
                     </CardContent>
                   </Card>
@@ -1199,9 +1215,15 @@ The Lana Team`;
                       <TrendingUp className="h-4 w-4 text-muted-foreground" />
                     </CardHeader>
                     <CardContent>
-                      <div className="text-2xl font-bold">{dashboardMetrics.conversionRate?.toFixed(1) || 0}%</div>
+                      <div className="text-2xl font-bold">
+                        {dashboardMetrics.totalConsultations > 0 
+                          ? `${dashboardMetrics.conversionRate?.toFixed(1)}%`
+                          : '—'}
+                      </div>
                       <p className="text-xs text-muted-foreground">
-                        {dashboardMetrics.convertedConsultations}/{dashboardMetrics.totalConsultations} converted
+                        {dashboardMetrics.totalConsultations > 0 
+                          ? `${dashboardMetrics.convertedConsultations}/${dashboardMetrics.totalConsultations} consultations converted`
+                          : 'No consultations in period'}
                       </p>
                     </CardContent>
                   </Card>
@@ -2012,8 +2034,12 @@ The Lana Team`;
 
         {learningPlanRequests.length === 0 ? (
           <Card>
-            <CardContent className="p-8 text-center text-muted-foreground">
-              No learning plan requests yet.
+            <CardContent className="p-12 text-center">
+              <FileText className="w-16 h-16 mx-auto mb-4 text-muted-foreground opacity-50" />
+              <p className="text-muted-foreground font-medium">No learning plan requests</p>
+              <p className="text-sm text-muted-foreground mt-2">
+                Requests from parents will appear here
+              </p>
             </CardContent>
           </Card>
         ) : (
@@ -2164,8 +2190,11 @@ The Lana Team`;
         {tutoringBookings.length === 0 ? (
           <Card>
             <CardContent className="p-12 text-center">
-              <BookMarked className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
-              <p className="text-muted-foreground">No tutoring bookings yet</p>
+              <BookMarked className="w-16 h-16 mx-auto mb-4 text-muted-foreground opacity-50" />
+              <p className="text-muted-foreground font-medium">No tutoring bookings</p>
+              <p className="text-sm text-muted-foreground mt-2">
+                Session bookings will appear here when parents book tutors
+              </p>
             </CardContent>
           </Card>
         ) : (
