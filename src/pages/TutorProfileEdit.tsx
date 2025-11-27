@@ -721,7 +721,15 @@ const TutorProfileEdit = () => {
                                 }));
                               }}
                               placeholder={`e.g., ${guidance ? guidance.min : 1500}`}
-                              className="mt-1"
+                              className={`mt-1 ${
+                                (() => {
+                                  const currentRate = parseFloat(formData.curriculumLevelRates[key] || '0');
+                                  if (guidance && currentRate > 0 && (currentRate < guidance.min || currentRate > guidance.max)) {
+                                    return 'border-amber-500';
+                                  }
+                                  return '';
+                                })()
+                              }`}
                             />
                             {formData.curriculumLevelRates[key] && (
                               <>
@@ -736,6 +744,21 @@ const TutorProfileEdit = () => {
                             <p className="text-xs text-muted-foreground mt-1">
                               Recommended online rate: {rangeText}
                             </p>
+                            {(() => {
+                              const currentRate = parseFloat(formData.curriculumLevelRates[key] || '0');
+                              const isOutOfRange = guidance && currentRate > 0 && (currentRate < guidance.min || currentRate > guidance.max);
+                              if (isOutOfRange) {
+                                return (
+                                  <div className="flex items-start gap-2 p-2 bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded mt-2">
+                                    <span className="text-amber-600 dark:text-amber-400 text-sm">⚠️</span>
+                                    <p className="text-xs text-amber-700 dark:text-amber-300">
+                                      Your rate is outside the recommended range. This may affect student bookings. Consider adjusting to stay competitive.
+                                    </p>
+                                  </div>
+                                );
+                              }
+                              return null;
+                            })()}
                           </div>
                         </div>
                       );
