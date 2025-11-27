@@ -437,10 +437,6 @@ const TutorProfileEdit = () => {
           teaching_mode: formData.teachingMode,
           teaching_location: formData.teachingLocations.join(', '),
           gender: formData.gender,
-          why_students_love: formData.whyStudentsLove
-            .split('\n')
-            .map(w => w.trim())
-            .filter(w => w.length > 0),
           education: formData.educationHistory.filter(e => e.institution && e.degree),
           teaching_experience: formData.teachingHistory.filter(t => t.institution && t.role),
           updated_at: new Date().toISOString(),
@@ -609,17 +605,6 @@ const TutorProfileEdit = () => {
                   value={formData.gender}
                   onChange={(e) => setFormData(prev => ({ ...prev, gender: e.target.value }))}
                   placeholder="e.g., Male, Female, Other"
-                />
-              </div>
-
-              <div>
-                <Label>Why Students Love Learning With You</Label>
-                <p className="text-sm text-muted-foreground mb-2">One reason per line (up to 3)</p>
-                <Textarea
-                  value={formData.whyStudentsLove}
-                  onChange={(e) => setFormData(prev => ({ ...prev, whyStudentsLove: e.target.value }))}
-                  rows={4}
-                  placeholder="Patient and encouraging teaching style&#10;Real-world examples that make concepts clear&#10;Flexible scheduling to fit student needs"
                 />
               </div>
 
