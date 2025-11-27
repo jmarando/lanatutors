@@ -80,14 +80,16 @@ const Navigation = () => {
     setOpen(false);
   };
 
-  const navLinks = [
+  const getNavLinks = () => [
     { to: "/tutors", label: "Find Tutors", singleLine: true },
     { to: "/holiday-packages", label: "Revision Packages", singleLine: true },
-    { to: "/for-students", label: "Student Hub", singleLine: true },
+    { to: user ? "/student/dashboard" : "/for-students", label: "Student Hub", singleLine: true },
     { to: "/for-tutors", label: "Tutor Hub", singleLine: true },
     { to: "/about", label: "About Us", singleLine: true },
     { to: "/blog", label: "Blog", singleLine: true },
   ];
+
+  const navLinks = getNavLinks();
 
   return (
     <nav className="bg-background sticky top-0 z-50 border-0">
