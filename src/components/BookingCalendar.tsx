@@ -210,7 +210,7 @@ export const BookingCalendar = ({
     const { data, error } = await supabase
       .from("tutor_availability")
       .select("*")
-      .eq("tutor_id", tutorUserId as string)
+      .in("tutor_id", [tutorUserId as string, tutorId])
       .gte("start_time", startOfDay.toISOString())
       .lte("start_time", endOfDay.toISOString())
       .order("start_time");
@@ -259,7 +259,7 @@ export const BookingCalendar = ({
     const { data, error } = await supabase
       .from("tutor_availability")
       .select("*")
-      .eq("tutor_id", tutorUserId as string)
+      .in("tutor_id", [tutorUserId as string, tutorId])
       .gte("start_time", monthStart.toISOString())
       .lte("start_time", monthEnd.toISOString());
 
