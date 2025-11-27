@@ -318,26 +318,26 @@ const TutorDashboard = () => {
         </Card>
 
         <Tabs defaultValue="today" className="space-y-6">
-          <TabsList>
-            <TabsTrigger value="today">
+          <TabsList className="w-full justify-start overflow-x-auto flex-nowrap">
+            <TabsTrigger value="today" className="whitespace-nowrap">
               Today ({todaySessions.length})
             </TabsTrigger>
-            <TabsTrigger value="week">
+            <TabsTrigger value="week" className="whitespace-nowrap">
               This Week ({thisWeekSessions.length})
             </TabsTrigger>
-            <TabsTrigger value="all">
+            <TabsTrigger value="all" className="whitespace-nowrap">
               All Upcoming ({upcomingBookings.length})
             </TabsTrigger>
-            <TabsTrigger value="calendar">
+            <TabsTrigger value="calendar" className="whitespace-nowrap">
               Calendar
             </TabsTrigger>
-            <TabsTrigger value="learning-plans">
+            <TabsTrigger value="learning-plans" className="whitespace-nowrap">
               Learning Plans
             </TabsTrigger>
-            <TabsTrigger value="progress">
+            <TabsTrigger value="progress" className="whitespace-nowrap">
               Student Progress
             </TabsTrigger>
-            <TabsTrigger value="reviews">
+            <TabsTrigger value="reviews" className="whitespace-nowrap">
               Reviews ({reviews.length})
             </TabsTrigger>
           </TabsList>
