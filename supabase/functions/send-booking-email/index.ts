@@ -76,7 +76,17 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Send to student
     if (recipientType === 'student' || recipientType === 'both') {
-      console.log(`Sending email to student: ${studentEmail}`);
+      console.log(`Attempting to send email to student: ${studentEmail}`);
+      
+      if (!studentEmail) {
+        console.error('Student email not found - cannot send confirmation');
+        throw new Error('Student email not found');
+      }
+      
+      if (!RESEND_API_KEY) {
+        console.error('RESEND_API_KEY not configured');
+        throw new Error('RESEND_API_KEY not configured');
+      }
       
       const studentEmailHtml = `
         <!DOCTYPE html>
@@ -301,13 +311,24 @@ const handler = async (req: Request): Promise<Response> => {
         }),
       });
 
+      if (!studentEmailResponse.ok) {
+        const errorText = await studentEmailResponse.text();
+        console.error('Resend API error for student email:', errorText);
+        throw new Error(`Resend failed: ${errorText}`);
+      }
+
       const studentEmailResult = await studentEmailResponse.json();
-      console.log('Student email result:', studentEmailResult);
+      console.log('✓ Student email sent successfully:', studentEmailResult);
     }
 
     // Send to tutor
     if (recipientType === 'tutor' || recipientType === 'both') {
-      console.log(`Sending email to tutor: ${tutorProfile?.email}`);
+      console.log(`Attempting to send email to tutor: ${tutorProfile?.email}`);
+      
+      if (!tutorProfile?.email) {
+        console.error('Tutor email not found - cannot send confirmation');
+        throw new Error('Tutor email not found');
+      }
       
       const tutorEmailHtml = `
         <!DOCTYPE html>
@@ -499,8 +520,14 @@ const handler = async (req: Request): Promise<Response> => {
         }),
       });
 
+      if (!tutorEmailResponse.ok) {
+        const errorText = await tutorEmailResponse.text();
+        console.error('Resend API error for tutor email:', errorText);
+        throw new Error(`Resend failed: ${errorText}`);
+      }
+
       const tutorEmailResult = await tutorEmailResponse.json();
-      console.log('Tutor email result:', tutorEmailResult);
+      console.log('✓ Tutor email sent successfully:', tutorEmailResult);
     }
 
     return new Response(
