@@ -80,14 +80,31 @@ export function GroupedBookingCard({ bookings, isUpcoming }: GroupedBookingCardP
           {/* Quick Actions for Next Session */}
           {isUpcoming && (
             <div className="flex flex-col gap-2 min-w-[160px]">
-              {nextSession.meeting_link && (
+              {/* Always show Join button - use meeting link if available, otherwise show request link option */}
+              {nextSession.meeting_link ? (
                 <Button
                   onClick={() => window.open(nextSession.meeting_link, '_blank')}
                   className="w-full"
                   size="lg"
                 >
                   <Video className="w-4 h-4 mr-2" />
-                  Join Next Class
+                  Join Class
+                </Button>
+              ) : (
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    const subject = encodeURIComponent('Request Meeting Link');
+                    const body = encodeURIComponent(
+                      `Booking ID: ${nextSession.id}\nSubject: ${nextSession.subject}\nDate/Time: ${format(nextSessionTime, 'EEEE, MMMM d, yyyy')} at ${format(nextSessionTime, 'hh:mm a')} EAT\n\nPlease provide the meeting link for this session.`
+                    );
+                    window.location.href = `mailto:info@lanatutors.africa?subject=${subject}&body=${body}`;
+                  }}
+                  className="w-full"
+                  size="lg"
+                >
+                  <Video className="w-4 h-4 mr-2" />
+                  Request Meeting Link
                 </Button>
               )}
               
@@ -162,15 +179,32 @@ export function GroupedBookingCard({ bookings, isUpcoming }: GroupedBookingCardP
                       )}
 
                       <div className="flex gap-2 mt-2">
-                        {booking.meeting_link && isUpcoming && (
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => window.open(booking.meeting_link, '_blank')}
-                          >
-                            <Video className="w-3 h-3 mr-1" />
-                            Join
-                          </Button>
+                        {isUpcoming && (
+                          booking.meeting_link ? (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => window.open(booking.meeting_link, '_blank')}
+                            >
+                              <Video className="w-3 h-3 mr-1" />
+                              Join
+                            </Button>
+                          ) : (
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                const subject = encodeURIComponent('Request Meeting Link');
+                                const body = encodeURIComponent(
+                                  `Booking ID: ${booking.id}\nSubject: ${booking.subject}\nDate/Time: ${format(sessionTime, 'EEEE, MMMM d, yyyy')} at ${format(sessionTime, 'hh:mm a')} EAT\n\nPlease provide the meeting link for this session.`
+                                );
+                                window.location.href = `mailto:info@lanatutors.africa?subject=${subject}&body=${body}`;
+                              }}
+                            >
+                              <Video className="w-3 h-3 mr-1" />
+                              Request Link
+                            </Button>
+                          )
                         )}
                         <Button
                           size="sm"
