@@ -90,7 +90,7 @@ const TutorProfileEdit = () => {
 
       if (!tutorProfile) {
         toast.error("No tutor profile found");
-        navigate("/tutor-dashboard");
+        navigate("/tutor/dashboard");
         return;
       }
 
@@ -476,7 +476,7 @@ const TutorProfileEdit = () => {
         .eq("id", tutorId);
 
       toast.success("Profile updated successfully!");
-      navigate("/tutor-dashboard");
+      navigate("/tutor/dashboard");
     } catch (error: any) {
       console.error("Error updating profile:", error);
       toast.error(error.message || "Failed to update profile");
