@@ -7,6 +7,7 @@ import { Video, ExternalLink, Calendar, DollarSign, CalendarClock, Sparkles, Loa
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { format } from "date-fns";
 import {
   Dialog,
   DialogContent,
@@ -30,9 +31,16 @@ export function StudentClassesTab() {
     const fetchBookings = async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
+        // Fetch bookings with tutor availability details
         const { data: bookings, error } = await supabase
           .from('bookings')
-          .select('*')
+          .select(`
+            *,
+            tutor_availability (
+              start_time,
+              end_time
+            )
+          `)
           .eq('student_id', user.id)
           .order('created_at', { ascending: false });
 
@@ -47,8 +55,33 @@ export function StudentClassesTab() {
         }
 
         if (bookings) {
-          const upcoming = bookings.filter(b => b.status === 'confirmed');
-          const past = bookings.filter(b => b.status !== 'confirmed');
+          const now = new Date();
+          // Filter by actual slot time, not booking creation time
+          const upcoming = bookings.filter(b => {
+            if (b.status !== 'confirmed') return false;
+            const slotTime = b.tutor_availability?.start_time 
+              ? new Date(b.tutor_availability.start_time)
+              : new Date(b.created_at);
+            return slotTime > now;
+          }).sort((a, b) => {
+            const timeA = a.tutor_availability?.start_time 
+              ? new Date(a.tutor_availability.start_time).getTime()
+              : new Date(a.created_at).getTime();
+            const timeB = b.tutor_availability?.start_time 
+              ? new Date(b.tutor_availability.start_time).getTime()
+              : new Date(b.created_at).getTime();
+            return timeA - timeB;
+          });
+          
+          const past = bookings.filter(b => {
+            if (b.status === 'confirmed') {
+              const slotTime = b.tutor_availability?.start_time 
+                ? new Date(b.tutor_availability.start_time)
+                : new Date(b.created_at);
+              return slotTime <= now;
+            }
+            return b.status !== 'confirmed';
+          });
           
           setUpcomingBookings(upcoming);
           setPastBookings(past);
@@ -141,92 +174,83 @@ export function StudentClassesTab() {
           ) : (
             <div className="grid gap-4">
               {upcomingBookings.map((booking) => {
-                const createdAt = new Date(booking.created_at);
+                const slotTime = booking.tutor_availability?.start_time 
+                  ? new Date(booking.tutor_availability.start_time)
+                  : new Date(booking.created_at);
+                const balanceDue = booking.balance_due || 0;
                 
                 return (
-                  <Card key={booking.id} className="hover:shadow-md transition-shadow">
+                  <Card key={booking.id} className="border-l-4 border-l-primary hover:shadow-lg transition-shadow">
                     <CardContent className="p-6">
-                      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                        <div className="flex-1">
+                      <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+                        <div className="flex-1 space-y-2">
                           <div className="flex items-center gap-2 mb-2">
-                            <h3 className="text-xl font-semibold">{booking.subject}</h3>
-                            <Badge>Confirmed</Badge>
+                            <h3 className="text-2xl font-bold">{booking.subject}</h3>
+                            <Badge className="bg-primary">Confirmed</Badge>
                           </div>
-                          <div className="space-y-1 text-sm text-muted-foreground">
-                            <p className="flex items-center gap-2">
+                          
+                          <div className="space-y-1">
+                            <div className="flex items-center gap-2 text-muted-foreground">
                               <Calendar className="w-4 h-4" />
-                              {createdAt.toLocaleDateString('en-US', { 
-                                weekday: 'long',
-                                month: 'long', 
-                                day: 'numeric', 
-                                year: 'numeric' 
-                              })}
-                            </p>
-                            <p className="ml-6">
-                              {createdAt.toLocaleTimeString('en-US', { 
-                                hour: '2-digit', 
-                                minute: '2-digit',
-                                timeZone: 'Africa/Nairobi'
-                              })} EAT
+                              <p className="text-base font-medium">
+                                {format(slotTime, 'EEEE, MMMM d, yyyy')}
+                              </p>
+                            </div>
+                            <p className="text-sm text-muted-foreground ml-6">
+                              {format(slotTime, 'hh:mm a')} EAT
                             </p>
                           </div>
-                          {booking.balance_due && booking.balance_due > 0 && (
-                            <Badge variant="outline" className="mt-2">
-                              Balance Due: {booking.currency} {booking.balance_due}
+
+                          {balanceDue > 0 && (
+                            <Badge variant="outline" className="text-xs mt-2">
+                              Balance Due: {booking.currency || 'KES'} {balanceDue.toLocaleString()}
                             </Badge>
                           )}
                         </div>
                         
-                        <div className="flex flex-col sm:flex-row gap-2">
-                          {booking.balance_due && booking.balance_due > 0 && (
-                            <Button
-                              variant="outline"
-                              onClick={() => navigate(`/pay-balance?bookingId=${booking.id}`)}
-                              className="w-full sm:w-auto"
-                            >
-                              <DollarSign className="w-4 h-4 mr-2" />
-                              Pay Balance
-                            </Button>
-                          )}
-                          <Button
-                            variant="outline"
-                            onClick={() => {
-                              const subject = encodeURIComponent('Reschedule Request - Booking #' + booking.id.substring(0, 8));
-                              const body = encodeURIComponent(
-                                `Hello Lana Tutors,\n\n` +
-                                `I would like to reschedule my upcoming class.\n\n` +
-                                `Booking Details:\n` +
-                                `- Booking ID: ${booking.id}\n` +
-                                `- Subject: ${booking.subject}\n` +
-                                `- Current Date: ${new Date(booking.created_at).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}\n` +
-                                `- Current Time: ${new Date(booking.created_at).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', timeZone: 'Africa/Nairobi' })} EAT\n\n` +
-                                `Preferred new date/time:\n` +
-                                `[Please specify your preferred date and time]\n\n` +
-                                `Reason for rescheduling:\n` +
-                                `[Please provide a brief reason]\n\n` +
-                                `Thank you!`
-                              );
-                              window.location.href = `mailto:info@lanatutors.africa?subject=${subject}&body=${body}`;
-                            }}
-                            className="w-full sm:w-auto"
-                          >
-                            <CalendarClock className="w-4 h-4 mr-2" />
-                            Reschedule
-                          </Button>
+                        <div className="flex flex-col gap-2 min-w-[160px]">
                           {booking.meeting_link && (
                             <Button
                               onClick={() => window.open(booking.meeting_link, '_blank')}
-                              className="w-full sm:w-auto"
+                              className="w-full"
+                              size="lg"
                             >
                               <Video className="w-4 h-4 mr-2" />
                               Join Class
                             </Button>
                           )}
+                          
+                          {balanceDue > 0 && (
+                            <Button
+                              variant="outline"
+                              onClick={() => navigate(`/pay-balance/${booking.id}`)}
+                              className="w-full"
+                            >
+                              <DollarSign className="w-4 h-4 mr-2" />
+                              Pay Balance
+                            </Button>
+                          )}
+                          
+                          <Button
+                            variant="outline"
+                            onClick={() => {
+                              const subject = encodeURIComponent('Reschedule Request');
+                              const body = encodeURIComponent(
+                                `Booking ID: ${booking.id}\nSubject: ${booking.subject}\nCurrent Date/Time: ${format(slotTime, 'EEEE, MMMM d, yyyy')} at ${format(slotTime, 'hh:mm a')} EAT\n\nPreferred New Date/Time:\n\nReason for Rescheduling:`
+                              );
+                              window.location.href = `mailto:info@lanatutors.africa?subject=${subject}&body=${body}`;
+                            }}
+                            className="w-full"
+                          >
+                            <CalendarClock className="w-4 h-4 mr-2" />
+                            Reschedule
+                          </Button>
+                          
                           {booking.classroom_link && (
                             <Button
                               variant="outline"
                               onClick={() => window.open(booking.classroom_link, '_blank')}
-                              className="w-full sm:w-auto"
+                              className="w-full"
                             >
                               <ExternalLink className="w-4 h-4 mr-2" />
                               Classroom
