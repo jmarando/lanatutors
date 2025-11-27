@@ -988,7 +988,7 @@ export const BookingCalendar = ({
                   {/* Payment information message */}
                   <div className="bg-muted/50 border border-border rounded-lg p-3">
                     <p className="text-sm text-muted-foreground">
-                      💳 You'll be redirected to our secure payment partner to complete your payment with M-Pesa, Card, or other payment methods.
+                      💳 You'll be redirected to Pesapal, our secure payment partner, to complete your payment with M-Pesa, Card, or other payment methods.
                     </p>
                   </div>
                 </>
