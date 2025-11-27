@@ -24,9 +24,10 @@ interface PackageSelectorProps {
   tutorId: string;
   onSelectPackage: (pkg: PackageOffer) => void;
   selectedPackageId?: string;
+  baseRate?: number;
 }
 
-export const PackageSelector = ({ tutorId, onSelectPackage, selectedPackageId }: PackageSelectorProps) => {
+export const PackageSelector = ({ tutorId, onSelectPackage, selectedPackageId, baseRate = 1000 }: PackageSelectorProps) => {
   const [packages, setPackages] = useState<PackageOffer[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -113,9 +114,11 @@ export const PackageSelector = ({ tutorId, onSelectPackage, selectedPackageId }:
       </div>
       <div className="grid gap-3">
         {packages.map((pkg) => {
-          const pricePerSession = pkg.total_price / pkg.session_count;
-          const originalPrice = pricePerSession / (1 - pkg.discount_percentage / 100) * pkg.session_count;
-          const savings = originalPrice - pkg.total_price;
+          // Calculate pricing based on the minimum base rate
+          const originalPrice = baseRate * pkg.session_count;
+          const discountedPrice = originalPrice * (1 - pkg.discount_percentage / 100);
+          const pricePerSession = discountedPrice / pkg.session_count;
+          const savings = originalPrice - discountedPrice;
 
           return (
             <Card
@@ -195,7 +198,7 @@ export const PackageSelector = ({ tutorId, onSelectPackage, selectedPackageId }:
                         KES {Math.round(originalPrice).toLocaleString()}
                       </div>
                       <div className="font-bold text-xl text-primary">
-                        KES {Math.round(pkg.total_price).toLocaleString()}
+                        KES {Math.round(discountedPrice).toLocaleString()}
                       </div>
                     </div>
                   </div>

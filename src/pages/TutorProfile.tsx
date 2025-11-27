@@ -332,12 +332,16 @@ const TutorProfile = () => {
     if (!selectedPackage || !currentUser) return;
 
     try {
+      // Recalculate package price based on minimum rate to ensure consistency
+      const originalPrice = currentRate * selectedPackage.session_count;
+      const discountedPrice = originalPrice * (1 - selectedPackage.discount_percentage / 100);
+      
       // Calculate amount based on payment option
       // Special testing rate for Justin Anyona
       const depositRate = selectedPackage.tutor_id === '4d9426d7-7294-492a-a2e9-4b1642ba1954' ? 0.01 : 0.3;
       const amount = packagePaymentOption === 'deposit' 
-        ? Math.round(selectedPackage.total_price * depositRate)
-        : Math.round(selectedPackage.total_price);
+        ? Math.round(discountedPrice * depositRate)
+        : Math.round(discountedPrice);
 
       // Get current user's currency preference
       const { data: profile } = await supabase
@@ -917,6 +921,7 @@ const TutorProfile = () => {
                       <PackageSelector
                         tutorId={tutor.id}
                         onSelectPackage={handlePackageSelect}
+                        baseRate={currentRate}
                       />
                     </div>
                   </CardContent>
@@ -998,139 +1003,152 @@ const TutorProfile = () => {
           
           {selectedPackage && (
             <div className="space-y-6 py-4">
-              {/* How It Works Section */}
-              <Card className="bg-primary/5 border-primary/20">
-                <CardContent className="p-4">
-                  <h4 className="font-semibold text-sm mb-3 flex items-center gap-2">
-                    <Sparkles className="w-4 h-4 text-primary" />
-                    How Your Session Bundle Works
-                  </h4>
-                  <div className="space-y-2 text-xs text-muted-foreground">
-                    <div className="flex items-start gap-2">
-                      <CheckCircle2 className="w-4 h-4 text-primary shrink-0 mt-0.5" />
-                      <span><strong>Use at your own pace:</strong> Book sessions whenever it suits your schedule over the next {selectedPackage.validity_days} days</span>
-                    </div>
-                    <div className="flex items-start gap-2">
-                      <CheckCircle2 className="w-4 h-4 text-primary shrink-0 mt-0.5" />
-                      <span><strong>Track your sessions:</strong> View your remaining sessions anytime in your student dashboard</span>
-                    </div>
-                    <div className="flex items-start gap-2">
-                      <CheckCircle2 className="w-4 h-4 text-primary shrink-0 mt-0.5" />
-                      <span><strong>Flexible booking:</strong> Schedule one session at a time or plan multiple sessions in advance</span>
-                    </div>
-                    <div className="flex items-start gap-2">
-                      <CheckCircle2 className="w-4 h-4 text-primary shrink-0 mt-0.5" />
-                      <span><strong>No pressure:</strong> There's no obligation to use all sessions at once - spread them out as needed</span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
+              {/* Calculate package price based on minimum rate */}
+              {(() => {
+                const originalPrice = currentRate * selectedPackage.session_count;
+                const discountedPrice = originalPrice * (1 - selectedPackage.discount_percentage / 100);
+                const depositRate = selectedPackage.tutor_id === '4d9426d7-7294-492a-a2e9-4b1642ba1954' ? 0.01 : 0.3;
+                const depositAmount = Math.round(discountedPrice * depositRate);
+                const balanceDue = Math.round(discountedPrice - depositAmount);
 
-              {/* Payment Option Selector */}
-              <Card className="bg-muted/30 border-border/50">
-                <CardContent className="p-4">
-                  <div className="space-y-3">
-                    <label className="text-sm font-medium">Payment Option</label>
-                    <div className="grid grid-cols-2 gap-3">
-                      <button
-                        onClick={() => setPackagePaymentOption('full')}
-                        className={cn(
-                          "p-3 rounded-lg border-2 transition-all text-left",
-                          packagePaymentOption === 'full'
-                            ? "border-primary bg-primary/5"
-                            : "border-border hover:border-primary/30"
-                        )}
-                      >
-                        <div className="text-sm font-medium">Full Payment</div>
-                        <div className="text-xs text-muted-foreground mt-1">
-                          Pay KES {Math.round(selectedPackage.total_price).toLocaleString()} now
-                        </div>
-                      </button>
-                      <button
-                        onClick={() => setPackagePaymentOption('deposit')}
-                        className={cn(
-                          "p-3 rounded-lg border-2 transition-all text-left",
-                          packagePaymentOption === 'deposit'
-                            ? "border-primary bg-primary/5"
-                            : "border-border hover:border-primary/30"
-                        )}
-                      >
-                        <div className="text-sm font-medium">{selectedPackage.tutor_id === '4d9426d7-7294-492a-a2e9-4b1642ba1954' ? '1%' : '30%'} Deposit</div>
-                        <div className="text-xs text-muted-foreground mt-1">
-                          Pay KES {Math.round(selectedPackage.total_price * (selectedPackage.tutor_id === '4d9426d7-7294-492a-a2e9-4b1642ba1954' ? 0.01 : 0.3)).toLocaleString()} now
-                        </div>
-                      </button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card className="bg-muted/50">
-                <CardContent className="p-4">
-                  <div className="space-y-3">
-                    <div className="flex justify-between">
-                      <span className="text-sm text-muted-foreground">Package:</span>
-                      <span className="font-semibold">{selectedPackage.name}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-sm text-muted-foreground">Total Sessions:</span>
-                      <span className="font-semibold">{selectedPackage.session_count} sessions</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-sm text-muted-foreground">Valid for:</span>
-                      <span className="font-semibold">{selectedPackage.validity_days} days</span>
-                    </div>
-                    <Separator />
-                    {packagePaymentOption === 'deposit' ? (
-                      <>
-                        <div className="flex justify-between">
-                          <span className="text-sm text-muted-foreground">Total Price:</span>
-                          <span className="font-medium">KES {Math.round(selectedPackage.total_price).toLocaleString()}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-sm text-muted-foreground">Deposit (30%):</span>
-                          <span className="font-medium">KES {Math.round(selectedPackage.total_price * 0.3).toLocaleString()}</span>
-                        </div>
-                        <div className="flex justify-between items-baseline">
-                          <span className="font-semibold">Balance Due:</span>
-                          <div className="text-right">
-                            <p className="text-lg font-bold text-amber-600">
-                              KES {Math.round(selectedPackage.total_price * 0.7).toLocaleString()}
-                            </p>
-                            <p className="text-xs text-muted-foreground">
-                              Payable later
-                            </p>
+                return (
+                  <>
+                    {/* How It Works Section */}
+                    <Card className="bg-primary/5 border-primary/20">
+                      <CardContent className="p-4">
+                        <h4 className="font-semibold text-sm mb-3 flex items-center gap-2">
+                          <Sparkles className="w-4 h-4 text-primary" />
+                          How Your Session Bundle Works
+                        </h4>
+                        <div className="space-y-2 text-xs text-muted-foreground">
+                          <div className="flex items-start gap-2">
+                            <CheckCircle2 className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+                            <span><strong>Use at your own pace:</strong> Book sessions whenever it suits your schedule over the next {selectedPackage.validity_days} days</span>
+                          </div>
+                          <div className="flex items-start gap-2">
+                            <CheckCircle2 className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+                            <span><strong>Track your sessions:</strong> View your remaining sessions anytime in your student dashboard</span>
+                          </div>
+                          <div className="flex items-start gap-2">
+                            <CheckCircle2 className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+                            <span><strong>Flexible booking:</strong> Schedule one session at a time or plan multiple sessions in advance</span>
+                          </div>
+                          <div className="flex items-start gap-2">
+                            <CheckCircle2 className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+                            <span><strong>No pressure:</strong> There's no obligation to use all sessions at once - spread them out as needed</span>
                           </div>
                         </div>
-                      </>
-                    ) : (
-                      <div className="flex justify-between items-baseline">
-                        <span className="font-semibold">Total Price:</span>
-                        <div className="text-right">
-                          <p className="text-lg font-bold">
-                            KES {Math.round(selectedPackage.total_price).toLocaleString()}
-                          </p>
-                          <p className="text-xs text-green-600">
-                            You save {selectedPackage.discount_percentage}%
-                          </p>
-                        </div>
-                      </div>
-                    )}
-                  </div>
-                </CardContent>
-              </Card>
+                      </CardContent>
+                    </Card>
 
-              <Button 
-                className="w-full" 
-                size="lg"
-                onClick={handlePackagePurchase}
-              >
-                Proceed to Payment
-              </Button>
-              
-              <p className="text-xs text-center text-muted-foreground">
-                Secure payment via PesaPal. After payment, you can start booking your sessions immediately from your dashboard.
-              </p>
+                    {/* Payment Option Selector */}
+                    <Card className="bg-muted/30 border-border/50">
+                      <CardContent className="p-4">
+                        <div className="space-y-3">
+                          <label className="text-sm font-medium">Payment Option</label>
+                          <div className="grid grid-cols-2 gap-3">
+                            <button
+                              onClick={() => setPackagePaymentOption('full')}
+                              className={cn(
+                                "p-3 rounded-lg border-2 transition-all text-left",
+                                packagePaymentOption === 'full'
+                                  ? "border-primary bg-primary/5"
+                                  : "border-border hover:border-primary/30"
+                              )}
+                            >
+                              <div className="text-sm font-medium">Full Payment</div>
+                              <div className="text-xs text-muted-foreground mt-1">
+                                Pay KES {Math.round(discountedPrice).toLocaleString()} now
+                              </div>
+                            </button>
+                            <button
+                              onClick={() => setPackagePaymentOption('deposit')}
+                              className={cn(
+                                "p-3 rounded-lg border-2 transition-all text-left",
+                                packagePaymentOption === 'deposit'
+                                  ? "border-primary bg-primary/5"
+                                  : "border-border hover:border-primary/30"
+                              )}
+                            >
+                              <div className="text-sm font-medium">{selectedPackage.tutor_id === '4d9426d7-7294-492a-a2e9-4b1642ba1954' ? '1%' : '30%'} Deposit</div>
+                              <div className="text-xs text-muted-foreground mt-1">
+                                Pay KES {depositAmount.toLocaleString()} now
+                              </div>
+                            </button>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    <Card className="bg-muted/50">
+                      <CardContent className="p-4">
+                        <div className="space-y-3">
+                          <div className="flex justify-between">
+                            <span className="text-sm text-muted-foreground">Package:</span>
+                            <span className="font-semibold">{selectedPackage.name}</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-sm text-muted-foreground">Total Sessions:</span>
+                            <span className="font-semibold">{selectedPackage.session_count} sessions</span>
+                          </div>
+                          <div className="flex justify-between">
+                            <span className="text-sm text-muted-foreground">Valid for:</span>
+                            <span className="font-semibold">{selectedPackage.validity_days} days</span>
+                          </div>
+                          <Separator />
+                          {packagePaymentOption === 'deposit' ? (
+                            <>
+                              <div className="flex justify-between">
+                                <span className="text-sm text-muted-foreground">Total Price:</span>
+                                <span className="font-medium">KES {Math.round(discountedPrice).toLocaleString()}</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span className="text-sm text-muted-foreground">Deposit ({depositRate === 0.01 ? '1%' : '30%'}):</span>
+                                <span className="font-medium">KES {depositAmount.toLocaleString()}</span>
+                              </div>
+                              <div className="flex justify-between items-baseline">
+                                <span className="font-semibold">Balance Due:</span>
+                                <div className="text-right">
+                                  <p className="text-lg font-bold text-amber-600">
+                                    KES {balanceDue.toLocaleString()}
+                                  </p>
+                                  <p className="text-xs text-muted-foreground">
+                                    Payable later
+                                  </p>
+                                </div>
+                              </div>
+                            </>
+                          ) : (
+                            <div className="flex justify-between items-baseline">
+                              <span className="font-semibold">Total Price:</span>
+                              <div className="text-right">
+                                <p className="text-lg font-bold">
+                                  KES {Math.round(discountedPrice).toLocaleString()}
+                                </p>
+                                <p className="text-xs text-green-600">
+                                  You save {selectedPackage.discount_percentage}%
+                                </p>
+                              </div>
+                            </div>
+                          )}
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    <Button 
+                      className="w-full" 
+                      size="lg"
+                      onClick={handlePackagePurchase}
+                    >
+                      Proceed to Payment
+                    </Button>
+                    
+                    <p className="text-xs text-center text-muted-foreground">
+                      Secure payment via PesaPal. After payment, you can start booking your sessions immediately from your dashboard.
+                    </p>
+                  </>
+                );
+              })()}
             </div>
           )}
         </DialogContent>
