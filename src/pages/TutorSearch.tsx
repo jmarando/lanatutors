@@ -46,23 +46,23 @@ const TutorSearch = () => {
     if (params.get('action') === 'request-plan') {
       setShowLearningPlanDialog(true);
       // Clean up URL
-      navigate('/tutors', { replace: true });
+      navigate('/tutors', {
+        replace: true
+      });
     }
-    
+
     // Restore filters from URL
     const query = params.get('query');
     const curriculum = params.get('curriculum');
     const level = params.get('level');
     const subject = params.get('subject');
     const location = params.get('location');
-    
     if (query) setSearchQuery(query);
     if (curriculum) setSelectedCurriculum(curriculum);
     if (level) setSelectedTeachingLevel(level);
     if (subject) setSelectedSubject(subject);
     if (location) setSelectedLocation(location);
   }, []);
-
   useEffect(() => {
     fetchTutors();
   }, []);
@@ -90,11 +90,9 @@ const TutorSearch = () => {
 
       // 3) Fetch pricing tiers for all tutors to get their rate ranges
       const tutorProfileIds = (tutorProfiles || []).map((tp: any) => tp.id);
-      const { data: pricingTiers } = await supabase
-        .from("tutor_pricing_tiers")
-        .select("*")
-        .in("tutor_id", tutorProfileIds);
-
+      const {
+        data: pricingTiers
+      } = await supabase.from("tutor_pricing_tiers").select("*").in("tutor_id", tutorProfileIds);
       const tiersByTutor = new Map<string, any[]>();
       (pricingTiers || []).forEach((tier: any) => {
         if (!tiersByTutor.has(tier.tutor_id)) {
@@ -108,29 +106,26 @@ const TutorSearch = () => {
       const formattedTutors = (tutorProfiles || []).map((tp: any, index: number) => {
         const prof = profilesById.get(tp.user_id);
         const name = prof?.full_name || "Tutor";
-        
+
         // Get pricing tiers for this tutor
         const tiers = tiersByTutor.get(tp.id) || [];
         const standardTier = tiers.find(t => t.tier_name.toLowerCase() === 'standard');
         const advancedTier = tiers.find(t => t.tier_name.toLowerCase() === 'advanced');
-        
+
         // Use standard tier as base rate, fallback to legacy hourly_rate
-        const hourlyRate = standardTier 
-          ? Number(standardTier.online_hourly_rate) 
-          : Number(tp.hourly_rate) || 2500;
-        const hourlyRateMax = advancedTier 
-          ? Number(advancedTier.online_hourly_rate) 
-          : hourlyRate;
+        const hourlyRate = standardTier ? Number(standardTier.online_hourly_rate) : Number(tp.hourly_rate) || 2500;
+        const hourlyRateMax = advancedTier ? Number(advancedTier.online_hourly_rate) : hourlyRate;
 
         // Only show real uploaded avatars, no AI fallback photos
         const uploadedAvatar = prof?.avatar_url;
-        
         return {
           id: tp.id,
           name,
           photo: name.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2),
-          photoUrl: uploadedAvatar || null, // Only use real avatar, no fallback
-          profileSlug: tp.profile_slug, // Add profile slug
+          photoUrl: uploadedAvatar || null,
+          // Only use real avatar, no fallback
+          profileSlug: tp.profile_slug,
+          // Add profile slug
           subjects: tp.subjects || [],
           curriculum: tp.curriculum || [],
           teachingLevels: tp.teaching_levels || [],
@@ -144,10 +139,9 @@ const TutorSearch = () => {
           hourlyRate,
           hourlyRateMax,
           hasTiers: tiers.length > 0,
-          gender: tp.gender || null,
+          gender: tp.gender || null
         };
       });
-
       setTutors(formattedTutors);
     } catch (err) {
       console.error("Error fetching tutors:", err);
@@ -160,14 +154,19 @@ const TutorSearch = () => {
 
   // Dynamic level options based on selected curriculum
   const levelOptions = selectedCurriculum !== "all" ? getLevelsForCurriculum(selectedCurriculum) : [];
-  const visibleLevelOptions = selectedCurriculum === "all"
-    ? [
-        { value: "Early Years", label: "Early Years" },
-        { value: "Primary", label: "Primary" },
-        { value: "Middle School/Junior Secondary", label: "Middle School/Junior Secondary" },
-        { value: "Secondary/A-Level", label: "Secondary/A-Level" },
-      ]
-    : levelOptions;
+  const visibleLevelOptions = selectedCurriculum === "all" ? [{
+    value: "Early Years",
+    label: "Early Years"
+  }, {
+    value: "Primary",
+    label: "Primary"
+  }, {
+    value: "Middle School/Junior Secondary",
+    label: "Middle School/Junior Secondary"
+  }, {
+    value: "Secondary/A-Level",
+    label: "Secondary/A-Level"
+  }] : levelOptions;
 
   // Subjects derived from curriculum + level (fallback to all subjects so it's not restrictive)
   const subjectOptions: string[] = (() => {
@@ -193,49 +192,17 @@ const TutorSearch = () => {
     if (/lower\s*primary|upper\s*primary|elementary|key\s*stage\s*[12]|pyp|grade\s*[1-6]/.test(l)) return "Primary";
     return level; // fallback to exact
   };
-
-  const filteredTutors = tutors.filter((tutor) => {
+  const filteredTutors = tutors.filter(tutor => {
     const q = searchQuery.toLowerCase();
-    const matchesSearch =
-      tutor.name.toLowerCase().includes(q) ||
-      tutor.subjects.some((s: string) => s.toLowerCase().includes(q)) ||
-      (tutor.school || "").toLowerCase().includes(q) ||
-      (tutor.teachingLocation || "").toLowerCase().includes(q);
-
-    const matchesSubject =
-      selectedSubject === "all" ||
-      tutor.subjects.some((s: string) =>
-        s.toLowerCase().includes(selectedSubject.toLowerCase()) ||
-        selectedSubject.toLowerCase().includes(s.toLowerCase())
-      );
-
-    const matchesCurriculum =
-      selectedCurriculum === "all" ||
-      (tutor.curriculum?.includes(selectedCurriculum)) ||
-      (tutor.teachingLevels?.some((lvl: string) =>
-        lvl.toLowerCase().includes(selectedCurriculum.toLowerCase())
-      ));
-
+    const matchesSearch = tutor.name.toLowerCase().includes(q) || tutor.subjects.some((s: string) => s.toLowerCase().includes(q)) || (tutor.school || "").toLowerCase().includes(q) || (tutor.teachingLocation || "").toLowerCase().includes(q);
+    const matchesSubject = selectedSubject === "all" || tutor.subjects.some((s: string) => s.toLowerCase().includes(selectedSubject.toLowerCase()) || selectedSubject.toLowerCase().includes(s.toLowerCase()));
+    const matchesCurriculum = selectedCurriculum === "all" || tutor.curriculum?.includes(selectedCurriculum) || tutor.teachingLevels?.some((lvl: string) => lvl.toLowerCase().includes(selectedCurriculum.toLowerCase()));
     const selectedBroad = mapLevelToBroad(selectedCurriculum, selectedTeachingLevel).toLowerCase();
-    const matchesTeachingLevel =
-      selectedTeachingLevel === "all" ||
-      (tutor.teachingLevels?.some((lvl: string) => {
-        const l = lvl.toLowerCase();
-        return (
-          l === selectedTeachingLevel.toLowerCase() ||
-          l.includes(selectedTeachingLevel.toLowerCase()) ||
-          (selectedCurriculum !== "all" && l.includes(`${selectedCurriculum.toLowerCase()} - ${selectedTeachingLevel.toLowerCase()}`)) ||
-          mapLevelToBroad(selectedCurriculum, lvl).toLowerCase() === selectedBroad
-        );
-      }) ?? false);
-
-    const matchesLocation = 
-      selectedLocation === "all" ||
-      selectedLocation === "online" && tutor.teachingMode?.includes("Online") ||
-      selectedLocation === "in-person" && tutor.teachingMode?.includes("In-Person") ||
-      (tutor.teachingLocation || "").toLowerCase().includes(selectedLocation.toLowerCase());
-
-
+    const matchesTeachingLevel = selectedTeachingLevel === "all" || (tutor.teachingLevels?.some((lvl: string) => {
+      const l = lvl.toLowerCase();
+      return l === selectedTeachingLevel.toLowerCase() || l.includes(selectedTeachingLevel.toLowerCase()) || selectedCurriculum !== "all" && l.includes(`${selectedCurriculum.toLowerCase()} - ${selectedTeachingLevel.toLowerCase()}`) || mapLevelToBroad(selectedCurriculum, lvl).toLowerCase() === selectedBroad;
+    }) ?? false);
+    const matchesLocation = selectedLocation === "all" || selectedLocation === "online" && tutor.teachingMode?.includes("Online") || selectedLocation === "in-person" && tutor.teachingMode?.includes("In-Person") || (tutor.teachingLocation || "").toLowerCase().includes(selectedLocation.toLowerCase());
     return matchesSearch && matchesSubject && matchesCurriculum && matchesTeachingLevel && matchesLocation;
   });
   if (loading) {
@@ -264,7 +231,7 @@ const TutorSearch = () => {
                         <SlidersHorizontal className="w-5 h-5 text-primary" />
                       </div>
                       <h3 className="font-semibold mb-1">1. Filter</h3>
-                      <p className="text-sm text-muted-foreground">Use filters to find tutors by subject, curriculum, level, and location</p>
+                      <p className="text-sm text-muted-foreground">Use filters to find tutors by subject, curriculum, level, and location for physical classes.</p>
                     </div>
                     <div className="flex flex-col items-start">
                       <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mb-3">
@@ -318,17 +285,18 @@ const TutorSearch = () => {
             </SelectContent>
           </Select>
 
-          <Select value={selectedTeachingLevel} onValueChange={(val) => { setSelectedTeachingLevel(val); setSelectedSubject("all"); }}>
+          <Select value={selectedTeachingLevel} onValueChange={val => {
+          setSelectedTeachingLevel(val);
+          setSelectedSubject("all");
+        }}>
             <SelectTrigger className="w-48 h-12 bg-background z-50">
               <SelectValue placeholder="All Levels" />
             </SelectTrigger>
             <SelectContent className="bg-background z-50">
               <SelectItem value="all">All Levels</SelectItem>
-              {visibleLevelOptions.map((opt) => (
-                <SelectItem key={opt.value} value={opt.value}>
+              {visibleLevelOptions.map(opt => <SelectItem key={opt.value} value={opt.value}>
                   {opt.label}
-                </SelectItem>
-              ))}
+                </SelectItem>)}
             </SelectContent>
           </Select>
 
@@ -337,11 +305,9 @@ const TutorSearch = () => {
               <SelectValue placeholder="All Subjects" />
             </SelectTrigger>
             <SelectContent className="bg-background z-50 max-h-[300px]">
-              {subjectChoices.map(subject => (
-                <SelectItem key={subject} value={subject}>
+              {subjectChoices.map(subject => <SelectItem key={subject} value={subject}>
                   {subject === "all" ? "All Subjects" : subject}
-                </SelectItem>
-              ))}
+                </SelectItem>)}
             </SelectContent>
           </Select>
 
@@ -353,11 +319,9 @@ const TutorSearch = () => {
               <SelectItem value="all">All Locations</SelectItem>
               <SelectItem value="online">Online Only</SelectItem>
               <SelectItem value="in-person">In-Person</SelectItem>
-              {NAIROBI_LOCATIONS.map(location => (
-                <SelectItem key={location} value={location}>
+              {NAIROBI_LOCATIONS.map(location => <SelectItem key={location} value={location}>
                   {location}
-                </SelectItem>
-              ))}
+                </SelectItem>)}
             </SelectContent>
           </Select>
 
@@ -370,44 +334,31 @@ const TutorSearch = () => {
             <p className="text-sm text-muted-foreground">
               Showing {filteredTutors.length} of {tutors.length} tutors
             </p>
-            {(selectedSubject !== "all" || selectedCurriculum !== "all" || selectedTeachingLevel !== "all" || selectedLocation !== "all" || searchQuery) && (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => {
-                  setSearchQuery("");
-                  setSelectedSubject("all");
-                  setSelectedCurriculum("all");
-                  setSelectedTeachingLevel("all");
-                  setSelectedLocation("all");
-                }}
-              >
+            {(selectedSubject !== "all" || selectedCurriculum !== "all" || selectedTeachingLevel !== "all" || selectedLocation !== "all" || searchQuery) && <Button variant="ghost" size="sm" onClick={() => {
+            setSearchQuery("");
+            setSelectedSubject("all");
+            setSelectedCurriculum("all");
+            setSelectedTeachingLevel("all");
+            setSelectedLocation("all");
+          }}>
                 Clear Filters
-              </Button>
-            )}
+              </Button>}
           </div>
         </div>
-        {filteredTutors.length === 0 ? (
-          <div className="text-center py-16">
+        {filteredTutors.length === 0 ? <div className="text-center py-16">
             <p className="text-xl font-semibold mb-2">No tutors found</p>
             <p className="text-muted-foreground mb-6">Try adjusting your filters or search criteria</p>
-            <Button
-              variant="outline"
-              onClick={() => {
-                setSearchQuery("");
-                setSelectedSubject("all");
-                setSelectedCurriculum("all");
-                setSelectedTeachingLevel("all");
-                setSelectedLocation("all");
-              }}
-            >
+            <Button variant="outline" onClick={() => {
+          setSearchQuery("");
+          setSelectedSubject("all");
+          setSelectedCurriculum("all");
+          setSelectedTeachingLevel("all");
+          setSelectedLocation("all");
+        }}>
               Reset Filters
             </Button>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto">
-            {filteredTutors.map((tutor) => (
-              <Card key={tutor.id} className="overflow-hidden border-border/50 bg-card">
+          </div> : <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 max-w-7xl mx-auto">
+            {filteredTutors.map(tutor => <Card key={tutor.id} className="overflow-hidden border-border/50 bg-card">
                 <CardContent className="p-6">
                   <div className="flex items-start gap-4 mb-4">
                     <Avatar className="w-16 h-16 border-2 border-black ring-2 ring-black/10">
@@ -421,38 +372,31 @@ const TutorSearch = () => {
                         <span className="font-semibold">Subjects:</span> {tutor.subjects.slice(0, 3).join(", ")}
                         {tutor.subjects.length > 3 ? "…" : ""}
                       </p>
-                      {tutor.curriculum && tutor.curriculum.length > 0 && (
-                        <p className="mt-1 text-xs text-muted-foreground">
+                      {tutor.curriculum && tutor.curriculum.length > 0 && <p className="mt-1 text-xs text-muted-foreground">
                           <span className="font-semibold">Curricula:</span> {tutor.curriculum.join(", ")}
-                        </p>
-                      )}
+                        </p>}
                       <p className="mt-1 text-xs font-semibold text-primary">
                         From KES {tutor.hourlyRate.toLocaleString()}/hr
                       </p>
                     </div>
                   </div>
-                  <Button
-                    onClick={() => {
-                      const params = new URLSearchParams();
-                      if (searchQuery) params.set("query", searchQuery);
-                      if (selectedCurriculum !== "all") params.set("curriculum", selectedCurriculum);
-                      if (selectedTeachingLevel !== "all") params.set("level", selectedTeachingLevel);
-                      if (selectedSubject !== "all") params.set("subject", selectedSubject);
-                      if (selectedLocation !== "all") params.set("location", selectedLocation);
-                      const qs = params.toString();
-                      // Use slug if available, otherwise fall back to ID
-                      const profilePath = tutor.profileSlug || tutor.id;
-                      navigate(`/tutors/${profilePath}${qs ? `?${qs}` : ""}`);
-                    }}
-                    className="w-full"
-                  >
+                  <Button onClick={() => {
+              const params = new URLSearchParams();
+              if (searchQuery) params.set("query", searchQuery);
+              if (selectedCurriculum !== "all") params.set("curriculum", selectedCurriculum);
+              if (selectedTeachingLevel !== "all") params.set("level", selectedTeachingLevel);
+              if (selectedSubject !== "all") params.set("subject", selectedSubject);
+              if (selectedLocation !== "all") params.set("location", selectedLocation);
+              const qs = params.toString();
+              // Use slug if available, otherwise fall back to ID
+              const profilePath = tutor.profileSlug || tutor.id;
+              navigate(`/tutors/${profilePath}${qs ? `?${qs}` : ""}`);
+            }} className="w-full">
                     View Profile
                   </Button>
                 </CardContent>
-              </Card>
-            ))}
-          </div>
-        )}
+              </Card>)}
+          </div>}
       </div>
 
       {/* Learning Plan Request Dialog */}
@@ -461,10 +405,7 @@ const TutorSearch = () => {
           <DialogHeader>
             <DialogTitle>Request a Custom Learning Plan</DialogTitle>
           </DialogHeader>
-          <GeneralLearningPlanRequest
-            onClose={() => setShowLearningPlanDialog(false)}
-            onSubmitSuccess={() => setShowLearningPlanDialog(false)}
-          />
+          <GeneralLearningPlanRequest onClose={() => setShowLearningPlanDialog(false)} onSubmitSuccess={() => setShowLearningPlanDialog(false)} />
         </DialogContent>
       </Dialog>
     </div>;
