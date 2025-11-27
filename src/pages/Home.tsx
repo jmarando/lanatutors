@@ -212,13 +212,6 @@ const Home = () => {
         structuredData={organizationSchema}
       />
       
-      {/* Holiday Package Banner - Prominent Position */}
-      <section className="max-w-7xl mx-auto px-6 pt-8 pb-4">
-        <div className="animate-pulse-slow">
-          <HolidayPackageBanner onViewPackages={() => navigate("/holiday-packages")} />
-        </div>
-      </section>
-      
       {/* Hero Section */}
       <section className="relative overflow-hidden">
         {/* Background Image with Overlay */}
@@ -272,6 +265,11 @@ const Home = () => {
             </div>
           </div>
         </div>
+      </section>
+
+      {/* Holiday Package Banner */}
+      <section className="max-w-7xl mx-auto px-6 py-8">
+        <HolidayPackageBanner onViewPackages={() => navigate("/holiday-packages")} />
       </section>
 
       {/* Stats Section */}
