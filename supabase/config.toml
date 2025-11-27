@@ -79,5 +79,5 @@ verify_jwt = true
 verify_jwt = true
 
 [functions.create-booking-with-meet]
-verify_jwt = true
+verify_jwt = false
 
