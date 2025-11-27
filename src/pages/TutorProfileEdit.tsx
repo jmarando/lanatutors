@@ -372,7 +372,10 @@ const TutorProfileEdit = () => {
           .from('avatars')
           .upload(fileName, photoFile, { upsert: true });
 
-        if (uploadError) throw uploadError;
+        if (uploadError) {
+          console.error("Photo upload error:", uploadError);
+          throw new Error(`Failed to upload photo: ${uploadError.message}`);
+        }
 
         const { data: { publicUrl } } = supabase.storage
           .from('avatars')
@@ -380,10 +383,19 @@ const TutorProfileEdit = () => {
 
         avatarUrl = publicUrl;
 
-        await supabase
+        const { error: profileUpdateError } = await supabase
           .from("profiles")
           .update({ avatar_url: avatarUrl })
           .eq("id", userId);
+
+        if (profileUpdateError) {
+          console.error("Profile update error:", profileUpdateError);
+          throw new Error(`Failed to update profile photo: ${profileUpdateError.message}`);
+        }
+
+        // Update form state to reflect new avatar
+        setFormData(prev => ({ ...prev, avatarUrl }));
+        setPhotoPreview(avatarUrl);
       }
 
       // Update tutor profile
