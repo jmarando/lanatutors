@@ -311,15 +311,7 @@ export const BookingCalendar = ({
       return;
     }
 
-    // Skip payment validation for trial sessions
-    if (!isTrialSession && paymentMethod === 'mpesa' && (!phoneNumber || phoneNumber.length !== 10)) {
-      toast({
-        title: "Invalid Phone Number",
-        description: "Please enter a valid 10-digit M-Pesa phone number",
-        variant: "destructive",
-      });
-      return;
-    }
+    // Payment validation removed - Pesapal handles payment method collection
 
     setLoading(true);
 
@@ -327,13 +319,7 @@ export const BookingCalendar = ({
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error("Not authenticated");
 
-      // Save phone number to profile if provided (for M-Pesa payments)
-      if (!isTrialSession && paymentMethod === 'mpesa' && phoneNumber) {
-        await supabase
-          .from("profiles")
-          .update({ phone_number: phoneNumber.trim() })
-          .eq("id", user.id);
-      }
+      // Phone number no longer collected here - Pesapal handles it
 
       // For trial sessions, always 30 minutes and free
       let duration, totalAmount, depositAmount, balanceDue;
@@ -999,53 +985,12 @@ export const BookingCalendar = ({
                     );
                   })()}
 
-                  {/* Payment Method Section */}
-                  <>
-                    <div className="space-y-2">
-                      <Label className="text-sm font-medium mb-2 block">Payment Method *</Label>
-                      <Tabs value={paymentMethod} onValueChange={(v) => setPaymentMethod(v as 'mpesa' | 'card')} className="w-full">
-                        <TabsList className="grid w-full grid-cols-2">
-                          <TabsTrigger value="mpesa" className="flex items-center gap-2">
-                            <Smartphone className="w-4 h-4" />
-                            M-Pesa
-                          </TabsTrigger>
-                          <TabsTrigger value="card" className="flex items-center gap-2">
-                            <CreditCard className="w-4 h-4" />
-                            Card
-                          </TabsTrigger>
-                        </TabsList>
-                      </Tabs>
-                      
-                      {/* Payment Flow Explanation */}
-                      <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-900 rounded-lg p-3">
-                        <p className="text-xs text-blue-900 dark:text-blue-200 font-medium mb-1">
-                          📋 Payment Process
-                        </p>
-                        <p className="text-xs text-blue-800 dark:text-blue-300">
-                          {paymentMethod === 'mpesa' 
-                            ? "You'll review your invoice, then receive an M-Pesa prompt on your phone to complete payment" 
-                            : "You'll review your invoice, then be redirected to a secure payment page to enter your card details"}
-                        </p>
-                      </div>
-                    </div>
-
-                    {paymentMethod === 'mpesa' && (
-                      <div>
-                        <Label className="text-sm font-medium mb-2 block">M-Pesa Phone Number *</Label>
-                        <Input
-                          type="tel"
-                          placeholder="0712345678"
-                          value={phoneNumber}
-                          onChange={(e) => setPhoneNumber(e.target.value)}
-                          maxLength={10}
-                          disabled={paymentInitiated}
-                        />
-                        <p className="text-xs text-muted-foreground mt-1">
-                          Enter your Safaricom number (format: 07XXXXXXXX)
-                        </p>
-                      </div>
-                    )}
-                  </>
+                  {/* Payment information message */}
+                  <div className="bg-muted/50 border border-border rounded-lg p-3">
+                    <p className="text-sm text-muted-foreground">
+                      💳 You'll be redirected to our secure payment partner to complete your payment with M-Pesa, Card, or other payment methods.
+                    </p>
+                  </div>
                 </>
               )}
 
@@ -1076,16 +1021,8 @@ export const BookingCalendar = ({
                   "Waiting for Payment..."
                 ) : isTrialSession ? (
                   "Confirm Free Trial"
-                ) : paymentOption === 'full' ? (
-                  <>
-                    {paymentMethod === 'mpesa' ? <Smartphone className="w-4 h-4 mr-2" /> : <CreditCard className="w-4 h-4 mr-2" />}
-                    Pay Full Amount & Confirm
-                  </>
                 ) : (
-                  <>
-                    {paymentMethod === 'mpesa' ? <Smartphone className="w-4 h-4 mr-2" /> : <CreditCard className="w-4 h-4 mr-2" />}
-                    Pay Deposit & Confirm Booking
-                  </>
+                  "Proceed to Payment"
                 )}
               </Button>
 
@@ -1100,39 +1037,18 @@ export const BookingCalendar = ({
                     <>
                       <p>• Pay now to purchase this package</p>
                       <p>• Use sessions anytime within {selectedPackage?.validity_days} days</p>
-                      {paymentMethod === 'mpesa' ? (
-                        <>
-                          <p>• You will receive an M-Pesa prompt on your phone</p>
-                          <p>• Enter your M-Pesa PIN to complete the purchase</p>
-                        </>
-                      ) : (
-                        <p>• You'll be redirected to secure payment</p>
-                      )}
+                      <p>• Choose M-Pesa, Card, or other payment methods on the next page</p>
                     </>
                   ) : paymentOption === 'full' ? (
                     <>
                       <p>• Pay the full amount now - no balance required later</p>
-                      {paymentMethod === 'mpesa' ? (
-                        <>
-                          <p>• You will receive an M-Pesa prompt on your phone</p>
-                          <p>• Enter your M-Pesa PIN to complete the payment</p>
-                        </>
-                      ) : (
-                        <p>• You'll be redirected to secure payment</p>
-                      )}
+                      <p>• Choose M-Pesa, Card, or other payment methods on the next page</p>
                     </>
                   ) : (
                     <>
                       <p>• Pay only {tutorId === '4d9426d7-7294-492a-a2e9-4b1642ba1954' ? '1%' : '30%'} deposit now to secure your booking</p>
                       <p>• Balance due before the session starts</p>
-                      {paymentMethod === 'mpesa' ? (
-                        <>
-                          <p>• You will receive an M-Pesa prompt on your phone</p>
-                          <p>• Enter your M-Pesa PIN to complete the deposit</p>
-                        </>
-                      ) : (
-                        <p>• You'll be redirected to secure payment</p>
-                      )}
+                      <p>• Choose M-Pesa, Card, or other payment methods on the next page</p>
                     </>
                   )}
                 </div>
