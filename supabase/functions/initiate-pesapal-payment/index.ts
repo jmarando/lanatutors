@@ -34,7 +34,25 @@ serve(async (req) => {
 
     const { amount, description, referenceId, paymentType, callbackUrl, phoneNumber, currency } = await req.json()
 
-    console.log('Initiating payment - Amount:', amount, 'Currency:', currency || 'KES', 'Type:', paymentType, 'Phone:', phoneNumber)
+    console.log('Initiating payment - Amount:', amount, 'Currency:', currency || 'KES', 'Type:', paymentType)
+
+    // Validate phone number before processing payment
+    if (phoneNumber) {
+      const { data: validationResult, error: validationError } = await supabase.functions.invoke('validate-phone', {
+        body: { phoneNumber }
+      })
+
+      if (validationError || !validationResult?.isValid) {
+        console.error('Phone validation failed:', validationError || 'Invalid phone number')
+        return new Response(
+          JSON.stringify({ 
+            success: false, 
+            error: 'Invalid phone number format. Please provide a valid phone number.' 
+          }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
+    }
 
     // Step 1: Get Pesapal access token
     const consumerKey = Deno.env.get('PESAPAL_CONSUMER_KEY')
