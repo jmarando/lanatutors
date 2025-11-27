@@ -296,9 +296,8 @@ export const CreateLearningPlanForm = ({
                       type="number"
                       min="1"
                       value={subject.sessions}
-                      onChange={(e) => updateSubject(index, "sessions", parseInt(e.target.value) || 1)}
-                      required
-                      className="bg-muted/50"
+                      disabled
+                      className="bg-muted/50 cursor-not-allowed"
                     />
                   </div>
                   <div>
