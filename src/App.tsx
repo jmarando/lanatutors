@@ -6,6 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { lazy, Suspense } from "react";
 import Navigation from "./components/Navigation";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 // Lazy load pages for code splitting
 const Home = lazy(() => import("./pages/Home"));
@@ -32,7 +33,6 @@ const AdminHolidayPackages = lazy(() => import("./pages/AdminHolidayPackages"));
 const MultiTutorPackage = lazy(() => import("./pages/MultiTutorPackage"));
 const PayBalance = lazy(() => import("./pages/PayBalance"));
 const InvoicePreview = lazy(() => import("./pages/InvoicePreview"));
-const TestBookingEmail = lazy(() => import("./pages/TestBookingEmail"));
 
 const NotFound = lazy(() => import("./pages/NotFound"));
 const TestEmail = lazy(() => import("./pages/TestEmail"));
@@ -52,18 +52,19 @@ const queryClient = new QueryClient();
 
 const App = () => {
   return (
-    <QueryClientProvider client={queryClient}>
-      <AuthProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <Navigation />
-            <Suspense fallback={
-              <div className="min-h-screen flex items-center justify-center">
-                <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-              </div>
-            }>
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <AuthProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <Navigation />
+              <Suspense fallback={
+                <div className="min-h-screen flex items-center justify-center">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+                </div>
+              }>
               <Routes>
                 <Route path="/" element={<Home />} />
                 <Route path="/how-it-works" element={<HowItWorks />} />
@@ -101,16 +102,16 @@ const App = () => {
                 <Route path="/multi-tutor-package" element={<MultiTutorPackage />} />
                 <Route path="/pay-balance" element={<PayBalance />} />
                 <Route path="/invoice-preview" element={<InvoicePreview />} />
-                <Route path="/test-booking-email" element={<TestBookingEmail />} />
                 <Route path="/privacy-policy" element={<PrivacyPolicy />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
-            </Suspense>
-          </BrowserRouter>
-        </TooltipProvider>
-      </AuthProvider>
-    </QueryClientProvider>
+              </Suspense>
+            </BrowserRouter>
+          </TooltipProvider>
+        </AuthProvider>
+      </QueryClientProvider>
+    </ErrorBoundary>
   );
 };
 

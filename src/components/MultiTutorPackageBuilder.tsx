@@ -47,13 +47,9 @@ export const MultiTutorPackageBuilder = () => {
   const loadCartFromStorage = () => {
     try {
       const saved = localStorage.getItem(CART_STORAGE_KEY);
-      console.log('Loading cart from storage:', saved);
       if (saved) {
         const parsedCart = JSON.parse(saved);
-        console.log('Parsed cart:', parsedCart);
         setCart(parsedCart);
-      } else {
-        console.log('No cart found in storage');
       }
     } catch (error) {
       console.error('Failed to load cart:', error);

@@ -2,12 +2,10 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { StudentSidebar } from "@/components/student/StudentSidebar";
-import { StudentOverviewTab } from "@/components/student/StudentOverviewTab";
 import { StudentClassesTab } from "@/components/student/StudentClassesTab";
 import { StudentClassroomsTab } from "@/components/student/StudentClassroomsTab";
+import { StudentProgressTab } from "@/components/student/StudentProgressTab";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
 import { supabase } from "@/integrations/supabase/client";
 
 const RedesignedStudentDashboard = () => {
@@ -45,7 +43,7 @@ const RedesignedStudentDashboard = () => {
       case "classrooms":
         return <StudentClassroomsTab />;
       case "progress":
-        return <ProgressTabPlaceholder />;
+        return <StudentProgressTab />;
       default:
         return <StudentClassesTab />;
     }
@@ -81,44 +79,5 @@ const RedesignedStudentDashboard = () => {
     </SidebarProvider>
   );
 };
-
-// Placeholder components for Progress and Messages tabs
-function ProgressTabPlaceholder() {
-  const learningProgress = [
-    { subject: "Math", progress: 85, sessions: 12, color: "bg-blue-500" },
-    { subject: "Physics", progress: 78, sessions: 8, color: "bg-purple-500" },
-    { subject: "Chemistry", progress: 92, sessions: 15, color: "bg-green-500" }
-  ];
-
-  return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-3xl font-bold mb-2">Learning Progress</h2>
-        <p className="text-muted-foreground">Track your progress across all subjects.</p>
-      </div>
-
-      <div className="grid gap-6">
-        {learningProgress.map((item) => (
-          <Card key={item.subject}>
-            <CardContent className="pt-6">
-              <div className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <h3 className="text-xl font-semibold">{item.subject}</h3>
-                  <span className="text-2xl font-bold text-primary">{item.progress}%</span>
-                </div>
-                <Progress value={item.progress} className="h-3" />
-                <div className="flex items-center justify-between text-sm text-muted-foreground">
-                  <span>{item.sessions} sessions completed</span>
-                  <span>{Math.round((item.progress / 100) * item.sessions)} / {item.sessions} goals achieved</span>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
-    </div>
-  );
-}
-
 
 export default RedesignedStudentDashboard;
