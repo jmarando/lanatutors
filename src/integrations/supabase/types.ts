@@ -65,6 +65,7 @@ export type Database = {
           amount_original_currency: number | null
           availability_slot_id: string
           balance_due: number | null
+          booking_group_id: string | null
           class_type: string | null
           classroom_id: string | null
           classroom_link: string | null
@@ -88,6 +89,7 @@ export type Database = {
           amount_original_currency?: number | null
           availability_slot_id: string
           balance_due?: number | null
+          booking_group_id?: string | null
           class_type?: string | null
           classroom_id?: string | null
           classroom_link?: string | null
@@ -111,6 +113,7 @@ export type Database = {
           amount_original_currency?: number | null
           availability_slot_id?: string
           balance_due?: number | null
+          booking_group_id?: string | null
           class_type?: string | null
           classroom_id?: string | null
           classroom_link?: string | null

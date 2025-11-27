@@ -408,6 +408,10 @@ export const BookingCalendar = ({
 
       const notesWithCurriculumLevel = `${notesWithLocation ? notesWithLocation + ' | ' : ''}Curriculum: ${curriculum} | Level: ${level} | Tier: ${selectedTier}`;
 
+      // Generate a booking_group_id if this is part of a multi-session booking
+      // For now, single bookings get null, but future multi-session flows will generate a UUID here
+      const bookingGroupId = null; // Will be populated when we implement multi-session booking
+
       const { data: booking, error: bookingError } = await supabase
         .from("bookings")
         .insert({
@@ -423,6 +427,7 @@ export const BookingCalendar = ({
           status: (isTrialSession || paymentOption === 'package') ? "pending" : "pending",
           payment_option: isTrialSession ? 'deposit' : paymentOption,
           package_purchase_id: packagePurchaseId,
+          booking_group_id: bookingGroupId,
         })
         .select()
         .single();
