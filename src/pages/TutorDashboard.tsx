@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { 
   Video, 
   Calendar,
@@ -40,6 +41,8 @@ const TutorDashboard = () => {
   const [payments, setPayments] = useState<any[]>([]);
   const [reviews, setReviews] = useState<any[]>([]);
   const [activeTab, setActiveTab] = useState("today");
+  const [learningPlansOpen, setLearningPlansOpen] = useState(false);
+  const [progressOpen, setProgressOpen] = useState(false);
 
   useEffect(() => {
     fetchTutorData();
@@ -222,17 +225,17 @@ const TutorDashboard = () => {
               Manage Availability
             </Button>
             <Button
-              variant={activeTab === "learning-plans" ? "default" : "outline"}
+              variant="outline"
               size="sm"
-              onClick={() => setActiveTab("learning-plans")}
+              onClick={() => setLearningPlansOpen(true)}
             >
               <FileText className="w-4 h-4 mr-2" />
               Learning Plans
             </Button>
             <Button
-              variant={activeTab === "progress" ? "default" : "outline"}
+              variant="outline"
               size="sm"
-              onClick={() => setActiveTab("progress")}
+              onClick={() => setProgressOpen(true)}
             >
               <TrendingUp className="w-4 h-4 mr-2" />
               Student Progress
@@ -560,14 +563,6 @@ const TutorDashboard = () => {
             <TutorCalendarOverview tutorId={user?.id} />
           </TabsContent>
 
-          <TabsContent value="learning-plans">
-            {tutorProfile && <LearningPlanRequests tutorProfileId={tutorProfile.id} />}
-          </TabsContent>
-
-          <TabsContent value="progress">
-            <StudentProgressTracker tutorId={user?.id} />
-          </TabsContent>
-
           <TabsContent value="reviews" className="space-y-4">
             {reviews.length === 0 ? (
               <Card>
@@ -610,6 +605,32 @@ const TutorDashboard = () => {
           </TabsContent>
         </Tabs>
       </div>
+
+      {/* Learning Plans Dialog */}
+      <Dialog open={learningPlansOpen} onOpenChange={setLearningPlansOpen}>
+        <DialogContent className="max-w-5xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <FileText className="w-5 h-5" />
+              Learning Plans
+            </DialogTitle>
+          </DialogHeader>
+          {tutorProfile && <LearningPlanRequests tutorProfileId={tutorProfile.id} />}
+        </DialogContent>
+      </Dialog>
+
+      {/* Student Progress Dialog */}
+      <Dialog open={progressOpen} onOpenChange={setProgressOpen}>
+        <DialogContent className="max-w-5xl max-h-[85vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <TrendingUp className="w-5 h-5" />
+              Student Progress
+            </DialogTitle>
+          </DialogHeader>
+          <StudentProgressTracker tutorId={user?.id} />
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
