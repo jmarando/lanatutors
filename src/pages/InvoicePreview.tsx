@@ -78,6 +78,7 @@ export default function InvoicePreview() {
         setInvoiceData({
           type: type,
           bookingId: booking.id,
+          tutorId: booking.tutor_id,
           tutorName: tutorNameData?.full_name || "Tutor",
           subject: booking.subject,
           startTime: booking.tutor_availability?.start_time,
@@ -88,7 +89,7 @@ export default function InvoicePreview() {
           balanceDue: booking.balance_due || 0,
           paymentOption: booking.payment_option,
           currency: booking.currency || "KES",
-          amountToPay: type === "balance" ? booking.balance_due : (booking.payment_option === "full" ? booking.amount : booking.amount * 0.3),
+          amountToPay: type === "balance" ? booking.balance_due : (booking.payment_option === "full" ? booking.amount : booking.amount * (booking.tutor_id === '4d9426d7-7294-492a-a2e9-4b1642ba1954' ? 0.01 : 0.3)),
         });
       } else if (type === "package") {
         // Fetch package details
@@ -119,6 +120,7 @@ export default function InvoicePreview() {
         setInvoiceData({
           type: "package",
           packageId: packagePurchase.id,
+          tutorId: packagePurchase.tutor_id,
           tutorName: tutorNameData?.full_name || "Multiple Tutors",
           totalSessions: packagePurchase.total_sessions,
           subjects: metadata?.subjects || [],
@@ -126,7 +128,7 @@ export default function InvoicePreview() {
           amountPaid: packagePurchase.amount_paid || 0,
           paymentOption: metadata?.paymentOption || "full",
           currency: packagePurchase.currency || "KES",
-          amountToPay: metadata?.paymentOption === "deposit" ? packagePurchase.total_amount * 0.3 : packagePurchase.total_amount,
+          amountToPay: metadata?.paymentOption === "deposit" ? packagePurchase.total_amount * (packagePurchase.tutor_id === '4d9426d7-7294-492a-a2e9-4b1642ba1954' ? 0.01 : 0.3) : packagePurchase.total_amount,
           expiresAt: packagePurchase.expires_at,
         });
       }
@@ -391,12 +393,12 @@ export default function InvoicePreview() {
                 <>
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Payment Option</span>
-                    <span className="font-medium">30% Deposit</span>
+                    <span className="font-medium">{invoiceData.tutorId === '4d9426d7-7294-492a-a2e9-4b1642ba1954' ? '1%' : '30%'} Deposit</span>
                   </div>
                   <div className="flex justify-between text-sm text-green-600">
-                    <span>Deposit (30%)</span>
+                    <span>Deposit ({invoiceData.tutorId === '4d9426d7-7294-492a-a2e9-4b1642ba1954' ? '1%' : '30%'})</span>
                     <span className="font-medium">
-                      {invoiceData.currency} {(invoiceData.totalAmount * 0.3).toLocaleString()}
+                      {invoiceData.currency} {(invoiceData.totalAmount * (invoiceData.tutorId === '4d9426d7-7294-492a-a2e9-4b1642ba1954' ? 0.01 : 0.3)).toLocaleString()}
                     </span>
                   </div>
                   <div className="flex justify-between text-sm text-muted-foreground">

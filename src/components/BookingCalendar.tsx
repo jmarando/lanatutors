@@ -347,8 +347,11 @@ export const BookingCalendar = ({
         totalAmount = duration * rate;
         
         // Handle different payment options
+        // Special testing rate for Justin Anyona
+        const depositRate = tutorId === '4d9426d7-7294-492a-a2e9-4b1642ba1954' ? 0.01 : 0.3;
+        
         if (paymentOption === 'deposit') {
-          depositAmount = totalAmount * 0.3;
+          depositAmount = totalAmount * depositRate;
           balanceDue = totalAmount - depositAmount;
         } else if (paymentOption === 'full') {
           depositAmount = totalAmount;
@@ -892,7 +895,8 @@ export const BookingCalendar = ({
                     // Apply 5% discount for double lessons (2 hours)
                     const rate = sessionDuration === 2 ? baseRate * 0.95 : baseRate;
                     const total = duration * rate;
-                    const deposit = total * 0.3;
+                    const depositRate = tutorId === '4d9426d7-7294-492a-a2e9-4b1642ba1954' ? 0.01 : 0.3;
+                    const deposit = total * depositRate;
                     const balance = total - deposit;
 
                     return (
@@ -924,7 +928,7 @@ export const BookingCalendar = ({
                               onClick={() => !paymentInitiated && setPaymentOption('deposit')}
                               disabled={paymentInitiated}
                             >
-                              <div className="font-semibold mb-1">30% Deposit</div>
+                              <div className="font-semibold mb-1">{tutorId === '4d9426d7-7294-492a-a2e9-4b1642ba1954' ? '1%' : '30%'} Deposit</div>
                               <div className="text-sm text-muted-foreground mb-2">
                                 Pay KES {deposit.toFixed(0)} now
                               </div>
@@ -1068,7 +1072,7 @@ export const BookingCalendar = ({
                     </>
                   ) : (
                     <>
-                      <p>• Pay only 30% deposit now to secure your booking</p>
+                      <p>• Pay only {tutorId === '4d9426d7-7294-492a-a2e9-4b1642ba1954' ? '1%' : '30%'} deposit now to secure your booking</p>
                       <p>• Balance due before the session starts</p>
                       {paymentMethod === 'mpesa' ? (
                         <>

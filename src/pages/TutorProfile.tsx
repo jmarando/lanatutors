@@ -333,8 +333,10 @@ const TutorProfile = () => {
 
     try {
       // Calculate amount based on payment option
+      // Special testing rate for Justin Anyona
+      const depositRate = selectedPackage.tutor_id === '4d9426d7-7294-492a-a2e9-4b1642ba1954' ? 0.01 : 0.3;
       const amount = packagePaymentOption === 'deposit' 
-        ? Math.round(selectedPackage.total_price * 0.3)
+        ? Math.round(selectedPackage.total_price * depositRate)
         : Math.round(selectedPackage.total_price);
 
       // Get current user's currency preference
@@ -1053,9 +1055,9 @@ const TutorProfile = () => {
                             : "border-border hover:border-primary/30"
                         )}
                       >
-                        <div className="text-sm font-medium">30% Deposit</div>
+                        <div className="text-sm font-medium">{selectedPackage.tutor_id === '4d9426d7-7294-492a-a2e9-4b1642ba1954' ? '1%' : '30%'} Deposit</div>
                         <div className="text-xs text-muted-foreground mt-1">
-                          Pay KES {Math.round(selectedPackage.total_price * 0.3).toLocaleString()} now
+                          Pay KES {Math.round(selectedPackage.total_price * (selectedPackage.tutor_id === '4d9426d7-7294-492a-a2e9-4b1642ba1954' ? 0.01 : 0.3)).toLocaleString()} now
                         </div>
                       </button>
                     </div>
