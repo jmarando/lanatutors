@@ -271,7 +271,7 @@ const TutorDashboard = () => {
         {/* Google Calendar Connection or Weekly Calendar */}
         <div className="mb-8">
           {tutorProfile?.google_calendar_connected ? (
-            <TutorWeeklyCalendar tutorId={tutorProfile?.id} />
+            <TutorWeeklyCalendar tutorId={user?.id} />
           ) : (
             <GoogleCalendarConnect 
               tutorId={tutorProfile?.id}
