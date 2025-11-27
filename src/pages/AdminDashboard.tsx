@@ -54,6 +54,7 @@ const AdminDashboard = () => {
     nextAction: "",
     nextActionDate: "",
   });
+  const [backfillingClassrooms, setBackfillingClassrooms] = useState(false);
 
   // Message templates for customer journey
   const messageTemplates = {
@@ -850,6 +851,29 @@ Yehtu Tutors`
     } catch (error: any) {
       console.error("Error fetching learning plan requests:", error);
       toast.error("Failed to load learning plan requests");
+    }
+  };
+
+  const handleBackfillClassrooms = async () => {
+    setBackfillingClassrooms(true);
+    try {
+      const { data, error } = await supabase.functions.invoke('backfill-classrooms', {
+        body: {}
+      });
+
+      if (error) throw error;
+
+      toast.success(
+        `Classroom backfill complete! Created ${data.classroomsCreated} classrooms (${data.successCount} successful, ${data.failedCount} failed)`
+      );
+      
+      // Refresh bookings to show updated data
+      fetchTutoringBookings();
+    } catch (error: any) {
+      console.error('Error backfilling classrooms:', error);
+      toast.error(`Failed to backfill classrooms: ${error.message}`);
+    } finally {
+      setBackfillingClassrooms(false);
     }
   };
 
@@ -2202,12 +2226,21 @@ The Lana Team`;
       </TabsContent>
 
       {/* Tutoring Bookings Tab */}
-      <TabsContent value="bookings" className="space-y-4">(
+      <TabsContent value="bookings" className="space-y-4">
         <div className="flex justify-between items-center mb-4">
           <div>
             <h2 className="text-2xl font-bold">Tutoring Session Bookings</h2>
             <p className="text-muted-foreground">All tutoring sessions booked through the platform</p>
           </div>
+          <Button 
+            onClick={handleBackfillClassrooms}
+            disabled={backfillingClassrooms}
+            variant="outline"
+            className="gap-2"
+          >
+            <ExternalLink className="h-4 w-4" />
+            {backfillingClassrooms ? 'Creating Classrooms...' : 'Backfill Missing Classrooms'}
+          </Button>
         </div>
 
         {tutoringBookings.length === 0 ? (
