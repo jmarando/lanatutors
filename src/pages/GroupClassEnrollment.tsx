@@ -25,6 +25,8 @@ interface GroupClass {
   hourly_rate: number;
   tutor_name?: string;
   tutor_bio?: string;
+  tutor_profile_slug?: string;
+  tutor_profile_id?: string;
 }
 
 export default function GroupClassEnrollment() {
@@ -63,7 +65,8 @@ export default function GroupClassEnrollment() {
             tutor_profiles!inner(
               id,
               user_id,
-              bio
+              bio,
+              profile_slug
             )
           )
         `)
@@ -75,7 +78,8 @@ export default function GroupClassEnrollment() {
       if (error) throw error;
       
       // Get tutor name from profiles table
-      const tutorUserId = data.group_class_tutor_assignments[0]?.tutor_profiles?.user_id;
+      const tutorProfile = data.group_class_tutor_assignments[0]?.tutor_profiles;
+      const tutorUserId = tutorProfile?.user_id;
       if (tutorUserId) {
         const { data: profile } = await supabase
           .from("profiles")
@@ -86,7 +90,9 @@ export default function GroupClassEnrollment() {
         setGroupClass({
           ...data,
           tutor_name: profile?.full_name || "TBA",
-          tutor_bio: data.group_class_tutor_assignments[0]?.tutor_profiles?.bio
+          tutor_bio: tutorProfile?.bio,
+          tutor_profile_slug: tutorProfile?.profile_slug,
+          tutor_profile_id: tutorProfile?.id
         });
       } else {
         setGroupClass({ ...data, tutor_name: "TBA" });
@@ -265,7 +271,16 @@ export default function GroupClassEnrollment() {
               {groupClass.tutor_name && (
                 <div className="pt-2 border-t">
                   <p className="text-sm font-medium mb-1">Your Tutor</p>
-                  <p className="text-sm text-foreground">{groupClass.tutor_name}</p>
+                  {groupClass.tutor_profile_slug || groupClass.tutor_profile_id ? (
+                    <button
+                      onClick={() => navigate(`/tutors/${groupClass.tutor_profile_slug || groupClass.tutor_profile_id}`)}
+                      className="text-sm text-primary hover:underline font-medium"
+                    >
+                      {groupClass.tutor_name} - View Profile
+                    </button>
+                  ) : (
+                    <p className="text-sm text-foreground">{groupClass.tutor_name}</p>
+                  )}
                   {groupClass.tutor_bio && (
                     <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
                       {groupClass.tutor_bio}
