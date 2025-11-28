@@ -292,6 +292,7 @@ export const CURRICULUM_DATA: CurriculumData = {
         "Spanish",
         "Swahili",
         "History",
+        "Geography",
         "Economics",
         "Business Management",
         "Psychology",
