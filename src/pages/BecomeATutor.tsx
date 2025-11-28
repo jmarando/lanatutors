@@ -202,21 +202,13 @@ const BecomeATutor = () => {
 
       if (applicationError) throw applicationError;
 
-      // Send acknowledgment email and WhatsApp
-      await Promise.all([
-        supabase.functions.invoke('send-application-acknowledgment', {
-          body: { 
-            email: formData.email,
-            fullName: formData.fullName 
-          }
-        }),
-        supabase.functions.invoke('send-tutor-application-whatsapp', {
-          body: { 
-            phoneNumber: phoneValidation.normalized,
-            fullName: formData.fullName 
-          }
-        })
-      ]);
+      // Send acknowledgment email
+      await supabase.functions.invoke('send-application-acknowledgment', {
+        body: { 
+          email: formData.email,
+          fullName: formData.fullName 
+        }
+      });
 
       toast({
         title: "Application submitted!",

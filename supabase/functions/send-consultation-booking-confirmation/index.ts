@@ -142,7 +142,7 @@ END:VCALENDAR`;
 
             <div class="reminder-box">
               <p style="margin: 0; color: #1A1A1A;"><strong>🔔 Reminders</strong></p>
-              <p style="margin: 10px 0 0 0; color: #737373;">We'll send you email and WhatsApp reminders:</p>
+              <p style="margin: 10px 0 0 0; color: #737373;">We'll send you email reminders:</p>
               <ul style="margin: 10px 0 0 20px; color: #737373;">
                 <li>1 day before your consultation</li>
                 <li>1 hour before your consultation</li>

@@ -158,7 +158,7 @@ const ProfileSettings = () => {
                   placeholder="e.g., +254712345678"
                 />
                 <p className="text-xs text-muted-foreground">
-                  Include country code for WhatsApp notifications
+                  Include country code (e.g., +254 for Kenya)
                 </p>
               </div>
 

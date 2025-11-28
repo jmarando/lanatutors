@@ -552,7 +552,7 @@ const TutorGuidePrintable = () => {
           <h4>Contact Support</h4>
           <ul className="guide-list">
             <li><strong>Email:</strong> support@lanatutors.com</li>
-            <li><strong>Phone/WhatsApp:</strong> [Insert phone number]</li>
+            <li><strong>Phone:</strong> +254 725 252 542</li>
             <li><strong>Response Time:</strong> Within 24 hours on business days</li>
           </ul>
         </div>
