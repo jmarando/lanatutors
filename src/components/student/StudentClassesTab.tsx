@@ -8,6 +8,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { format } from "date-fns";
+import { formatInTimeZone } from "date-fns-tz";
 import {
   Dialog,
   DialogContent,
@@ -228,17 +229,15 @@ export function StudentClassesTab() {
                     </thead>
                     <tbody>
                       {pastBookings.map((booking) => {
-                        const createdAt = new Date(booking.created_at);
+                        const sessionTime = booking.tutor_availability?.start_time 
+                          ? new Date(booking.tutor_availability.start_time)
+                          : new Date(booking.created_at);
                         
                         return (
                           <tr key={booking.id} className="border-b last:border-0">
                             <td className="py-4 font-medium">{booking.subject}</td>
                             <td className="py-4 text-muted-foreground">
-                              {createdAt.toLocaleDateString('en-US', { 
-                                month: 'short', 
-                                day: 'numeric', 
-                                year: 'numeric' 
-                              })}
+                              {formatInTimeZone(sessionTime, 'Africa/Nairobi', 'MMM d, yyyy')} EAT
                             </td>
                             <td className="py-4">
                               <Badge variant="secondary">{booking.status}</Badge>
@@ -258,8 +257,8 @@ export function StudentClassesTab() {
                                   size="sm"
                                   onClick={() => {
                                     const sessionDate = booking.tutor_availability?.start_time
-                                      ? format(new Date(booking.tutor_availability.start_time), 'EEEE, MMMM d, yyyy')
-                                      : format(new Date(booking.created_at), 'EEEE, MMMM d, yyyy');
+                                      ? formatInTimeZone(new Date(booking.tutor_availability.start_time), 'Africa/Nairobi', 'EEEE, MMMM d, yyyy')
+                                      : formatInTimeZone(new Date(booking.created_at), 'Africa/Nairobi', 'EEEE, MMMM d, yyyy');
                                     const subject = encodeURIComponent('Feedback on Session');
                                     const body = encodeURIComponent(
                                       `Booking ID: ${booking.id}\nSubject: ${booking.subject}\nDate: ${sessionDate}\n\nMy Feedback:\n\n`
@@ -269,6 +268,23 @@ export function StudentClassesTab() {
                                 >
                                   <MessageSquare className="w-4 h-4 mr-2" />
                                   Give Feedback
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => {
+                                    const sessionDate = booking.tutor_availability?.start_time
+                                      ? formatInTimeZone(new Date(booking.tutor_availability.start_time), 'Africa/Nairobi', 'EEEE, MMMM d, yyyy')
+                                      : formatInTimeZone(new Date(booking.created_at), 'Africa/Nairobi', 'EEEE, MMMM d, yyyy');
+                                    const subject = encodeURIComponent('Reschedule Request');
+                                    const body = encodeURIComponent(
+                                      `Booking ID: ${booking.id}\nSubject: ${booking.subject}\nCurrent Date/Time: ${sessionDate}\n\nPreferred New Date/Time:\n\nReason for Rescheduling:`
+                                    );
+                                    window.location.href = `mailto:info@lanatutors.africa?subject=${subject}&body=${body}`;
+                                  }}
+                                >
+                                  <CalendarClock className="w-4 h-4 mr-2" />
+                                  Reschedule
                                 </Button>
                                 {booking.classroom_link && (
                                   <Button

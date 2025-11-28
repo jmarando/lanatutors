@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, Video, DollarSign, CalendarClock, ExternalLink, ChevronDown, ChevronUp } from "lucide-react";
 import { format } from "date-fns";
+import { formatInTimeZone } from "date-fns-tz";
 import { useNavigate } from "react-router-dom";
 
 interface GroupedBookingCardProps {
@@ -61,11 +62,11 @@ export function GroupedBookingCard({ bookings, isUpcoming }: GroupedBookingCardP
                 <div className="flex items-center gap-2 text-muted-foreground">
                   <Calendar className="w-4 h-4" />
                   <p className="text-base font-medium">
-                    {format(nextSessionTime, 'EEEE, MMMM d, yyyy')}
+                    {formatInTimeZone(nextSessionTime, 'Africa/Nairobi', 'EEEE, MMMM d, yyyy')}
                   </p>
                 </div>
                 <p className="text-sm text-muted-foreground ml-6">
-                  {format(nextSessionTime, 'hh:mm a')} EAT
+                  {formatInTimeZone(nextSessionTime, 'Africa/Nairobi', 'h:mm a')} EAT
                 </p>
               </div>
             )}
@@ -94,9 +95,9 @@ export function GroupedBookingCard({ bookings, isUpcoming }: GroupedBookingCardP
                 <Button
                   variant="outline"
                   onClick={() => {
-                    const subject = encodeURIComponent('Request Meeting Link');
+                  const subject = encodeURIComponent('Request Meeting Link');
                     const body = encodeURIComponent(
-                      `Booking ID: ${nextSession.id}\nSubject: ${nextSession.subject}\nDate/Time: ${format(nextSessionTime, 'EEEE, MMMM d, yyyy')} at ${format(nextSessionTime, 'hh:mm a')} EAT\n\nPlease provide the meeting link for this session.`
+                      `Booking ID: ${nextSession.id}\nSubject: ${nextSession.subject}\nDate/Time: ${formatInTimeZone(nextSessionTime, 'Africa/Nairobi', 'EEEE, MMMM d, yyyy')} at ${formatInTimeZone(nextSessionTime, 'Africa/Nairobi', 'h:mm a')} EAT\n\nPlease provide the meeting link for this session.`
                     );
                     window.location.href = `mailto:info@lanatutors.africa?subject=${subject}&body=${body}`;
                   }}
@@ -111,9 +112,9 @@ export function GroupedBookingCard({ bookings, isUpcoming }: GroupedBookingCardP
               <Button
                 variant="outline"
                 onClick={() => {
-                  const subject = encodeURIComponent('Reschedule Request');
+                const subject = encodeURIComponent('Reschedule Request');
                   const body = encodeURIComponent(
-                    `Booking ID: ${nextSession.id}\nSubject: ${nextSession.subject}\nCurrent Date/Time: ${format(nextSessionTime, 'EEEE, MMMM d, yyyy')} at ${format(nextSessionTime, 'hh:mm a')} EAT\n\nPreferred New Date/Time:\n\nReason for Rescheduling:`
+                    `Booking ID: ${nextSession.id}\nSubject: ${nextSession.subject}\nCurrent Date/Time: ${formatInTimeZone(nextSessionTime, 'Africa/Nairobi', 'EEEE, MMMM d, yyyy')} at ${formatInTimeZone(nextSessionTime, 'Africa/Nairobi', 'h:mm a')} EAT\n\nPreferred New Date/Time:\n\nReason for Rescheduling:`
                   );
                   window.location.href = `mailto:info@lanatutors.africa?subject=${subject}&body=${body}`;
                 }}
@@ -184,7 +185,7 @@ export function GroupedBookingCard({ bookings, isUpcoming }: GroupedBookingCardP
 
                       <div className="flex items-center gap-2 text-sm text-muted-foreground">
                         <Calendar className="w-3 h-3" />
-                        <span>{format(sessionTime, 'EEE, MMM d, yyyy')} at {format(sessionTime, 'h:mm a')}</span>
+                        <span>{formatInTimeZone(sessionTime, 'Africa/Nairobi', 'EEE, MMM d, yyyy')} at {formatInTimeZone(sessionTime, 'Africa/Nairobi', 'h:mm a')} EAT</span>
                       </div>
 
                       {balanceDue > 0 && (
@@ -209,9 +210,9 @@ export function GroupedBookingCard({ bookings, isUpcoming }: GroupedBookingCardP
                               size="sm"
                               variant="outline"
                               onClick={() => {
-                                const subject = encodeURIComponent('Request Meeting Link');
+                              const subject = encodeURIComponent('Request Meeting Link');
                                 const body = encodeURIComponent(
-                                  `Booking ID: ${booking.id}\nSubject: ${booking.subject}\nDate/Time: ${format(sessionTime, 'EEEE, MMMM d, yyyy')} at ${format(sessionTime, 'hh:mm a')} EAT\n\nPlease provide the meeting link for this session.`
+                                  `Booking ID: ${booking.id}\nSubject: ${booking.subject}\nDate/Time: ${formatInTimeZone(sessionTime, 'Africa/Nairobi', 'EEEE, MMMM d, yyyy')} at ${formatInTimeZone(sessionTime, 'Africa/Nairobi', 'h:mm a')} EAT\n\nPlease provide the meeting link for this session.`
                                 );
                                 window.location.href = `mailto:info@lanatutors.africa?subject=${subject}&body=${body}`;
                               }}
@@ -225,9 +226,9 @@ export function GroupedBookingCard({ bookings, isUpcoming }: GroupedBookingCardP
                           size="sm"
                           variant="outline"
                           onClick={() => {
-                            const subject = encodeURIComponent('Reschedule Request');
+                          const subject = encodeURIComponent('Reschedule Request');
                             const body = encodeURIComponent(
-                              `Booking ID: ${booking.id}\nSubject: ${booking.subject}\nCurrent Date/Time: ${format(sessionTime, 'EEEE, MMMM d, yyyy')} at ${format(sessionTime, 'hh:mm a')} EAT\n\nPreferred New Date/Time:\n\nReason for Rescheduling:`
+                              `Booking ID: ${booking.id}\nSubject: ${booking.subject}\nCurrent Date/Time: ${formatInTimeZone(sessionTime, 'Africa/Nairobi', 'EEEE, MMMM d, yyyy')} at ${formatInTimeZone(sessionTime, 'Africa/Nairobi', 'h:mm a')} EAT\n\nPreferred New Date/Time:\n\nReason for Rescheduling:`
                             );
                             window.location.href = `mailto:info@lanatutors.africa?subject=${subject}&body=${body}`;
                           }}

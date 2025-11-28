@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { formatInTimeZone } from "date-fns-tz";
 import { CheckCircle2, Calendar, Clock, User, BookOpen, MapPin, Video, Mail, ArrowRight, Home } from "lucide-react";
 
 interface BookingDetails {
@@ -186,10 +187,10 @@ const BookingConfirmed = () => {
                   <div>
                     <p className="text-sm text-muted-foreground">Date & Time</p>
                     <p className="font-semibold">
-                      {format(new Date(booking.start_time), "EEEE, MMMM d, yyyy")}
+                      {formatInTimeZone(new Date(booking.start_time), "Africa/Nairobi", "EEEE, MMMM d, yyyy")}
                     </p>
                     <p className="text-sm text-muted-foreground">
-                      {format(new Date(booking.start_time), "h:mm a")} - {format(new Date(booking.end_time), "h:mm a")}
+                      {formatInTimeZone(new Date(booking.start_time), "Africa/Nairobi", "h:mm a")} - {formatInTimeZone(new Date(booking.end_time), "Africa/Nairobi", "h:mm a")} EAT
                     </p>
                   </div>
                 </div>
