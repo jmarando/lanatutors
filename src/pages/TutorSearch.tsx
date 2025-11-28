@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
@@ -10,7 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Search, Star, SlidersHorizontal, Calendar as CalendarIcon, Clock, MapPin, Award, Sparkles, ArrowRight, CheckCircle, Loader2 } from "lucide-react";
+import { Star, SlidersHorizontal, Calendar as CalendarIcon, Clock, MapPin, Award, Sparkles, ArrowRight, CheckCircle, Loader2, Eye } from "lucide-react";
 import { SEO } from "@/components/SEO";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -29,7 +28,6 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { GeneralLearningPlanRequest } from "@/components/GeneralLearningPlanRequest";
 const TutorSearch = () => {
   const navigate = useNavigate();
-  const [searchQuery, setSearchQuery] = useState("");
   const [selectedSubject, setSelectedSubject] = useState("all");
   const [selectedCurriculum, setSelectedCurriculum] = useState("all");
   const [selectedTeachingLevel, setSelectedTeachingLevel] = useState("all");
@@ -52,12 +50,10 @@ const TutorSearch = () => {
     }
 
     // Restore filters from URL
-    const query = params.get('query');
     const curriculum = params.get('curriculum');
     const level = params.get('level');
     const subject = params.get('subject');
     const location = params.get('location');
-    if (query) setSearchQuery(query);
     if (curriculum) setSelectedCurriculum(curriculum);
     if (level) setSelectedTeachingLevel(level);
     if (subject) setSelectedSubject(subject);
@@ -200,8 +196,6 @@ const TutorSearch = () => {
     return level; // fallback to exact
   };
   const filteredTutors = tutors.filter(tutor => {
-    const q = searchQuery.toLowerCase();
-    const matchesSearch = tutor.name.toLowerCase().includes(q) || tutor.subjects.some((s: string) => s.toLowerCase().includes(q)) || (tutor.school || "").toLowerCase().includes(q) || (tutor.teachingLocation || "").toLowerCase().includes(q);
     const matchesSubject = selectedSubject === "all" || tutor.subjects.some((s: string) => s.toLowerCase().includes(selectedSubject.toLowerCase()) || selectedSubject.toLowerCase().includes(s.toLowerCase()));
     const matchesCurriculum = selectedCurriculum === "all" || tutor.curriculum?.includes(selectedCurriculum) || tutor.teachingLevels?.some((lvl: string) => lvl.toLowerCase().includes(selectedCurriculum.toLowerCase()));
     const selectedBroad = mapLevelToBroad(selectedCurriculum, selectedTeachingLevel).toLowerCase();
@@ -210,7 +204,7 @@ const TutorSearch = () => {
       return l === selectedTeachingLevel.toLowerCase() || l.includes(selectedTeachingLevel.toLowerCase()) || selectedCurriculum !== "all" && l.includes(`${selectedCurriculum.toLowerCase()} - ${selectedTeachingLevel.toLowerCase()}`) || mapLevelToBroad(selectedCurriculum, lvl).toLowerCase() === selectedBroad;
     }) ?? false);
     const matchesLocation = selectedLocation === "all" || selectedLocation === "online" && tutor.teachingMode?.includes("Online") || selectedLocation === "in-person" && tutor.teachingMode?.includes("In-Person") || (tutor.teachingLocation || "").toLowerCase().includes(selectedLocation.toLowerCase());
-    return matchesSearch && matchesSubject && matchesCurriculum && matchesTeachingLevel && matchesLocation;
+    return matchesSubject && matchesCurriculum && matchesTeachingLevel && matchesLocation;
   });
   if (loading) {
     return <div className="min-h-screen bg-secondary/20 flex items-center justify-center">
@@ -242,7 +236,7 @@ const TutorSearch = () => {
                     </div>
                     <div className="flex flex-col items-start">
                       <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mb-3">
-                        <Search className="w-5 h-5 text-primary" />
+                        <Eye className="w-5 h-5 text-primary" />
                       </div>
                       <h3 className="font-semibold mb-1">2. View Profile</h3>
                       <p className="text-sm text-muted-foreground">Browse tutor profiles to see qualifications, experience, and availability</p>
@@ -271,11 +265,6 @@ const TutorSearch = () => {
 
         {/* Filters */}
         <div className="flex gap-4 mb-8 max-w-5xl mx-auto flex-wrap">
-          <div className="relative flex-1 min-w-64">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground" />
-            <Input placeholder="Search by name, subject, location..." value={searchQuery} onChange={e => setSearchQuery(e.target.value)} className="pl-10 h-12" />
-          </div>
-          
           <Select value={selectedCurriculum} onValueChange={value => {
           setSelectedCurriculum(value);
           // Reset level and subject when curriculum changes
@@ -341,8 +330,7 @@ const TutorSearch = () => {
             <p className="text-sm text-muted-foreground">
               Showing {filteredTutors.length} of {tutors.length} tutors
             </p>
-            {(selectedSubject !== "all" || selectedCurriculum !== "all" || selectedTeachingLevel !== "all" || selectedLocation !== "all" || searchQuery) && <Button variant="ghost" size="sm" onClick={() => {
-            setSearchQuery("");
+            {(selectedSubject !== "all" || selectedCurriculum !== "all" || selectedTeachingLevel !== "all" || selectedLocation !== "all") && <Button variant="ghost" size="sm" onClick={() => {
             setSelectedSubject("all");
             setSelectedCurriculum("all");
             setSelectedTeachingLevel("all");
@@ -356,7 +344,6 @@ const TutorSearch = () => {
             <p className="text-xl font-semibold mb-2">No tutors found</p>
             <p className="text-muted-foreground mb-6">Try adjusting your filters or search criteria</p>
             <Button variant="outline" onClick={() => {
-          setSearchQuery("");
           setSelectedSubject("all");
           setSelectedCurriculum("all");
           setSelectedTeachingLevel("all");
@@ -389,7 +376,6 @@ const TutorSearch = () => {
                   </div>
                   <Button onClick={() => {
               const params = new URLSearchParams();
-              if (searchQuery) params.set("query", searchQuery);
               if (selectedCurriculum !== "all") params.set("curriculum", selectedCurriculum);
               if (selectedTeachingLevel !== "all") params.set("level", selectedTeachingLevel);
               if (selectedSubject !== "all") params.set("subject", selectedSubject);
