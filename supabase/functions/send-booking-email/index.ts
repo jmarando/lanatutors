@@ -94,13 +94,14 @@ const handler = async (req: Request): Promise<Response> => {
       weekday: 'long',
       year: 'numeric',
       month: 'long',
-      day: 'numeric'
+      day: 'numeric',
+      timeZone: 'Africa/Nairobi'
     });
     const formattedTime = startTime.toLocaleTimeString('en-US', {
       hour: '2-digit',
       minute: '2-digit',
       timeZone: 'Africa/Nairobi'
-    });
+    }) + ' EAT';
 
     // Send to student
     if (recipientType === 'student' || recipientType === 'both') {
