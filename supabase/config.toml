@@ -81,3 +81,18 @@ verify_jwt = true
 [functions.create-booking-with-meet]
 verify_jwt = false
 
+[functions.send-group-class-enrollment-confirmation]
+verify_jwt = false
+
+[functions.validate-group-class-access]
+verify_jwt = true
+
+[functions.enhance-tutor-photo]
+verify_jwt = true
+
+[functions.send-group-class-session-reminder]
+verify_jwt = false
+
+[functions.send-group-class-tutor-notification]
+verify_jwt = false
+

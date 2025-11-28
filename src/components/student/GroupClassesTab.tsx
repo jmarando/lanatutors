@@ -1,10 +1,12 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, Calendar, Clock, Video, BookOpen } from "lucide-react";
+import { Loader2, Calendar, Clock, Video, BookOpen, ExternalLink } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { formatDistanceToNow } from "date-fns";
 
 interface GroupClassEnrollment {
   id: string;
@@ -93,8 +95,8 @@ export default function GroupClassesTab({ userId }: GroupClassesTabProps) {
     });
   };
 
-  const handleJoinClass = (meetingLink: string | null) => {
-    if (!meetingLink) {
+  const handleJoinClass = async (enrollment: GroupClassEnrollment) => {
+    if (!enrollment.group_classes.meeting_link) {
       toast({
         title: "Meeting link unavailable",
         description: "The meeting link will be available closer to class time",
@@ -102,7 +104,57 @@ export default function GroupClassesTab({ userId }: GroupClassesTabProps) {
       });
       return;
     }
-    window.open(meetingLink, "_blank");
+
+    try {
+      // Validate access before opening meeting link
+      const { data, error } = await supabase.functions.invoke("validate-group-class-access", {
+        body: {
+          classId: enrollment.group_classes.id,
+          enrollmentId: enrollment.id,
+        },
+      });
+
+      if (error || !data?.hasAccess) {
+        toast({
+          title: "Access denied",
+          description: data?.error || "You don't have access to this class",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      // Open meeting link
+      window.open(data.meetingLink, "_blank");
+    } catch (error) {
+      console.error("Error validating access:", error);
+      toast({
+        title: "Error",
+        description: "Failed to join class. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const getNextSessionInfo = (enrollment: GroupClassEnrollment) => {
+    const dayMap: Record<string, number> = {
+      "Sunday": 0, "Monday": 1, "Tuesday": 2, "Wednesday": 3,
+      "Thursday": 4, "Friday": 5, "Saturday": 6
+    };
+
+    const targetDay = dayMap[enrollment.group_classes.day_of_week];
+    const now = new Date();
+    const currentDay = now.getDay();
+    
+    let daysUntilNext = targetDay - currentDay;
+    if (daysUntilNext <= 0) daysUntilNext += 7;
+
+    const nextSession = new Date(now);
+    nextSession.setDate(now.getDate() + daysUntilNext);
+    
+    return {
+      date: nextSession,
+      timeUntil: formatDistanceToNow(nextSession, { addSuffix: true })
+    };
   };
 
   if (loading) {
@@ -174,19 +226,39 @@ export default function GroupClassesTab({ userId }: GroupClassesTabProps) {
                   </div>
                 </div>
 
-                <div className="flex items-center justify-between pt-4 border-t">
+                {(() => {
+                  const nextInfo = getNextSessionInfo(enrollment);
+                  return (
+                    <div className="bg-primary/5 p-3 rounded-md mb-3">
+                      <p className="text-sm font-medium text-primary mb-1">Next Class</p>
+                      <p className="text-xs text-muted-foreground">{nextInfo.timeUntil}</p>
+                    </div>
+                  );
+                })()}
+
+                <div className="flex items-center justify-between pt-3 border-t">
                   <div className="text-sm">
-                    <span className="text-muted-foreground">Sessions attended: </span>
+                    <span className="text-muted-foreground">Attended: </span>
                     <span className="font-medium">{enrollment.sessions_attended}</span>
                   </div>
-                  <Button
-                    size="sm"
-                    onClick={() => handleJoinClass(enrollment.group_classes.meeting_link)}
-                    disabled={!enrollment.group_classes.meeting_link || enrollment.payment_status !== "completed"}
-                  >
-                    <Video className="w-4 h-4 mr-2" />
-                    Join Class
-                  </Button>
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => window.open(`https://classroom.google.com`, "_blank")}
+                    >
+                      <ExternalLink className="w-4 h-4 mr-2" />
+                      Materials
+                    </Button>
+                    <Button
+                      size="sm"
+                      onClick={() => handleJoinClass(enrollment)}
+                      disabled={!enrollment.group_classes.meeting_link || enrollment.payment_status !== "completed"}
+                    >
+                      <Video className="w-4 h-4 mr-2" />
+                      Join Class
+                    </Button>
+                  </div>
                 </div>
               </CardContent>
             </Card>

@@ -34,33 +34,22 @@ serve(async (req) => {
 
     if (updateError) throw updateError;
 
-    // If payment completed, get class details and send confirmation email
+    // If payment completed, send confirmation and notification emails
     if (paymentStatus === "completed") {
-      const { data: enrollment } = await supabaseClient
-        .from("group_class_enrollments")
-        .select(`
-          *,
-          group_classes (
-            title,
-            subject,
-            day_of_week,
-            start_time,
-            end_time,
-            meeting_link
-          )
-        `)
-        .eq("id", enrollmentId)
-        .single();
-
-      if (enrollment) {
-        const { data: profile } = await supabaseClient
-          .from("profiles")
-          .select("full_name")
-          .eq("id", enrollment.student_id)
-          .single();
-
-        // TODO: Send confirmation email with meeting link
-        console.log("Enrollment confirmed for:", profile?.full_name);
+      try {
+        // Send enrollment confirmation to student
+        await supabaseClient.functions.invoke("send-group-class-enrollment-confirmation", {
+          body: { enrollmentId }
+        });
+        
+        // Notify tutor of new enrollment
+        await supabaseClient.functions.invoke("send-group-class-tutor-notification", {
+          body: { enrollmentId }
+        });
+        
+        console.log("Enrollment emails sent for:", enrollmentId);
+      } catch (emailError) {
+        console.error("Failed to send enrollment emails:", emailError);
       }
     }
 
