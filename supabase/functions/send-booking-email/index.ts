@@ -70,13 +70,25 @@ const handler = async (req: Request): Promise<Response> => {
     const startTime = slot ? new Date(slot.start_time) : new Date();
     const endTime = slot ? new Date(slot.end_time) : new Date(startTime.getTime() + 60 * 60 * 1000);
 
-    const durationMinutes = Math.max(
-      1,
-      Math.round((endTime.getTime() - startTime.getTime()) / (1000 * 60))
-    );
-    const durationText = durationMinutes % 60 === 0
-      ? `${durationMinutes / 60} hour${durationMinutes / 60 === 1 ? '' : 's'}`
-      : `${durationMinutes} minutes`;
+    // Extract duration from booking notes if available (for double sessions)
+    let durationText = '';
+    if (booking.notes && booking.notes.includes('Duration:')) {
+      const durationMatch = booking.notes.match(/Duration:\s*(\d+\s*hours?|\d+\s*hour)/);
+      if (durationMatch) {
+        durationText = durationMatch[1];
+      }
+    }
+    
+    // Fallback to calculating from slot times if duration not in notes
+    if (!durationText) {
+      const durationMinutes = Math.max(
+        1,
+        Math.round((endTime.getTime() - startTime.getTime()) / (1000 * 60))
+      );
+      durationText = durationMinutes % 60 === 0
+        ? `${durationMinutes / 60} hour${durationMinutes / 60 === 1 ? '' : 's'}`
+        : `${durationMinutes} minutes`;
+    }
 
     const formattedDate = startTime.toLocaleDateString('en-US', {
       weekday: 'long',

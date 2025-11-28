@@ -369,10 +369,15 @@ export const BookingCalendar = ({
             new Date(selectedSlot.start_time).getTime()) /
           (1000 * 60 * 60);
         
+        // Multiply by sessionDuration for double sessions
+        duration = duration * sessionDuration;
+        
         // Use curriculum-specific rate if available, otherwise use base hourly rate
         const effectiveRate = curriculumSpecificRate !== null ? curriculumSpecificRate : hourlyRate;
         // Calculate rate (50% more for in-person)
-        const rate = selectedClassType === 'in-person' ? effectiveRate * 1.5 : effectiveRate;
+        const baseRate = selectedClassType === 'in-person' ? effectiveRate * 1.5 : effectiveRate;
+        // Apply 5% discount for double sessions (2 hours)
+        const rate = sessionDuration === 2 ? baseRate * 0.95 : baseRate;
         totalAmount = duration * rate;
         
         // Handle different payment options
@@ -439,7 +444,7 @@ export const BookingCalendar = ({
         ? `${noteText ? noteText + ' | ' : ''}Location: ${selectedLocation}`
         : noteText;
 
-      const notesWithCurriculumLevel = `${notesWithLocation ? notesWithLocation + ' | ' : ''}Curriculum: ${curriculum} | Level: ${level} | Tier: ${selectedTier}`;
+      const notesWithCurriculumLevel = `${notesWithLocation ? notesWithLocation + ' | ' : ''}Curriculum: ${curriculum} | Level: ${level} | Tier: ${selectedTier} | Duration: ${sessionDuration === 2 ? '2 hours' : '1 hour'}`;
 
       // Generate a booking_group_id if this is part of a multi-session booking
       // For now, single bookings get null, but future multi-session flows will generate a UUID here
