@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -15,6 +15,7 @@ import { CalendarIcon, Clock, CheckCircle, Users, GraduationCap, Target, Award, 
 import { validateAndNormalizePhone } from "@/utils/phoneValidation";
 import { SEO } from "@/components/SEO";
 import { getCurriculums, getLevelsForCurriculum, getSubjectsForCurriculumLevel } from "@/utils/curriculumData";
+import { startOfDay, addHours, format, parse, isAfter } from "date-fns";
 
 const CONSULTATION_BENEFITS = [
   {
@@ -62,6 +63,28 @@ const BookConsultation = () => {
     "09:00 AM", "10:00 AM", "11:00 AM", "12:00 PM",
     "02:00 PM", "03:00 PM", "04:00 PM", "05:00 PM", "06:00 PM"
   ];
+
+  // Filter time slots based on selected date and current time
+  const filteredTimeSlots = useMemo(() => {
+    if (!selectedDate) return availableTimeSlots;
+    
+    const now = new Date();
+    const isToday = startOfDay(selectedDate).getTime() === startOfDay(now).getTime();
+    
+    if (!isToday) {
+      // Future date - show all slots
+      return availableTimeSlots;
+    }
+    
+    // Today - only show slots at least 1 hour from now
+    const oneHourFromNow = addHours(now, 1);
+    
+    return availableTimeSlots.filter(timeSlot => {
+      // Parse the time slot (e.g., "09:00 AM") into a Date object for today
+      const slotTime = parse(timeSlot, "hh:mm a", selectedDate);
+      return isAfter(slotTime, oneHourFromNow);
+    });
+  }, [selectedDate, availableTimeSlots]);
 
   const progress = (step / 4) * 100;
 
@@ -512,28 +535,39 @@ const BookConsultation = () => {
                         mode="single"
                         selected={selectedDate}
                         onSelect={setSelectedDate}
-                        disabled={(date) => date < new Date() || date.getDay() === 0}
+                        disabled={(date) => {
+                          const today = startOfDay(new Date());
+                          const checkDate = startOfDay(date);
+                          // Disable past dates (before today) and Sundays
+                          return checkDate < today || date.getDay() === 0;
+                        }}
                         className="rounded-md border"
                       />
                       <p className="text-xs text-muted-foreground">Consultations available Monday-Saturday</p>
                     </div>
                     <div className="space-y-2">
                       <Label>Choose Time *</Label>
-                      <div className="grid grid-cols-2 gap-2">
-                        {availableTimeSlots.map((time) => (
-                          <Button
-                            key={time}
-                            type="button"
-                            variant={selectedTime === time ? "default" : "outline"}
-                            size="sm"
-                            onClick={() => setSelectedTime(time)}
-                            className="justify-start"
-                          >
-                            <Clock className="w-4 h-4 mr-2" />
-                            {time}
-                          </Button>
-                        ))}
-                      </div>
+                      {filteredTimeSlots.length === 0 ? (
+                        <div className="text-sm text-muted-foreground p-4 border rounded-md">
+                          No available time slots for today. Please select a future date or try again later.
+                        </div>
+                      ) : (
+                        <div className="grid grid-cols-2 gap-2">
+                          {filteredTimeSlots.map((time) => (
+                            <Button
+                              key={time}
+                              type="button"
+                              variant={selectedTime === time ? "default" : "outline"}
+                              size="sm"
+                              onClick={() => setSelectedTime(time)}
+                              className="justify-start"
+                            >
+                              <Clock className="w-4 h-4 mr-2" />
+                              {time}
+                            </Button>
+                          ))}
+                        </div>
+                      )}
                     </div>
                   </div>
                 </div>
