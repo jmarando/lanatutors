@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
+import { create } from "https://deno.land/x/djwt@v2.8/mod.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -58,85 +58,76 @@ const handler = async (req: Request): Promise<Response> => {
       notes,
     }: CalendarEventRequest = await req.json();
 
-    const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
-    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
-
-    const supabaseClient = createClient(supabaseUrl, serviceRoleKey);
-
-    // Fetch central calendar OAuth tokens
-    const { data: centralConfig, error: configError } = await supabaseClient
-      .from("central_calendar_config")
-      .select("google_oauth_token, google_refresh_token, google_token_expires_at")
-      .eq("id", "central-calendar")
-      .maybeSingle();
-
-    if (configError) {
-      console.error("Error fetching central calendar config:", configError);
-      return new Response(
-        JSON.stringify({ error: "central_calendar_config_error" }),
-        { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
+    // Use Google service account to create Meet link (same approach as generate-google-meet-link)
+    const googleServiceAccount = Deno.env.get("GOOGLE_SERVICE_ACCOUNT_JSON");
+    if (!googleServiceAccount) {
+      throw new Error("Google service account not configured");
     }
 
-    if (!centralConfig || !centralConfig.google_oauth_token) {
-      console.log("Central calendar not configured, cannot create Meet link");
-      return new Response(
-        JSON.stringify({
-          success: false,
-          message: "central_calendar_not_configured",
-          meetingLink: "https://meet.google.com/pending",
-        }),
-        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-      );
-    }
+    const serviceAccount = JSON.parse(googleServiceAccount);
 
-    let accessToken = centralConfig.google_oauth_token as string;
+    // Create JWT for Google API
+    const now = Math.floor(Date.now() / 1000);
 
-    // Refresh token if expired
-    if (centralConfig.google_token_expires_at) {
-      const expiresAt = new Date(centralConfig.google_token_expires_at as string);
-      if (expiresAt <= new Date()) {
-        console.log("Central calendar token expired, refreshing...");
-
-        const refreshResponse = await fetch("https://oauth2.googleapis.com/token", {
-          method: "POST",
-          headers: { "Content-Type": "application/x-www-form-urlencoded" },
-          body: new URLSearchParams({
-            client_id: Deno.env.get("GOOGLE_CLIENT_ID")!,
-            client_secret: Deno.env.get("GOOGLE_CLIENT_SECRET")!,
-            refresh_token: centralConfig.google_refresh_token!,
-            grant_type: "refresh_token",
-          }),
-        });
-
-        if (!refreshResponse.ok) {
-          const errorText = await refreshResponse.text();
-          console.error("Token refresh failed for consultations:", errorText);
-          return new Response(
-            JSON.stringify({
-              success: false,
-              message: "calendar_token_refresh_failed",
-              meetingLink: "https://meet.google.com/pending",
-            }),
-            { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-          );
-        }
-
-        const tokens = await refreshResponse.json();
-        accessToken = tokens.access_token;
-
-        const newExpiresAt = new Date(Date.now() + tokens.expires_in * 1000);
-        await supabaseClient
-          .from("central_calendar_config")
-          .update({
-            google_oauth_token: accessToken,
-            google_token_expires_at: newExpiresAt.toISOString(),
-          })
-          .eq("id", "central-calendar");
-
-        console.log("Central calendar token refreshed successfully for consultations");
+    const pemToArrayBuffer = (pem: string): ArrayBuffer => {
+      const b64 = pem
+        .replace(/-----BEGIN PRIVATE KEY-----/g, "")
+        .replace(/-----END PRIVATE KEY-----/g, "")
+        .replace(/\r?\n|\r|\s/g, "");
+      const binary = atob(b64);
+      const bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) {
+        bytes[i] = binary.charCodeAt(i);
       }
+      return bytes.buffer;
+    };
+
+    const keyData = pemToArrayBuffer(serviceAccount.private_key);
+    const cryptoKey = await crypto.subtle.importKey(
+      "pkcs8",
+      keyData,
+      { name: "RSASSA-PKCS1-v1_5", hash: "SHA-256" },
+      false,
+      ["sign"],
+    );
+
+    const payload: Record<string, unknown> = {
+      iss: serviceAccount.client_email,
+      scope: "https://www.googleapis.com/auth/calendar",
+      aud: "https://oauth2.googleapis.com/token",
+      exp: now + 3600,
+      iat: now,
+    };
+
+    const impersonate = Deno.env.get("GOOGLE_IMPERSONATE_EMAIL");
+    if (impersonate) {
+      (payload as any).sub = impersonate;
     }
+
+    const jwt = await create(
+      { alg: "RS256", typ: "JWT" },
+      payload,
+      cryptoKey,
+    );
+
+    const tokenResponse = await fetch("https://oauth2.googleapis.com/token", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: new URLSearchParams({
+        grant_type: "urn:ietf:params:oauth:grant-type:jwt-bearer",
+        assertion: jwt,
+      }),
+    });
+
+    if (!tokenResponse.ok) {
+      const errorData = await tokenResponse.text();
+      console.error("Token error (consultation):", errorData);
+      throw new Error("Failed to get access token for consultation event");
+    }
+
+    const { access_token } = await tokenResponse.json();
 
     const startDateTime = buildStartDateTime(consultationDate, consultationTime);
     const endDateTime = new Date(startDateTime.getTime() + 30 * 60 * 1000); // 30 minutes
@@ -189,7 +180,7 @@ const handler = async (req: Request): Promise<Response> => {
       {
         method: "POST",
         headers: {
-          Authorization: `Bearer ${accessToken}`,
+          Authorization: `Bearer ${access_token}`,
           "Content-Type": "application/json",
         },
         body: JSON.stringify(calendarEvent),
