@@ -520,7 +520,10 @@ const BookConsultation = () => {
                       <p className="text-xs text-muted-foreground">Consultations available Monday-Saturday</p>
                     </div>
                     <div className="space-y-2">
-                      <Label>Choose Time *</Label>
+                      <div className="flex items-center justify-between">
+                        <Label>Choose Time *</Label>
+                        <span className="text-xs text-muted-foreground">EAT</span>
+                      </div>
                       {filteredTimeSlots.length === 0 ? (
                         <div className="text-sm text-muted-foreground p-3 border rounded-md">
                           No available time slots for today. Please select a future date or try again later.

@@ -144,7 +144,10 @@ export const TutorCalendarOverview = ({ tutorId }: TutorCalendarOverviewProps) =
                   </div>
 
                   <div className="border-t pt-3 mt-3">
-                    <h4 className="text-sm font-semibold mb-2">Time Slots</h4>
+                    <div className="flex items-center justify-between mb-2">
+                      <h4 className="text-sm font-semibold">Time Slots</h4>
+                      <span className="text-xs text-muted-foreground">EAT</span>
+                    </div>
                     <div className="space-y-2 max-h-64 overflow-y-auto">
                       {selectedDaySlots.map((slot) => {
                         const booking = selectedDayBookings.find(

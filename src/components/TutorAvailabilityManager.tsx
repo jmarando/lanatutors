@@ -582,7 +582,7 @@ export const TutorAvailabilityManager = () => {
 
                 <div className="grid grid-cols-2 gap-2 mb-3">
                   <div>
-                    <Label className="text-xs text-muted-foreground mb-1 block">Start Time</Label>
+                    <Label className="text-xs text-muted-foreground mb-1 block">Start Time (EAT)</Label>
                     <Input
                       type="time"
                       value={startTime}
@@ -590,7 +590,7 @@ export const TutorAvailabilityManager = () => {
                     />
                   </div>
                   <div>
-                    <Label className="text-xs text-muted-foreground mb-1 block">End Time</Label>
+                    <Label className="text-xs text-muted-foreground mb-1 block">End Time (EAT)</Label>
                     <Input
                       type="time"
                       value={endTime}
@@ -643,11 +643,12 @@ export const TutorAvailabilityManager = () => {
       {/* Week Calendar View */}
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <CardTitle className="flex items-center gap-2">
-              <Clock className="w-5 h-5 text-primary" />
-              Weekly Schedule
-            </CardTitle>
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center gap-2">
+                <Clock className="w-5 h-5 text-primary" />
+                Weekly Schedule
+              </CardTitle>
+              <span className="text-xs text-muted-foreground">All times in EAT</span>
             <div className="flex items-center gap-2">
               <Button
                 variant="outline"
