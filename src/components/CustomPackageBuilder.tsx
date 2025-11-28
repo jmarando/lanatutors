@@ -9,7 +9,7 @@ import { CheckCircle2, BookOpen, Calendar, CreditCard, X, Plus, ShoppingCart } f
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
-import { RecurringSlotSelector } from "./RecurringSlotSelector";
+import { RecurringScheduleBuilder } from "./RecurringScheduleBuilder";
 
 interface CustomPackageBuilderProps {
   tutorId: string; // tutor_profiles.id for package ownership
@@ -29,9 +29,18 @@ interface SubjectItem {
   sessions: number;
 }
 
+interface RecurringScheduleItem {
+  id: string;
+  subject: string;
+  dayOfWeek: number;
+  timeSlot: string;
+  weeks: number;
+  availabilitySlotId: string;
+}
+
 interface SchedulePreference {
   mode: 'schedule_now' | 'use_flexibly';
-  recurringSlotIds?: string[];
+  recurringSchedule?: RecurringScheduleItem[];
   notes?: string;
 }
 
@@ -135,10 +144,10 @@ export const CustomPackageBuilder = ({
     ));
   };
 
-  const handleSlotsSelected = (slotIds: string[]) => {
+  const handleScheduleComplete = (recurringSchedule: RecurringScheduleItem[]) => {
     setSchedulePreference({
       ...schedulePreference,
-      recurringSlotIds: slotIds
+      recurringSchedule
     });
   };
 
@@ -483,12 +492,12 @@ export const CustomPackageBuilder = ({
                         : "border-border hover:border-primary/30"
                     }`}
                   >
-                    <div className="flex items-start gap-3">
+                     <div className="flex items-start gap-3">
                       <Calendar className="w-5 h-5 text-primary shrink-0 mt-0.5" />
                       <div className="flex-1">
                         <div className="text-sm font-medium mb-1">Pre-Schedule Recurring Slots</div>
                         <p className="text-xs text-muted-foreground">
-                          Reserve specific days/times now (e.g., every Monday & Wednesday 4pm). We'll block time on the tutor's calendar before you pay.
+                          Build a weekly schedule by subject (e.g., English Mondays 2 PM for 4 weeks, Physics Tuesdays 4 PM for 6 weeks). Times will be blocked on the tutor's calendar.
                         </p>
                       </div>
                     </div>
@@ -522,10 +531,10 @@ export const CustomPackageBuilder = ({
               {/* Scheduling Options */}
               {showScheduleOptions && schedulePreference.mode === 'schedule_now' && (
                 <div className="space-y-4 pt-3 border-t">
-                  <RecurringSlotSelector
+                  <RecurringScheduleBuilder
                     tutorUserId={availabilityTutorId}
-                    onSlotsSelected={handleSlotsSelected}
-                    selectedSlots={schedulePreference.recurringSlotIds || []}
+                    subjects={selectedSubjects.map(s => s.subject)}
+                    onScheduleComplete={handleScheduleComplete}
                   />
 
                   <div className="space-y-2">
