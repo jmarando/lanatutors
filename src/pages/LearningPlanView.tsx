@@ -22,6 +22,14 @@ const LearningPlanView = () => {
 
   const fetchPlan = async () => {
     try {
+      // Ensure the user is authenticated before loading the plan, otherwise RLS will hide it
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        // Redirect to login; after login the parent can reopen the email link
+        navigate("/login");
+        return;
+      }
+
       const { data, error } = await supabase
         .from("learning_plans")
         .select(`
