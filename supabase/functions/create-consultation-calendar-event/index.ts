@@ -124,7 +124,16 @@ const handler = async (req: Request): Promise<Response> => {
     if (!tokenResponse.ok) {
       const errorData = await tokenResponse.text();
       console.error("Token error (consultation):", errorData);
-      throw new Error("Failed to get access token for consultation event");
+
+      // Fall back gracefully so consultation booking can still proceed
+      return new Response(
+        JSON.stringify({
+          success: false,
+          message: "token_error",
+          meetingLink: "https://meet.google.com/pending",
+        }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
     }
 
     const { access_token } = await tokenResponse.json();
