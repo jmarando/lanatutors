@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Video, ExternalLink, Calendar, DollarSign, CalendarClock, Sparkles, Loader2 } from "lucide-react";
+import { Video, ExternalLink, Calendar, DollarSign, CalendarClock, Sparkles, Loader2, MessageSquare } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
@@ -252,6 +252,23 @@ export function StudentClassesTab() {
                                 >
                                   <Sparkles className="w-4 h-4 mr-2" />
                                   AI Summary
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => {
+                                    const sessionDate = booking.tutor_availability?.start_time
+                                      ? format(new Date(booking.tutor_availability.start_time), 'EEEE, MMMM d, yyyy')
+                                      : format(new Date(booking.created_at), 'EEEE, MMMM d, yyyy');
+                                    const subject = encodeURIComponent('Feedback on Session');
+                                    const body = encodeURIComponent(
+                                      `Booking ID: ${booking.id}\nSubject: ${booking.subject}\nDate: ${sessionDate}\n\nMy Feedback:\n\n`
+                                    );
+                                    window.location.href = `mailto:info@lanatutors.africa?subject=${subject}&body=${body}`;
+                                  }}
+                                >
+                                  <MessageSquare className="w-4 h-4 mr-2" />
+                                  Give Feedback
                                 </Button>
                                 {booking.classroom_link && (
                                   <Button
