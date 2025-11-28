@@ -159,7 +159,7 @@ const Navigation = () => {
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuItem asChild>
-                  <Link to="/book-consultation" className="flex items-start gap-3 p-3 cursor-pointer">
+                  <Link to="/request-learning-plan" className="flex items-start gap-3 p-3 cursor-pointer">
                     <FileText className="w-5 h-5 text-primary mt-0.5" />
                     <div className="flex-1">
                       <div className="font-medium">Learning Plan</div>
@@ -315,7 +315,7 @@ const Navigation = () => {
                     <div className="text-xs text-muted-foreground">Multi-session bundles</div>
                   </div>
                 </Link>
-                <Link to="/book-consultation" onClick={() => setOpen(false)} className="flex items-center gap-3 px-2 py-2 hover:bg-primary/5 rounded-md">
+                <Link to="/request-learning-plan" onClick={() => setOpen(false)} className="flex items-center gap-3 px-2 py-2 hover:bg-primary/5 rounded-md">
                   <FileText className="w-5 h-5" />
                   <div>
                     <div className="font-medium">Learning Plan</div>
