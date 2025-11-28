@@ -271,20 +271,19 @@ export default function GroupClassEnrollment() {
               {groupClass.tutor_name && (
                 <div className="pt-2 border-t">
                   <p className="text-sm font-medium mb-1">Your Tutor</p>
-                  {groupClass.tutor_profile_slug || groupClass.tutor_profile_id ? (
-                    <button
-                      onClick={() => navigate(`/tutors/${groupClass.tutor_profile_slug || groupClass.tutor_profile_id}`)}
-                      className="text-sm text-primary hover:underline font-medium"
-                    >
-                      {groupClass.tutor_name} - View Profile
-                    </button>
-                  ) : (
-                    <p className="text-sm text-foreground">{groupClass.tutor_name}</p>
-                  )}
+                  <p className="text-sm font-medium text-foreground">{groupClass.tutor_name}</p>
                   {groupClass.tutor_bio && (
-                    <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                    <p className="text-xs text-muted-foreground mt-1 line-clamp-3">
                       {groupClass.tutor_bio}
                     </p>
+                  )}
+                  {(groupClass.tutor_profile_slug || groupClass.tutor_profile_id) && (
+                    <button
+                      onClick={() => navigate(`/tutors/${groupClass.tutor_profile_slug || groupClass.tutor_profile_id}`)}
+                      className="text-xs text-primary hover:underline mt-1 inline-block"
+                    >
+                      View Full Profile →
+                    </button>
                   )}
                 </div>
               )}
