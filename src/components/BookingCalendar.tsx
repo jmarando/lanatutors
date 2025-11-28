@@ -376,8 +376,7 @@ export const BookingCalendar = ({
         totalAmount = duration * rate;
         
         // Handle different payment options
-        // Special testing rate for Justin Anyona
-        const depositRate = tutorId === '4d9426d7-7294-492a-a2e9-4b1642ba1954' ? 0.01 : 0.3;
+        const depositRate = 0.3;
         
         if (paymentOption === 'deposit') {
           depositAmount = totalAmount * depositRate;
