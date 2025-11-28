@@ -83,7 +83,6 @@ const Navigation = () => {
 
   const getNavLinks = () => [
     { to: "/", label: "Home", singleLine: true },
-    { to: "/holiday-packages", label: "Revision Packages", singleLine: true },
     { to: user ? "/student/dashboard" : "/for-students", label: "Student Hub", singleLine: true },
     { to: "/for-tutors", label: "Tutor Hub", singleLine: true },
     { to: "/about", label: "About Us", singleLine: true },
@@ -108,18 +107,16 @@ const Navigation = () => {
         {/* Desktop Navigation */}
         <div className="hidden lg:flex items-center gap-4 xl:gap-6">
           <div className="flex items-center gap-4 xl:gap-6 whitespace-nowrap">
-            {navLinks.map((link) => (
-              <Link
-                key={link.to}
-                to={link.to}
-                className="group relative text-sm font-medium hover:text-primary transition-all duration-300 whitespace-nowrap"
-              >
-                <span className="relative inline-block">
-                  {link.label}
-                  <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
-                </span>
-              </Link>
-            ))}
+            {/* Home Link */}
+            <Link
+              to="/"
+              className="group relative text-sm font-medium hover:text-primary transition-all duration-300 whitespace-nowrap"
+            >
+              <span className="relative inline-block">
+                Home
+                <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
+              </span>
+            </Link>
             
             {/* Book a Class Dropdown */}
             <DropdownMenu>
@@ -172,6 +169,20 @@ const Navigation = () => {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
+            
+            {/* Other Nav Links */}
+            {navLinks.slice(1).map((link) => (
+              <Link
+                key={link.to}
+                to={link.to}
+                className="group relative text-sm font-medium hover:text-primary transition-all duration-300 whitespace-nowrap"
+              >
+                <span className="relative inline-block">
+                  {link.label}
+                  <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
+                </span>
+              </Link>
+            ))}
             
             {isAdmin && (
               <Link to="/admin" className="group relative text-sm font-medium hover:text-primary transition-all duration-300 whitespace-nowrap">
@@ -270,16 +281,15 @@ const Navigation = () => {
                   </div>
                 </div>
               )}
-              {navLinks.map((link) => (
-                <Link
-                  key={link.to}
-                  to={link.to}
-                  onClick={() => setOpen(false)}
-                  className="text-lg font-medium hover:text-primary transition-colors px-2 py-1 hover:bg-primary/5 rounded-md"
-                >
-                  {link.label}
-                </Link>
-              ))}
+              
+              {/* Home Link */}
+              <Link
+                to="/"
+                onClick={() => setOpen(false)}
+                className="text-lg font-medium hover:text-primary transition-colors px-2 py-1 hover:bg-primary/5 rounded-md"
+              >
+                Home
+              </Link>
               
               {/* Book a Class Mobile Section */}
               <div className="border-t pt-4">
@@ -313,6 +323,18 @@ const Navigation = () => {
                   </div>
                 </Link>
               </div>
+              
+              {/* Other Nav Links */}
+              {navLinks.slice(1).map((link) => (
+                <Link
+                  key={link.to}
+                  to={link.to}
+                  onClick={() => setOpen(false)}
+                  className="text-lg font-medium hover:text-primary transition-colors px-2 py-1 hover:bg-primary/5 rounded-md"
+                >
+                  {link.label}
+                </Link>
+              ))}
               
               {isAdmin && (
                 <Link to="/admin" onClick={() => setOpen(false)} className="text-lg font-medium hover:text-primary transition-colors px-2 py-1 hover:bg-primary/5 rounded-md">
