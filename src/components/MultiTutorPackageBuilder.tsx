@@ -126,7 +126,7 @@ export const MultiTutorPackageBuilder = () => {
     ));
   };
 
-  const handleCheckout = async () => {
+  const handleCheckout = async (generateInvoice: boolean) => {
     if (!currentUser) {
       toast.error("Please sign in to continue");
       return;
@@ -192,16 +192,40 @@ export const MultiTutorPackageBuilder = () => {
       setCart([]);
       localStorage.removeItem(CART_STORAGE_KEY);
 
-      // Redirect to invoice preview with package IDs and payment option
-      const params = new URLSearchParams({
-        type: 'multi_package',
-        packageIds: packageIds.join(','),
-        paymentOption,
-        totalAmount: totals.total.toString(),
-        depositAmount: totals.deposit.toString(),
-      });
-      
-      navigate(`/invoice-preview?${params.toString()}`);
+      if (generateInvoice) {
+        // Redirect to invoice preview with package IDs and payment option
+        const params = new URLSearchParams({
+          type: 'multi_package',
+          packageIds: packageIds.join(','),
+          paymentOption,
+          totalAmount: totals.total.toString(),
+          depositAmount: totals.deposit.toString(),
+        });
+        
+        navigate(`/invoice-preview?${params.toString()}`);
+      } else {
+        // Direct payment via Pesapal
+        const amountToPay = paymentOption === 'full' ? totals.total : totals.deposit;
+        
+        const { data: paymentData, error: paymentError } = await supabase.functions.invoke(
+          'initiate-pesapal-payment',
+          {
+            body: {
+              amount: amountToPay,
+              description: `Multi-Subject Package - ${totals.totalSessions} sessions`,
+              referenceId: packageIds[0],
+              paymentType: 'multi_package',
+              phoneNumber: currentUser.phone || '',
+            },
+          }
+        );
+
+        if (paymentError) throw new Error('Failed to initiate payment');
+        
+        if (paymentData?.redirect_url) {
+          window.open(paymentData.redirect_url, '_blank');
+        }
+      }
     } catch (error: any) {
       console.error("Checkout error:", error);
       toast.error(error.message || "Failed to process checkout. Please try again.");
@@ -367,20 +391,30 @@ export const MultiTutorPackageBuilder = () => {
                 )}
               </div>
 
-              <Button
-                className="w-full"
-                onClick={handleCheckout}
-                disabled={loading || cart.length === 0}
-              >
-                {loading ? (
-                  "Processing..."
-                ) : (
-                  <>
-                    <CreditCard className="w-4 h-4 mr-2" />
-                    Proceed to Payment
-                  </>
-                )}
-              </Button>
+              <div className="space-y-2">
+                <Button
+                  className="w-full"
+                  onClick={() => handleCheckout(false)}
+                  disabled={loading || cart.length === 0}
+                >
+                  {loading ? (
+                    "Processing..."
+                  ) : (
+                    <>
+                      <CreditCard className="w-4 h-4 mr-2" />
+                      Pay Now
+                    </>
+                  )}
+                </Button>
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => handleCheckout(true)}
+                  disabled={loading || cart.length === 0}
+                >
+                  Generate Invoice and Pay
+                </Button>
+              </div>
             </CardContent>
           </Card>
         </div>
