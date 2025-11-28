@@ -201,7 +201,7 @@ const handler = async (req: Request): Promise<Response> => {
                                     </tr>
                                     ${booking.payment_option === 'deposit' && booking.deposit_paid ? `
                                     <tr>
-                                      <td style="padding: 10px 0; font-size: 14px; color: #78350f;">✓ Deposit Paid:</td>
+                                      <td style="padding: 10px 0; font-size: 14px; color: #78350f;">✓ ${booking.balance_due > 0 ? 'Deposit Paid' : 'Amount Paid'}:</td>
                                       <td style="padding: 10px 0; font-size: 14px; color: #15803d; font-weight: 600; text-align: right;">${booking.currency || 'KES'} ${booking.deposit_paid}</td>
                                     </tr>
                                     ${booking.balance_due ? `

@@ -264,7 +264,7 @@ const BookingConfirmed = () => {
                   <span className="font-semibold">KES {booking.amount.toFixed(0)}</span>
                 </div>
                 <div className="flex justify-between text-green-600">
-                  <span>Deposit Paid</span>
+                  <span>{booking.balance_due > 0 ? 'Deposit Paid' : 'Amount Paid'}</span>
                   <span className="font-semibold">KES {booking.deposit_paid.toFixed(0)}</span>
                 </div>
                 {booking.balance_due > 0 && (
