@@ -25,15 +25,47 @@ const GroupClassMarketplace = () => {
   const fetchGroupClasses = async () => {
     const { data, error } = await supabase
       .from("group_classes")
-      .select("*")
+      .select(`
+        *,
+        group_class_tutor_assignments!inner(
+          tutor_id,
+          is_primary,
+          tutor_profiles!inner(
+            id,
+            user_id,
+            subjects,
+            bio
+          )
+        )
+      `)
       .eq("status", "active")
+      .eq("group_class_tutor_assignments.is_primary", true)
       .order("day_of_week", { ascending: true });
 
     if (error) {
       console.error("Error fetching group classes:", error);
       toast.error("Failed to load group classes");
     } else {
-      setGroupClasses(data || []);
+      // Get tutor profile name from profiles table
+      const enrichedData = await Promise.all((data || []).map(async (classItem) => {
+        const tutorUserId = classItem.group_class_tutor_assignments[0]?.tutor_profiles?.user_id;
+        if (tutorUserId) {
+          const { data: profile } = await supabase
+            .from("profiles")
+            .select("full_name")
+            .eq("id", tutorUserId)
+            .single();
+          
+          return {
+            ...classItem,
+            tutor_name: profile?.full_name || "TBA",
+            tutor_bio: classItem.group_class_tutor_assignments[0]?.tutor_profiles?.bio
+          };
+        }
+        return { ...classItem, tutor_name: "TBA" };
+      }));
+      
+      setGroupClasses(enrichedData);
     }
     setLoading(false);
   };
@@ -148,6 +180,10 @@ const GroupClassMarketplace = () => {
                   </CardHeader>
                   <CardContent className="space-y-4">
                     <div className="space-y-2 text-sm">
+                      <div className="flex items-center gap-2">
+                        <Users className="w-4 h-4 text-muted-foreground" />
+                        <span className="font-medium">Tutor: {classItem.tutor_name}</span>
+                      </div>
                       <div className="flex items-center gap-2">
                         <Calendar className="w-4 h-4 text-muted-foreground" />
                         <span>{classItem.day_of_week}</span>

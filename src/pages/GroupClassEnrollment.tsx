@@ -23,6 +23,8 @@ interface GroupClass {
   start_time: string;
   end_time: string;
   hourly_rate: number;
+  tutor_name?: string;
+  tutor_bio?: string;
 }
 
 export default function GroupClassEnrollment() {
@@ -53,13 +55,42 @@ export default function GroupClassEnrollment() {
     try {
       const { data, error } = await supabase
         .from("group_classes")
-        .select("*")
+        .select(`
+          *,
+          group_class_tutor_assignments!inner(
+            tutor_id,
+            is_primary,
+            tutor_profiles!inner(
+              id,
+              user_id,
+              bio
+            )
+          )
+        `)
         .eq("id", classId)
         .eq("status", "active")
+        .eq("group_class_tutor_assignments.is_primary", true)
         .single();
 
       if (error) throw error;
-      setGroupClass(data);
+      
+      // Get tutor name from profiles table
+      const tutorUserId = data.group_class_tutor_assignments[0]?.tutor_profiles?.user_id;
+      if (tutorUserId) {
+        const { data: profile } = await supabase
+          .from("profiles")
+          .select("full_name")
+          .eq("id", tutorUserId)
+          .single();
+        
+        setGroupClass({
+          ...data,
+          tutor_name: profile?.full_name || "TBA",
+          tutor_bio: data.group_class_tutor_assignments[0]?.tutor_profiles?.bio
+        });
+      } else {
+        setGroupClass({ ...data, tutor_name: "TBA" });
+      }
     } catch (error) {
       console.error("Error fetching group class:", error);
       toast({
@@ -231,6 +262,17 @@ export default function GroupClassEnrollment() {
                 <Clock className="w-4 h-4 text-primary" />
                 <span>{formatTime(groupClass.start_time)} - {formatTime(groupClass.end_time)} EAT</span>
               </div>
+              {groupClass.tutor_name && (
+                <div className="pt-2 border-t">
+                  <p className="text-sm font-medium mb-1">Your Tutor</p>
+                  <p className="text-sm text-foreground">{groupClass.tutor_name}</p>
+                  {groupClass.tutor_bio && (
+                    <p className="text-xs text-muted-foreground mt-1 line-clamp-2">
+                      {groupClass.tutor_bio}
+                    </p>
+                  )}
+                </div>
+              )}
               {groupClass.description && (
                 <p className="text-sm text-muted-foreground pt-2 border-t">
                   {groupClass.description}

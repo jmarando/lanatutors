@@ -19,6 +19,7 @@ import { formatConsultationDate, formatToEAT, formatFullDateTime } from "@/utils
 import { BlogManagement } from "@/components/admin/BlogManagement";
 import { TutorSignupList } from "@/components/admin/TutorSignupList";
 import { TutorEmailList } from "@/components/admin/TutorEmailList";
+import { GroupClassTutorAssignment } from "@/components/admin/GroupClassTutorAssignment";
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -1167,6 +1168,15 @@ The Lana Team`;
                 </span>
               </TabsTrigger>
               <TabsTrigger 
+                value="group-classes"
+                className="data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:bg-transparent rounded-none bg-transparent px-4 py-3 border-b-2 border-transparent"
+              >
+                <span className="flex items-center gap-2">
+                  <Users className="h-4 w-4" />
+                  Group Classes
+                </span>
+              </TabsTrigger>
+              <TabsTrigger 
                 value="tools"
                 className="data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:bg-transparent rounded-none bg-transparent px-4 py-3 border-b-2 border-transparent"
               >
@@ -2309,6 +2319,10 @@ The Lana Team`;
 
                 <TabsContent value="tutor-emails">
                   <TutorEmailList />
+                </TabsContent>
+
+                <TabsContent value="group-classes">
+                  <GroupClassTutorAssignment />
                 </TabsContent>
     </Tabs>
 
