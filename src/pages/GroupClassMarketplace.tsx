@@ -34,7 +34,8 @@ const GroupClassMarketplace = () => {
             id,
             user_id,
             subjects,
-            bio
+            bio,
+            profile_slug
           )
         )
       `)
@@ -48,7 +49,8 @@ const GroupClassMarketplace = () => {
     } else {
       // Get tutor profile name from profiles table
       const enrichedData = await Promise.all((data || []).map(async (classItem) => {
-        const tutorUserId = classItem.group_class_tutor_assignments[0]?.tutor_profiles?.user_id;
+        const tutorProfile = classItem.group_class_tutor_assignments[0]?.tutor_profiles;
+        const tutorUserId = tutorProfile?.user_id;
         if (tutorUserId) {
           const { data: profile } = await supabase
             .from("profiles")
@@ -59,7 +61,9 @@ const GroupClassMarketplace = () => {
           return {
             ...classItem,
             tutor_name: profile?.full_name || "TBA",
-            tutor_bio: classItem.group_class_tutor_assignments[0]?.tutor_profiles?.bio
+            tutor_bio: tutorProfile?.bio,
+            tutor_profile_slug: tutorProfile?.profile_slug,
+            tutor_profile_id: tutorProfile?.id
           };
         }
         return { ...classItem, tutor_name: "TBA" };
@@ -182,7 +186,22 @@ const GroupClassMarketplace = () => {
                     <div className="space-y-2 text-sm">
                       <div className="flex items-center gap-2">
                         <Users className="w-4 h-4 text-muted-foreground" />
-                        <span className="font-medium">Tutor: {classItem.tutor_name}</span>
+                        <span className="font-medium">
+                          Tutor:{" "}
+                          {classItem.tutor_profile_slug || classItem.tutor_profile_id ? (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                navigate(`/tutors/${classItem.tutor_profile_slug || classItem.tutor_profile_id}`);
+                              }}
+                              className="text-primary hover:underline"
+                            >
+                              {classItem.tutor_name}
+                            </button>
+                          ) : (
+                            classItem.tutor_name
+                          )}
+                        </span>
                       </div>
                       <div className="flex items-center gap-2">
                         <Calendar className="w-4 h-4 text-muted-foreground" />
