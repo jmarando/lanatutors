@@ -151,6 +151,8 @@ export const MultiTutorPackageBuilder = () => {
         return acc;
       }, {} as Record<string, CartItem[]>);
 
+      const packageIds: string[] = [];
+
       // Create package purchase for each tutor
       for (const [tutorId, items] of Object.entries(tutorGroups)) {
         const tutorSessions = items.reduce((sum, item) => sum + item.sessions, 0);
@@ -167,7 +169,7 @@ export const MultiTutorPackageBuilder = () => {
             sessions_remaining: tutorSessions,
             sessions_used: 0,
             total_amount: proportionalTotal,
-            amount_paid: paymentOption === 'full' ? proportionalTotal : Math.round(proportionalTotal * 0.3),
+            amount_paid: 0,
             payment_status: 'pending',
             expires_at: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString(),
             currency: 'KES',
@@ -176,37 +178,30 @@ export const MultiTutorPackageBuilder = () => {
               subjects: items.map(i => ({ subject: i.subject, sessions: i.sessions })),
               discount_percentage: totals.discountPercentage,
               created_via: 'multi_tutor_package_builder',
+              payment_option: paymentOption,
             },
           })
           .select()
           .single();
 
         if (purchaseError) throw purchaseError;
+        if (packagePurchase) packageIds.push(packagePurchase.id);
       }
 
-      // Create single payment for the entire cart
-      const amountToPay = paymentOption === 'full' ? totals.total : totals.deposit;
-      
-      const { data: payment, error: paymentError } = await supabase
-        .from("payments")
-        .insert({
-          user_id: currentUser.id,
-          amount: amountToPay,
-          phone_number: currentUser.phone || "0000000000",
-          payment_type: "multi_package_purchase",
-          status: 'pending',
-          currency: 'KES',
-        })
-        .select()
-        .single();
-
-      if (paymentError) throw paymentError;
-
-      // Redirect to invoice preview page instead of directly to Pesapal
-      // Clear cart before redirecting
+      // Clear cart
       setCart([]);
       localStorage.removeItem(CART_STORAGE_KEY);
-      window.location.href = `/invoice-preview?type=package&packageId=${payment.id}`;
+
+      // Redirect to invoice preview with package IDs and payment option
+      const params = new URLSearchParams({
+        type: 'multi_package',
+        packageIds: packageIds.join(','),
+        paymentOption,
+        totalAmount: totals.total.toString(),
+        depositAmount: totals.deposit.toString(),
+      });
+      
+      navigate(`/invoice-preview?${params.toString()}`);
     } catch (error: any) {
       console.error("Checkout error:", error);
       toast.error(error.message || "Failed to process checkout. Please try again.");
