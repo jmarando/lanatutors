@@ -46,16 +46,8 @@ const GroupClassMarketplace = () => {
     return true;
   });
 
-  const handleEnroll = async (classId: string) => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      toast.error("Please sign in to enroll");
-      navigate("/login");
-      return;
-    }
-
-    // Navigate to enrollment/payment flow
-    navigate(`/group-class-enroll/${classId}`);
+  const handleEnroll = (classId: string) => {
+    navigate(`/group-classes/${classId}/enroll`);
   };
 
   const uniqueCurricula = Array.from(new Set(groupClasses.map((c) => c.curriculum)));
@@ -165,10 +157,6 @@ const GroupClassMarketplace = () => {
                         <span>{classItem.start_time} - {classItem.end_time} EAT</span>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Users className="w-4 h-4 text-muted-foreground" />
-                        <span>{classItem.current_enrollment}/{classItem.max_students} enrolled</span>
-                      </div>
-                      <div className="flex items-center gap-2">
                         <MapPin className="w-4 h-4 text-muted-foreground" />
                         <span>Online via Google Meet</span>
                       </div>
@@ -184,9 +172,8 @@ const GroupClassMarketplace = () => {
                       <Button 
                         onClick={() => handleEnroll(classItem.id)}
                         className="w-full"
-                        disabled={classItem.current_enrollment >= classItem.max_students}
                       >
-                        {classItem.current_enrollment >= classItem.max_students ? "Class Full" : "Join Class"}
+                        Join Class
                       </Button>
                     </div>
                   </CardContent>

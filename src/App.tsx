@@ -36,6 +36,7 @@ const InvoicePreview = lazy(() => import("./pages/InvoicePreview"));
 const ProfileSettings = lazy(() => import("./pages/ProfileSettings"));
 const LearningPlanView = lazy(() => import("./pages/LearningPlanView"));
 const GroupClassMarketplace = lazy(() => import("./pages/GroupClassMarketplace"));
+const GroupClassEnrollment = lazy(() => import("./pages/GroupClassEnrollment"));
 
 const NotFound = lazy(() => import("./pages/NotFound"));
 const TestEmail = lazy(() => import("./pages/TestEmail"));
@@ -116,7 +117,8 @@ const App = () => {
                 <Route path="/privacy-policy" element={<PrivacyPolicy />} />
               <Route path="/profile-settings" element={<ProfileSettings />} />
               <Route path="/learning-plan/:planId" element={<LearningPlanView />} />
-                <Route path="/group-classes" element={<GroupClassMarketplace />} />
+          <Route path="/group-classes" element={<GroupClassMarketplace />} />
+          <Route path="/group-classes/:classId/enroll" element={<GroupClassEnrollment />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
