@@ -351,21 +351,49 @@ export default function GroupClassEnrollment() {
                 </div>
               </div>
 
-              <Button
-                className="w-full"
-                size="lg"
-                onClick={handleEnroll}
-                disabled={processing}
-              >
-                {processing ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Processing...
-                  </>
-                ) : (
-                  "Proceed to Payment"
-                )}
-              </Button>
+              <div className="space-y-3">
+                <Button
+                  className="w-full"
+                  size="lg"
+                  onClick={handleEnroll}
+                  disabled={processing}
+                >
+                  {processing ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Processing...
+                    </>
+                  ) : (
+                    "Proceed to Payment"
+                  )}
+                </Button>
+                
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  size="lg"
+                  onClick={() => {
+                    // TODO: Navigate to invoice preview page
+                    toast({
+                      title: "Coming soon",
+                      description: "Invoice preview will be available shortly",
+                    });
+                  }}
+                  disabled={processing}
+                >
+                  Generate Invoice and Pay
+                </Button>
+              </div>
+
+              <div className="pt-4 border-t space-y-2">
+                <p className="text-xs font-medium text-foreground">What happens next?</p>
+                <ul className="text-xs text-muted-foreground space-y-1.5">
+                  <li>• You'll receive a confirmation email with your enrollment details</li>
+                  <li>• Access to the class meeting link will be available in your Student Dashboard</li>
+                  <li>• You'll get reminder emails before each scheduled session</li>
+                  <li>• Your tutor will be notified and will reach out if needed</li>
+                </ul>
+              </div>
             </CardContent>
           </Card>
         </div>
