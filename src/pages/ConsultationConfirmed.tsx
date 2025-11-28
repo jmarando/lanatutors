@@ -202,7 +202,7 @@ const ConsultationConfirmed = () => {
                 <div>
                   <p className="font-semibold mb-2">Reminders</p>
                   <p className="text-sm text-muted-foreground mb-2">
-                    We'll send you email and WhatsApp reminders:
+                    We'll send you email reminders:
                   </p>
                   <ul className="text-sm space-y-1">
                     <li>• 1 day before your consultation</li>
