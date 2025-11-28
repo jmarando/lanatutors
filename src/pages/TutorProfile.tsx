@@ -6,7 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Star, GraduationCap, Clock, BookOpen, Award, MapPin, Users, CheckCircle2, Heart, Sparkles, Video, Calendar, ArrowLeft, School, Building2, Home } from "lucide-react";
+import { Star, GraduationCap, Clock, BookOpen, Award, MapPin, Users, CheckCircle2, Heart, Sparkles, Video, Calendar, ArrowLeft, School, Building2, Home, ShoppingCart } from "lucide-react";
 import { toast } from "sonner";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -842,7 +842,7 @@ const TutorProfile = () => {
 
                     <Separator className="my-5" />
 
-                    {/* Custom Package Builder */}
+                    {/* Custom Package Builder - Single Tutor */}
                     <div className="space-y-3">
                       <Button 
                         variant="outline"
@@ -865,15 +865,57 @@ const TutorProfile = () => {
                         <div className="flex flex-col items-center gap-2 w-full">
                           <div className="flex items-center gap-2">
                             <Sparkles className="w-5 h-5 text-primary" />
-                            <span className="font-semibold text-base text-foreground">Create Custom Package</span>
+                            <span className="font-semibold text-base text-foreground">Custom Package with {tutor.name}</span>
                           </div>
-                          <span className="text-sm text-muted-foreground">Choose sessions & subject yourself</span>
+                          <span className="text-sm text-muted-foreground">Multiple subjects with this tutor</span>
                         </div>
                       </Button>
                       <p className="text-xs text-center text-muted-foreground px-2">
-                        Build your own multi-session package - select number of sessions (2+ gets discounts), pick subject & schedule, pay once and use sessions flexibly over 90 days
+                        Build a package with {tutor.name} - select sessions per subject, get bulk discounts, and use flexibly over 90 days
                       </p>
                     </div>
+
+                    <Separator className="my-5" />
+
+                    {/* Multi-Tutor Package Builder */}
+                    <div className="space-y-3">
+                      <Button 
+                        variant="outline"
+                        className="w-full bg-secondary/5 border-secondary/30 hover:bg-secondary/10 hover:border-secondary h-auto py-5 text-foreground whitespace-normal text-wrap"
+                        size="lg"
+                        onClick={async () => {
+                          const { data: { user } } = await supabase.auth.getUser();
+                          if (!user) {
+                            showToast({
+                              title: "Please Sign In",
+                              description: "You need to sign in to build a multi-tutor package",
+                              variant: "destructive",
+                            });
+                            navigate(`/login?redirect=${encodeURIComponent(window.location.pathname)}`);
+                            return;
+                          }
+                          
+                          // Navigate to multi-tutor cart page
+                          toast.success("Browse tutors and click 'Add to Multi-Subject Cart' to combine multiple tutors!", {
+                            duration: 5000,
+                          });
+                          navigate('/multi-tutor-package');
+                        }}
+                      >
+                        <div className="flex flex-col items-center gap-2 w-full">
+                          <div className="flex items-center gap-2">
+                            <ShoppingCart className="w-5 h-5 text-secondary" />
+                            <span className="font-semibold text-base text-foreground">Build Multi-Tutor Package</span>
+                          </div>
+                          <span className="text-sm text-muted-foreground">Combine multiple tutors & subjects</span>
+                        </div>
+                      </Button>
+                      <p className="text-xs text-center text-muted-foreground px-2">
+                        Browse multiple tutors, add subjects from each to your cart, then pay once for maximum bulk discounts
+                      </p>
+                    </div>
+
+                    <Separator className="my-5" />
 
                     {/* Learning Plan Request */}
                     <div className="space-y-3">
