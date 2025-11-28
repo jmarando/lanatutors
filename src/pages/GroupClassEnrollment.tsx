@@ -8,7 +8,6 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, Calendar, Clock, BookOpen } from "lucide-react";
-import Navigation from "@/components/Navigation";
 
 type EnrollmentType = "weekly" | "monthly";
 
@@ -217,7 +216,6 @@ export default function GroupClassEnrollment() {
   if (loading) {
     return (
       <div className="min-h-screen bg-background">
-        <Navigation />
         <div className="flex items-center justify-center h-[80vh]">
           <Loader2 className="w-8 h-8 animate-spin text-primary" />
         </div>
@@ -228,7 +226,6 @@ export default function GroupClassEnrollment() {
   if (!groupClass) {
     return (
       <div className="min-h-screen bg-background">
-        <Navigation />
         <div className="container py-8">
           <p className="text-center text-muted-foreground">Class not found</p>
         </div>
@@ -240,7 +237,6 @@ export default function GroupClassEnrollment() {
 
   return (
     <div className="min-h-screen bg-background">
-      <Navigation />
       <div className="container py-8 max-w-4xl">
         <Button variant="ghost" onClick={() => navigate("/group-classes")} className="mb-6">
           ← Back to Classes
