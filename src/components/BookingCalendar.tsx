@@ -108,6 +108,8 @@ export const BookingCalendar = ({
     }
 
     (async () => {
+      console.log('[BookingCalendar] Fetching rate for:', { curriculum, level, tutorId });
+      
       // Query curriculum_level_tier_assignments to find the correct tier for this curriculum-level combo
       const { data: assignment } = await supabase
         .from('curriculum_level_tier_assignments')
@@ -117,11 +119,16 @@ export const BookingCalendar = ({
         .eq('level', level)
         .maybeSingle();
       
+      console.log('[BookingCalendar] Assignment found:', assignment);
+      
       if (assignment && assignment.tutor_pricing_tiers) {
         const tierData = assignment.tutor_pricing_tiers as any;
-        setCurriculumSpecificRate(Number(tierData.online_hourly_rate));
+        const rate = Number(tierData.online_hourly_rate);
+        console.log('[BookingCalendar] Setting curriculum-specific rate:', rate);
+        setCurriculumSpecificRate(rate);
       } else {
         // Fallback to base hourly rate if no specific tier found
+        console.log('[BookingCalendar] No assignment found, using base hourly rate:', hourlyRate);
         setCurriculumSpecificRate(hourlyRate);
       }
     })();
@@ -321,6 +328,19 @@ export const BookingCalendar = ({
         variant: "destructive",
       });
       return;
+    }
+
+    // Validate that a rate has been determined (not 0 or null) for paid bookings
+    if (!isTrialSession && paymentOption !== 'package') {
+      const effectiveRate = curriculumSpecificRate !== null ? curriculumSpecificRate : hourlyRate;
+      if (!effectiveRate || effectiveRate <= 0) {
+        toast({
+          title: "Rate not available",
+          description: "No rate found for the selected curriculum and level. Please contact support or try a different curriculum/level combination.",
+          variant: "destructive",
+        });
+        return;
+      }
     }
 
     // Payment validation removed - Pesapal handles payment method collection
