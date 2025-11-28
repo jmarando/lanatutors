@@ -377,6 +377,221 @@ export type Database = {
         }
         Relationships: []
       }
+      group_class_attendance: {
+        Row: {
+          attended: boolean | null
+          created_at: string | null
+          group_class_id: string
+          id: string
+          joined_at: string | null
+          left_at: string | null
+          notes: string | null
+          session_date: string
+          student_id: string
+          tutor_id: string | null
+        }
+        Insert: {
+          attended?: boolean | null
+          created_at?: string | null
+          group_class_id: string
+          id?: string
+          joined_at?: string | null
+          left_at?: string | null
+          notes?: string | null
+          session_date: string
+          student_id: string
+          tutor_id?: string | null
+        }
+        Update: {
+          attended?: boolean | null
+          created_at?: string | null
+          group_class_id?: string
+          id?: string
+          joined_at?: string | null
+          left_at?: string | null
+          notes?: string | null
+          session_date?: string
+          student_id?: string
+          tutor_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "group_class_attendance_group_class_id_fkey"
+            columns: ["group_class_id"]
+            isOneToOne: false
+            referencedRelation: "group_classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "group_class_attendance_tutor_id_fkey"
+            columns: ["tutor_id"]
+            isOneToOne: false
+            referencedRelation: "tutor_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      group_class_enrollments: {
+        Row: {
+          amount_paid: number
+          created_at: string | null
+          enrollment_type: string | null
+          expires_at: string | null
+          group_class_id: string
+          id: string
+          payment_status: string | null
+          sessions_attended: number | null
+          starts_at: string
+          status: string | null
+          student_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          amount_paid: number
+          created_at?: string | null
+          enrollment_type?: string | null
+          expires_at?: string | null
+          group_class_id: string
+          id?: string
+          payment_status?: string | null
+          sessions_attended?: number | null
+          starts_at: string
+          status?: string | null
+          student_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          amount_paid?: number
+          created_at?: string | null
+          enrollment_type?: string | null
+          expires_at?: string | null
+          group_class_id?: string
+          id?: string
+          payment_status?: string | null
+          sessions_attended?: number | null
+          starts_at?: string
+          status?: string | null
+          student_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "group_class_enrollments_group_class_id_fkey"
+            columns: ["group_class_id"]
+            isOneToOne: false
+            referencedRelation: "group_classes"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      group_class_tutor_assignments: {
+        Row: {
+          assigned_days: string[] | null
+          created_at: string | null
+          group_class_id: string
+          id: string
+          is_primary: boolean | null
+          status: string | null
+          tutor_id: string
+        }
+        Insert: {
+          assigned_days?: string[] | null
+          created_at?: string | null
+          group_class_id: string
+          id?: string
+          is_primary?: boolean | null
+          status?: string | null
+          tutor_id: string
+        }
+        Update: {
+          assigned_days?: string[] | null
+          created_at?: string | null
+          group_class_id?: string
+          id?: string
+          is_primary?: boolean | null
+          status?: string | null
+          tutor_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "group_class_tutor_assignments_group_class_id_fkey"
+            columns: ["group_class_id"]
+            isOneToOne: false
+            referencedRelation: "group_classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "group_class_tutor_assignments_tutor_id_fkey"
+            columns: ["tutor_id"]
+            isOneToOne: false
+            referencedRelation: "tutor_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      group_classes: {
+        Row: {
+          classroom_id: string | null
+          created_at: string | null
+          current_enrollment: number | null
+          curriculum: string
+          day_of_week: string
+          description: string | null
+          end_time: string
+          grade_level: string
+          hourly_rate: number | null
+          id: string
+          max_students: number | null
+          meeting_link: string | null
+          start_time: string
+          status: string | null
+          subject: string
+          timezone: string | null
+          title: string
+          updated_at: string | null
+        }
+        Insert: {
+          classroom_id?: string | null
+          created_at?: string | null
+          current_enrollment?: number | null
+          curriculum: string
+          day_of_week: string
+          description?: string | null
+          end_time: string
+          grade_level: string
+          hourly_rate?: number | null
+          id?: string
+          max_students?: number | null
+          meeting_link?: string | null
+          start_time: string
+          status?: string | null
+          subject: string
+          timezone?: string | null
+          title: string
+          updated_at?: string | null
+        }
+        Update: {
+          classroom_id?: string | null
+          created_at?: string | null
+          current_enrollment?: number | null
+          curriculum?: string
+          day_of_week?: string
+          description?: string | null
+          end_time?: string
+          grade_level?: string
+          hourly_rate?: number | null
+          id?: string
+          max_students?: number | null
+          meeting_link?: string | null
+          start_time?: string
+          status?: string | null
+          subject?: string
+          timezone?: string | null
+          title?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       holiday_packages: {
         Row: {
           candidate_levels: string[]
