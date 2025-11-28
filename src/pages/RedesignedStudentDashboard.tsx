@@ -4,10 +4,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { StudentClassesTab } from "@/components/student/StudentClassesTab";
 import { StudentClassroomsTab } from "@/components/student/StudentClassroomsTab";
 import { StudentProgressTab } from "@/components/student/StudentProgressTab";
-import { Button } from "@/components/ui/button";
-import { Calendar, GraduationCap, TrendingUp, LogOut } from "lucide-react";
+import { Calendar, GraduationCap, TrendingUp } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
-import lanaLogo from "@/assets/lana-header-logo-2025.png";
 
 const RedesignedStudentDashboard = () => {
   const navigate = useNavigate();
@@ -37,10 +35,6 @@ const RedesignedStudentDashboard = () => {
     return () => window.removeEventListener("hashchange", handleHashChange);
   }, [navigate]);
 
-  const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    navigate("/login");
-  };
 
   const renderTabContent = () => {
     switch (currentTab) {
@@ -57,28 +51,8 @@ const RedesignedStudentDashboard = () => {
 
   return (
     <div className="min-h-screen flex flex-col bg-background">
-      {/* Header with Logo and Sign Out */}
-      <header className="border-b bg-background sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-6 py-4 flex items-center justify-between">
-          <img 
-            src={lanaLogo} 
-            alt="Lana Tutors"
-            className="h-12 w-auto object-contain cursor-pointer"
-            onClick={() => navigate("/")}
-          />
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleSignOut}
-          >
-            <LogOut className="w-4 h-4 mr-2" />
-            Sign Out
-          </Button>
-        </div>
-      </header>
-
       {/* Main Content with Centered Tabs */}
-      <main className="flex-1 py-8">
+      <main className="flex-1 py-8 mt-4">
         <div className="max-w-7xl mx-auto px-6">
           <Tabs value={currentTab} onValueChange={setCurrentTab} className="w-full">
             {/* Centered Navigation Tabs */}
