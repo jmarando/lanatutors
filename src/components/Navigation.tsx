@@ -81,6 +81,7 @@ const Navigation = () => {
   };
 
   const getNavLinks = () => [
+    { to: "/", label: "Home", singleLine: true },
     { to: "/tutors", label: "Find Tutors", singleLine: true },
     { to: "/holiday-packages", label: "Revision Packages", singleLine: true },
     { to: user ? "/student/dashboard" : "/for-students", label: "Student Hub", singleLine: true },
