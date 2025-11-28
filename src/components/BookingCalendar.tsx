@@ -10,6 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { format, isSameDay } from "date-fns";
+import { toZonedTime, fromZonedTime, formatInTimeZone } from "date-fns-tz";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Loader2, CreditCard, Smartphone, FileText } from "lucide-react";
@@ -201,18 +202,24 @@ export const BookingCalendar = ({
   const fetchAvailableSlots = async () => {
     if (!selectedDate || !tutorUserId) return;
 
+    // Convert selected date to EAT timezone for querying
+    const EAT_TIMEZONE = 'Africa/Nairobi';
     const startOfDay = new Date(selectedDate);
     startOfDay.setHours(0, 0, 0, 0);
-
+    
     const endOfDay = new Date(selectedDate);
     endOfDay.setHours(23, 59, 59, 999);
+    
+    // Convert to UTC from EAT for database query
+    const startOfDayUTC = fromZonedTime(startOfDay, EAT_TIMEZONE);
+    const endOfDayUTC = fromZonedTime(endOfDay, EAT_TIMEZONE);
 
     const { data, error } = await supabase
       .from("tutor_availability")
       .select("*")
       .in("tutor_id", [tutorUserId as string, tutorId])
-      .gte("start_time", startOfDay.toISOString())
-      .lte("start_time", endOfDay.toISOString())
+      .gte("start_time", startOfDayUTC.toISOString())
+      .lte("start_time", endOfDayUTC.toISOString())
       .order("start_time");
 
     if (error) {
@@ -262,17 +269,22 @@ export const BookingCalendar = ({
   const fetchMonthSlots = async () => {
     if (!selectedDate) return;
 
+    const EAT_TIMEZONE = 'Africa/Nairobi';
     const monthStart = new Date(selectedDate.getFullYear(), selectedDate.getMonth(), 1);
     monthStart.setHours(0, 0, 0, 0);
     const monthEnd = new Date(selectedDate.getFullYear(), selectedDate.getMonth() + 1, 0);
     monthEnd.setHours(23, 59, 59, 999);
+    
+    // Convert to UTC from EAT for database query
+    const monthStartUTC = fromZonedTime(monthStart, EAT_TIMEZONE);
+    const monthEndUTC = fromZonedTime(monthEnd, EAT_TIMEZONE);
 
     const { data, error } = await supabase
       .from("tutor_availability")
       .select("*")
       .in("tutor_id", [tutorUserId as string, tutorId])
-      .gte("start_time", monthStart.toISOString())
-      .lte("start_time", monthEnd.toISOString());
+      .gte("start_time", monthStartUTC.toISOString())
+      .lte("start_time", monthEndUTC.toISOString());
 
     if (error) {
       console.error("Error fetching month slots:", error);
@@ -606,14 +618,19 @@ export const BookingCalendar = ({
 
   // Get availability status for a given date (used for calendar dots)
   const getDateStatus = (date: Date) => {
+    const EAT_TIMEZONE = 'Africa/Nairobi';
     const dayStart = new Date(date);
     dayStart.setHours(0, 0, 0, 0);
     const dayEnd = new Date(date);
     dayEnd.setHours(23, 59, 59, 999);
+    
+    // Convert to UTC from EAT
+    const dayStartUTC = fromZonedTime(dayStart, EAT_TIMEZONE);
+    const dayEndUTC = fromZonedTime(dayEnd, EAT_TIMEZONE);
 
     const daySlots = monthSlots.filter((slot) => {
       const slotStart = new Date(slot.start_time);
-      return slotStart >= dayStart && slotStart <= dayEnd;
+      return slotStart >= dayStartUTC && slotStart <= dayEndUTC;
     });
 
     if (daySlots.length === 0) return null;
@@ -710,24 +727,32 @@ export const BookingCalendar = ({
 
         <div className="space-y-4">
           <div className="space-y-2">
-            <label className="text-sm font-medium block">Available Time Slots</label>
+            <div className="flex items-center justify-between">
+              <label className="text-sm font-medium block">Available Time Slots</label>
+              <span className="text-xs text-muted-foreground">Times in EAT</span>
+            </div>
             <div className="space-y-2 max-h-72 overflow-y-auto border rounded-lg p-3 bg-background">
               {availableSlots.length === 0 ? (
                 <p className="text-sm text-muted-foreground text-center py-8">
                   No available slots for this date
                 </p>
               ) : (
-                availableSlots.map((slot) => (
-                  <Button
-                    key={slot.id}
-                    variant={selectedSlot?.id === slot.id ? "default" : "outline"}
-                    className="w-full justify-start"
-                    onClick={() => setSelectedSlot(slot)}
-                  >
-                    {format(new Date(slot.start_time), "h:mm a")} -{" "}
-                    {format(new Date(slot.end_time), "h:mm a")}
-                  </Button>
-                ))
+                availableSlots.map((slot) => {
+                  const EAT_TIMEZONE = 'Africa/Nairobi';
+                  const startTimeEAT = formatInTimeZone(new Date(slot.start_time), EAT_TIMEZONE, "h:mm a");
+                  const endTimeEAT = formatInTimeZone(new Date(slot.end_time), EAT_TIMEZONE, "h:mm a");
+                  
+                  return (
+                    <Button
+                      key={slot.id}
+                      variant={selectedSlot?.id === slot.id ? "default" : "outline"}
+                      className="w-full justify-start"
+                      onClick={() => setSelectedSlot(slot)}
+                    >
+                      {startTimeEAT} - {endTimeEAT}
+                    </Button>
+                  );
+                })
               )}
             </div>
           </div>

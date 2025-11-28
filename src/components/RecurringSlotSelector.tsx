@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { format, addDays, isSameDay, parseISO } from "date-fns";
+import { formatInTimeZone, fromZonedTime } from "date-fns-tz";
 import { supabase } from "@/integrations/supabase/client";
 import { Clock, CheckCircle2 } from "lucide-react";
 import { toast } from "sonner";
@@ -47,18 +48,23 @@ export const RecurringSlotSelector = ({
   const fetchAvailability = async (date: Date) => {
     setLoading(true);
     try {
+      const EAT_TIMEZONE = 'Africa/Nairobi';
       const startOfDay = new Date(date);
       startOfDay.setHours(0, 0, 0, 0);
       
       const endOfDay = new Date(date);
       endOfDay.setHours(23, 59, 59, 999);
+      
+      // Convert to UTC from EAT for database query
+      const startOfDayUTC = fromZonedTime(startOfDay, EAT_TIMEZONE);
+      const endOfDayUTC = fromZonedTime(endOfDay, EAT_TIMEZONE);
 
       const { data, error } = await supabase
         .from("tutor_availability")
         .select("*")
         .eq("tutor_id", tutorUserId)
-        .gte("start_time", startOfDay.toISOString())
-        .lte("start_time", endOfDay.toISOString())
+        .gte("start_time", startOfDayUTC.toISOString())
+        .lte("start_time", endOfDayUTC.toISOString())
         .order("start_time", { ascending: true });
 
       if (error) throw error;
@@ -116,9 +122,10 @@ export const RecurringSlotSelector = ({
   };
 
   const formatTimeSlot = (startTime: string, endTime: string) => {
-    const start = parseISO(startTime);
-    const end = parseISO(endTime);
-    return `${format(start, "h:mm a")} - ${format(end, "h:mm a")}`;
+    const EAT_TIMEZONE = 'Africa/Nairobi';
+    const startEAT = formatInTimeZone(parseISO(startTime), EAT_TIMEZONE, "h:mm a");
+    const endEAT = formatInTimeZone(parseISO(endTime), EAT_TIMEZONE, "h:mm a");
+    return `${startEAT} - ${endEAT}`;
   };
 
   return (
@@ -126,7 +133,7 @@ export const RecurringSlotSelector = ({
       <div>
         <Label className="text-sm font-medium mb-3 block">Select Recurring Time Slots</Label>
         <p className="text-xs text-muted-foreground mb-4">
-          Choose the same time slots across different days to create your recurring schedule. Selected slots will be blocked on the tutor's calendar after payment.
+          Choose the same time slots across different days to create your recurring schedule. Selected slots will be blocked on the tutor's calendar after payment. <span className="font-medium">Times shown in EAT.</span>
         </p>
       </div>
 
