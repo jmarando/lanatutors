@@ -258,6 +258,46 @@ export const MultiTutorPackageBuilder = () => {
         </Button>
       </div>
 
+      {/* Learning Options Info Card */}
+      <Card className="mb-6 border-primary/20 bg-gradient-to-br from-primary/5 via-background to-brand-accent/5">
+        <CardContent className="pt-6">
+          <div className="flex items-start gap-4">
+            <div className="flex-1">
+              <h2 className="text-xl font-semibold mb-3">Flexible Learning Options for Every Budget</h2>
+              <div className="grid md:grid-cols-2 gap-4">
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <UserPlus className="w-5 h-5 text-primary" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-base mb-1">Affordable Group Classes</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Join small group sessions from <span className="font-semibold text-foreground">KES 400/hr</span>. Learn collaboratively with peers while keeping costs low.
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-start gap-3">
+                  <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <CreditCard className="w-5 h-5 text-primary" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-base mb-1">Personalized 1-on-1 Tuition</h3>
+                    <p className="text-sm text-muted-foreground">
+                      Get dedicated attention with private sessions. Build custom packages across multiple subjects and save up to 15%.
+                    </p>
+                  </div>
+                </div>
+              </div>
+              <div className="mt-4 pt-4 border-t">
+                <p className="text-sm text-muted-foreground">
+                  💡 <span className="font-medium text-foreground">Mix and match:</span> Combine subjects from different tutors in one package. The more sessions you book, the bigger your discount!
+                </p>
+              </div>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
+
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Cart */}
         <div id="cart-section" className="lg:col-span-2 space-y-4 scroll-mt-20">
