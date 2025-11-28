@@ -48,7 +48,6 @@ const BookConsultation = () => {
     curriculum: "",
     gradeLevel: "",
     subjects: [] as string[],
-    preferredMode: "",
     additionalNotes: "",
   });
 
@@ -106,7 +105,7 @@ const BookConsultation = () => {
   };
 
   const validateStep2 = () => {
-    if (!formData.curriculum || !formData.gradeLevel || formData.subjects.length === 0 || !formData.preferredMode) {
+    if (!formData.curriculum || !formData.gradeLevel || formData.subjects.length === 0) {
       toast.error("Please fill in all required fields");
       return false;
     }
@@ -174,7 +173,7 @@ const BookConsultation = () => {
         email: formData.email,
         grade_level: `${formData.curriculum} - ${formData.gradeLevel}`,
         subjects_interest: formData.subjects,
-        preferred_mode: formData.preferredMode,
+        preferred_mode: "consultation",
         additional_notes: formData.additionalNotes,
         consultation_date: selectedDate!.toISOString().split('T')[0],
         consultation_time: selectedTime,
@@ -436,24 +435,11 @@ const BookConsultation = () => {
                           <SelectItem key={level.value} value={level.value}>
                             {level.label}
                           </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="preferredMode">Preferred Learning Mode *</Label>
-                    <Select value={formData.preferredMode} onValueChange={(value) => setFormData({ ...formData, preferredMode: value })}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select mode" />
-                      </SelectTrigger>
-                      <SelectContent className="bg-background z-50">
-                        <SelectItem value="online">Online Sessions</SelectItem>
-                        <SelectItem value="in-person">In-Person Sessions</SelectItem>
-                        <SelectItem value="both">Either/Both</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
+              </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="subjects">Subjects of Interest *</Label>
