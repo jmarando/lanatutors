@@ -173,21 +173,17 @@ const GroupClassMarketplace = () => {
               </CardContent>
             </Card>
           ) : (
-            <Tabs defaultValue="calendar" className="w-full">
+            <Tabs defaultValue="list" className="w-full">
               <TabsList className="mb-6">
-                <TabsTrigger value="calendar" className="gap-2">
-                  <CalendarDays className="w-4 h-4" />
-                  Calendar View
-                </TabsTrigger>
                 <TabsTrigger value="list" className="gap-2">
                   <LayoutGrid className="w-4 h-4" />
                   List View
                 </TabsTrigger>
+                <TabsTrigger value="calendar" className="gap-2">
+                  <CalendarDays className="w-4 h-4" />
+                  Calendar View
+                </TabsTrigger>
               </TabsList>
-
-              <TabsContent value="calendar">
-                <GroupClassWeeklyCalendar groupClasses={filteredClasses} />
-              </TabsContent>
 
               <TabsContent value="list">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -254,6 +250,10 @@ const GroupClassMarketplace = () => {
                     </Card>
                   ))}
                 </div>
+              </TabsContent>
+
+              <TabsContent value="calendar">
+                <GroupClassWeeklyCalendar groupClasses={filteredClasses} />
               </TabsContent>
             </Tabs>
           )}
