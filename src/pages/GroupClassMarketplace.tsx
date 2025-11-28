@@ -4,10 +4,12 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Users, Clock, Calendar, MapPin } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Users, Clock, Calendar, MapPin, CalendarDays, LayoutGrid } from "lucide-react";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { SEO } from "@/components/SEO";
+import GroupClassWeeklyCalendar from "@/components/GroupClassWeeklyCalendar";
 
 const GroupClassMarketplace = () => {
   const navigate = useNavigate();
@@ -158,7 +160,7 @@ const GroupClassMarketplace = () => {
             </Select>
           </div>
 
-          {/* Class Cards */}
+          {/* View Tabs */}
           {loading ? (
             <div className="text-center py-12">
               <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto"></div>
@@ -171,70 +173,89 @@ const GroupClassMarketplace = () => {
               </CardContent>
             </Card>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {filteredClasses.map((classItem) => (
-                <Card key={classItem.id} className="hover:shadow-lg transition-shadow">
-                  <CardHeader>
-                    <div className="flex items-start justify-between mb-2">
-                      <Badge variant="secondary">{classItem.curriculum}</Badge>
-                      <Badge variant="outline">{classItem.grade_level}</Badge>
-                    </div>
-                    <CardTitle className="text-xl">{classItem.subject}</CardTitle>
-                    <CardDescription>{classItem.description}</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="space-y-2 text-sm">
-                      <div className="flex items-center gap-2">
-                        <Users className="w-4 h-4 text-muted-foreground" />
-                        <span className="font-medium">
-                          Tutor:{" "}
-                          {classItem.tutor_profile_slug || classItem.tutor_profile_id ? (
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                navigate(`/tutors/${classItem.tutor_profile_slug || classItem.tutor_profile_id}`);
-                              }}
-                              className="text-primary hover:underline"
-                            >
-                              {classItem.tutor_name}
-                            </button>
-                          ) : (
-                            classItem.tutor_name
-                          )}
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Calendar className="w-4 h-4 text-muted-foreground" />
-                        <span>{classItem.day_of_week}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <Clock className="w-4 h-4 text-muted-foreground" />
-                        <span>{classItem.start_time} - {classItem.end_time} EAT</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <MapPin className="w-4 h-4 text-muted-foreground" />
-                        <span>Online via Google Meet</span>
-                      </div>
-                    </div>
+            <Tabs defaultValue="calendar" className="w-full">
+              <TabsList className="mb-6">
+                <TabsTrigger value="calendar" className="gap-2">
+                  <CalendarDays className="w-4 h-4" />
+                  Calendar View
+                </TabsTrigger>
+                <TabsTrigger value="list" className="gap-2">
+                  <LayoutGrid className="w-4 h-4" />
+                  List View
+                </TabsTrigger>
+              </TabsList>
 
-                    <div className="pt-4 border-t">
-                      <div className="flex items-center justify-between mb-3">
-                        <div>
-                          <div className="text-2xl font-bold text-primary">KES 400</div>
-                          <div className="text-xs text-muted-foreground">per hour</div>
+              <TabsContent value="calendar">
+                <GroupClassWeeklyCalendar groupClasses={filteredClasses} />
+              </TabsContent>
+
+              <TabsContent value="list">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {filteredClasses.map((classItem) => (
+                    <Card key={classItem.id} className="hover:shadow-lg transition-shadow">
+                      <CardHeader>
+                        <div className="flex items-start justify-between mb-2">
+                          <Badge variant="secondary">{classItem.curriculum}</Badge>
+                          <Badge variant="outline">{classItem.grade_level}</Badge>
                         </div>
-                      </div>
-                      <Button 
-                        onClick={() => handleEnroll(classItem.id)}
-                        className="w-full"
-                      >
-                        Join Class
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+                        <CardTitle className="text-xl">{classItem.subject}</CardTitle>
+                        <CardDescription>{classItem.description}</CardDescription>
+                      </CardHeader>
+                      <CardContent className="space-y-4">
+                        <div className="space-y-2 text-sm">
+                          <div className="flex items-center gap-2">
+                            <Users className="w-4 h-4 text-muted-foreground" />
+                            <span className="font-medium">
+                              Tutor:{" "}
+                              {classItem.tutor_profile_slug || classItem.tutor_profile_id ? (
+                                <button
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    navigate(`/tutors/${classItem.tutor_profile_slug || classItem.tutor_profile_id}`);
+                                  }}
+                                  className="text-primary hover:underline"
+                                >
+                                  {classItem.tutor_name}
+                                </button>
+                              ) : (
+                                classItem.tutor_name
+                              )}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Calendar className="w-4 h-4 text-muted-foreground" />
+                            <span>{classItem.day_of_week}</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <Clock className="w-4 h-4 text-muted-foreground" />
+                            <span>{classItem.start_time} - {classItem.end_time} EAT</span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <MapPin className="w-4 h-4 text-muted-foreground" />
+                            <span>Online via Google Meet</span>
+                          </div>
+                        </div>
+
+                        <div className="pt-4 border-t">
+                          <div className="flex items-center justify-between mb-3">
+                            <div>
+                              <div className="text-2xl font-bold text-primary">KES 400</div>
+                              <div className="text-xs text-muted-foreground">per hour</div>
+                            </div>
+                          </div>
+                          <Button 
+                            onClick={() => handleEnroll(classItem.id)}
+                            className="w-full"
+                          >
+                            Join Class
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </TabsContent>
+            </Tabs>
           )}
         </div>
       </div>
