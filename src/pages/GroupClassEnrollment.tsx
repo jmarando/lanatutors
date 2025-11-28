@@ -10,7 +10,7 @@ import { useToast } from "@/hooks/use-toast";
 import { Loader2, Calendar, Clock, BookOpen } from "lucide-react";
 import Navigation from "@/components/Navigation";
 
-type EnrollmentType = "weekly" | "monthly" | "term";
+type EnrollmentType = "weekly" | "monthly";
 
 interface GroupClass {
   id: string;
@@ -81,9 +81,7 @@ export default function GroupClassEnrollment() {
       case "weekly":
         return { sessions: 4, total: 1400, perSession: 350, discount: 12.5 };
       case "monthly":
-        return { sessions: 8, total: 2800, perSession: 350, discount: 12.5 };
-      case "term":
-        return { sessions: 12, total: 3600, perSession: 300, discount: 25 };
+        return { sessions: 16, total: 5600, perSession: 350, discount: 12.5 };
       default:
         return { sessions: 1, total: hourlyRate, perSession: hourlyRate, discount: 0 };
     }
@@ -100,10 +98,8 @@ export default function GroupClassEnrollment() {
 
       if (enrollmentType === "weekly") {
         expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
-      } else if (enrollmentType === "monthly") {
-        expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
       } else {
-        expiresAt = new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+        expiresAt = new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
       }
 
       // Get user's phone number
@@ -273,28 +269,11 @@ export default function GroupClassEnrollment() {
                     <div className="flex justify-between items-center">
                       <div>
                         <p className="font-medium">Monthly Pass</p>
-                        <p className="text-xs text-muted-foreground">8 sessions</p>
+                        <p className="text-xs text-muted-foreground">16 sessions (4/week)</p>
                       </div>
                       <div className="text-right">
-                        <p className="font-bold">KES 2,800</p>
-                        <p className="text-xs text-muted-foreground line-through">KES 3,200</p>
-                      </div>
-                    </div>
-                  </Label>
-                </div>
-
-                <div className="flex items-center space-x-2 p-4 border rounded-lg cursor-pointer hover:bg-accent">
-                  <RadioGroupItem value="term" id="term" />
-                  <Label htmlFor="term" className="flex-1 cursor-pointer">
-                    <div className="flex justify-between items-center">
-                      <div>
-                        <p className="font-medium">Term Pass</p>
-                        <p className="text-xs text-muted-foreground">12 sessions</p>
-                      </div>
-                      <div className="text-right">
-                        <p className="font-bold">KES 3,600</p>
-                        <p className="text-xs text-muted-foreground line-through">KES 4,800</p>
-                        <p className="text-xs text-green-600">Save 25%</p>
+                        <p className="font-bold">KES 5,600</p>
+                        <p className="text-xs text-muted-foreground line-through">KES 6,400</p>
                       </div>
                     </div>
                   </Label>
