@@ -97,6 +97,7 @@ export const TutorWeeklyCalendar = ({ tutorId }: TutorWeeklyCalendarProps) => {
           <Calendar className="w-5 h-5 text-primary" />
           This Week's Schedule
         </CardTitle>
+        <span className="text-xs text-muted-foreground">Times in EAT</span>
         <Button 
           variant="outline" 
           size="sm"
