@@ -9,6 +9,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { CheckCircle2, Mail, Sparkles, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { getCurriculums, getLevelsForCurriculum, getSubjectsForCurriculumLevel } from "@/utils/curriculumData";
 
 interface LearningPlanRequestProps {
   tutorId: string;
@@ -43,6 +44,15 @@ export const LearningPlanRequest = ({
     availableTimePerWeek: "",
   });
   const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
+  
+  // Get available curricula, levels, and subjects based on selections
+  const curricula = getCurriculums();
+  const availableLevels = formData.curriculum 
+    ? getLevelsForCurriculum(formData.curriculum) 
+    : [];
+  const availableSubjects = formData.curriculum && formData.gradeLevel
+    ? getSubjectsForCurriculumLevel(formData.curriculum, formData.gradeLevel)
+    : tutorSubjects; // Fallback to tutor subjects if no curriculum/level selected
 
   useEffect(() => {
     fetchUserProfile();
@@ -76,13 +86,17 @@ export const LearningPlanRequest = ({
     }
   };
 
-  const gradeLevels = [
-    "Grade 1", "Grade 2", "Grade 3", "Grade 4", "Grade 5", "Grade 6",
-    "Grade 7", "Grade 8", "Grade 9", "Form 1", "Form 2", "Form 3", "Form 4",
-    "AS Level", "A2 Level"
-  ];
+  // When curriculum changes, reset grade level and subjects
+  const handleCurriculumChange = (value: string) => {
+    setFormData({ ...formData, curriculum: value, gradeLevel: "" });
+    setSelectedSubjects([]);
+  };
 
-  const curricula = ["CBC", "8-4-4", "IGCSE", "British", "American"];
+  // When grade level changes, reset subjects
+  const handleGradeLevelChange = (value: string) => {
+    setFormData({ ...formData, gradeLevel: value });
+    setSelectedSubjects([]);
+  };
 
   const toggleSubject = (subject: string) => {
     setSelectedSubjects(prev =>
@@ -100,7 +114,7 @@ export const LearningPlanRequest = ({
       return;
     }
 
-    if (!formData.parentName || !formData.parentEmail || !formData.studentName || !formData.gradeLevel) {
+    if (!formData.parentName || !formData.parentEmail || !formData.studentName || !formData.gradeLevel || !formData.curriculum) {
       toast.error("Please fill in all required fields");
       return;
     }
@@ -264,45 +278,45 @@ export const LearningPlanRequest = ({
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <Label htmlFor="gradeLevel">Grade Level *</Label>
-              <Select
-                value={formData.gradeLevel}
-                onValueChange={(value) => setFormData({ ...formData, gradeLevel: value })}
-                required
-              >
-                <SelectTrigger id="gradeLevel">
-                  <SelectValue placeholder="Select grade" />
-                </SelectTrigger>
-                <SelectContent>
-                  {gradeLevels.map((grade) => (
-                    <SelectItem key={grade} value={grade}>
-                      {grade}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+          <div>
+            <Label htmlFor="curriculum">Curriculum *</Label>
+            <Select
+              value={formData.curriculum}
+              onValueChange={handleCurriculumChange}
+              required
+            >
+              <SelectTrigger id="curriculum">
+                <SelectValue placeholder="Select curriculum" />
+              </SelectTrigger>
+              <SelectContent className="bg-background z-50">
+                {curricula.map((curr) => (
+                  <SelectItem key={curr} value={curr}>
+                    {curr}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
-            <div>
-              <Label htmlFor="curriculum">Curriculum (Optional)</Label>
-              <Select
-                value={formData.curriculum}
-                onValueChange={(value) => setFormData({ ...formData, curriculum: value })}
-              >
-                <SelectTrigger id="curriculum">
-                  <SelectValue placeholder="Select curriculum" />
-                </SelectTrigger>
-                <SelectContent>
-                  {curricula.map((curr) => (
-                    <SelectItem key={curr} value={curr}>
-                      {curr}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+          <div>
+            <Label htmlFor="gradeLevel">Grade Level *</Label>
+            <Select
+              value={formData.gradeLevel}
+              onValueChange={handleGradeLevelChange}
+              required
+              disabled={!formData.curriculum}
+            >
+              <SelectTrigger id="gradeLevel">
+                <SelectValue placeholder={formData.curriculum ? "Select grade" : "Select curriculum first"} />
+              </SelectTrigger>
+              <SelectContent className="bg-background z-50">
+                {availableLevels.map((level) => (
+                  <SelectItem key={level.value} value={level.value}>
+                    {level.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
         </div>
 
@@ -324,23 +338,31 @@ export const LearningPlanRequest = ({
         {/* Subjects Selection */}
         <div className="space-y-2">
           <Label>Subjects Needed *</Label>
-          <div className="flex flex-wrap gap-2">
-            {tutorSubjects.map((subject) => (
-              <Badge
-                key={subject}
-                variant={selectedSubjects.includes(subject) ? "default" : "outline"}
-                className="cursor-pointer hover:bg-primary/20"
-                onClick={() => toggleSubject(subject)}
-              >
-                {subject}
-                {selectedSubjects.includes(subject) && (
-                  <X className="w-3 h-3 ml-1" />
-                )}
-              </Badge>
-            ))}
-          </div>
-          {selectedSubjects.length === 0 && (
-            <p className="text-xs text-muted-foreground">Click to select subjects</p>
+          {!formData.curriculum || !formData.gradeLevel ? (
+            <div className="p-4 border rounded-md bg-muted/50 text-center text-sm text-muted-foreground">
+              Please select curriculum and grade level first to see available subjects
+            </div>
+          ) : (
+            <>
+              <div className="flex flex-wrap gap-2 max-h-40 overflow-y-auto p-2 border rounded-md">
+                {availableSubjects.map((subject) => (
+                  <Badge
+                    key={subject}
+                    variant={selectedSubjects.includes(subject) ? "default" : "outline"}
+                    className="cursor-pointer hover:bg-primary/20"
+                    onClick={() => toggleSubject(subject)}
+                  >
+                    {subject}
+                    {selectedSubjects.includes(subject) && (
+                      <X className="w-3 h-3 ml-1" />
+                    )}
+                  </Badge>
+                ))}
+              </div>
+              {selectedSubjects.length === 0 && (
+                <p className="text-xs text-muted-foreground">Click to select subjects</p>
+              )}
+            </>
           )}
         </div>
 
@@ -390,7 +412,7 @@ export const LearningPlanRequest = ({
                 <SelectTrigger id="desiredDurationWeeks">
                   <SelectValue placeholder="Select duration" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-background z-50">
                   <SelectItem value="2">2 weeks</SelectItem>
                   <SelectItem value="4">4 weeks (1 month)</SelectItem>
                   <SelectItem value="6">6 weeks</SelectItem>
@@ -415,7 +437,7 @@ export const LearningPlanRequest = ({
                 <SelectTrigger id="availableTimePerWeek">
                   <SelectValue placeholder="Select time" />
                 </SelectTrigger>
-                <SelectContent>
+                <SelectContent className="bg-background z-50">
                   <SelectItem value="1-2 hours">1-2 hours/week</SelectItem>
                   <SelectItem value="3-4 hours">3-4 hours/week</SelectItem>
                   <SelectItem value="5-6 hours">5-6 hours/week</SelectItem>
