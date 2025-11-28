@@ -20,7 +20,7 @@ import {
 import { Link } from "react-router-dom";
 import { SEO } from "@/components/SEO";
 import { supabase } from "@/integrations/supabase/client";
-import { HolidayPackageBanner } from "@/components/HolidayPackageBanner";
+import { GroupClassBanner } from "@/components/GroupClassBanner";
 import { useNavigate } from "react-router-dom";
 import heroVideo from "@/assets/hero-video.mp4";
 import heroImage from "@/assets/hero-image.jpg";
@@ -267,9 +267,9 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Holiday Package Banner */}
+      {/* Group Class Banner */}
       <section className="max-w-7xl mx-auto px-6 py-8">
-        <HolidayPackageBanner onViewPackages={() => navigate("/holiday-packages")} />
+        <GroupClassBanner onViewClasses={() => navigate("/group-classes")} />
       </section>
 
       {/* Stats Section */}
