@@ -989,6 +989,7 @@ const TutorProfile = () => {
             tutorSubjects={tutor.subjects}
             tutorCurriculum={tutor.curriculum}
             tutorTeachingMode={tutor.teachingMode || []}
+            tutorTeachingLevels={tutor.teachingLevels || []}
             onBookingComplete={() => {
               setIsBookingOpen(false);
               toast.success("Booking confirmed!");

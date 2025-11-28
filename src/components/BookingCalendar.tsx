@@ -36,6 +36,7 @@ interface BookingCalendarProps {
   tutorLocations?: string[];
   tutorCurriculum?: string[];
   tutorTeachingMode?: string[];
+  tutorTeachingLevels?: string[];
   onBookingComplete?: () => void;
   classType?: 'online' | 'in-person';
   isTrialSession?: boolean;
@@ -69,6 +70,7 @@ export const BookingCalendar = ({
   tutorLocations = [],
   tutorCurriculum = [],
   tutorTeachingMode = [],
+  tutorTeachingLevels = [],
   onBookingComplete,
   classType = 'online',
   isTrialSession = false,
@@ -822,11 +824,17 @@ export const BookingCalendar = ({
                       <SelectValue placeholder="Select level/grade" />
                     </SelectTrigger>
                     <SelectContent className="bg-background z-50 max-h-[300px]">
-                      {getLevelsForCurriculum(curriculum).map((lvl) => (
-                        <SelectItem key={lvl.value} value={lvl.value}>
-                          {lvl.label}
-                        </SelectItem>
-                      ))}
+                      {getLevelsForCurriculum(curriculum)
+                        .filter((lvl) => {
+                          // Only show levels that the tutor actually teaches for this curriculum
+                          const tutorLevelKey = `${curriculum} - ${lvl.value}`;
+                          return tutorTeachingLevels.some(tl => tl === tutorLevelKey);
+                        })
+                        .map((lvl) => (
+                          <SelectItem key={lvl.value} value={lvl.value}>
+                            {lvl.label}
+                          </SelectItem>
+                        ))}
                     </SelectContent>
                   </Select>
                   {curriculumSpecificRate !== null && curriculum && level && (
