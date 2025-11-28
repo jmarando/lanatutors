@@ -345,8 +345,7 @@ const TutorProfile = () => {
       const discountedPrice = originalPrice * (1 - selectedPackage.discount_percentage / 100);
       
       // Calculate amount based on payment option
-      // Special testing rate for Justin Anyona
-      const depositRate = selectedPackage.tutor_id === '4d9426d7-7294-492a-a2e9-4b1642ba1954' ? 0.01 : 0.3;
+      const depositRate = 0.3;
       const amount = packagePaymentOption === 'deposit' 
         ? Math.round(discountedPrice * depositRate)
         : Math.round(discountedPrice);
