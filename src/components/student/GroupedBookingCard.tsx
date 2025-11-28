@@ -108,6 +108,21 @@ export function GroupedBookingCard({ bookings, isUpcoming }: GroupedBookingCardP
                 </Button>
               )}
               
+              <Button
+                variant="outline"
+                onClick={() => {
+                  const subject = encodeURIComponent('Reschedule Request');
+                  const body = encodeURIComponent(
+                    `Booking ID: ${nextSession.id}\nSubject: ${nextSession.subject}\nCurrent Date/Time: ${format(nextSessionTime, 'EEEE, MMMM d, yyyy')} at ${format(nextSessionTime, 'hh:mm a')} EAT\n\nPreferred New Date/Time:\n\nReason for Rescheduling:`
+                  );
+                  window.location.href = `mailto:info@lanatutors.africa?subject=${subject}&body=${body}`;
+                }}
+                className="w-full"
+              >
+                <CalendarClock className="w-4 h-4 mr-2" />
+                Reschedule
+              </Button>
+              
               {totalBalanceDue > 0 && (
                 <Button
                   variant="outline"
