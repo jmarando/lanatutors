@@ -1,5 +1,5 @@
 import { Button } from "@/components/ui/button";
-import { Menu, LogOut, MessageCircle, Globe, ChevronDown, User } from "lucide-react";
+import { Menu, LogOut, Globe, ChevronDown, User } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -180,10 +180,6 @@ const Navigation = () => {
                 </Link>
               </>
             )}
-            <a href="https://wa.me/254725252542?text=Hello%20Lana%20Tutors!%20I%20would%20like%20to%20inquire%20about%20your%20tutoring%20services." target="_blank" rel="noopener noreferrer" className="group flex items-center gap-1.5 text-sm font-medium hover:text-primary transition-colors px-2.5 py-2 rounded-md hover:bg-primary/5 whitespace-nowrap" title="Chat on WhatsApp">
-              <MessageCircle className="w-4 h-4 transition-transform group-hover:scale-110" />
-              <span className="hidden xl:inline">WhatsApp</span>
-            </a>
           </div>
         </div>
 
@@ -235,10 +231,6 @@ const Navigation = () => {
                   Admin Dashboard
                 </Link>
               )}
-              <a href="https://wa.me/254725252542?text=Hello%20Lana%20Tutors!%20I%20would%20like%20to%20inquire%20about%20your%20tutoring%20services." target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 text-lg font-medium hover:text-primary transition-colors px-2 py-2 hover:bg-primary/5 rounded-md">
-                <MessageCircle className="w-5 h-5" />
-                <span>Chat on WhatsApp</span>
-              </a>
               {user ? (
                 <Button variant="outline" className="w-full" onClick={handleSignOut}>
                   <LogOut className="w-4 h-4 mr-2" />

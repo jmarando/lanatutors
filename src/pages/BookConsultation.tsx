@@ -195,19 +195,7 @@ const BookConsultation = () => {
         },
       });
 
-      // Step 4: Send WhatsApp notification
-      await supabase.functions.invoke("send-consultation-whatsapp", {
-        body: {
-          phoneNumber: formData.phoneNumber,
-          parentName: formData.parentName,
-          studentName: formData.studentName,
-          consultationDate: selectedDate!.toISOString().split('T')[0],
-          consultationTime: selectedTime,
-          meetingLink,
-        },
-      });
-
-      toast.success("Consultation booked! Check your email and WhatsApp for details.");
+      toast.success("Consultation booked! Check your email for details.");
       
       // Navigate to confirmation page with details
       navigate(`/consultation-confirmed?parentName=${encodeURIComponent(formData.parentName)}&studentName=${encodeURIComponent(formData.studentName)}&date=${selectedDate!.toISOString().split('T')[0]}&time=${encodeURIComponent(selectedTime)}&email=${encodeURIComponent(formData.email)}`);
@@ -565,7 +553,6 @@ const BookConsultation = () => {
                   </p>
                   <ul className="text-sm text-blue-800 dark:text-blue-200 mt-2 space-y-1 ml-4 list-disc">
                     <li>Email with meeting link and calendar invite</li>
-                    <li>WhatsApp confirmation with details</li>
                     <li>Reminders 1 day before and 1 hour before</li>
                   </ul>
                 </div>
