@@ -53,6 +53,12 @@ const handler = async (req: Request): Promise<Response> => {
       .eq('user_id', booking.tutor_id)
       .maybeSingle();
 
+    const { data: tutorUserProfile } = await supabase
+      .from('profiles')
+      .select('full_name')
+      .eq('id', booking.tutor_id)
+      .maybeSingle();
+
     const { data: slot } = await supabase
       .from('tutor_availability')
       .select('start_time, end_time')
@@ -62,6 +68,16 @@ const handler = async (req: Request): Promise<Response> => {
     const finalMeetingLink = meetingLink || booking.meeting_link || 'Will be shared soon';
 
     const startTime = slot ? new Date(slot.start_time) : new Date();
+    const endTime = slot ? new Date(slot.end_time) : new Date(startTime.getTime() + 60 * 60 * 1000);
+
+    const durationMinutes = Math.max(
+      1,
+      Math.round((endTime.getTime() - startTime.getTime()) / (1000 * 60))
+    );
+    const durationText = durationMinutes % 60 === 0
+      ? `${durationMinutes / 60} hour${durationMinutes / 60 === 1 ? '' : 's'}`
+      : `${durationMinutes} minutes`;
+
     const formattedDate = startTime.toLocaleDateString('en-US', {
       weekday: 'long',
       year: 'numeric',
@@ -144,18 +160,18 @@ const handler = async (req: Request): Promise<Response> => {
                                       <td style="padding: 10px 0; border-bottom: 1px solid #FFD6D6; font-size: 14px; color: #666666; width: 40%;">Subject:</td>
                                       <td style="padding: 10px 0; border-bottom: 1px solid #FFD6D6; font-size: 14px; color: #1a1a1a; font-weight: 500; text-align: right;">${booking.subject}</td>
                                     </tr>
-                                    <tr>
+                                     <tr>
                                       <td style="padding: 10px 0; border-bottom: 1px solid #FFD6D6; font-size: 14px; color: #666666;">Tutor:</td>
-                                      <td style="padding: 10px 0; border-bottom: 1px solid #FFD6D6; font-size: 14px; color: #1a1a1a; font-weight: 500; text-align: right;">Calvins Onuko</td>
-                                    </tr>
-                                    <tr>
-                                      <td style="padding: 10px 0; border-bottom: 1px solid #FFD6D6; font-size: 14px; color: #666666;">Date & Time:</td>
-                                      <td style="padding: 10px 0; border-bottom: 1px solid #FFD6D6; font-size: 14px; color: #1a1a1a; font-weight: 500; text-align: right;">${formattedDate} at ${formattedTime}</td>
-                                    </tr>
-                                    <tr>
-                                      <td style="padding: 10px 0; border-bottom: 1px solid #FFD6D6; font-size: 14px; color: #666666;">Duration:</td>
-                                      <td style="padding: 10px 0; border-bottom: 1px solid #FFD6D6; font-size: 14px; color: #1a1a1a; font-weight: 500; text-align: right;">1 hour</td>
-                                    </tr>
+                                      <td style="padding: 10px 0; border-bottom: 1px solid #FFD6D6; font-size: 14px; color: #1a1a1a; font-weight: 500; text-align: right;">${tutorUserProfile?.full_name || 'Your tutor'}</td>
+                                     </tr>
+                                     <tr>
+                                       <td style="padding: 10px 0; border-bottom: 1px solid #FFD6D6; font-size: 14px; color: #666666;">Date & Time:</td>
+                                       <td style="padding: 10px 0; border-bottom: 1px solid #FFD6D6; font-size: 14px; color: #1a1a1a; font-weight: 500; text-align: right;">${formattedDate} at ${formattedTime}</td>
+                                     </tr>
+                                     <tr>
+                                       <td style="padding: 10px 0; border-bottom: 1px solid #FFD6D6; font-size: 14px; color: #666666;">Duration:</td>
+                                       <td style="padding: 10px 0; border-bottom: 1px solid #FFD6D6; font-size: 14px; color: #1a1a1a; font-weight: 500; text-align: right;">${durationText}</td>
+                                     </tr>
                                     <tr>
                                       <td style="padding: 10px 0; font-size: 14px; color: #666666;">Class Type:</td>
                                       <td style="padding: 10px 0; font-size: 14px; color: #1a1a1a; font-weight: 500; text-align: right;">${booking.class_type === 'physical' ? '📍 Physical' : '💻 Online'}</td>
