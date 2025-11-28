@@ -34,7 +34,16 @@ export const MultiTutorPackageBuilder = () => {
     // Check if items were just added via navigation state
     const state = location.state as any;
     if (state?.fromCart && state?.itemsAdded) {
-      toast.success(`${state.itemsAdded} subject(s) added to your cart!`);
+      setTimeout(() => {
+        toast.success(`${state.itemsAdded} subject(s) added to your cart! Add more or proceed to checkout.`, {
+          duration: 6000,
+        });
+        // Scroll to cart
+        document.getElementById('cart-section')?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 500);
+      
+      // Clear state after showing message
+      window.history.replaceState({}, document.title);
     } else if (state?.addTutor) {
       toast.info(`Select a subject to add ${state.addTutor.tutorName} to your cart`);
     }
@@ -251,7 +260,7 @@ export const MultiTutorPackageBuilder = () => {
 
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Cart */}
-        <div className="lg:col-span-2 space-y-4">
+        <div id="cart-section" className="lg:col-span-2 space-y-4 scroll-mt-20">
           <Card>
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
@@ -265,7 +274,7 @@ export const MultiTutorPackageBuilder = () => {
                   <ShoppingCart className="w-12 h-12 mx-auto text-muted-foreground mb-3" />
                   <p className="text-muted-foreground mb-2">Your cart is empty</p>
                   <p className="text-xs text-muted-foreground mb-4">
-                    Add subjects from tutor profiles to build your custom package
+                    Browse tutors and click "Add to Multi-Subject Cart" to build your package
                   </p>
                   <Button onClick={() => navigate('/tutors')}>
                     Browse Tutors
@@ -274,7 +283,7 @@ export const MultiTutorPackageBuilder = () => {
               ) : (
                 <div className="space-y-3">
                   {cart.map((item) => (
-                    <div key={item.id} className="flex items-center gap-3 p-3 rounded-lg border">
+                    <div key={item.id} className="flex items-center gap-3 p-3 rounded-lg border bg-card">
                       <div className="flex-1">
                         <div className="font-medium">{item.subject}</div>
                         <div className="text-sm text-muted-foreground">with {item.tutorName}</div>
@@ -313,19 +322,30 @@ export const MultiTutorPackageBuilder = () => {
             </CardContent>
           </Card>
 
-          <Button 
-            className="w-full" 
-            variant="outline"
-            onClick={() => navigate('/tutors')}
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Add More Subjects/Tutors
-          </Button>
+          <div className="flex gap-3">
+            <Button 
+              className="flex-1" 
+              variant="outline"
+              onClick={() => navigate('/tutors')}
+            >
+              <Plus className="w-4 h-4 mr-2" />
+              Add More Subjects
+            </Button>
+            {cart.length > 0 && (
+              <Button 
+                className="flex-1"
+                onClick={() => document.getElementById('order-summary')?.scrollIntoView({ behavior: 'smooth' })}
+              >
+                <ShoppingCart className="w-4 h-4 mr-2" />
+                Review & Checkout
+              </Button>
+            )}
+          </div>
         </div>
 
         {/* Summary */}
         <div className="lg:col-span-1">
-          <Card className="sticky top-4">
+          <Card id="order-summary" className="sticky top-4 scroll-mt-20">
             <CardHeader>
               <CardTitle>Order Summary</CardTitle>
             </CardHeader>

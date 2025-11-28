@@ -16,6 +16,7 @@ import { PackageSelector } from "@/components/PackageSelector";
 import { HolidayPackageBanner } from "@/components/HolidayPackageBanner";
 import { CustomPackageBuilder } from "@/components/CustomPackageBuilder";
 import { LearningPlanRequest } from "@/components/LearningPlanRequest";
+import { AddToMultiTutorCart } from "@/components/AddToMultiTutorCart";
 import { cn } from "@/lib/utils";
 
 import tutor1 from "@/assets/tutor-1.jpg";
@@ -879,39 +880,14 @@ const TutorProfile = () => {
 
                     {/* Multi-Tutor Package Builder */}
                     <div className="space-y-3">
-                      <Button 
-                        variant="outline"
-                        className="w-full bg-secondary/5 border-secondary/30 hover:bg-secondary/10 hover:border-secondary h-auto py-5 text-foreground whitespace-normal text-wrap"
-                        size="lg"
-                        onClick={async () => {
-                          const { data: { user } } = await supabase.auth.getUser();
-                          if (!user) {
-                            showToast({
-                              title: "Please Sign In",
-                              description: "You need to sign in to build a multi-tutor package",
-                              variant: "destructive",
-                            });
-                            navigate(`/login?redirect=${encodeURIComponent(window.location.pathname)}`);
-                            return;
-                          }
-                          
-                          // Navigate to multi-tutor cart page
-                          toast.success("Browse tutors and click 'Add to Multi-Subject Cart' to combine multiple tutors!", {
-                            duration: 5000,
-                          });
-                          navigate('/multi-tutor-package');
-                        }}
-                      >
-                        <div className="flex flex-col items-center gap-2 w-full">
-                          <div className="flex items-center gap-2">
-                            <ShoppingCart className="w-5 h-5 text-secondary" />
-                            <span className="font-semibold text-base text-foreground">Build Multi-Tutor Package</span>
-                          </div>
-                          <span className="text-sm text-muted-foreground">Combine multiple tutors & subjects</span>
-                        </div>
-                      </Button>
+                      <AddToMultiTutorCart
+                        tutorId={tutor.id}
+                        tutorName={tutor.name}
+                        tutorRate={getCurrentRate()}
+                        subjects={tutor.subjects}
+                      />
                       <p className="text-xs text-center text-muted-foreground px-2">
-                        Browse multiple tutors, add subjects from each to your cart, then pay once for maximum bulk discounts
+                        Add subjects from this tutor to your cart, then browse other tutors to build a comprehensive package with maximum savings
                       </p>
                     </div>
 
