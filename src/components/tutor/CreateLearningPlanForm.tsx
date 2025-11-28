@@ -98,6 +98,8 @@ export const CreateLearningPlanForm = ({
         .insert({
           tutor_id: tutorProfileId,
           inquiry_id: inquiry.id,
+          // Link plan to the authenticated parent so they can view it via RLS
+          student_id: inquiry.parent_id || null,
           title,
           subjects: subjects.map(s => ({
             name: s.name,
