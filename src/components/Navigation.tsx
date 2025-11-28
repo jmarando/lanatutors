@@ -1,8 +1,9 @@
 import { Button } from "@/components/ui/button";
-import { Menu, LogOut, Globe, ChevronDown, User } from "lucide-react";
+import { Menu, LogOut, Globe, ChevronDown, User, Users, Package, FileText } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
@@ -82,7 +83,6 @@ const Navigation = () => {
 
   const getNavLinks = () => [
     { to: "/", label: "Home", singleLine: true },
-    { to: "/tutors", label: "Find Tutors", singleLine: true },
     { to: "/holiday-packages", label: "Revision Packages", singleLine: true },
     { to: user ? "/student/dashboard" : "/for-students", label: "Student Hub", singleLine: true },
     { to: "/for-tutors", label: "Tutor Hub", singleLine: true },
@@ -120,6 +120,59 @@ const Navigation = () => {
                 </span>
               </Link>
             ))}
+            
+            {/* Book a Class Dropdown */}
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="group relative text-sm font-medium hover:text-primary transition-all duration-300 whitespace-nowrap flex items-center gap-1">
+                  <span className="relative inline-block">
+                    Book a Class
+                    <span className="absolute bottom-0 left-0 w-0 h-0.5 bg-primary transition-all duration-300 group-hover:w-full"></span>
+                  </span>
+                  <ChevronDown className="w-3 h-3" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-64">
+                <DropdownMenuItem asChild>
+                  <Link to="/group-classes" className="flex items-start gap-3 p-3 cursor-pointer">
+                    <Users className="w-5 h-5 text-primary mt-0.5" />
+                    <div className="flex-1">
+                      <div className="font-medium">Group Classes</div>
+                      <div className="text-xs text-muted-foreground">From KES 400/hr</div>
+                    </div>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem asChild>
+                  <Link to="/tutors" className="flex items-start gap-3 p-3 cursor-pointer">
+                    <User className="w-5 h-5 text-primary mt-0.5" />
+                    <div className="flex-1">
+                      <div className="font-medium">Individual Tutor</div>
+                      <div className="text-xs text-muted-foreground">1-on-1 sessions</div>
+                    </div>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/multi-tutor-package" className="flex items-start gap-3 p-3 cursor-pointer">
+                    <Package className="w-5 h-5 text-primary mt-0.5" />
+                    <div className="flex-1">
+                      <div className="font-medium">Custom Package</div>
+                      <div className="text-xs text-muted-foreground">Multi-session bundles</div>
+                    </div>
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/book-consultation" className="flex items-start gap-3 p-3 cursor-pointer">
+                    <FileText className="w-5 h-5 text-primary mt-0.5" />
+                    <div className="flex-1">
+                      <div className="font-medium">Learning Plan</div>
+                      <div className="text-xs text-muted-foreground">Get expert advice</div>
+                    </div>
+                  </Link>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            
             {isAdmin && (
               <Link to="/admin" className="group relative text-sm font-medium hover:text-primary transition-all duration-300 whitespace-nowrap">
                 <span className="relative inline-block">
@@ -227,6 +280,40 @@ const Navigation = () => {
                   {link.label}
                 </Link>
               ))}
+              
+              {/* Book a Class Mobile Section */}
+              <div className="border-t pt-4">
+                <div className="text-xs text-muted-foreground mb-2 px-2">Book a Class</div>
+                <Link to="/group-classes" onClick={() => setOpen(false)} className="flex items-center gap-3 px-2 py-2 hover:bg-primary/5 rounded-md">
+                  <Users className="w-5 h-5" />
+                  <div>
+                    <div className="font-medium">Group Classes</div>
+                    <div className="text-xs text-muted-foreground">From KES 400/hr</div>
+                  </div>
+                </Link>
+                <Link to="/tutors" onClick={() => setOpen(false)} className="flex items-center gap-3 px-2 py-2 hover:bg-primary/5 rounded-md">
+                  <User className="w-5 h-5" />
+                  <div>
+                    <div className="font-medium">Individual Tutor</div>
+                    <div className="text-xs text-muted-foreground">1-on-1 sessions</div>
+                  </div>
+                </Link>
+                <Link to="/multi-tutor-package" onClick={() => setOpen(false)} className="flex items-center gap-3 px-2 py-2 hover:bg-primary/5 rounded-md">
+                  <Package className="w-5 h-5" />
+                  <div>
+                    <div className="font-medium">Custom Package</div>
+                    <div className="text-xs text-muted-foreground">Multi-session bundles</div>
+                  </div>
+                </Link>
+                <Link to="/book-consultation" onClick={() => setOpen(false)} className="flex items-center gap-3 px-2 py-2 hover:bg-primary/5 rounded-md">
+                  <FileText className="w-5 h-5" />
+                  <div>
+                    <div className="font-medium">Learning Plan</div>
+                    <div className="text-xs text-muted-foreground">Get expert advice</div>
+                  </div>
+                </Link>
+              </div>
+              
               {isAdmin && (
                 <Link to="/admin" onClick={() => setOpen(false)} className="text-lg font-medium hover:text-primary transition-colors px-2 py-1 hover:bg-primary/5 rounded-md">
                   Admin Dashboard

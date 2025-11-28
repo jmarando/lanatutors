@@ -22,6 +22,7 @@ import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { TutorSignupList } from "@/components/admin/TutorSignupList";
 import { StudentList } from "@/components/admin/StudentList";
+import { AdminGroupClasses } from "@/components/admin/AdminGroupClasses";
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -1159,6 +1160,10 @@ The Lana Team`;
             <TabsTrigger value="students">
               <Users className="h-4 w-4 mr-2" />
               Students
+            </TabsTrigger>
+            <TabsTrigger value="group-classes">
+              <Users className="h-4 w-4 mr-2" />
+              Group Classes
             </TabsTrigger>
           </TabsList>
 
@@ -2360,6 +2365,11 @@ The Lana Team`;
       {/* Students Tab */}
       <TabsContent value="students">
         <StudentList />
+      </TabsContent>
+
+      {/* Group Classes Tab */}
+      <TabsContent value="group-classes">
+        <AdminGroupClasses />
       </TabsContent>
     </Tabs>
 

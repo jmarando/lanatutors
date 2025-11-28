@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
@@ -28,6 +28,7 @@ const EnhancedTutorDashboard = () => {
   const [bookings, setBookings] = useState<any[]>([]);
   const [payments, setPayments] = useState<any[]>([]);
   const [reviews, setReviews] = useState<any[]>([]);
+  const [groupClasses, setGroupClasses] = useState<any[]>([]);
 
   useEffect(() => {
     fetchTutorData();
@@ -101,6 +102,18 @@ const EnhancedTutorDashboard = () => {
       .limit(5);
 
     setReviews(reviewsData || []);
+    
+    // Fetch group class assignments
+    const { data: assignments } = await supabase
+      .from("group_class_tutor_assignments")
+      .select(`
+        *,
+        group_classes(*)
+      `)
+      .eq("tutor_id", tutorData.id)
+      .eq("status", "active");
+    
+    setGroupClasses(assignments || []);
     setLoading(false);
   };
 
@@ -195,6 +208,9 @@ const EnhancedTutorDashboard = () => {
             <TabsTrigger value="upcoming">
               Upcoming Sessions ({upcomingBookings.length})
             </TabsTrigger>
+            <TabsTrigger value="group-classes">
+              Group Classes ({groupClasses.length})
+            </TabsTrigger>
             <TabsTrigger value="availability">
               Manage Availability
             </TabsTrigger>
@@ -255,6 +271,68 @@ const EnhancedTutorDashboard = () => {
 
           <TabsContent value="availability">
             <TutorAvailabilityManager />
+          </TabsContent>
+
+          <TabsContent value="group-classes" className="space-y-4">
+            {groupClasses.length === 0 ? (
+              <Card>
+                <CardContent className="p-12 text-center">
+                  <Users className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
+                  <p className="text-muted-foreground">No group classes assigned yet</p>
+                </CardContent>
+              </Card>
+            ) : (
+              groupClasses.map((assignment: any) => {
+                const classData = assignment.group_classes;
+                return (
+                  <Card key={assignment.id}>
+                    <CardHeader>
+                      <div className="flex items-start justify-between">
+                        <div>
+                          <CardTitle className="text-xl">{classData.title}</CardTitle>
+                          <CardDescription>{classData.description}</CardDescription>
+                        </div>
+                        <div className="flex gap-2">
+                          <Badge variant="secondary">{classData.curriculum}</Badge>
+                          <Badge>{classData.subject}</Badge>
+                        </div>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                        <div>
+                          <div className="text-muted-foreground mb-1">Schedule</div>
+                          <div className="font-medium">{classData.day_of_week}</div>
+                          <div>{classData.start_time} - {classData.end_time} EAT</div>
+                        </div>
+                        <div>
+                          <div className="text-muted-foreground mb-1">Students</div>
+                          <div className="font-medium">{classData.current_enrollment}/{classData.max_students}</div>
+                        </div>
+                        <div>
+                          <div className="text-muted-foreground mb-1">Your Days</div>
+                          <div className="font-medium">
+                            {assignment.assigned_days?.join(", ") || "All"}
+                          </div>
+                        </div>
+                        <div>
+                          {classData.meeting_link && (
+                            <Button 
+                              onClick={() => window.open(classData.meeting_link, '_blank')}
+                              size="sm"
+                              className="w-full"
+                            >
+                              <Video className="w-4 h-4 mr-2" />
+                              Join Class
+                            </Button>
+                          )}
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                );
+              })
+            )}
           </TabsContent>
 
           <TabsContent value="reviews" className="space-y-4">
