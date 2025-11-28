@@ -234,18 +234,17 @@ const BookConsultation = () => {
         </Link>
 
         <Card>
-          <CardHeader>
-            <div className="mb-4">
+          <CardHeader className="pb-4">
+            <div className="mb-3">
               <Progress value={progress} className="h-2" />
-              <p className="text-sm text-muted-foreground mt-2">Step {step} of 4</p>
+              <p className="text-sm text-muted-foreground mt-1.5">Step {step} of 4</p>
             </div>
-            <CardTitle className="text-3xl text-center">Book Your Free Consultation</CardTitle>
-            <CardDescription className="text-base text-center">
+            <CardTitle className="text-2xl text-center">Book Your Free Consultation</CardTitle>
+            <CardDescription className="text-sm text-center">
               30-minute session with an education consultant
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            {/* Step 1: Choose Path or Why Book */}
+          <CardContent className="pt-0">{/* Step 1: Choose Path or Why Book */}
             {step === 1 && (
               <div className="space-y-6">
                 <div>
@@ -318,10 +317,10 @@ const BookConsultation = () => {
 
             {/* Step 2: Basic Information */}
             {step === 2 && (
-              <div className="space-y-6">
+              <div className="space-y-4">
                 <div>
-                  <h3 className="font-semibold text-lg mb-2">Basic Information</h3>
-                  <p className="text-sm text-muted-foreground mb-4">
+                  <h3 className="font-semibold text-lg mb-1">Basic Information</h3>
+                  <p className="text-sm text-muted-foreground">
                     Tell us about yourself and the student
                   </p>
                 </div>
@@ -387,39 +386,39 @@ const BookConsultation = () => {
 
             {/* Step 3: Learning Details & Schedule */}
             {step === 3 && (
-              <div className="space-y-6">
+              <div className="space-y-4">
                 <div>
-                  <h3 className="font-semibold text-lg mb-2">Learning Details</h3>
-                  <p className="text-sm text-muted-foreground mb-4">
+                  <h3 className="font-semibold text-lg mb-1">Learning Details</h3>
+                  <p className="text-sm text-muted-foreground">
                     Help us understand your student's needs
                   </p>
                 </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="curriculum">Curriculum *</Label>
-                  <Select 
-                    value={formData.curriculum} 
-                    onValueChange={(value) => setFormData({ 
-                      ...formData, 
-                      curriculum: value, 
-                      gradeLevel: "",
-                      subjects: []
-                    })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select curriculum" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-background z-50">
-                      {curriculums.map(curriculum => (
-                        <SelectItem key={curriculum} value={curriculum}>
-                          {curriculum}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
                 <div className="grid md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="curriculum">Curriculum *</Label>
+                    <Select 
+                      value={formData.curriculum} 
+                      onValueChange={(value) => setFormData({ 
+                        ...formData, 
+                        curriculum: value, 
+                        gradeLevel: "",
+                        subjects: []
+                      })}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select curriculum" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-background z-50">
+                        {curriculums.map(curriculum => (
+                          <SelectItem key={curriculum} value={curriculum}>
+                            {curriculum}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
                   <div className="space-y-2">
                     <Label htmlFor="gradeLevel">Level/Year *</Label>
                     <Select 
@@ -438,16 +437,16 @@ const BookConsultation = () => {
                       ))}
                     </SelectContent>
                   </Select>
+                  </div>
                 </div>
-              </div>
 
                 <div className="space-y-2">
                   <Label htmlFor="subjects">Subjects of Interest *</Label>
-                  <div className="border rounded-md p-3 min-h-[100px] bg-muted/30">
+                  <div className="border rounded-md p-2.5 min-h-[60px] bg-muted/30">
                     {formData.subjects.length > 0 ? (
-                      <div className="flex flex-wrap gap-2 mb-2">
+                      <div className="flex flex-wrap gap-1.5 mb-2">
                         {formData.subjects.map(subject => (
-                          <Badge key={subject} variant="secondary" className="cursor-pointer" onClick={() => {
+                          <Badge key={subject} variant="secondary" className="cursor-pointer text-xs" onClick={() => {
                             setFormData({
                               ...formData,
                               subjects: formData.subjects.filter(s => s !== subject)
@@ -458,7 +457,7 @@ const BookConsultation = () => {
                         ))}
                       </div>
                     ) : (
-                      <p className="text-sm text-muted-foreground mb-2">
+                      <p className="text-xs text-muted-foreground mb-2">
                         {!formData.curriculum || !formData.gradeLevel 
                           ? "Please select curriculum and level first" 
                           : "Select subjects from the dropdown below"}
@@ -505,16 +504,17 @@ const BookConsultation = () => {
                     placeholder="Any specific concerns or questions you'd like to discuss?"
                     value={formData.additionalNotes}
                     onChange={(e) => setFormData({ ...formData, additionalNotes: e.target.value })}
-                    rows={3}
+                    rows={2}
+                    className="resize-none"
                   />
                 </div>
 
-                <div className="border-t pt-6">
-                  <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
+                <div className="border-t pt-4 mt-4">
+                  <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
                     <CalendarIcon className="w-5 h-5" />
                     Select Date & Time
                   </h3>
-                  <div className="grid md:grid-cols-2 gap-6">
+                  <div className="grid md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label>Choose Date *</Label>
                       <Calendar
@@ -534,7 +534,7 @@ const BookConsultation = () => {
                     <div className="space-y-2">
                       <Label>Choose Time *</Label>
                       {filteredTimeSlots.length === 0 ? (
-                        <div className="text-sm text-muted-foreground p-4 border rounded-md">
+                        <div className="text-sm text-muted-foreground p-3 border rounded-md">
                           No available time slots for today. Please select a future date or try again later.
                         </div>
                       ) : (
