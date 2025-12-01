@@ -10,6 +10,7 @@ import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 // Lazy load pages for code splitting
 const Home = lazy(() => import("./pages/Home"));
+const BookingOptions = lazy(() => import("./pages/BookingOptions"));
 const HowItWorks = lazy(() => import("./pages/HowItWorks"));
 const AboutUs = lazy(() => import("./pages/AboutUs"));
 const Blog = lazy(() => import("./pages/Blog"));
@@ -82,6 +83,7 @@ const App = () => {
               }>
               <Routes>
                 <Route path="/" element={<Home />} />
+                <Route path="/book-class" element={<BookingOptions />} />
                 <Route path="/how-it-works" element={<HowItWorks />} />
             <Route path="/about" element={<AboutUs />} />
             <Route path="/blog" element={<Blog />} />
