@@ -31,36 +31,8 @@ export const TutorDisplayInfo = ({
   }, [avatarUrl, tutorId, enablePhotoEnhancement]);
 
   const enhancePhoto = async () => {
-    if (!avatarUrl || isEnhancing) return;
-
-    try {
-      setIsEnhancing(true);
-
-      // Check if we already have an enhanced version cached
-      const cacheKey = `enhanced_photo_${tutorId}`;
-      const cached = localStorage.getItem(cacheKey);
-      
-      if (cached) {
-        setEnhancedPhotoUrl(cached);
-        return;
-      }
-
-      // Call edge function to enhance photo
-      const { data, error } = await supabase.functions.invoke("enhance-tutor-photo", {
-        body: { imageUrl: avatarUrl },
-      });
-
-      if (!error && data?.enhancedUrl) {
-        setEnhancedPhotoUrl(data.enhancedUrl);
-        // Cache the enhanced URL
-        localStorage.setItem(cacheKey, data.enhancedUrl);
-      }
-    } catch (error) {
-      console.error("Photo enhancement failed:", error);
-      // Silently fail - use original photo
-    } finally {
-      setIsEnhancing(false);
-    }
+    // Photo enhancement temporarily disabled - using original photos
+    return;
   };
 
   const displayName = formatName(name);
