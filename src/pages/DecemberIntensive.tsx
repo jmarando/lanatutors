@@ -320,51 +320,47 @@ const DecemberIntensive = () => {
                 </Card>
               ) : (
                 <>
-                  {/* Weekly Schedule Overview */}
-                  <Card className="mb-8 bg-primary/5 border-primary/20">
-                    <CardHeader>
-                      <CardTitle className="text-lg">Program Schedule</CardTitle>
-                      <CardDescription>Classes run Monday to Friday, December 8-19, 2025</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="space-y-4">
-                        {timeSlots.map((slot) => {
-                          const classesAtTime = filteredClasses.filter(cls => cls.time_slot === slot);
-                          if (classesAtTime.length === 0) return null;
+                  {/* Grade-Specific Schedule */}
+                  {selectedGrade && (
+                    <Card className="mb-8 bg-primary/5 border-primary/20">
+                      <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                          <Calendar className="h-5 w-5" />
+                          {selectedGrade} Schedule
+                        </CardTitle>
+                        <CardDescription>Classes run Monday to Friday, December 8-19, 2025</CardDescription>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="space-y-3">
+                          {timeSlots.map((slot) => {
+                            const classAtTime = filteredClasses.find(
+                              cls => cls.time_slot === slot && cls.grade_levels.includes(selectedGrade)
+                            );
+                            if (!classAtTime) return null;
 
-                          return (
-                            <div key={slot} className="border-b last:border-0 pb-4 last:pb-0">
-                              <div className="flex items-center gap-2 mb-3">
-                                <Clock className="h-4 w-4 text-primary flex-shrink-0" />
-                                <span className="font-semibold">{slot} EAT</span>
-                                <Badge variant="outline" className="flex-shrink-0">75 min</Badge>
-                                <span className="text-xs text-muted-foreground">Mon - Fri</span>
-                              </div>
-                              <div className="ml-6 space-y-2">
-                                {classesAtTime.map((cls) => {
-                                  const gradeLevel = cls.grade_levels[0] || "";
-                                  return (
-                                    <div key={cls.id} className="flex items-center gap-3 text-sm">
-                                      <span className="text-lg">{getSubjectIcon(cls.subject)}</span>
-                                      <div className="flex-1">
-                                        <span className="font-medium">{cls.subject}</span>
-                                        <span className="text-muted-foreground"> - {gradeLevel}</span>
-                                      </div>
-                                      {cls.tutor_name && (
-                                        <span className="text-xs text-muted-foreground">
-                                          with {cls.tutor_name}
-                                        </span>
-                                      )}
+                            return (
+                              <div key={slot} className="flex items-start gap-3 p-3 rounded-lg border bg-card">
+                                <Clock className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+                                <div className="flex-1">
+                                  <div className="font-semibold mb-1">{slot} EAT</div>
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-lg">{getSubjectIcon(classAtTime.subject)}</span>
+                                    <span className="font-medium">{classAtTime.subject}</span>
+                                  </div>
+                                  {classAtTime.tutor_name && (
+                                    <div className="text-sm text-muted-foreground mt-1">
+                                      with {classAtTime.tutor_name}
                                     </div>
-                                  );
-                                })}
+                                  )}
+                                </div>
+                                <Badge variant="outline">75 min</Badge>
                               </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    </CardContent>
-                  </Card>
+                            );
+                          })}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  )}
 
                   {/* Classes by Time Slot and Grade */}
                   {timeSlots.map((timeSlot) => {
