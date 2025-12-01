@@ -178,6 +178,7 @@ const DecemberIntensive = () => {
       "Physics": "⚡",
       "Chemistry": "🧪",
       "Biology": "🔬",
+      "Integrated Science": "🔬",
       "English": "📚",
       "Kiswahili": "🗣️",
       "TOK": "💭"
@@ -339,22 +340,41 @@ const DecemberIntensive = () => {
                               );
                               if (!classAtTime) return null;
 
+                              // Parse focus_topics to extract week 1 and week 2
+                              const topics = classAtTime.focus_topics || '';
+                              const week1Match = topics.match(/Week 1:([^|]+)/);
+                              const week2Match = topics.match(/Week 2:([^|]+)/);
+                              const week1Topics = week1Match ? week1Match[1].trim() : 'Topics to be announced';
+                              const week2Topics = week2Match ? week2Match[1].trim() : 'Topics to be announced';
+
                               return (
-                                <div key={slot} className="flex items-start gap-3 p-3 rounded-lg border bg-card">
-                                  <Clock className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
-                                  <div className="flex-1">
-                                    <div className="font-semibold mb-1">{slot} EAT</div>
-                                    <div className="flex items-center gap-2">
-                                      <span className="text-lg">{getSubjectIcon(classAtTime.subject)}</span>
-                                      <span className="font-medium">{classAtTime.subject}</span>
-                                    </div>
-                                    {classAtTime.tutor_name && (
-                                      <div className="text-sm text-muted-foreground mt-1">
-                                        with {classAtTime.tutor_name}
+                                <div key={slot} className="p-4 rounded-lg border bg-card">
+                                  <div className="flex items-center gap-3 mb-3">
+                                    <Clock className="h-5 w-5 text-primary flex-shrink-0" />
+                                    <div className="flex-1">
+                                      <div className="font-semibold mb-1">{slot} EAT</div>
+                                      <div className="flex items-center gap-2">
+                                        <span className="text-lg">{getSubjectIcon(classAtTime.subject)}</span>
+                                        <span className="font-medium">{classAtTime.subject}</span>
                                       </div>
-                                    )}
+                                      {classAtTime.tutor_name && (
+                                        <div className="text-sm text-muted-foreground mt-1">
+                                          with {classAtTime.tutor_name}
+                                        </div>
+                                      )}
+                                    </div>
+                                    <Badge variant="outline">75 min</Badge>
                                   </div>
-                                  <Badge variant="outline">75 min</Badge>
+                                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3 pt-3 border-t text-sm">
+                                    <div>
+                                      <div className="font-semibold text-xs uppercase text-muted-foreground mb-1">Week 1 (Dec 8-12)</div>
+                                      <div className="text-muted-foreground">{week1Topics}</div>
+                                    </div>
+                                    <div>
+                                      <div className="font-semibold text-xs uppercase text-muted-foreground mb-1">Week 2 (Dec 15-19)</div>
+                                      <div className="text-muted-foreground">{week2Topics}</div>
+                                    </div>
+                                  </div>
                                 </div>
                               );
                             })}
@@ -379,30 +399,26 @@ const DecemberIntensive = () => {
                                 </tr>
                               </thead>
                               <tbody>
-                                {filteredClasses.map((cls) => (
-                                  <tr key={cls.id} className="border-b last:border-0">
-                                    <td className="p-3">
-                                      <div className="flex items-center gap-2">
-                                        <span className="text-lg">{getSubjectIcon(cls.subject)}</span>
-                                        <span className="font-medium">{cls.subject}</span>
-                                      </div>
-                                    </td>
-                                    <td className="p-3 text-sm text-muted-foreground">
-                                      {cls.focus_topics ? (
-                                        <span>{cls.focus_topics.split(',').slice(0, 2).join(', ')}</span>
-                                      ) : (
-                                        <span>Foundation concepts, Core principles</span>
-                                      )}
-                                    </td>
-                                    <td className="p-3 text-sm text-muted-foreground">
-                                      {cls.focus_topics ? (
-                                        <span>{cls.focus_topics.split(',').slice(2, 4).join(', ')}</span>
-                                      ) : (
-                                        <span>Advanced topics, Practice & review</span>
-                                      )}
-                                    </td>
-                                  </tr>
-                                ))}
+                                {filteredClasses.map((cls) => {
+                                  const topics = cls.focus_topics || '';
+                                  const week1Match = topics.match(/Week 1:([^|]+)/);
+                                  const week2Match = topics.match(/Week 2:([^|]+)/);
+                                  const week1Topics = week1Match ? week1Match[1].trim() : 'Topics to be announced';
+                                  const week2Topics = week2Match ? week2Match[1].trim() : 'Topics to be announced';
+                                  
+                                  return (
+                                    <tr key={cls.id} className="border-b last:border-0">
+                                      <td className="p-3">
+                                        <div className="flex items-center gap-2">
+                                          <span className="text-lg">{getSubjectIcon(cls.subject)}</span>
+                                          <span className="font-medium">{cls.subject}</span>
+                                        </div>
+                                      </td>
+                                      <td className="p-3 text-sm text-muted-foreground">{week1Topics}</td>
+                                      <td className="p-3 text-sm text-muted-foreground">{week2Topics}</td>
+                                    </tr>
+                                  );
+                                })}
                               </tbody>
                             </table>
                           </div>

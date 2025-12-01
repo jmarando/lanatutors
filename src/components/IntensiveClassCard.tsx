@@ -74,7 +74,7 @@ export const IntensiveClassCard = ({
             </div>
 
             {/* Curriculum badges */}
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-2 mb-2">
               {classes.map(cls => (
                 <Badge key={cls.id} variant="secondary">
                   {cls.curriculum} {cls.grade_levels.length > 0 && `(${cls.grade_levels.join(", ")})`}
@@ -107,6 +107,38 @@ export const IntensiveClassCard = ({
       </CardHeader>
 
       <CardContent className="pt-4">
+        {/* Focus topics display */}
+        {firstClass.focus_topics && (
+          <div className="mb-4 space-y-3">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+              {(() => {
+                const topics = firstClass.focus_topics;
+                const week1Match = topics.match(/Week 1:([^|]+)/);
+                const week2Match = topics.match(/Week 2:([^|]+)/);
+                const week1Topics = week1Match ? week1Match[1].trim() : '';
+                const week2Topics = week2Match ? week2Match[1].trim() : '';
+
+                return (
+                  <>
+                    {week1Topics && (
+                      <div className="p-3 rounded-lg bg-muted/50">
+                        <h4 className="font-semibold text-sm mb-2">Week 1 (Dec 8-12)</h4>
+                        <p className="text-sm text-muted-foreground">{week1Topics}</p>
+                      </div>
+                    )}
+                    {week2Topics && (
+                      <div className="p-3 rounded-lg bg-muted/50">
+                        <h4 className="font-semibold text-sm mb-2">Week 2 (Dec 15-19)</h4>
+                        <p className="text-sm text-muted-foreground">{week2Topics}</p>
+                      </div>
+                    )}
+                  </>
+                );
+              })()}
+            </div>
+          </div>
+        )}
+
         {/* Day-by-day breakdown */}
         {hasTopics && (
           <div className="space-y-3">
@@ -143,12 +175,6 @@ export const IntensiveClassCard = ({
               </div>
             )}
           </div>
-        )}
-
-        {!hasTopics && firstClass.focus_topics && (
-          <p className="text-sm text-muted-foreground">
-            <strong>Focus:</strong> {firstClass.focus_topics}
-          </p>
         )}
 
         <div className="mt-4 pt-4 border-t">
