@@ -9,8 +9,7 @@ import { useState, useEffect } from "react";
 import { format, addDays } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { IntensiveClassCard } from "@/components/IntensiveClassCard";
-import { IntensiveCart, CartStudent } from "@/components/IntensiveCart";
-import { StudentSelector } from "@/components/StudentSelector";
+import { IntensiveCartSimple } from "@/components/IntensiveCartSimple";
 import { useToast } from "@/hooks/use-toast";
 
 interface IntensiveClass {
@@ -37,8 +36,12 @@ const DecemberIntensive = () => {
   const [selectedGrade, setSelectedGrade] = useState<string>("");
   
   // Cart state
-  const [cartStudents, setCartStudents] = useState<CartStudent[]>([]);
-  const [currentStudent, setCurrentStudent] = useState<CartStudent | null>(null);
+  const [selectedClasses, setSelectedClasses] = useState<Array<{
+    id: string;
+    subject: string;
+    curriculum: string;
+    gradeLevel: string;
+  }>>([]);
 
   useEffect(() => {
     fetchClasses();
@@ -47,17 +50,14 @@ const DecemberIntensive = () => {
 
   useEffect(() => {
     saveCartToStorage();
-  }, [cartStudents, currentStudent]);
+  }, [selectedClasses]);
 
   const loadCartFromStorage = () => {
     const saved = localStorage.getItem('december_intensive_cart');
     if (saved) {
       try {
         const data = JSON.parse(saved);
-        setCartStudents(data.students || []);
-        if (data.students && data.students.length > 0) {
-          setCurrentStudent(data.students[0]);
-        }
+        setSelectedClasses(data.selectedClasses || []);
       } catch (error) {
         console.error('Error loading cart:', error);
       }
@@ -66,7 +66,7 @@ const DecemberIntensive = () => {
 
   const saveCartToStorage = () => {
     localStorage.setItem('december_intensive_cart', JSON.stringify({
-      students: cartStudents
+      selectedClasses
     }));
   };
 
@@ -146,88 +146,28 @@ const DecemberIntensive = () => {
     }
   };
 
-  const handleAddStudent = (student: { name: string; curriculum: string; gradeLevel: string }) => {
-    const newStudent: CartStudent = {
-      id: `student-${Date.now()}`,
-      name: student.name,
-      curriculum: student.curriculum,
-      gradeLevel: student.gradeLevel,
-      selectedClassIds: [],
-      selectedSubjects: []
-    };
-    setCartStudents([...cartStudents, newStudent]);
-    setCurrentStudent(newStudent);
-    setSelectedCurriculum(student.curriculum);
-    setSelectedGrade(student.gradeLevel);
-  };
-
-  const handleSelectStudent = (studentId: string) => {
-    const student = cartStudents.find(s => s.id === studentId);
-    if (student) {
-      setCurrentStudent(student);
-      setSelectedCurriculum(student.curriculum);
-      setSelectedGrade(student.gradeLevel);
-    }
-  };
-
-  const handleAddToCart = (classId: string, subject: string, curriculum: string) => {
-    if (!currentStudent) {
+  const handleAddToCart = (classId: string, subject: string, curriculum: string, gradeLevel: string) => {
+    const existingIndex = selectedClasses.findIndex(c => c.id === classId);
+    
+    if (existingIndex >= 0) {
+      // Remove from cart
+      setSelectedClasses(selectedClasses.filter(c => c.id !== classId));
       toast({
-        title: "Add a student first",
-        description: "Please add a student before selecting classes",
-        variant: "destructive"
+        title: "Removed from cart",
+        description: `${subject} has been removed from your cart`,
       });
-      return;
-    }
-
-    const updatedStudents = cartStudents.map(student => {
-      if (student.id === currentStudent.id) {
-        if (student.selectedClassIds.includes(classId)) {
-          // Remove from cart
-          return {
-            ...student,
-            selectedClassIds: student.selectedClassIds.filter(id => id !== classId),
-            selectedSubjects: student.selectedSubjects.filter(s => s.id !== classId)
-          };
-        } else {
-          // Add to cart
-          return {
-            ...student,
-            selectedClassIds: [...student.selectedClassIds, classId],
-            selectedSubjects: [...student.selectedSubjects, { id: classId, subject, curriculum }]
-          };
-        }
-      }
-      return student;
-    });
-
-    setCartStudents(updatedStudents);
-    setCurrentStudent(updatedStudents.find(s => s.id === currentStudent.id) || null);
-  };
-
-  const handleRemoveStudent = (studentId: string) => {
-    const updated = cartStudents.filter(s => s.id !== studentId);
-    setCartStudents(updated);
-    if (currentStudent?.id === studentId) {
-      setCurrentStudent(updated[0] || null);
+    } else {
+      // Add to cart
+      setSelectedClasses([...selectedClasses, { id: classId, subject, curriculum, gradeLevel }]);
+      toast({
+        title: "Added to cart",
+        description: `${subject} has been added to your cart`,
+      });
     }
   };
 
-  const handleRemoveSubject = (studentId: string, classId: string) => {
-    const updated = cartStudents.map(student => {
-      if (student.id === studentId) {
-        return {
-          ...student,
-          selectedClassIds: student.selectedClassIds.filter(id => id !== classId),
-          selectedSubjects: student.selectedSubjects.filter(s => s.id !== classId)
-        };
-      }
-      return student;
-    });
-    setCartStudents(updated);
-    if (currentStudent?.id === studentId) {
-      setCurrentStudent(updated.find(s => s.id === studentId) || null);
-    }
+  const handleRemoveClass = (classId: string) => {
+    setSelectedClasses(selectedClasses.filter(c => c.id !== classId));
   };
 
   const timeSlots = ["8:00 - 9:15 AM", "9:30 - 10:45 AM", "11:00 AM - 12:15 PM", "1:00 - 2:15 PM", "2:30 - 3:45 PM", "4:00 - 5:15 PM"];
@@ -323,21 +263,13 @@ const DecemberIntensive = () => {
               </div>
               <div className="mt-6 p-4 bg-muted/50 rounded-lg">
                 <p className="text-sm text-center">
-                  <strong>What happens next:</strong> After payment, you'll receive confirmation emails with Google Meet links and Google Classroom access for each enrolled subject. Classes begin December 8th!
+                  <strong>What happens next:</strong> After payment, you&apos;ll receive confirmation emails with Google Meet links and Google Classroom access for each enrolled subject. Classes begin December 8th!
                 </p>
               </div>
             </CardContent>
           </Card>
 
-          {/* Student Selector */}
-          <div className="max-w-6xl mx-auto mb-8">
-            <StudentSelector
-              currentStudent={currentStudent}
-              allStudents={cartStudents}
-              onSelectStudent={handleSelectStudent}
-              onAddStudent={handleAddStudent}
-            />
-          </div>
+          {/* Student Selector - Removed from top */}
 
           {/* Curriculum Tabs */}
           <div id="schedule" className="max-w-6xl mx-auto">
@@ -410,7 +342,8 @@ const DecemberIntensive = () => {
                       <div className="grid gap-4">
                         {Object.entries(subjectGroups).map(([subject, subjectClasses]) => {
                           const firstClass = subjectClasses[0];
-                          const isInCart = currentStudent?.selectedClassIds.includes(firstClass.id) || false;
+                          const isInCart = selectedClasses.some(c => c.id === firstClass.id);
+                          const gradeLevel = firstClass.grade_levels[0] || "";
 
                           return (
                             <IntensiveClassCard
@@ -419,7 +352,7 @@ const DecemberIntensive = () => {
                               icon={getSubjectIcon(subject)}
                               classes={subjectClasses}
                               isInCart={isInCart}
-                              onAddToCart={() => handleAddToCart(firstClass.id, subject, firstClass.curriculum)}
+                              onAddToCart={() => handleAddToCart(firstClass.id, subject, firstClass.curriculum, gradeLevel)}
                               weekDates={allDates}
                             />
                           );
@@ -453,10 +386,9 @@ const DecemberIntensive = () => {
       </div>
 
       {/* Sticky Cart */}
-      <IntensiveCart
-        students={cartStudents}
-        onRemoveStudent={handleRemoveStudent}
-        onRemoveSubject={handleRemoveSubject}
+      <IntensiveCartSimple
+        selectedClasses={selectedClasses}
+        onRemoveClass={handleRemoveClass}
       />
     </>
   );
