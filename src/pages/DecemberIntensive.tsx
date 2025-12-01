@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
 import { Calendar, Clock, Users, CheckCircle2, Filter } from "lucide-react";
 import { useState, useEffect } from "react";
+import { format, addDays } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 
 interface IntensiveClass {
@@ -134,7 +135,10 @@ const DecemberIntensive = () => {
 
           {/* Daily Schedule with Filters */}
           <div id="schedule" className="mb-16">
-            <h2 className="text-3xl font-bold text-center mb-8">Daily Schedule by Stream</h2>
+            <h2 className="text-3xl font-bold text-center mb-4">Daily Schedule by Stream</h2>
+            <p className="text-center text-muted-foreground mb-8">
+              Monday - Friday | December 8-19, 2025 | 10 sessions per subject
+            </p>
             
             {/* Filter Controls */}
             <Card className="max-w-5xl mx-auto mb-6">
@@ -219,15 +223,43 @@ const DecemberIntensive = () => {
                     subjectGroups[cls.subject].push(cls);
                   });
 
+                  // Calculate the actual dates (Dec 9-13 and Dec 16-20, 2025)
+                  const startDate = new Date(2025, 11, 9); // December 9, 2025 (Monday)
+                  const weekdays = ["Mon", "Tue", "Wed", "Thu", "Fri"];
+                  const week1Dates = weekdays.map((day, i) => ({
+                    day,
+                    date: format(addDays(startDate, i), "MMM d")
+                  }));
+                  const week2Dates = weekdays.map((day, i) => ({
+                    day,
+                    date: format(addDays(startDate, i + 7), "MMM d")
+                  }));
+
                   return (
                     <Card key={timeSlot} className="overflow-hidden">
                       <CardHeader className="bg-primary/5 pb-4">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <Clock className="h-5 w-5 text-primary" />
-                            <CardTitle className="text-xl">{timeSlot} EAT</CardTitle>
+                        <div className="flex flex-col gap-3">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <Clock className="h-5 w-5 text-primary" />
+                              <CardTitle className="text-xl">{timeSlot} EAT</CardTitle>
+                            </div>
+                            <span className="text-sm font-medium text-muted-foreground">75 min</span>
                           </div>
-                          <span className="text-sm font-medium text-muted-foreground">75 min</span>
+                          <div className="flex flex-wrap gap-2">
+                            <span className="text-xs font-medium text-muted-foreground mr-2">Week 1:</span>
+                            {week1Dates.map(({ day, date }) => (
+                              <Badge key={`w1-${day}`} variant="outline" className="text-xs">
+                                {day} {date}
+                              </Badge>
+                            ))}
+                            <span className="text-xs font-medium text-muted-foreground ml-2 mr-2">Week 2:</span>
+                            {week2Dates.map(({ day, date }) => (
+                              <Badge key={`w2-${day}`} variant="outline" className="text-xs">
+                                {day} {date}
+                              </Badge>
+                            ))}
+                          </div>
                         </div>
                       </CardHeader>
                       <CardContent className="p-6">
