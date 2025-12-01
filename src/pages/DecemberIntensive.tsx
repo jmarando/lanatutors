@@ -327,15 +327,41 @@ const DecemberIntensive = () => {
                       <CardDescription>Classes run Monday to Friday, December 8-19, 2025</CardDescription>
                     </CardHeader>
                     <CardContent>
-                      <div className="space-y-2 text-sm">
-                        {timeSlots.map((slot, idx) => (
-                          <div key={slot} className="flex items-center gap-4 py-2 border-b last:border-0">
-                            <Clock className="h-4 w-4 text-primary flex-shrink-0" />
-                            <span className="font-medium min-w-[140px]">{slot} EAT</span>
-                            <Badge variant="outline" className="flex-shrink-0">75 min</Badge>
-                            <span className="text-muted-foreground">Monday - Friday</span>
-                          </div>
-                        ))}
+                      <div className="space-y-4">
+                        {timeSlots.map((slot) => {
+                          const classesAtTime = filteredClasses.filter(cls => cls.time_slot === slot);
+                          if (classesAtTime.length === 0) return null;
+
+                          return (
+                            <div key={slot} className="border-b last:border-0 pb-4 last:pb-0">
+                              <div className="flex items-center gap-2 mb-3">
+                                <Clock className="h-4 w-4 text-primary flex-shrink-0" />
+                                <span className="font-semibold">{slot} EAT</span>
+                                <Badge variant="outline" className="flex-shrink-0">75 min</Badge>
+                                <span className="text-xs text-muted-foreground">Mon - Fri</span>
+                              </div>
+                              <div className="ml-6 space-y-2">
+                                {classesAtTime.map((cls) => {
+                                  const gradeLevel = cls.grade_levels[0] || "";
+                                  return (
+                                    <div key={cls.id} className="flex items-center gap-3 text-sm">
+                                      <span className="text-lg">{getSubjectIcon(cls.subject)}</span>
+                                      <div className="flex-1">
+                                        <span className="font-medium">{cls.subject}</span>
+                                        <span className="text-muted-foreground"> - {gradeLevel}</span>
+                                      </div>
+                                      {cls.tutor_name && (
+                                        <span className="text-xs text-muted-foreground">
+                                          with {cls.tutor_name}
+                                        </span>
+                                      )}
+                                    </div>
+                                  );
+                                })}
+                              </div>
+                            </div>
+                          );
+                        })}
                       </div>
                     </CardContent>
                   </Card>
