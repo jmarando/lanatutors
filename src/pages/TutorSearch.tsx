@@ -11,6 +11,8 @@ import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Star, SlidersHorizontal, Calendar as CalendarIcon, Clock, MapPin, Award, Sparkles, ArrowRight, CheckCircle, Loader2, Eye } from "lucide-react";
 import { SEO } from "@/components/SEO";
+import { TutorAvatar, TutorBioDisplay } from "@/components/TutorDisplayInfo";
+import { formatName, cleanDisplayText } from "@/utils/textFormatting";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { CURRICULUM_DATA, getCurriculums, getAllSubjects, getLevelsForCurriculum, getSubjectsForCurriculumLevel } from "@/utils/curriculumData";
@@ -355,12 +357,15 @@ const TutorSearch = () => {
             {filteredTutors.map(tutor => <Card key={tutor.id} className="overflow-hidden border-border/50 bg-card">
                 <CardContent className="p-6">
                   <div className="flex items-start gap-4 mb-4">
-                    <Avatar className="w-16 h-16 border-2 border-black ring-2 ring-black/10">
-                      <AvatarImage src={tutor.photoUrl || undefined} alt={tutor.name} />
-                      <AvatarFallback className="bg-muted text-foreground font-semibold">{tutor.photo}</AvatarFallback>
-                    </Avatar>
+                    <TutorAvatar
+                      name={tutor.name}
+                      avatarUrl={tutor.photoUrl}
+                      tutorId={tutor.id}
+                      size="lg"
+                      className="border-2 border-black ring-2 ring-black/10"
+                    />
                     <div className="flex-1">
-                      <h3 className="font-semibold text-lg">{tutor.name}</h3>
+                      <h3 className="font-semibold text-lg">{formatName(tutor.name)}</h3>
                       <p className="text-sm text-muted-foreground">{tutor.school}</p>
                       <p className="mt-2 text-xs text-muted-foreground">
                         <span className="font-semibold">Subjects:</span> {tutor.subjects.slice(0, 3).join(", ")}

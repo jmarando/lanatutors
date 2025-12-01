@@ -11,6 +11,8 @@ import { toast } from "sonner";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
 import { SEO } from "@/components/SEO";
+import { TutorAvatar, TutorBioDisplay } from "@/components/TutorDisplayInfo";
+import { formatName } from "@/utils/textFormatting";
 import { BookingCalendar } from "@/components/BookingCalendar";
 import { PackageSelector } from "@/components/PackageSelector";
 import { CustomPackageBuilder } from "@/components/CustomPackageBuilder";
@@ -486,15 +488,16 @@ const TutorProfile = () => {
             <Card className="border-border/50">
               <CardContent className="p-8">
                 <div className="flex flex-col sm:flex-row gap-6 items-start mb-6">
-                  <Avatar className="w-28 h-28 shrink-0 border-[3px] border-black ring-4 ring-black/10">
-                    <AvatarImage src={tutor.photoUrl} alt={tutor.name} />
-                    <AvatarFallback className="text-2xl bg-muted text-foreground font-semibold">
-                      {tutor.photo}
-                    </AvatarFallback>
-                  </Avatar>
+                  <TutorAvatar
+                    name={tutor.name}
+                    avatarUrl={tutor.photoUrl}
+                    tutorId={tutor.id}
+                    size="xl"
+                    className="border-[3px] border-black ring-4 ring-black/10"
+                  />
                   
                   <div className="flex-1 min-w-0">
-                    <h1 className="text-3xl font-bold mb-2">{tutor.name}</h1>
+                    <h1 className="text-3xl font-bold mb-2">{formatName(tutor.name)}</h1>
                     <p className="text-base text-muted-foreground mb-4">
                       {tutor.subjects.join(" • ")}
                     </p>
