@@ -28,10 +28,8 @@ serve(async (req) => {
     // Convert to base64 in chunks to avoid stack overflow
     const bytes = new Uint8Array(imageArrayBuffer);
     let binary = '';
-    const chunkSize = 8192;
-    for (let i = 0; i < bytes.length; i += chunkSize) {
-      const chunk = bytes.subarray(i, Math.min(i + chunkSize, bytes.length));
-      binary += String.fromCharCode.apply(null, Array.from(chunk));
+    for (let i = 0; i < bytes.length; i++) {
+      binary += String.fromCharCode(bytes[i]);
     }
     const base64Image = btoa(binary);
 
