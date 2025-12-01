@@ -349,6 +349,12 @@ const DecemberIntensive = () => {
                             {selectedGrade} Daily Schedule
                           </CardTitle>
                           <CardDescription>Classes run Monday to Friday, December 8-19, 2025</CardDescription>
+                          
+                          {/* Pricing summary */}
+                          <div className="mt-4 pt-4 border-t">
+                            <p className="text-2xl font-bold">KES 4,000</p>
+                            <p className="text-sm text-muted-foreground">10 sessions • 75 minutes each</p>
+                          </div>
                         </CardHeader>
                         <CardContent>
                           <div className="space-y-3">
