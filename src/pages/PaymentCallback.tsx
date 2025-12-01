@@ -5,11 +5,17 @@ import { supabase } from "@/integrations/supabase/client";
 
 type PaymentStatus = "processing" | "success" | "error";
 
+interface PaymentInfo {
+  reference_id: string | null;
+  payment_type: string | null;
+  status: string | null;
+}
+
 export default function PaymentCallback() {
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const [status, setStatus] = useState<PaymentStatus>("processing");
-  const [bookingId, setBookingId] = useState<string | null>(null);
+  const [paymentInfo, setPaymentInfo] = useState<PaymentInfo | null>(null);
 
   useEffect(() => {
     const processCallback = async () => {
@@ -42,7 +48,7 @@ export default function PaymentCallback() {
             continue;
           }
 
-          const payment = (data?.payment as { reference_id: string | null; payment_type: string | null; status: string | null } | null) ?? null;
+          const payment = (data?.payment as PaymentInfo | null) ?? null;
 
           if (!payment) {
             attempts++;
@@ -62,19 +68,10 @@ export default function PaymentCallback() {
                 console.error("Error blocking recurring slots:", error);
                 // Continue anyway - slots can be manually blocked later
               }
-
-              setStatus("success");
-              return;
             }
 
-            // Handle booking payments (initial or balance)
-            if ((payment.payment_type === "booking" || payment.payment_type === "booking_balance") && payment.reference_id) {
-              setBookingId(payment.reference_id);
-              setStatus("success");
-              return;
-            }
-
-            // Other payment types
+            // Store payment info for redirect
+            setPaymentInfo(payment);
             setStatus("success");
             return;
           }
@@ -98,18 +95,27 @@ export default function PaymentCallback() {
 
   useEffect(() => {
     // Redirect to appropriate page based on payment type
-    if (status === "success") {
-      if (bookingId) {
+    if (status === "success" && paymentInfo) {
+      const redirectDelay = 1500;
+      
+      if (paymentInfo.payment_type === "intensive_enrollment" && paymentInfo.reference_id) {
+        // December Intensive enrollment - redirect to confirmation page
+        setTimeout(() => {
+          navigate(`/december-intensive/confirmed?enrollment_id=${paymentInfo.reference_id}`);
+        }, redirectDelay);
+      } else if ((paymentInfo.payment_type === "booking" || paymentInfo.payment_type === "booking_balance") && paymentInfo.reference_id) {
         // Booking payment - redirect to booking confirmed
-        navigate(`/booking-confirmed?bookingId=${bookingId}`);
+        setTimeout(() => {
+          navigate(`/booking-confirmed?bookingId=${paymentInfo.reference_id}`);
+        }, redirectDelay);
       } else {
         // Package or other payment - redirect to dashboard
         setTimeout(() => {
           navigate("/student/dashboard");
-        }, 2000);
+        }, redirectDelay);
       }
     }
-  }, [status, bookingId, navigate]);
+  }, [status, paymentInfo, navigate]);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-primary/5 to-background flex items-center justify-center p-4">
@@ -130,13 +136,13 @@ export default function PaymentCallback() {
               <CheckCircle className="w-16 h-16 text-green-500" />
             </div>
             <h1 className="text-2xl font-bold">Payment Successful!</h1>
-            {bookingId ? (
-              <p className="text-muted-foreground">Redirecting to booking confirmation...</p>
-            ) : (
-              <p className="text-muted-foreground">
-                Your package has been purchased. Redirecting to dashboard...
-              </p>
-            )}
+            <p className="text-muted-foreground">
+              {paymentInfo?.payment_type === "intensive_enrollment"
+                ? "Redirecting to enrollment confirmation..."
+                : paymentInfo?.payment_type === "booking" || paymentInfo?.payment_type === "booking_balance"
+                ? "Redirecting to booking confirmation..."
+                : "Your package has been purchased. Redirecting to dashboard..."}
+            </p>
           </>
         )}
 
