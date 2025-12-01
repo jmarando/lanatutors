@@ -642,6 +642,7 @@ export type Database = {
           max_students: number
           meeting_link: string | null
           program_id: string
+          session_topics: Json | null
           status: string
           subject: string
           time_slot: string
@@ -658,6 +659,7 @@ export type Database = {
           max_students?: number
           meeting_link?: string | null
           program_id: string
+          session_topics?: Json | null
           status?: string
           subject: string
           time_slot: string
@@ -674,6 +676,7 @@ export type Database = {
           max_students?: number
           meeting_link?: string | null
           program_id?: string
+          session_topics?: Json | null
           status?: string
           subject?: string
           time_slot?: string

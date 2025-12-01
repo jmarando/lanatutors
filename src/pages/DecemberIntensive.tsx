@@ -1,14 +1,17 @@
 import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
-import { Calendar, Clock, Users, CheckCircle2, Filter } from "lucide-react";
+import { Calendar, Clock, Users, CheckCircle2 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { format, addDays } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
-import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { IntensiveClassCard } from "@/components/IntensiveClassCard";
+import { IntensiveCart, CartStudent } from "@/components/IntensiveCart";
+import { StudentSelector } from "@/components/StudentSelector";
+import { useToast } from "@/hooks/use-toast";
 
 interface IntensiveClass {
   id: string;
@@ -22,18 +25,50 @@ interface IntensiveClass {
   tutor_id: string | null;
   tutor_name: string | null;
   tutor_avatar: string | null;
+  session_topics: Record<string, string> | null;
 }
 
 const DecemberIntensive = () => {
   const navigate = useNavigate();
+  const { toast } = useToast();
   const [classes, setClasses] = useState<IntensiveClass[]>([]);
   const [loading, setLoading] = useState(true);
-  const [selectedCurriculum, setSelectedCurriculum] = useState<string>("all");
-  const [selectedGrade, setSelectedGrade] = useState<string>("all");
+  const [selectedCurriculum, setSelectedCurriculum] = useState<string>("CBC");
+  const [selectedGrade, setSelectedGrade] = useState<string>("");
+  
+  // Cart state
+  const [cartStudents, setCartStudents] = useState<CartStudent[]>([]);
+  const [currentStudent, setCurrentStudent] = useState<CartStudent | null>(null);
 
   useEffect(() => {
     fetchClasses();
+    loadCartFromStorage();
   }, []);
+
+  useEffect(() => {
+    saveCartToStorage();
+  }, [cartStudents, currentStudent]);
+
+  const loadCartFromStorage = () => {
+    const saved = localStorage.getItem('december_intensive_cart');
+    if (saved) {
+      try {
+        const data = JSON.parse(saved);
+        setCartStudents(data.students || []);
+        if (data.students && data.students.length > 0) {
+          setCurrentStudent(data.students[0]);
+        }
+      } catch (error) {
+        console.error('Error loading cart:', error);
+      }
+    }
+  };
+
+  const saveCartToStorage = () => {
+    localStorage.setItem('december_intensive_cart', JSON.stringify({
+      students: cartStudents
+    }));
+  };
 
   const fetchClasses = async () => {
     try {
@@ -59,8 +94,6 @@ const DecemberIntensive = () => {
 
       // Get unique tutor_ids
       const tutorIds = [...new Set(classesData.map(c => c.tutor_id).filter(Boolean))] as string[];
-
-      // Fetch tutor profiles and their user profiles
       const tutorInfo: Record<string, { name: string; avatar: string | null }> = {};
       
       if (tutorIds.length > 0) {
@@ -90,7 +123,6 @@ const DecemberIntensive = () => {
         }
       }
 
-      // Merge tutor info with classes
       const enrichedClasses: IntensiveClass[] = classesData.map(cls => ({
         id: cls.id,
         subject: cls.subject,
@@ -103,6 +135,7 @@ const DecemberIntensive = () => {
         tutor_id: cls.tutor_id,
         tutor_name: cls.tutor_id ? tutorInfo[cls.tutor_id]?.name || null : null,
         tutor_avatar: cls.tutor_id ? tutorInfo[cls.tutor_id]?.avatar || null : null,
+        session_topics: cls.session_topics as Record<string, string> | null,
       }));
 
       setClasses(enrichedClasses);
@@ -110,6 +143,90 @@ const DecemberIntensive = () => {
       console.error("Error fetching classes:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleAddStudent = (student: { name: string; curriculum: string; gradeLevel: string }) => {
+    const newStudent: CartStudent = {
+      id: `student-${Date.now()}`,
+      name: student.name,
+      curriculum: student.curriculum,
+      gradeLevel: student.gradeLevel,
+      selectedClassIds: [],
+      selectedSubjects: []
+    };
+    setCartStudents([...cartStudents, newStudent]);
+    setCurrentStudent(newStudent);
+    setSelectedCurriculum(student.curriculum);
+    setSelectedGrade(student.gradeLevel);
+  };
+
+  const handleSelectStudent = (studentId: string) => {
+    const student = cartStudents.find(s => s.id === studentId);
+    if (student) {
+      setCurrentStudent(student);
+      setSelectedCurriculum(student.curriculum);
+      setSelectedGrade(student.gradeLevel);
+    }
+  };
+
+  const handleAddToCart = (classId: string, subject: string, curriculum: string) => {
+    if (!currentStudent) {
+      toast({
+        title: "Add a student first",
+        description: "Please add a student before selecting classes",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    const updatedStudents = cartStudents.map(student => {
+      if (student.id === currentStudent.id) {
+        if (student.selectedClassIds.includes(classId)) {
+          // Remove from cart
+          return {
+            ...student,
+            selectedClassIds: student.selectedClassIds.filter(id => id !== classId),
+            selectedSubjects: student.selectedSubjects.filter(s => s.id !== classId)
+          };
+        } else {
+          // Add to cart
+          return {
+            ...student,
+            selectedClassIds: [...student.selectedClassIds, classId],
+            selectedSubjects: [...student.selectedSubjects, { id: classId, subject, curriculum }]
+          };
+        }
+      }
+      return student;
+    });
+
+    setCartStudents(updatedStudents);
+    setCurrentStudent(updatedStudents.find(s => s.id === currentStudent.id) || null);
+  };
+
+  const handleRemoveStudent = (studentId: string) => {
+    const updated = cartStudents.filter(s => s.id !== studentId);
+    setCartStudents(updated);
+    if (currentStudent?.id === studentId) {
+      setCurrentStudent(updated[0] || null);
+    }
+  };
+
+  const handleRemoveSubject = (studentId: string, classId: string) => {
+    const updated = cartStudents.map(student => {
+      if (student.id === studentId) {
+        return {
+          ...student,
+          selectedClassIds: student.selectedClassIds.filter(id => id !== classId),
+          selectedSubjects: student.selectedSubjects.filter(s => s.id !== classId)
+        };
+      }
+      return student;
+    });
+    setCartStudents(updated);
+    if (currentStudent?.id === studentId) {
+      setCurrentStudent(updated.find(s => s.id === studentId) || null);
     }
   };
 
@@ -123,18 +240,24 @@ const DecemberIntensive = () => {
       "Biology": "🔬",
       "English": "📚",
       "Kiswahili": "🗣️",
+      "TOK": "💭"
     };
     return icons[subject] || "📖";
   };
 
+  const gradesByCurriculum: Record<string, string[]> = {
+    "CBC": ["Grade 7", "Grade 8", "Grade 9"],
+    "8-4-4": ["Form 3", "Form 4"],
+    "IGCSE": ["Year 10", "Year 11"],
+    "A-Level": ["Year 12", "Year 13"],
+    "IB": ["Year 12", "Year 13"]
+  };
+
   const filteredClasses = classes.filter(cls => {
-    if (selectedCurriculum !== "all" && cls.curriculum !== selectedCurriculum) return false;
-    if (selectedGrade !== "all" && !cls.grade_levels.includes(selectedGrade)) return false;
+    if (cls.curriculum !== selectedCurriculum) return false;
+    if (selectedGrade && !cls.grade_levels.includes(selectedGrade)) return false;
     return true;
   });
-
-  const allCurricula = ["CBC", "8-4-4", "IGCSE", "A-Level", "IB"];
-  const allGrades = ["Grade 6", "Grade 7", "Grade 8", "Grade 9", "Form 1", "Form 2", "Form 3", "Form 4", "Year 9", "Year 10", "Year 11", "Year 12", "Year 13"];
 
   const features = [
     { icon: Calendar, title: "10 Lessons Per Subject", description: "Complete coverage across 2 weeks" },
@@ -143,6 +266,13 @@ const DecemberIntensive = () => {
     { icon: CheckCircle2, title: "Expert Tutors", description: "Qualified tutors for each subject" },
   ];
 
+  const startDate = new Date(2025, 11, 9);
+  const weekdays = ["Mon", "Tue", "Wed", "Thu", "Fri"];
+  const allDates = weekdays.flatMap((day, i) => [
+    { day, date: format(addDays(startDate, i), "MMM d") },
+    { day, date: format(addDays(startDate, i + 7), "MMM d") }
+  ]);
+
   return (
     <>
       <SEO
@@ -150,7 +280,7 @@ const DecemberIntensive = () => {
         description="Join our 2-week December Intensive Program. 10 lessons per subject across Mathematics, Sciences, English, and more. December 8-19, 2025."
       />
 
-      <div className="min-h-screen bg-gradient-to-b from-background to-muted/20">
+      <div className="min-h-screen bg-gradient-to-b from-background to-muted/20 pb-32">
         {/* Hero Section */}
         <div className="container mx-auto px-4 py-16">
           <div className="text-center max-w-4xl mx-auto mb-16">
@@ -163,14 +293,6 @@ const DecemberIntensive = () => {
             <p className="text-lg mb-8">
               Comprehensive revision program with 10 lessons per subject across Mathematics, Physics, Chemistry, Biology, English, and Kiswahili/TOK.
             </p>
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Button size="lg" onClick={() => navigate("/december-intensive/enroll")} className="text-lg">
-                Enroll Now
-              </Button>
-              <Button size="lg" variant="outline" onClick={() => document.getElementById("schedule")?.scrollIntoView({ behavior: "smooth" })}>
-                View Schedule
-              </Button>
-            </div>
           </div>
 
           {/* Features Grid */}
@@ -188,88 +310,68 @@ const DecemberIntensive = () => {
             ))}
           </div>
 
-          {/* Daily Schedule with Filters */}
-          <div id="schedule" className="mb-16">
-            <h2 className="text-3xl font-bold text-center mb-4">Daily Schedule by Stream</h2>
+          {/* Student Selector */}
+          <div className="max-w-6xl mx-auto mb-8">
+            <StudentSelector
+              currentStudent={currentStudent}
+              allStudents={cartStudents}
+              onSelectStudent={handleSelectStudent}
+              onAddStudent={handleAddStudent}
+            />
+          </div>
+
+          {/* Curriculum Tabs */}
+          <div id="schedule" className="max-w-6xl mx-auto">
+            <h2 className="text-3xl font-bold text-center mb-4">Select Your Classes</h2>
             <p className="text-center text-muted-foreground mb-8">
-              Monday - Friday | December 8-19, 2025 | 10 sessions per subject
+              Choose your curriculum, then add subjects to your cart
             </p>
-            
-            {/* Filter Controls */}
-            <Card className="max-w-5xl mx-auto mb-6">
-              <CardContent className="p-6">
-                <div className="flex items-center gap-4 mb-4">
-                  <Filter className="h-5 w-5 text-primary" />
-                  <span className="font-semibold">Filter Classes:</span>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-sm font-medium mb-2 block">Curriculum</label>
-                    <Select value={selectedCurriculum} onValueChange={setSelectedCurriculum}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="All Curricula" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All Curricula</SelectItem>
-                        {allCurricula.map(curr => (
-                          <SelectItem key={curr} value={curr}>{curr}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div>
-                    <label className="text-sm font-medium mb-2 block">Grade Level</label>
-                    <Select value={selectedGrade} onValueChange={setSelectedGrade}>
-                      <SelectTrigger>
-                        <SelectValue placeholder="All Grades" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All Grades</SelectItem>
-                        {allGrades.map(grade => (
-                          <SelectItem key={grade} value={grade}>{grade}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
 
-            {/* Schedule Grid */}
-            {loading ? (
-              <Card className="max-w-5xl mx-auto">
-                <CardContent className="p-12 text-center">
-                  <p className="text-muted-foreground">Loading schedule...</p>
-                </CardContent>
-              </Card>
-            ) : (
-              <div className="max-w-6xl mx-auto space-y-4">
-                {timeSlots.map((timeSlot, idx) => {
+            <Tabs value={selectedCurriculum} onValueChange={setSelectedCurriculum}>
+              <TabsList className="grid grid-cols-5 w-full mb-6">
+                <TabsTrigger value="CBC">CBC</TabsTrigger>
+                <TabsTrigger value="8-4-4">8-4-4</TabsTrigger>
+                <TabsTrigger value="IGCSE">IGCSE</TabsTrigger>
+                <TabsTrigger value="A-Level">A-Level</TabsTrigger>
+                <TabsTrigger value="IB">IB</TabsTrigger>
+              </TabsList>
+
+              {/* Grade level chips */}
+              {selectedCurriculum && (
+                <div className="flex flex-wrap gap-2 mb-6">
+                  <span className="text-sm font-medium text-muted-foreground mr-2">Grade Level:</span>
+                  <Badge
+                    variant={selectedGrade === "" ? "default" : "outline"}
+                    className="cursor-pointer"
+                    onClick={() => setSelectedGrade("")}
+                  >
+                    All
+                  </Badge>
+                  {gradesByCurriculum[selectedCurriculum]?.map(grade => (
+                    <Badge
+                      key={grade}
+                      variant={selectedGrade === grade ? "default" : "outline"}
+                      className="cursor-pointer"
+                      onClick={() => setSelectedGrade(grade)}
+                    >
+                      {grade}
+                    </Badge>
+                  ))}
+                </div>
+              )}
+
+              {/* Class Cards */}
+              {loading ? (
+                <Card>
+                  <CardContent className="p-12 text-center">
+                    <p className="text-muted-foreground">Loading schedule...</p>
+                  </CardContent>
+                </Card>
+              ) : (
+                timeSlots.map((timeSlot) => {
                   const classesAtTime = filteredClasses.filter(cls => cls.time_slot === timeSlot);
-                  
-                  if (classesAtTime.length === 0 && selectedCurriculum === "all" && selectedGrade === "all") {
-                    // Show lunch break placeholder
-                    if (idx === 3) {
-                      return (
-                        <Card key={timeSlot} className="bg-muted/30">
-                          <CardContent className="p-6">
-                            <div className="flex items-center gap-4">
-                              <span className="text-3xl">🍽️</span>
-                              <div>
-                                <p className="font-semibold text-lg">Lunch Break</p>
-                                <p className="text-sm text-muted-foreground">12:15 - 1:00 PM EAT</p>
-                              </div>
-                            </div>
-                          </CardContent>
-                        </Card>
-                      );
-                    }
-                    return null;
-                  }
-
                   if (classesAtTime.length === 0) return null;
 
-                  // Group classes by subject
                   const subjectGroups: Record<string, IntensiveClass[]> = {};
                   classesAtTime.forEach(cls => {
                     if (!subjectGroups[cls.subject]) {
@@ -278,162 +380,47 @@ const DecemberIntensive = () => {
                     subjectGroups[cls.subject].push(cls);
                   });
 
-                  // Calculate the actual dates (Dec 9-13 and Dec 16-20, 2025)
-                  const startDate = new Date(2025, 11, 9); // December 9, 2025 (Monday)
-                  const weekdays = ["Mon", "Tue", "Wed", "Thu", "Fri"];
-                  const week1Dates = weekdays.map((day, i) => ({
-                    day,
-                    date: format(addDays(startDate, i), "MMM d")
-                  }));
-                  const week2Dates = weekdays.map((day, i) => ({
-                    day,
-                    date: format(addDays(startDate, i + 7), "MMM d")
-                  }));
-
                   return (
-                    <Card key={timeSlot} className="overflow-hidden">
-                      <CardHeader className="bg-primary/5 pb-4">
-                        <div className="flex flex-col gap-3">
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                              <Clock className="h-5 w-5 text-primary" />
-                              <CardTitle className="text-xl">{timeSlot} EAT</CardTitle>
-                            </div>
-                            <span className="text-sm font-medium text-muted-foreground">75 min</span>
-                          </div>
-                          <div className="flex flex-wrap gap-2">
-                            <span className="text-xs font-medium text-muted-foreground mr-2">Week 1:</span>
-                            {week1Dates.map(({ day, date }) => (
-                              <Badge key={`w1-${day}`} variant="outline" className="text-xs">
-                                {day} {date}
-                              </Badge>
-                            ))}
-                            <span className="text-xs font-medium text-muted-foreground ml-2 mr-2">Week 2:</span>
-                            {week2Dates.map(({ day, date }) => (
-                              <Badge key={`w2-${day}`} variant="outline" className="text-xs">
-                                {day} {date}
-                              </Badge>
-                            ))}
-                          </div>
-                        </div>
-                      </CardHeader>
-                      <CardContent className="p-6">
-                        <div className="space-y-6">
-                          {Object.entries(subjectGroups).map(([subject, subjectClasses]) => {
-                            const firstClass = subjectClasses[0];
-                            return (
-                              <div key={subject} className="space-y-3">
-                                <div className="flex items-center gap-3">
-                                  <span className="text-2xl">{getSubjectIcon(subject)}</span>
-                                  <div className="flex-1">
-                                    <h3 className="text-lg font-semibold">{subject}</h3>
-                                    
-                                    {/* Tutor Info */}
-                                    <div className="flex items-center gap-2 mt-2 mb-3">
-                                      {firstClass.tutor_name ? (
-                                        <>
-                                          <Avatar className="h-7 w-7">
-                                            <AvatarImage src={firstClass.tutor_avatar || undefined} />
-                                            <AvatarFallback className="text-xs">
-                                              {firstClass.tutor_name.split(' ').map(n => n[0]).join('')}
-                                            </AvatarFallback>
-                                          </Avatar>
-                                          <span className="text-sm text-muted-foreground">
-                                            Taught by <span className="font-medium text-foreground">{firstClass.tutor_name}</span>
-                                          </span>
-                                        </>
-                                      ) : (
-                                        <span className="text-sm text-muted-foreground italic">
-                                          Tutor: To be announced
-                                        </span>
-                                      )}
-                                    </div>
+                    <div key={timeSlot} className="mb-6">
+                      <div className="flex items-center gap-2 mb-4">
+                        <Clock className="h-5 w-5 text-primary" />
+                        <h3 className="text-xl font-semibold">{timeSlot} EAT</h3>
+                        <Badge variant="outline">75 min</Badge>
+                      </div>
 
-                                    <div className="flex flex-wrap gap-2">
-                                      {subjectClasses.map(cls => (
-                                        <Badge 
-                                          key={cls.id} 
-                                          variant="secondary"
-                                          className="px-3 py-1 text-xs font-medium"
-                                        >
-                                          {cls.curriculum}
-                                          {cls.grade_levels.length > 0 && (
-                                            <span className="ml-1.5 opacity-75">
-                                              ({cls.grade_levels.length > 2 
-                                                ? `${cls.grade_levels[0]} - ${cls.grade_levels[cls.grade_levels.length - 1]}`
-                                                : cls.grade_levels.join(", ")
-                                              })
-                                            </span>
-                                          )}
-                                        </Badge>
-                                      ))}
-                                    </div>
-                                  </div>
-                                </div>
-                                {firstClass?.focus_topics && (
-                                  <p className="text-sm text-muted-foreground ml-11 line-clamp-2">
-                                    {firstClass.focus_topics}
-                                  </p>
-                                )}
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </CardContent>
-                    </Card>
+                      <div className="grid gap-4">
+                        {Object.entries(subjectGroups).map(([subject, subjectClasses]) => {
+                          const firstClass = subjectClasses[0];
+                          const isInCart = currentStudent?.selectedClassIds.includes(firstClass.id) || false;
+
+                          return (
+                            <IntensiveClassCard
+                              key={subject}
+                              subject={subject}
+                              icon={getSubjectIcon(subject)}
+                              classes={subjectClasses}
+                              isInCart={isInCart}
+                              onAddToCart={() => handleAddToCart(firstClass.id, subject, firstClass.curriculum)}
+                              weekDates={allDates}
+                            />
+                          );
+                        })}
+                      </div>
+                    </div>
                   );
-                })}
-              </div>
-            )}
-          </div>
-
-          {/* Pricing */}
-          <div className="text-center mb-16">
-            <h2 className="text-3xl font-bold mb-6">Simple, Transparent Pricing</h2>
-            <Card className="max-w-md mx-auto">
-              <CardHeader>
-                <CardTitle className="text-2xl">KES 4,000 per subject</CardTitle>
-                <CardDescription>Choose up to 6 subjects</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <ul className="text-left space-y-2 mb-6">
-                  <li className="flex items-start gap-2">
-                    <CheckCircle2 className="h-5 w-5 text-primary mt-0.5" />
-                    <span>10 comprehensive lessons</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <CheckCircle2 className="h-5 w-5 text-primary mt-0.5" />
-                    <span>75 minutes per session</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <CheckCircle2 className="h-5 w-5 text-primary mt-0.5" />
-                    <span>Expert tutor guidance</span>
-                  </li>
-                  <li className="flex items-start gap-2">
-                    <CheckCircle2 className="h-5 w-5 text-primary mt-0.5" />
-                    <span>Google Classroom access</span>
-                  </li>
-                </ul>
-                <Button className="w-full" onClick={() => navigate("/december-intensive/enroll")}>
-                  Enroll Now
-                </Button>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* Supported Curricula */}
-          <div className="text-center">
-            <h2 className="text-3xl font-bold mb-6">All Curricula Supported</h2>
-            <div className="flex flex-wrap justify-center gap-4">
-              {["CBC", "8-4-4", "IGCSE", "A-Level", "IB"].map((curriculum) => (
-                <Card key={curriculum} className="px-8 py-4">
-                  <CardTitle className="text-lg">{curriculum}</CardTitle>
-                </Card>
-              ))}
-            </div>
+                })
+              )}
+            </Tabs>
           </div>
         </div>
       </div>
+
+      {/* Sticky Cart */}
+      <IntensiveCart
+        students={cartStudents}
+        onRemoveStudent={handleRemoveStudent}
+        onRemoveSubject={handleRemoveSubject}
+      />
     </>
   );
 };
