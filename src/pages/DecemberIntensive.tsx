@@ -2,6 +2,7 @@ import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
 import { Calendar, Clock, Users, CheckCircle2, Filter } from "lucide-react";
 import { useState, useEffect } from "react";
@@ -183,7 +184,7 @@ const DecemberIntensive = () => {
                 </CardContent>
               </Card>
             ) : (
-              <div className="max-w-5xl mx-auto space-y-6">
+              <div className="max-w-6xl mx-auto space-y-4">
                 {timeSlots.map((timeSlot, idx) => {
                   const classesAtTime = filteredClasses.filter(cls => cls.time_slot === timeSlot);
                   
@@ -192,11 +193,11 @@ const DecemberIntensive = () => {
                     if (idx === 3) {
                       return (
                         <Card key={timeSlot} className="bg-muted/30">
-                          <CardContent className="p-4">
+                          <CardContent className="p-6">
                             <div className="flex items-center gap-4">
-                              <span className="text-2xl">🍽️</span>
+                              <span className="text-3xl">🍽️</span>
                               <div>
-                                <p className="font-semibold">Lunch Break</p>
+                                <p className="font-semibold text-lg">Lunch Break</p>
                                 <p className="text-sm text-muted-foreground">12:15 - 1:00 PM EAT</p>
                               </div>
                             </div>
@@ -209,36 +210,60 @@ const DecemberIntensive = () => {
 
                   if (classesAtTime.length === 0) return null;
 
+                  // Group classes by subject
+                  const subjectGroups: Record<string, IntensiveClass[]> = {};
+                  classesAtTime.forEach(cls => {
+                    if (!subjectGroups[cls.subject]) {
+                      subjectGroups[cls.subject] = [];
+                    }
+                    subjectGroups[cls.subject].push(cls);
+                  });
+
                   return (
-                    <Card key={timeSlot}>
-                      <CardHeader className="pb-3">
+                    <Card key={timeSlot} className="overflow-hidden">
+                      <CardHeader className="bg-primary/5 pb-4">
                         <div className="flex items-center justify-between">
-                          <CardTitle className="text-lg">{timeSlot} EAT</CardTitle>
-                          <span className="text-sm text-muted-foreground">75 minutes</span>
+                          <div className="flex items-center gap-3">
+                            <Clock className="h-5 w-5 text-primary" />
+                            <CardTitle className="text-xl">{timeSlot} EAT</CardTitle>
+                          </div>
+                          <span className="text-sm font-medium text-muted-foreground">75 min</span>
                         </div>
                       </CardHeader>
-                      <CardContent>
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                          {classesAtTime.map(cls => (
-                            <div key={cls.id} className="p-4 rounded-lg border bg-card hover:bg-accent/5 transition-colors">
-                              <div className="flex items-start gap-3 mb-2">
-                                <span className="text-2xl">{getSubjectIcon(cls.subject)}</span>
+                      <CardContent className="p-6">
+                        <div className="space-y-6">
+                          {Object.entries(subjectGroups).map(([subject, subjectClasses]) => (
+                            <div key={subject} className="space-y-3">
+                              <div className="flex items-center gap-3">
+                                <span className="text-2xl">{getSubjectIcon(subject)}</span>
                                 <div className="flex-1">
-                                  <p className="font-semibold">{cls.subject}</p>
-                                  <p className="text-sm text-muted-foreground">{cls.curriculum}</p>
-                                  <p className="text-xs text-muted-foreground mt-1">
-                                    {cls.grade_levels.join(", ")}
-                                  </p>
+                                  <h3 className="text-lg font-semibold">{subject}</h3>
+                                  <div className="flex flex-wrap gap-2 mt-2">
+                                    {subjectClasses.map(cls => (
+                                      <Badge 
+                                        key={cls.id} 
+                                        variant="secondary"
+                                        className="px-3 py-1 text-xs font-medium"
+                                      >
+                                        {cls.curriculum}
+                                        {cls.grade_levels.length > 0 && (
+                                          <span className="ml-1.5 opacity-75">
+                                            ({cls.grade_levels.length > 2 
+                                              ? `${cls.grade_levels[0]} - ${cls.grade_levels[cls.grade_levels.length - 1]}`
+                                              : cls.grade_levels.join(", ")
+                                            })
+                                          </span>
+                                        )}
+                                      </Badge>
+                                    ))}
+                                  </div>
                                 </div>
                               </div>
-                              <div className="flex items-center justify-between mt-3 pt-3 border-t">
-                                <span className="text-xs text-muted-foreground">
-                                  {cls.current_enrollment}/{cls.max_students} enrolled
-                                </span>
-                                {cls.current_enrollment >= cls.max_students && (
-                                  <span className="text-xs text-destructive font-medium">Full</span>
-                                )}
-                              </div>
+                              {subjectClasses[0]?.focus_topics && (
+                                <p className="text-sm text-muted-foreground ml-11 line-clamp-2">
+                                  {subjectClasses[0].focus_topics}
+                                </p>
+                              )}
                             </div>
                           ))}
                         </div>
