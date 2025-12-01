@@ -23,6 +23,8 @@ import { cn } from "@/lib/utils";
 import { TutorSignupList } from "@/components/admin/TutorSignupList";
 import { StudentList } from "@/components/admin/StudentList";
 import { AdminGroupClasses } from "@/components/admin/AdminGroupClasses";
+import { GroupClassTutorAssignment } from "@/components/admin/GroupClassTutorAssignment";
+import { AdminIntensivePrograms } from "@/components/admin/AdminIntensivePrograms";
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -1160,6 +1162,10 @@ The Lana Team`;
             <TabsTrigger value="students">
               <Users className="h-4 w-4 mr-2" />
               Students
+            </TabsTrigger>
+            <TabsTrigger value="intensive-programs">
+              <CalendarIcon className="h-4 w-4 mr-2" />
+              December Intensive
             </TabsTrigger>
             <TabsTrigger value="group-classes">
               <Users className="h-4 w-4 mr-2" />
@@ -2365,6 +2371,11 @@ The Lana Team`;
       {/* Students Tab */}
       <TabsContent value="students">
         <StudentList />
+      </TabsContent>
+
+      {/* December Intensive Programs Tab */}
+      <TabsContent value="intensive-programs">
+        <AdminIntensivePrograms />
       </TabsContent>
 
       {/* Group Classes Tab */}

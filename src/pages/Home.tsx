@@ -21,6 +21,7 @@ import { Link } from "react-router-dom";
 import { SEO } from "@/components/SEO";
 import { supabase } from "@/integrations/supabase/client";
 import { GroupClassBanner } from "@/components/GroupClassBanner";
+import { DecemberIntensiveBanner } from "@/components/DecemberIntensiveBanner";
 import { useNavigate } from "react-router-dom";
 import heroVideo from "@/assets/hero-video.mp4";
 import heroImage from "@/assets/hero-image.jpg";
@@ -267,9 +268,9 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Group Class Banner */}
+      {/* December Intensive Banner */}
       <section className="max-w-7xl mx-auto px-6 py-8">
-        <GroupClassBanner onViewClasses={() => navigate("/group-classes")} />
+        <DecemberIntensiveBanner onViewProgram={() => navigate("/december-intensive")} />
       </section>
 
       {/* Stats Section */}
