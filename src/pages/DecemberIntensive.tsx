@@ -1,21 +1,83 @@
 import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useNavigate } from "react-router-dom";
-import { Calendar, Clock, Users, CheckCircle2 } from "lucide-react";
+import { Calendar, Clock, Users, CheckCircle2, Filter } from "lucide-react";
+import { useState, useEffect } from "react";
+import { supabase } from "@/integrations/supabase/client";
+
+interface IntensiveClass {
+  id: string;
+  subject: string;
+  curriculum: string;
+  grade_levels: string[];
+  time_slot: string;
+  current_enrollment: number;
+  max_students: number;
+  focus_topics: string | null;
+}
 
 const DecemberIntensive = () => {
   const navigate = useNavigate();
+  const [classes, setClasses] = useState<IntensiveClass[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [selectedCurriculum, setSelectedCurriculum] = useState<string>("all");
+  const [selectedGrade, setSelectedGrade] = useState<string>("all");
 
-  const schedule = [
-    { time: "8:00 - 9:15 AM", subject: "Mathematics", icon: "📐" },
-    { time: "9:30 - 10:45 AM", subject: "Physics", icon: "⚡" },
-    { time: "11:00 AM - 12:15 PM", subject: "Chemistry", icon: "🧪" },
-    { time: "12:15 - 1:00 PM", subject: "Lunch Break", icon: "🍽️" },
-    { time: "1:00 - 2:15 PM", subject: "Biology", icon: "🔬" },
-    { time: "2:30 - 3:45 PM", subject: "English", icon: "📚" },
-    { time: "4:00 - 5:15 PM", subject: "Kiswahili / TOK", icon: "🗣️" },
-  ];
+  useEffect(() => {
+    fetchClasses();
+  }, []);
+
+  const fetchClasses = async () => {
+    try {
+      const { data: programData } = await supabase
+        .from("intensive_programs")
+        .select("id")
+        .eq("is_active", true)
+        .single();
+
+      if (!programData) return;
+
+      const { data, error } = await supabase
+        .from("intensive_classes")
+        .select("*")
+        .eq("program_id", programData.id)
+        .eq("status", "active")
+        .order("time_slot");
+
+      if (!error && data) {
+        setClasses(data);
+      }
+    } catch (error) {
+      console.error("Error fetching classes:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const timeSlots = ["8:00 - 9:15 AM", "9:30 - 10:45 AM", "11:00 AM - 12:15 PM", "1:00 - 2:15 PM", "2:30 - 3:45 PM", "4:00 - 5:15 PM"];
+  
+  const getSubjectIcon = (subject: string) => {
+    const icons: Record<string, string> = {
+      "Mathematics": "📐",
+      "Physics": "⚡",
+      "Chemistry": "🧪",
+      "Biology": "🔬",
+      "English": "📚",
+      "Kiswahili": "🗣️",
+    };
+    return icons[subject] || "📖";
+  };
+
+  const filteredClasses = classes.filter(cls => {
+    if (selectedCurriculum !== "all" && cls.curriculum !== selectedCurriculum) return false;
+    if (selectedGrade !== "all" && !cls.grade_levels.includes(selectedGrade)) return false;
+    return true;
+  });
+
+  const allCurricula = ["CBC", "8-4-4", "IGCSE", "A-Level", "IB"];
+  const allGrades = ["Grade 6", "Grade 7", "Grade 8", "Grade 9", "Form 1", "Form 2", "Form 3", "Form 4", "Year 9", "Year 10", "Year 11", "Year 12", "Year 13"];
 
   const features = [
     { icon: Calendar, title: "10 Lessons Per Subject", description: "Complete coverage across 2 weeks" },
@@ -69,36 +131,123 @@ const DecemberIntensive = () => {
             ))}
           </div>
 
-          {/* Daily Schedule */}
+          {/* Daily Schedule with Filters */}
           <div id="schedule" className="mb-16">
-            <h2 className="text-3xl font-bold text-center mb-8">Daily Schedule</h2>
-            <Card className="max-w-3xl mx-auto">
+            <h2 className="text-3xl font-bold text-center mb-8">Daily Schedule by Stream</h2>
+            
+            {/* Filter Controls */}
+            <Card className="max-w-5xl mx-auto mb-6">
               <CardContent className="p-6">
-                <div className="space-y-3">
-                  {schedule.map((slot, index) => (
-                    <div
-                      key={index}
-                      className={`flex items-center justify-between p-4 rounded-lg ${
-                        slot.subject === "Lunch Break"
-                          ? "bg-muted/50"
-                          : "bg-primary/5 hover:bg-primary/10 transition-colors"
-                      }`}
-                    >
-                      <div className="flex items-center gap-4">
-                        <span className="text-2xl">{slot.icon}</span>
-                        <div>
-                          <p className="font-semibold">{slot.subject}</p>
-                          <p className="text-sm text-muted-foreground">{slot.time} EAT</p>
-                        </div>
-                      </div>
-                      {slot.subject !== "Lunch Break" && (
-                        <span className="text-sm text-primary font-medium">75 min</span>
-                      )}
-                    </div>
-                  ))}
+                <div className="flex items-center gap-4 mb-4">
+                  <Filter className="h-5 w-5 text-primary" />
+                  <span className="font-semibold">Filter Classes:</span>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">Curriculum</label>
+                    <Select value={selectedCurriculum} onValueChange={setSelectedCurriculum}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="All Curricula" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Curricula</SelectItem>
+                        {allCurricula.map(curr => (
+                          <SelectItem key={curr} value={curr}>{curr}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium mb-2 block">Grade Level</label>
+                    <Select value={selectedGrade} onValueChange={setSelectedGrade}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="All Grades" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="all">All Grades</SelectItem>
+                        {allGrades.map(grade => (
+                          <SelectItem key={grade} value={grade}>{grade}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
               </CardContent>
             </Card>
+
+            {/* Schedule Grid */}
+            {loading ? (
+              <Card className="max-w-5xl mx-auto">
+                <CardContent className="p-12 text-center">
+                  <p className="text-muted-foreground">Loading schedule...</p>
+                </CardContent>
+              </Card>
+            ) : (
+              <div className="max-w-5xl mx-auto space-y-6">
+                {timeSlots.map((timeSlot, idx) => {
+                  const classesAtTime = filteredClasses.filter(cls => cls.time_slot === timeSlot);
+                  
+                  if (classesAtTime.length === 0 && selectedCurriculum === "all" && selectedGrade === "all") {
+                    // Show lunch break placeholder
+                    if (idx === 3) {
+                      return (
+                        <Card key={timeSlot} className="bg-muted/30">
+                          <CardContent className="p-4">
+                            <div className="flex items-center gap-4">
+                              <span className="text-2xl">🍽️</span>
+                              <div>
+                                <p className="font-semibold">Lunch Break</p>
+                                <p className="text-sm text-muted-foreground">12:15 - 1:00 PM EAT</p>
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      );
+                    }
+                    return null;
+                  }
+
+                  if (classesAtTime.length === 0) return null;
+
+                  return (
+                    <Card key={timeSlot}>
+                      <CardHeader className="pb-3">
+                        <div className="flex items-center justify-between">
+                          <CardTitle className="text-lg">{timeSlot} EAT</CardTitle>
+                          <span className="text-sm text-muted-foreground">75 minutes</span>
+                        </div>
+                      </CardHeader>
+                      <CardContent>
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                          {classesAtTime.map(cls => (
+                            <div key={cls.id} className="p-4 rounded-lg border bg-card hover:bg-accent/5 transition-colors">
+                              <div className="flex items-start gap-3 mb-2">
+                                <span className="text-2xl">{getSubjectIcon(cls.subject)}</span>
+                                <div className="flex-1">
+                                  <p className="font-semibold">{cls.subject}</p>
+                                  <p className="text-sm text-muted-foreground">{cls.curriculum}</p>
+                                  <p className="text-xs text-muted-foreground mt-1">
+                                    {cls.grade_levels.join(", ")}
+                                  </p>
+                                </div>
+                              </div>
+                              <div className="flex items-center justify-between mt-3 pt-3 border-t">
+                                <span className="text-xs text-muted-foreground">
+                                  {cls.current_enrollment}/{cls.max_students} enrolled
+                                </span>
+                                {cls.current_enrollment >= cls.max_students && (
+                                  <span className="text-xs text-destructive font-medium">Full</span>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
+              </div>
+            )}
           </div>
 
           {/* Pricing */}
