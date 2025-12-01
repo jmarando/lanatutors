@@ -8,6 +8,7 @@ import { Calendar, Clock, Users, CheckCircle2, Filter } from "lucide-react";
 import { useState, useEffect } from "react";
 import { format, addDays } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 
 interface IntensiveClass {
   id: string;
@@ -18,6 +19,9 @@ interface IntensiveClass {
   current_enrollment: number;
   max_students: number;
   focus_topics: string | null;
+  tutor_id: string | null;
+  tutor_name: string | null;
+  tutor_avatar: string | null;
 }
 
 const DecemberIntensive = () => {
@@ -41,16 +45,67 @@ const DecemberIntensive = () => {
 
       if (!programData) return;
 
-      const { data, error } = await supabase
+      const { data: classesData, error } = await supabase
         .from("intensive_classes")
         .select("*")
         .eq("program_id", programData.id)
         .eq("status", "active")
         .order("time_slot");
 
-      if (!error && data) {
-        setClasses(data);
+      if (error || !classesData) {
+        setLoading(false);
+        return;
       }
+
+      // Get unique tutor_ids
+      const tutorIds = [...new Set(classesData.map(c => c.tutor_id).filter(Boolean))] as string[];
+
+      // Fetch tutor profiles and their user profiles
+      const tutorInfo: Record<string, { name: string; avatar: string | null }> = {};
+      
+      if (tutorIds.length > 0) {
+        const { data: tutorProfiles } = await supabase
+          .from('tutor_profiles')
+          .select('id, user_id')
+          .in('id', tutorIds);
+
+        if (tutorProfiles) {
+          const userIds = tutorProfiles.map(tp => tp.user_id);
+          const { data: profiles } = await supabase
+            .from('profiles')
+            .select('id, full_name, avatar_url')
+            .in('id', userIds);
+
+          if (profiles) {
+            tutorProfiles.forEach(tp => {
+              const profile = profiles.find(p => p.id === tp.user_id);
+              if (profile) {
+                tutorInfo[tp.id] = {
+                  name: profile.full_name || 'Unknown Tutor',
+                  avatar: profile.avatar_url
+                };
+              }
+            });
+          }
+        }
+      }
+
+      // Merge tutor info with classes
+      const enrichedClasses: IntensiveClass[] = classesData.map(cls => ({
+        id: cls.id,
+        subject: cls.subject,
+        curriculum: cls.curriculum,
+        grade_levels: cls.grade_levels,
+        time_slot: cls.time_slot,
+        current_enrollment: cls.current_enrollment,
+        max_students: cls.max_students,
+        focus_topics: cls.focus_topics,
+        tutor_id: cls.tutor_id,
+        tutor_name: cls.tutor_id ? tutorInfo[cls.tutor_id]?.name || null : null,
+        tutor_avatar: cls.tutor_id ? tutorInfo[cls.tutor_id]?.avatar || null : null,
+      }));
+
+      setClasses(enrichedClasses);
     } catch (error) {
       console.error("Error fetching classes:", error);
     } finally {
@@ -264,40 +319,65 @@ const DecemberIntensive = () => {
                       </CardHeader>
                       <CardContent className="p-6">
                         <div className="space-y-6">
-                          {Object.entries(subjectGroups).map(([subject, subjectClasses]) => (
-                            <div key={subject} className="space-y-3">
-                              <div className="flex items-center gap-3">
-                                <span className="text-2xl">{getSubjectIcon(subject)}</span>
-                                <div className="flex-1">
-                                  <h3 className="text-lg font-semibold">{subject}</h3>
-                                  <div className="flex flex-wrap gap-2 mt-2">
-                                    {subjectClasses.map(cls => (
-                                      <Badge 
-                                        key={cls.id} 
-                                        variant="secondary"
-                                        className="px-3 py-1 text-xs font-medium"
-                                      >
-                                        {cls.curriculum}
-                                        {cls.grade_levels.length > 0 && (
-                                          <span className="ml-1.5 opacity-75">
-                                            ({cls.grade_levels.length > 2 
-                                              ? `${cls.grade_levels[0]} - ${cls.grade_levels[cls.grade_levels.length - 1]}`
-                                              : cls.grade_levels.join(", ")
-                                            })
+                          {Object.entries(subjectGroups).map(([subject, subjectClasses]) => {
+                            const firstClass = subjectClasses[0];
+                            return (
+                              <div key={subject} className="space-y-3">
+                                <div className="flex items-center gap-3">
+                                  <span className="text-2xl">{getSubjectIcon(subject)}</span>
+                                  <div className="flex-1">
+                                    <h3 className="text-lg font-semibold">{subject}</h3>
+                                    
+                                    {/* Tutor Info */}
+                                    <div className="flex items-center gap-2 mt-2 mb-3">
+                                      {firstClass.tutor_name ? (
+                                        <>
+                                          <Avatar className="h-7 w-7">
+                                            <AvatarImage src={firstClass.tutor_avatar || undefined} />
+                                            <AvatarFallback className="text-xs">
+                                              {firstClass.tutor_name.split(' ').map(n => n[0]).join('')}
+                                            </AvatarFallback>
+                                          </Avatar>
+                                          <span className="text-sm text-muted-foreground">
+                                            Taught by <span className="font-medium text-foreground">{firstClass.tutor_name}</span>
                                           </span>
-                                        )}
-                                      </Badge>
-                                    ))}
+                                        </>
+                                      ) : (
+                                        <span className="text-sm text-muted-foreground italic">
+                                          Tutor: To be announced
+                                        </span>
+                                      )}
+                                    </div>
+
+                                    <div className="flex flex-wrap gap-2">
+                                      {subjectClasses.map(cls => (
+                                        <Badge 
+                                          key={cls.id} 
+                                          variant="secondary"
+                                          className="px-3 py-1 text-xs font-medium"
+                                        >
+                                          {cls.curriculum}
+                                          {cls.grade_levels.length > 0 && (
+                                            <span className="ml-1.5 opacity-75">
+                                              ({cls.grade_levels.length > 2 
+                                                ? `${cls.grade_levels[0]} - ${cls.grade_levels[cls.grade_levels.length - 1]}`
+                                                : cls.grade_levels.join(", ")
+                                              })
+                                            </span>
+                                          )}
+                                        </Badge>
+                                      ))}
+                                    </div>
                                   </div>
                                 </div>
+                                {firstClass?.focus_topics && (
+                                  <p className="text-sm text-muted-foreground ml-11 line-clamp-2">
+                                    {firstClass.focus_topics}
+                                  </p>
+                                )}
                               </div>
-                              {subjectClasses[0]?.focus_topics && (
-                                <p className="text-sm text-muted-foreground ml-11 line-clamp-2">
-                                  {subjectClasses[0].focus_topics}
-                                </p>
-                              )}
-                            </div>
-                          ))}
+                            );
+                          })}
                         </div>
                       </CardContent>
                     </Card>
