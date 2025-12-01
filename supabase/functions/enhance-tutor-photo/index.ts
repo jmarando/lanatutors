@@ -24,7 +24,16 @@ serve(async (req) => {
     const imageResponse = await fetch(imageUrl);
     const imageBlob = await imageResponse.blob();
     const imageArrayBuffer = await imageBlob.arrayBuffer();
-    const base64Image = btoa(String.fromCharCode(...new Uint8Array(imageArrayBuffer)));
+    
+    // Convert to base64 in chunks to avoid stack overflow
+    const bytes = new Uint8Array(imageArrayBuffer);
+    let binary = '';
+    const chunkSize = 8192;
+    for (let i = 0; i < bytes.length; i += chunkSize) {
+      const chunk = bytes.subarray(i, Math.min(i + chunkSize, bytes.length));
+      binary += String.fromCharCode.apply(null, Array.from(chunk));
+    }
+    const base64Image = btoa(binary);
 
     // Call Lovable AI to enhance the photo
     const aiResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
@@ -63,10 +72,25 @@ serve(async (req) => {
     }
 
     const aiData = await aiResponse.json();
-    const enhancedImageUrl = aiData.choices?.[0]?.message?.images?.[0]?.image_url?.url;
+    console.log("AI Response structure:", JSON.stringify(aiData, null, 2));
+    
+    // Try multiple possible response structures
+    let enhancedImageUrl = aiData.choices?.[0]?.message?.images?.[0]?.image_url?.url ||
+                           aiData.choices?.[0]?.message?.content ||
+                           aiData.data?.[0]?.url;
 
     if (!enhancedImageUrl) {
+      console.error("Unexpected AI response structure:", aiData);
       throw new Error("No enhanced image returned from AI");
+    }
+    
+    // If the response is text content instead of image URL, it might be a base64 image
+    if (typeof enhancedImageUrl === 'string' && enhancedImageUrl.startsWith('data:image')) {
+      // Already in data URL format
+      console.log("Received image as data URL");
+    } else if (!enhancedImageUrl.startsWith('http') && !enhancedImageUrl.startsWith('data:')) {
+      console.error("Invalid image URL format:", enhancedImageUrl);
+      throw new Error("Invalid image format returned from AI");
     }
 
     // Upload enhanced image to Supabase storage
