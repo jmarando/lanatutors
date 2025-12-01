@@ -1,7 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { X, ShoppingCart } from "lucide-react";
+import { X, ShoppingCart, Minus, Plus, Users } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 interface SelectedClass {
@@ -9,16 +8,19 @@ interface SelectedClass {
   subject: string;
   curriculum: string;
   gradeLevel: string;
+  quantity: number;
 }
 
 interface IntensiveCartSimpleProps {
   selectedClasses: SelectedClass[];
   onRemoveClass: (classId: string) => void;
+  onUpdateQuantity: (classId: string, quantity: number) => void;
 }
 
-export const IntensiveCartSimple = ({ selectedClasses, onRemoveClass }: IntensiveCartSimpleProps) => {
+export const IntensiveCartSimple = ({ selectedClasses, onRemoveClass, onUpdateQuantity }: IntensiveCartSimpleProps) => {
   const navigate = useNavigate();
-  const totalAmount = selectedClasses.length * 4000;
+  const totalStudents = selectedClasses.reduce((sum, cls) => sum + cls.quantity, 0);
+  const totalAmount = totalStudents * 4000;
 
   if (selectedClasses.length === 0) {
     return null;
@@ -36,25 +38,71 @@ export const IntensiveCartSimple = ({ selectedClasses, onRemoveClass }: Intensiv
               </div>
               <div className="text-right">
                 <p className="text-sm text-muted-foreground">
-                  {selectedClasses.length} subject{selectedClasses.length !== 1 ? 's' : ''}
+                  {selectedClasses.length} subject{selectedClasses.length !== 1 ? "s" : ""} • {totalStudents} student{totalStudents !== 1 ? "s" : ""}
                 </p>
                 <p className="text-xl font-bold">KES {totalAmount.toLocaleString()}</p>
               </div>
             </div>
 
-            {/* Selected classes */}
-            <div className="flex flex-wrap gap-2 mb-4">
+            {/* Selected classes with details */}
+            <div className="space-y-3 mb-4 max-h-48 overflow-y-auto">
               {selectedClasses.map((cls) => (
-                <Badge
+                <div
                   key={cls.id}
-                  variant="secondary"
-                  className="cursor-pointer hover:bg-destructive/20 px-3 py-2"
-                  onClick={() => onRemoveClass(cls.id)}
+                  className="flex items-center justify-between p-3 rounded-lg bg-background border"
                 >
-                  {cls.subject} ({cls.curriculum})
-                  <X className="h-3 w-3 ml-2" />
-                </Badge>
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-sm">{cls.subject}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {cls.curriculum} • {cls.gradeLevel}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      KES {(cls.quantity * 4000).toLocaleString()}
+                    </p>
+                  </div>
+                  
+                  {/* Quantity controls */}
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1 bg-muted rounded-md">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7"
+                        onClick={() => onUpdateQuantity(cls.id, cls.quantity - 1)}
+                      >
+                        <Minus className="h-3 w-3" />
+                      </Button>
+                      <div className="flex items-center gap-1 px-2 min-w-[3rem] justify-center">
+                        <Users className="h-3 w-3 text-muted-foreground" />
+                        <span className="text-sm font-medium">{cls.quantity}</span>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7"
+                        onClick={() => onUpdateQuantity(cls.id, cls.quantity + 1)}
+                        disabled={cls.quantity >= 10}
+                      >
+                        <Plus className="h-3 w-3" />
+                      </Button>
+                    </div>
+                    
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 text-destructive hover:text-destructive hover:bg-destructive/10"
+                      onClick={() => onRemoveClass(cls.id)}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </div>
               ))}
+            </div>
+
+            {/* Price breakdown */}
+            <div className="text-xs text-muted-foreground mb-4 p-2 bg-muted/50 rounded">
+              KES 4,000 per subject per student × {totalStudents} = <span className="font-semibold">KES {totalAmount.toLocaleString()}</span>
             </div>
 
             {/* Action buttons */}
