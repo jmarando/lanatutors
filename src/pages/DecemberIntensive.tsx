@@ -298,18 +298,22 @@ const DecemberIntensive = () => {
 
               {/* Grade level chips */}
               {selectedCurriculum && (
-                <div className="flex flex-wrap gap-2 mb-6">
-                  <span className="text-sm font-medium text-muted-foreground mr-2">Grade Level:</span>
-                  {gradesByCurriculum[selectedCurriculum]?.map(grade => (
-                    <Badge
-                      key={grade}
-                      variant={selectedGrade === grade ? "default" : "outline"}
-                      className="cursor-pointer"
-                      onClick={() => setSelectedGrade(grade)}
-                    >
-                      {grade}
-                    </Badge>
-                  ))}
+                <div className="mb-6">
+                  <p className="text-sm text-muted-foreground mb-3">
+                    Please select the grade your child will be going to next year:
+                  </p>
+                  <div className="flex flex-wrap gap-2">
+                    {gradesByCurriculum[selectedCurriculum]?.map(grade => (
+                      <Badge
+                        key={grade}
+                        variant={selectedGrade === grade ? "default" : "outline"}
+                        className="cursor-pointer"
+                        onClick={() => setSelectedGrade(grade)}
+                      >
+                        {grade}
+                      </Badge>
+                    ))}
+                  </div>
                 </div>
               )}
 
