@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { useNavigate } from "react-router-dom";
-import { Calendar, Clock, Users, CheckCircle2 } from "lucide-react";
+import { Calendar, Clock, Users, CheckCircle2, Plus, Check } from "lucide-react";
 import { useState, useEffect } from "react";
 import { format, addDays } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
@@ -347,6 +347,8 @@ const DecemberIntensive = () => {
                               const week1Topics = week1Match ? week1Match[1].trim() : 'Topics to be announced';
                               const week2Topics = week2Match ? week2Match[1].trim() : 'Topics to be announced';
 
+                              const isInCart = selectedClasses.some(c => c.id === classAtTime.id);
+
                               return (
                                 <div key={slot} className="p-4 rounded-lg border bg-card">
                                   <div className="flex items-center gap-3 mb-3">
@@ -363,7 +365,27 @@ const DecemberIntensive = () => {
                                         </div>
                                       )}
                                     </div>
-                                    <Badge variant="outline">75 min</Badge>
+                                    <div className="flex items-center gap-2">
+                                      <Badge variant="outline">75 min</Badge>
+                                      <Button
+                                        size="sm"
+                                        variant={isInCart ? "secondary" : "default"}
+                                        onClick={() => handleAddToCart(classAtTime.id, classAtTime.subject, classAtTime.curriculum, selectedGrade)}
+                                        className="ml-2"
+                                      >
+                                        {isInCart ? (
+                                          <>
+                                            <Check className="h-4 w-4 mr-1" />
+                                            Added
+                                          </>
+                                        ) : (
+                                          <>
+                                            <Plus className="h-4 w-4 mr-1" />
+                                            Add
+                                          </>
+                                        )}
+                                      </Button>
+                                    </div>
                                   </div>
                                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3 pt-3 border-t text-sm">
                                     <div>
