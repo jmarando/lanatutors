@@ -107,7 +107,7 @@ export const TutorAvatar = ({
   };
 
   return (
-    <Avatar className={cn(sizeClasses[size], className)}>
+    <Avatar className={cn(sizeClasses[size], "bg-muted", className)}>
       {isEnhancing && (
         <div className="absolute inset-0 flex items-center justify-center bg-background/50 z-10">
           <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-primary" />
