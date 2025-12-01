@@ -97,14 +97,26 @@ serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
     );
 
-    // Convert base64 to blob
-    const enhancedBase64 = enhancedImageUrl.split(',')[1];
-    const enhancedImageBlob = Uint8Array.from(atob(enhancedBase64), c => c.charCodeAt(0));
+    // Convert enhanced image to binary data
+    let enhancedImageBytes: Uint8Array;
+
+    if (typeof enhancedImageUrl === 'string' && enhancedImageUrl.startsWith('data:image')) {
+      // Data URL: extract base64 part
+      const enhancedBase64 = enhancedImageUrl.split(',')[1];
+      enhancedImageBytes = Uint8Array.from(atob(enhancedBase64), (c) => c.charCodeAt(0));
+    } else if (typeof enhancedImageUrl === 'string' && enhancedImageUrl.startsWith('http')) {
+      // Remote URL: fetch and convert to bytes
+      const enhancedResponse = await fetch(enhancedImageUrl);
+      const enhancedBuffer = await enhancedResponse.arrayBuffer();
+      enhancedImageBytes = new Uint8Array(enhancedBuffer);
+    } else {
+      throw new Error('Unsupported enhanced image format');
+    }
 
     const fileName = `enhanced-${Date.now()}.jpg`;
     const { data: uploadData, error: uploadError } = await supabase.storage
       .from("avatars")
-      .upload(fileName, enhancedImageBlob, {
+      .upload(fileName, enhancedImageBytes, {
         contentType: "image/jpeg",
         upsert: false
       });
