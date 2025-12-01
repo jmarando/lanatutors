@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { Calendar, Clock, Users, CheckCircle2, Plus, Check } from "lucide-react";
 import { useState, useEffect } from "react";
 import { format, addDays } from "date-fns";
@@ -33,7 +33,7 @@ const DecemberIntensive = () => {
   const [classes, setClasses] = useState<IntensiveClass[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedCurriculum, setSelectedCurriculum] = useState<string>("CBC");
-  const [selectedGrade, setSelectedGrade] = useState<string>("");
+  const [selectedGrade, setSelectedGrade] = useState<string>("Grade 7");
   
   // Cart state
   const [selectedClasses, setSelectedClasses] = useState<Array<{
@@ -51,6 +51,14 @@ const DecemberIntensive = () => {
   useEffect(() => {
     saveCartToStorage();
   }, [selectedClasses]);
+
+  // Auto-select first grade when curriculum changes
+  useEffect(() => {
+    const grades = gradesByCurriculum[selectedCurriculum];
+    if (grades && grades.length > 0) {
+      setSelectedGrade(grades[0]);
+    }
+  }, [selectedCurriculum]);
 
   const loadCartFromStorage = () => {
     const saved = localStorage.getItem('december_intensive_cart');
@@ -292,13 +300,6 @@ const DecemberIntensive = () => {
               {selectedCurriculum && (
                 <div className="flex flex-wrap gap-2 mb-6">
                   <span className="text-sm font-medium text-muted-foreground mr-2">Grade Level:</span>
-                  <Badge
-                    variant={selectedGrade === "" ? "default" : "outline"}
-                    className="cursor-pointer"
-                    onClick={() => setSelectedGrade("")}
-                  >
-                    All
-                  </Badge>
                   {gradesByCurriculum[selectedCurriculum]?.map(grade => (
                     <Badge
                       key={grade}
@@ -359,9 +360,15 @@ const DecemberIntensive = () => {
                                         <span className="text-lg">{getSubjectIcon(classAtTime.subject)}</span>
                                         <span className="font-medium">{classAtTime.subject}</span>
                                       </div>
-                                      {classAtTime.tutor_name && (
+                                      {classAtTime.tutor_name && classAtTime.tutor_id && (
                                         <div className="text-sm text-muted-foreground mt-1">
-                                          with {classAtTime.tutor_name}
+                                          with{" "}
+                                          <Link 
+                                            to={`/tutor/${classAtTime.tutor_id}`}
+                                            className="text-primary hover:underline"
+                                          >
+                                            {classAtTime.tutor_name}
+                                          </Link>
                                         </div>
                                       )}
                                     </div>
