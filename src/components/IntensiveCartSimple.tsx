@@ -102,7 +102,7 @@ export const IntensiveCartSimple = ({ selectedClasses, onRemoveClass, onUpdateQu
 
             {/* Price breakdown */}
             <div className="text-xs text-muted-foreground mb-4 p-2 bg-muted/50 rounded">
-              KES 4,000 per subject per student × {totalStudents} = <span className="font-semibold">KES {totalAmount.toLocaleString()}</span>
+              KES 400/session × 10 sessions × {totalStudents} student{totalStudents !== 1 ? "s" : ""} = <span className="font-semibold">KES {totalAmount.toLocaleString()}</span>
             </div>
 
             {/* Action buttons */}

@@ -377,9 +377,9 @@ const DecemberIntensive = () => {
                                         <span className="text-lg">{getSubjectIcon(classAtTime.subject)}</span>
                                         <span className="font-medium">{classAtTime.subject}</span>
                                         <span className="text-sm text-muted-foreground">•</span>
-                                        <span className="font-semibold text-primary">KES 4,000</span>
+                                        <span className="font-semibold text-primary">KES 400/session</span>
                                       </div>
-                                      <p className="text-xs text-muted-foreground mt-1">10 sessions • 75 min each</p>
+                                      <p className="text-xs text-muted-foreground mt-1">10 sessions × KES 400 = KES 4,000 • 75 min each</p>
                                       {classAtTime.tutor_name && classAtTime.tutor_id && (
                                         <div className="text-sm text-muted-foreground mt-1">
                                           with{" "}
