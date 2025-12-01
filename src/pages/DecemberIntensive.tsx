@@ -322,44 +322,93 @@ const DecemberIntensive = () => {
                 <>
                   {/* Grade-Specific Schedule */}
                   {selectedGrade && (
-                    <Card className="mb-8 bg-primary/5 border-primary/20">
-                      <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                          <Calendar className="h-5 w-5" />
-                          {selectedGrade} Schedule
-                        </CardTitle>
-                        <CardDescription>Classes run Monday to Friday, December 8-19, 2025</CardDescription>
-                      </CardHeader>
-                      <CardContent>
-                        <div className="space-y-3">
-                          {timeSlots.map((slot) => {
-                            const classAtTime = filteredClasses.find(
-                              cls => cls.time_slot === slot && cls.grade_levels.includes(selectedGrade)
-                            );
-                            if (!classAtTime) return null;
+                    <>
+                      <Card className="mb-8 bg-primary/5 border-primary/20">
+                        <CardHeader>
+                          <CardTitle className="flex items-center gap-2">
+                            <Calendar className="h-5 w-5" />
+                            {selectedGrade} Daily Schedule
+                          </CardTitle>
+                          <CardDescription>Classes run Monday to Friday, December 8-19, 2025</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="space-y-3">
+                            {timeSlots.map((slot) => {
+                              const classAtTime = filteredClasses.find(
+                                cls => cls.time_slot === slot && cls.grade_levels.includes(selectedGrade)
+                              );
+                              if (!classAtTime) return null;
 
-                            return (
-                              <div key={slot} className="flex items-start gap-3 p-3 rounded-lg border bg-card">
-                                <Clock className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
-                                <div className="flex-1">
-                                  <div className="font-semibold mb-1">{slot} EAT</div>
-                                  <div className="flex items-center gap-2">
-                                    <span className="text-lg">{getSubjectIcon(classAtTime.subject)}</span>
-                                    <span className="font-medium">{classAtTime.subject}</span>
-                                  </div>
-                                  {classAtTime.tutor_name && (
-                                    <div className="text-sm text-muted-foreground mt-1">
-                                      with {classAtTime.tutor_name}
+                              return (
+                                <div key={slot} className="flex items-start gap-3 p-3 rounded-lg border bg-card">
+                                  <Clock className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+                                  <div className="flex-1">
+                                    <div className="font-semibold mb-1">{slot} EAT</div>
+                                    <div className="flex items-center gap-2">
+                                      <span className="text-lg">{getSubjectIcon(classAtTime.subject)}</span>
+                                      <span className="font-medium">{classAtTime.subject}</span>
                                     </div>
-                                  )}
+                                    {classAtTime.tutor_name && (
+                                      <div className="text-sm text-muted-foreground mt-1">
+                                        with {classAtTime.tutor_name}
+                                      </div>
+                                    )}
+                                  </div>
+                                  <Badge variant="outline">75 min</Badge>
                                 </div>
-                                <Badge variant="outline">75 min</Badge>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      </CardContent>
-                    </Card>
+                              );
+                            })}
+                          </div>
+                        </CardContent>
+                      </Card>
+
+                      {/* Week-by-Week Topics Summary */}
+                      <Card className="mb-8">
+                        <CardHeader>
+                          <CardTitle>{selectedGrade} Topics Overview</CardTitle>
+                          <CardDescription>Subject coverage across the 2-week program</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                          <div className="overflow-x-auto">
+                            <table className="w-full border-collapse">
+                              <thead>
+                                <tr className="border-b">
+                                  <th className="text-left p-3 font-semibold">Subject</th>
+                                  <th className="text-left p-3 font-semibold">Week 1 (Dec 8-12)</th>
+                                  <th className="text-left p-3 font-semibold">Week 2 (Dec 15-19)</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {filteredClasses.map((cls) => (
+                                  <tr key={cls.id} className="border-b last:border-0">
+                                    <td className="p-3">
+                                      <div className="flex items-center gap-2">
+                                        <span className="text-lg">{getSubjectIcon(cls.subject)}</span>
+                                        <span className="font-medium">{cls.subject}</span>
+                                      </div>
+                                    </td>
+                                    <td className="p-3 text-sm text-muted-foreground">
+                                      {cls.focus_topics ? (
+                                        <span>{cls.focus_topics.split(',').slice(0, 2).join(', ')}</span>
+                                      ) : (
+                                        <span>Foundation concepts, Core principles</span>
+                                      )}
+                                    </td>
+                                    <td className="p-3 text-sm text-muted-foreground">
+                                      {cls.focus_topics ? (
+                                        <span>{cls.focus_topics.split(',').slice(2, 4).join(', ')}</span>
+                                      ) : (
+                                        <span>Advanced topics, Practice & review</span>
+                                      )}
+                                    </td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    </>
                   )}
 
                   {/* Classes by Time Slot and Grade */}

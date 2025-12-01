@@ -2,7 +2,7 @@ import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
-import { Users, Plus, Check } from "lucide-react";
+import { Plus, Check } from "lucide-react";
 import { useState } from "react";
 
 interface IntensiveClass {
@@ -74,18 +74,12 @@ export const IntensiveClassCard = ({
             </div>
 
             {/* Curriculum badges */}
-            <div className="flex flex-wrap gap-2 mb-3">
+            <div className="flex flex-wrap gap-2">
               {classes.map(cls => (
                 <Badge key={cls.id} variant="secondary">
                   {cls.curriculum} {cls.grade_levels.length > 0 && `(${cls.grade_levels.join(", ")})`}
                 </Badge>
               ))}
-            </div>
-
-            {/* Enrollment status */}
-            <div className="flex items-center gap-2 text-sm text-muted-foreground">
-              <Users className="h-4 w-4" />
-              <span>{firstClass.current_enrollment}/{firstClass.max_students} enrolled</span>
             </div>
           </div>
 
