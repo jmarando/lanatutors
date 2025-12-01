@@ -282,33 +282,52 @@ const DecemberIntensive = () => {
 
       <div className="min-h-screen bg-gradient-to-b from-background to-muted/20 pb-32">
         {/* Hero Section */}
-        <div className="container mx-auto px-4 py-16">
-          <div className="text-center max-w-4xl mx-auto mb-16">
-            <h1 className="text-5xl font-bold mb-6 bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
+        <div className="container mx-auto px-4 py-12">
+          <div className="text-center max-w-4xl mx-auto mb-8">
+            <h1 className="text-5xl font-bold mb-4 bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
               December Intensive Program 2025
             </h1>
-            <p className="text-xl text-muted-foreground mb-4">
+            <p className="text-xl text-muted-foreground mb-2">
               December 8 - 19, 2025
-            </p>
-            <p className="text-lg mb-8">
-              Comprehensive revision program with 10 lessons per subject across Mathematics, Physics, Chemistry, Biology, English, and Kiswahili/TOK.
             </p>
           </div>
 
-          {/* Features Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
-            {features.map((feature, index) => (
-              <Card key={index}>
-                <CardHeader>
-                  <feature.icon className="h-10 w-10 text-primary mb-2" />
-                  <CardTitle className="text-lg">{feature.title}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <CardDescription>{feature.description}</CardDescription>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
+          {/* How It Works */}
+          <Card className="max-w-4xl mx-auto mb-12 bg-primary/5 border-primary/20">
+            <CardHeader>
+              <CardTitle className="text-2xl text-center">How to Enroll</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div className="text-center">
+                  <div className="bg-primary/10 rounded-full w-12 h-12 flex items-center justify-center mx-auto mb-3">
+                    <span className="text-2xl font-bold text-primary">1</span>
+                  </div>
+                  <h3 className="font-semibold mb-2">Add Your Student(s)</h3>
+                  <p className="text-sm text-muted-foreground">Enter each child's name, curriculum, and grade level</p>
+                </div>
+                <div className="text-center">
+                  <div className="bg-primary/10 rounded-full w-12 h-12 flex items-center justify-center mx-auto mb-3">
+                    <span className="text-2xl font-bold text-primary">2</span>
+                  </div>
+                  <h3 className="font-semibold mb-2">Select Classes</h3>
+                  <p className="text-sm text-muted-foreground">Browse subjects and add up to 6 per student to your cart</p>
+                </div>
+                <div className="text-center">
+                  <div className="bg-primary/10 rounded-full w-12 h-12 flex items-center justify-center mx-auto mb-3">
+                    <span className="text-2xl font-bold text-primary">3</span>
+                  </div>
+                  <h3 className="font-semibold mb-2">Checkout & Pay</h3>
+                  <p className="text-sm text-muted-foreground">Review your cart and complete payment via Pesapal</p>
+                </div>
+              </div>
+              <div className="mt-6 p-4 bg-muted/50 rounded-lg">
+                <p className="text-sm text-center">
+                  <strong>What happens next:</strong> After payment, you'll receive confirmation emails with Google Meet links and Google Classroom access for each enrolled subject. Classes begin December 8th!
+                </p>
+              </div>
+            </CardContent>
+          </Card>
 
           {/* Student Selector */}
           <div className="max-w-6xl mx-auto mb-8">
@@ -411,6 +430,24 @@ const DecemberIntensive = () => {
                 })
               )}
             </Tabs>
+          </div>
+
+          {/* Features Grid - Moved Lower */}
+          <div className="max-w-6xl mx-auto mt-16">
+            <h2 className="text-3xl font-bold text-center mb-8">Program Highlights</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+              {features.map((feature, index) => (
+                <Card key={index}>
+                  <CardHeader>
+                    <feature.icon className="h-10 w-10 text-primary mb-2" />
+                    <CardTitle className="text-lg">{feature.title}</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <CardDescription>{feature.description}</CardDescription>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
           </div>
         </div>
       </div>
