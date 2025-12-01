@@ -243,15 +243,15 @@ const DecemberIntensive = () => {
                   <div className="bg-primary/10 rounded-full w-12 h-12 flex items-center justify-center mx-auto mb-3">
                     <span className="text-2xl font-bold text-primary">1</span>
                   </div>
-                  <h3 className="font-semibold mb-2">Add Your Student(s)</h3>
-                  <p className="text-sm text-muted-foreground">Enter each child's name, curriculum, and grade level</p>
+                  <h3 className="font-semibold mb-2">Select Classes</h3>
+                  <p className="text-sm text-muted-foreground">Browse subjects and add up to 6 to your cart</p>
                 </div>
                 <div className="text-center">
                   <div className="bg-primary/10 rounded-full w-12 h-12 flex items-center justify-center mx-auto mb-3">
                     <span className="text-2xl font-bold text-primary">2</span>
                   </div>
-                  <h3 className="font-semibold mb-2">Select Classes</h3>
-                  <p className="text-sm text-muted-foreground">Browse subjects and add up to 6 per student to your cart</p>
+                  <h3 className="font-semibold mb-2">Add Student Details</h3>
+                  <p className="text-sm text-muted-foreground">Enter your child's information during checkout</p>
                 </div>
                 <div className="text-center">
                   <div className="bg-primary/10 rounded-full w-12 h-12 flex items-center justify-center mx-auto mb-3">
