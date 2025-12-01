@@ -131,11 +131,11 @@ const Navigation = () => {
               </DropdownMenuTrigger>
               <DropdownMenuContent align="start" className="w-64">
                 <DropdownMenuItem asChild>
-                  <Link to="/group-classes" className="flex items-start gap-3 p-3 cursor-pointer">
+                  <Link to="/december-intensive" className="flex items-start gap-3 p-3 cursor-pointer">
                     <Users className="w-5 h-5 text-primary mt-0.5" />
                     <div className="flex-1">
-                      <div className="font-medium">Group Classes</div>
-                      <div className="text-xs text-muted-foreground">From KES 400/hr</div>
+                      <div className="font-medium">December Intensive</div>
+                      <div className="text-xs text-muted-foreground">KES 4,000 per subject</div>
                     </div>
                   </Link>
                 </DropdownMenuItem>
@@ -294,11 +294,11 @@ const Navigation = () => {
               {/* Book a Class Mobile Section */}
               <div className="border-t pt-4">
                 <div className="text-xs text-muted-foreground mb-2 px-2">Book a Class</div>
-                <Link to="/group-classes" onClick={() => setOpen(false)} className="flex items-center gap-3 px-2 py-2 hover:bg-primary/5 rounded-md">
+                <Link to="/december-intensive" onClick={() => setOpen(false)} className="flex items-center gap-3 px-2 py-2 hover:bg-primary/5 rounded-md">
                   <Users className="w-5 h-5" />
                   <div>
-                    <div className="font-medium">Group Classes</div>
-                    <div className="text-xs text-muted-foreground">From KES 400/hr</div>
+                    <div className="font-medium">December Intensive</div>
+                    <div className="text-xs text-muted-foreground">KES 4,000 per subject</div>
                   </div>
                 </Link>
                 <Link to="/tutors" onClick={() => setOpen(false)} className="flex items-center gap-3 px-2 py-2 hover:bg-primary/5 rounded-md">

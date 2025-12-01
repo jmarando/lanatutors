@@ -631,6 +631,158 @@ export type Database = {
         }
         Relationships: []
       }
+      intensive_classes: {
+        Row: {
+          created_at: string | null
+          current_enrollment: number
+          curriculum: string
+          focus_topics: string | null
+          grade_levels: string[]
+          id: string
+          max_students: number
+          meeting_link: string | null
+          program_id: string
+          status: string
+          subject: string
+          time_slot: string
+          tutor_id: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          current_enrollment?: number
+          curriculum: string
+          focus_topics?: string | null
+          grade_levels: string[]
+          id?: string
+          max_students?: number
+          meeting_link?: string | null
+          program_id: string
+          status?: string
+          subject: string
+          time_slot: string
+          tutor_id?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          current_enrollment?: number
+          curriculum?: string
+          focus_topics?: string | null
+          grade_levels?: string[]
+          id?: string
+          max_students?: number
+          meeting_link?: string | null
+          program_id?: string
+          status?: string
+          subject?: string
+          time_slot?: string
+          tutor_id?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "intensive_classes_program_id_fkey"
+            columns: ["program_id"]
+            isOneToOne: false
+            referencedRelation: "intensive_programs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "intensive_classes_tutor_id_fkey"
+            columns: ["tutor_id"]
+            isOneToOne: false
+            referencedRelation: "tutor_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      intensive_enrollments: {
+        Row: {
+          created_at: string | null
+          enrolled_class_ids: string[]
+          id: string
+          payment_status: string
+          pesapal_order_tracking_id: string | null
+          program_id: string
+          student_id: string
+          total_amount: number
+          total_subjects: number
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          enrolled_class_ids: string[]
+          id?: string
+          payment_status?: string
+          pesapal_order_tracking_id?: string | null
+          program_id: string
+          student_id: string
+          total_amount: number
+          total_subjects: number
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          enrolled_class_ids?: string[]
+          id?: string
+          payment_status?: string
+          pesapal_order_tracking_id?: string | null
+          program_id?: string
+          student_id?: string
+          total_amount?: number
+          total_subjects?: number
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "intensive_enrollments_program_id_fkey"
+            columns: ["program_id"]
+            isOneToOne: false
+            referencedRelation: "intensive_programs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      intensive_programs: {
+        Row: {
+          break_duration_minutes: number
+          created_at: string | null
+          description: string | null
+          end_date: string
+          id: string
+          is_active: boolean
+          name: string
+          session_duration_minutes: number
+          start_date: string
+          updated_at: string | null
+        }
+        Insert: {
+          break_duration_minutes?: number
+          created_at?: string | null
+          description?: string | null
+          end_date: string
+          id?: string
+          is_active?: boolean
+          name: string
+          session_duration_minutes?: number
+          start_date: string
+          updated_at?: string | null
+        }
+        Update: {
+          break_duration_minutes?: number
+          created_at?: string | null
+          description?: string | null
+          end_date?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          session_duration_minutes?: number
+          start_date?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       learning_plans: {
         Row: {
           created_at: string | null
