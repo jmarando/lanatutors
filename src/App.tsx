@@ -41,6 +41,7 @@ const GroupClassMarketplace = lazy(() => import("./pages/GroupClassMarketplace")
 const GroupClassEnrollment = lazy(() => import("./pages/GroupClassEnrollment"));
 const DecemberIntensive = lazy(() => import("./pages/DecemberIntensive"));
 const DecemberIntensiveEnrollment = lazy(() => import("./pages/DecemberIntensiveEnrollment"));
+const DecemberIntensiveConfirmed = lazy(() => import("./pages/DecemberIntensiveConfirmed"));
 
 const NotFound = lazy(() => import("./pages/NotFound"));
 const TestEmail = lazy(() => import("./pages/TestEmail"));
@@ -127,6 +128,7 @@ const App = () => {
           <Route path="/group-classes/:classId/enroll" element={<GroupClassEnrollment />} />
           <Route path="/december-intensive" element={<DecemberIntensive />} />
           <Route path="/december-intensive/enroll" element={<DecemberIntensiveEnrollment />} />
+          <Route path="/december-intensive/confirmed" element={<DecemberIntensiveConfirmed />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
