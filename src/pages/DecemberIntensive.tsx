@@ -349,12 +349,6 @@ const DecemberIntensive = () => {
                             {selectedGrade} Daily Schedule
                           </CardTitle>
                           <CardDescription>Classes run Monday to Friday, December 8-19, 2025</CardDescription>
-                          
-                          {/* Pricing summary */}
-                          <div className="mt-4 pt-4 border-t">
-                            <p className="text-2xl font-bold">KES 4,000</p>
-                            <p className="text-sm text-muted-foreground">10 sessions • 75 minutes each</p>
-                          </div>
                         </CardHeader>
                         <CardContent>
                           <div className="space-y-3">
@@ -382,7 +376,10 @@ const DecemberIntensive = () => {
                                       <div className="flex items-center gap-2">
                                         <span className="text-lg">{getSubjectIcon(classAtTime.subject)}</span>
                                         <span className="font-medium">{classAtTime.subject}</span>
+                                        <span className="text-sm text-muted-foreground">•</span>
+                                        <span className="font-semibold text-primary">KES 4,000</span>
                                       </div>
+                                      <p className="text-xs text-muted-foreground mt-1">10 sessions • 75 min each</p>
                                       {classAtTime.tutor_name && classAtTime.tutor_id && (
                                         <div className="text-sm text-muted-foreground mt-1">
                                           with{" "}
@@ -396,7 +393,6 @@ const DecemberIntensive = () => {
                                       )}
                                     </div>
                                     <div className="flex items-center gap-2">
-                                      <Badge variant="outline">75 min</Badge>
                                       <Button
                                         size="sm"
                                         variant={isInCart ? "secondary" : "default"}
