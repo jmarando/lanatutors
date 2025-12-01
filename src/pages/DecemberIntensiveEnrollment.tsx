@@ -36,7 +36,7 @@ const DecemberIntensiveEnrollment = () => {
   const curricula = ["CBC", "8-4-4", "IGCSE", "A-Level", "IB"];
   const gradeLevels: Record<string, string[]> = {
     "CBC": ["Grade 7", "Grade 8", "Grade 9"],
-    "8-4-4": ["Form 1", "Form 2", "Form 3", "Form 4"],
+    "8-4-4": ["Form 3", "Form 4"],
     "IGCSE": ["Year 9", "Year 10", "Year 11"],
     "A-Level": ["AS Level", "A2 Level"],
     "IB": ["IB Year 1", "IB Year 2"],
