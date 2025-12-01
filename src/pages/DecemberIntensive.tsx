@@ -319,48 +319,75 @@ const DecemberIntensive = () => {
                   </CardContent>
                 </Card>
               ) : (
-                timeSlots.map((timeSlot) => {
-                  const classesAtTime = filteredClasses.filter(cls => cls.time_slot === timeSlot);
-                  if (classesAtTime.length === 0) return null;
-
-                  const subjectGroups: Record<string, IntensiveClass[]> = {};
-                  classesAtTime.forEach(cls => {
-                    if (!subjectGroups[cls.subject]) {
-                      subjectGroups[cls.subject] = [];
-                    }
-                    subjectGroups[cls.subject].push(cls);
-                  });
-
-                  return (
-                    <div key={timeSlot} className="mb-6">
-                      <div className="flex items-center gap-2 mb-4">
-                        <Clock className="h-5 w-5 text-primary" />
-                        <h3 className="text-xl font-semibold">{timeSlot} EAT</h3>
-                        <Badge variant="outline">75 min</Badge>
+                <>
+                  {/* Weekly Schedule Overview */}
+                  <Card className="mb-8 bg-primary/5 border-primary/20">
+                    <CardHeader>
+                      <CardTitle className="text-lg">Program Schedule</CardTitle>
+                      <CardDescription>Classes run Monday to Friday, December 8-19, 2025</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-2 text-sm">
+                        {timeSlots.map((slot, idx) => (
+                          <div key={slot} className="flex items-center gap-4 py-2 border-b last:border-0">
+                            <Clock className="h-4 w-4 text-primary flex-shrink-0" />
+                            <span className="font-medium min-w-[140px]">{slot} EAT</span>
+                            <Badge variant="outline" className="flex-shrink-0">75 min</Badge>
+                            <span className="text-muted-foreground">Monday - Friday</span>
+                          </div>
+                        ))}
                       </div>
+                    </CardContent>
+                  </Card>
 
-                      <div className="grid gap-4">
-                        {Object.entries(subjectGroups).map(([subject, subjectClasses]) => {
-                          const firstClass = subjectClasses[0];
-                          const isInCart = selectedClasses.some(c => c.id === firstClass.id);
-                          const gradeLevel = firstClass.grade_levels[0] || "";
+                  {/* Classes by Time Slot and Grade */}
+                  {timeSlots.map((timeSlot) => {
+                    const classesAtTime = filteredClasses.filter(cls => cls.time_slot === timeSlot);
+                    if (classesAtTime.length === 0) return null;
 
-                          return (
-                            <IntensiveClassCard
-                              key={subject}
-                              subject={subject}
-                              icon={getSubjectIcon(subject)}
-                              classes={subjectClasses}
-                              isInCart={isInCart}
-                              onAddToCart={() => handleAddToCart(firstClass.id, subject, firstClass.curriculum, gradeLevel)}
-                              weekDates={allDates}
-                            />
-                          );
-                        })}
+                    // Group by subject AND grade level
+                    const subjectGradeGroups: Record<string, IntensiveClass[]> = {};
+                    classesAtTime.forEach(cls => {
+                      const gradeLevel = cls.grade_levels[0] || "";
+                      const key = `${cls.subject}-${gradeLevel}`;
+                      if (!subjectGradeGroups[key]) {
+                        subjectGradeGroups[key] = [];
+                      }
+                      subjectGradeGroups[key].push(cls);
+                    });
+
+                    return (
+                      <div key={timeSlot} className="mb-8">
+                        <div className="flex items-center gap-2 mb-4">
+                          <Clock className="h-5 w-5 text-primary" />
+                          <h3 className="text-xl font-semibold">{timeSlot} EAT</h3>
+                          <Badge variant="outline">75 min</Badge>
+                          <span className="text-sm text-muted-foreground ml-2">Mon - Fri</span>
+                        </div>
+
+                        <div className="grid gap-4">
+                          {Object.entries(subjectGradeGroups).map(([key, classes]) => {
+                            const firstClass = classes[0];
+                            const gradeLevel = firstClass.grade_levels[0] || "";
+                            const isInCart = selectedClasses.some(c => c.id === firstClass.id);
+
+                            return (
+                              <IntensiveClassCard
+                                key={key}
+                                subject={`${firstClass.subject} - ${gradeLevel}`}
+                                icon={getSubjectIcon(firstClass.subject)}
+                                classes={classes}
+                                isInCart={isInCart}
+                                onAddToCart={() => handleAddToCart(firstClass.id, firstClass.subject, firstClass.curriculum, gradeLevel)}
+                                weekDates={allDates}
+                              />
+                            );
+                          })}
+                        </div>
                       </div>
-                    </div>
-                  );
-                })
+                    );
+                  })}
+                </>
               )}
             </Tabs>
           </div>
