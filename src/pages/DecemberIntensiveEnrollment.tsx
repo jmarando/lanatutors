@@ -218,7 +218,11 @@ const DecemberIntensiveEnrollment = () => {
           <Card className="mb-6">
             <CardHeader>
               <CardTitle>Step 2: Select Your Grade Level</CardTitle>
-              <CardDescription>Select the grade you'll be in during 2025</CardDescription>
+              <CardDescription>
+                {curriculum === "CBC" || curriculum === "8-4-4"
+                  ? "Select the grade you'll be in during 2025"
+                  : "Select your current grade level"}
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <Select value={gradeLevel} onValueChange={setGradeLevel}>
