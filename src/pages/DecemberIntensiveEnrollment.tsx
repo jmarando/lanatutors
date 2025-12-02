@@ -169,6 +169,7 @@ const DecemberIntensiveEnrollment = () => {
             paymentOption: paymentOption,
             totalAmount: totalAmount,
             balanceDue: paymentOption === 'deposit' ? balanceDue : 0,
+            appOrigin: window.location.origin,
           },
         }
       );

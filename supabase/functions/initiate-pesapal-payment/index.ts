@@ -32,7 +32,7 @@ serve(async (req) => {
       throw new Error('Unauthorized')
     }
 
-    const { amount, description, referenceId, paymentType, callbackUrl, phoneNumber, currency } = await req.json()
+    const { amount, description, referenceId, paymentType, callbackUrl, phoneNumber, currency, appOrigin } = await req.json()
 
     console.log('Initiating payment - Amount:', amount, 'Currency:', currency || 'KES', 'Type:', paymentType)
 
@@ -179,6 +179,7 @@ serve(async (req) => {
     }
 
     // Step 4: Create payment record in database
+    // Store app origin URL for callback redirects
     const { data: payment, error: paymentError } = await supabase
       .from('payments')
       .insert({
@@ -191,7 +192,7 @@ serve(async (req) => {
         phone_number: phoneNumber || '',
         pesapal_order_tracking_id: orderData.order_tracking_id,
         pesapal_merchant_reference: merchantReference,
-        redirect_url: orderData.redirect_url,
+        redirect_url: appOrigin || '', // Store app origin for callback redirects
       })
       .select()
       .single()
