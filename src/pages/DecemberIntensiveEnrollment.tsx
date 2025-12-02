@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
-import { Loader2, ShoppingCart, User, ArrowLeft, Trash2 } from "lucide-react";
+import { Loader2, ShoppingCart, User, ArrowLeft, Trash2, Zap, CreditCard, Check, FileText, CreditCard as CardIcon } from "lucide-react";
 
 interface CartItem {
   id: string;
@@ -16,6 +16,8 @@ interface CartItem {
   curriculum: string;
   gradeLevel: string;
 }
+
+type PaymentOption = 'deposit' | 'full';
 
 // Get price per subject based on curriculum
 const getPricePerSubject = (curriculum: string): number => {
@@ -40,6 +42,7 @@ const DecemberIntensiveEnrollment = () => {
   const [parentPhone, setParentPhone] = useState("");
   const [parentEmail, setParentEmail] = useState("");
   const [programId, setProgramId] = useState<string | null>(null);
+  const [paymentOption, setPaymentOption] = useState<PaymentOption>('deposit');
 
   useEffect(() => {
     loadCartFromStorage();
@@ -100,6 +103,11 @@ const DecemberIntensiveEnrollment = () => {
     return sum + getPricePerSubject(item.curriculum);
   }, 0);
 
+  // Calculate deposit (30%) and balance (70%)
+  const depositAmount = Math.round(totalAmount * 0.3);
+  const balanceDue = totalAmount - depositAmount;
+  const amountToPay = paymentOption === 'deposit' ? depositAmount : totalAmount;
+
   const validateForm = () => {
     if (!studentName.trim()) {
       toast.error("Please enter the student's name");
@@ -138,25 +146,28 @@ const DecemberIntensiveEnrollment = () => {
           enrolled_class_ids: enrolledClassIds,
           total_subjects: cartItems.length,
           total_amount: totalAmount,
-          payment_status: "pending",
+          payment_status: paymentOption === 'deposit' ? 'deposit_paid' : 'pending',
         })
         .select()
         .single();
 
       if (enrollmentError) throw enrollmentError;
 
-      // Initiate Pesapal payment
+      // Initiate Pesapal payment with the selected amount
       const { data: paymentData, error: paymentError } = await supabase.functions.invoke(
         "initiate-pesapal-payment",
         {
           body: {
-            amount: totalAmount,
+            amount: amountToPay,
             phoneNumber: parentPhone,
             email: parentEmail,
             paymentType: "intensive_enrollment",
             referenceId: enrollment.id,
-            description: `December Holiday Bootcamp - ${cartItems.length} subject(s) for ${studentName}`,
+            description: `December Holiday Bootcamp - ${cartItems.length} subject(s) for ${studentName}${paymentOption === 'deposit' ? ' (30% Deposit)' : ''}`,
             studentNames: studentName,
+            paymentOption: paymentOption,
+            totalAmount: totalAmount,
+            balanceDue: paymentOption === 'deposit' ? balanceDue : 0,
           },
         }
       );
@@ -351,9 +362,88 @@ const DecemberIntensiveEnrollment = () => {
 
                 <div className="border-t pt-4">
                   <div className="flex justify-between text-lg font-bold">
-                    <span>Total</span>
+                    <span>Total Amount</span>
                     <span className="text-primary">KES {totalAmount.toLocaleString()}</span>
                   </div>
+                </div>
+
+                {/* Payment Option Selection */}
+                <div className="space-y-3">
+                  <Label className="text-sm font-medium">Payment Option *</Label>
+                  
+                  {/* 30% Deposit Option */}
+                  <Card 
+                    className={`cursor-pointer transition-all ${
+                      paymentOption === 'deposit' 
+                        ? 'border-primary border-2 bg-primary/5' 
+                        : 'border-border hover:border-primary/50'
+                    }`}
+                    onClick={() => setPaymentOption('deposit')}
+                  >
+                    <CardContent className="p-4">
+                      <div className="flex items-start justify-between">
+                        <div className="flex items-start gap-3">
+                          <div className={`p-2 rounded-lg ${paymentOption === 'deposit' ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
+                            <Zap className="w-4 h-4" />
+                          </div>
+                          <div>
+                            <div className="font-semibold flex items-center gap-2 text-sm">
+                              30% Deposit
+                              {paymentOption === 'deposit' && (
+                                <Check className="w-4 h-4 text-primary" />
+                              )}
+                            </div>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              Pay KES {depositAmount.toLocaleString()} now
+                            </p>
+                            <p className="text-xs text-amber-600 dark:text-amber-400">
+                              Balance due: KES {balanceDue.toLocaleString()}
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+
+                  {/* Full Payment Option */}
+                  <Card 
+                    className={`cursor-pointer transition-all ${
+                      paymentOption === 'full' 
+                        ? 'border-primary border-2 bg-primary/5' 
+                        : 'border-border hover:border-primary/50'
+                    }`}
+                    onClick={() => setPaymentOption('full')}
+                  >
+                    <CardContent className="p-4">
+                      <div className="flex items-start justify-between">
+                        <div className="flex items-start gap-3">
+                          <div className={`p-2 rounded-lg ${paymentOption === 'full' ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
+                            <CreditCard className="w-4 h-4" />
+                          </div>
+                          <div>
+                            <div className="font-semibold flex items-center gap-2 text-sm">
+                              Full Payment
+                              {paymentOption === 'full' && (
+                                <Check className="w-4 h-4 text-primary" />
+                              )}
+                            </div>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              Pay KES {totalAmount.toLocaleString()} now
+                            </p>
+                            <p className="text-xs text-green-600 dark:text-green-400">
+                              No balance due
+                            </p>
+                          </div>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                {/* Pesapal Info */}
+                <div className="bg-muted/50 p-3 rounded-lg text-xs text-muted-foreground flex items-start gap-2">
+                  <CardIcon className="h-4 w-4 mt-0.5 flex-shrink-0" />
+                  <span>You&apos;ll be redirected to Pesapal, our secure payment partner, to complete your payment with M-Pesa, Card, or other payment methods.</span>
                 </div>
 
                 <Button
@@ -368,13 +458,26 @@ const DecemberIntensiveEnrollment = () => {
                       Processing...
                     </>
                   ) : (
-                    "Pay Now"
+                    `Proceed to Payment`
                   )}
                 </Button>
 
-                <p className="text-xs text-center text-muted-foreground">
-                  Secure payment via M-Pesa, Card, or Bank Transfer
-                </p>
+                <Button
+                  variant="outline"
+                  size="lg"
+                  className="w-full"
+                  onClick={() => navigate(`/december-intensive/invoice?amount=${amountToPay}&total=${totalAmount}&deposit=${depositAmount}&balance=${paymentOption === 'deposit' ? balanceDue : 0}&subjects=${cartItems.length}&student=${encodeURIComponent(studentName)}&phone=${encodeURIComponent(parentPhone)}&email=${encodeURIComponent(parentEmail)}&option=${paymentOption}`)}
+                  disabled={loading || !studentName || !parentPhone || !parentEmail}
+                >
+                  <FileText className="mr-2 h-4 w-4" />
+                  Generate Invoice & Pay
+                </Button>
+
+                <div className="text-xs text-muted-foreground space-y-1">
+                  <p>• Pay only 30% deposit now to secure your booking</p>
+                  <p>• Balance due before the program starts</p>
+                  <p>• Choose M-Pesa, Card, or other payment methods on the next page</p>
+                </div>
               </CardContent>
             </Card>
           </div>
