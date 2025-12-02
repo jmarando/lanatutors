@@ -68,6 +68,9 @@ const TutorProfile = () => {
     }
   }, []);
 
+  // Get redeemPackageId from URL for package redemption flow
+  const redeemPackageId = new URLSearchParams(window.location.search).get('redeemPackageId') || undefined;
+
   const fetchCurrentUser = async () => {
     const { data: { user } } = await supabase.auth.getUser();
     if (user) {
@@ -933,6 +936,7 @@ const TutorProfile = () => {
             }}
             classType="online"
             isTrialSession={bookingType === 'trial'}
+            redeemPackageId={redeemPackageId}
           />
         </DialogContent>
       </Dialog>

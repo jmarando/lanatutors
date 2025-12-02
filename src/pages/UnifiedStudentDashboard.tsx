@@ -485,7 +485,7 @@ export default function UnifiedStudentDashboard() {
                           className="w-full" 
                           onClick={() => {
                             if (tutor?.profile_slug) {
-                              navigate(`/tutors/${tutor.profile_slug}`);
+                              navigate(`/tutors/${tutor.profile_slug}?redeemPackageId=${pkg.id}&openBooking=1`);
                             } else {
                               navigate('/tutors');
                             }

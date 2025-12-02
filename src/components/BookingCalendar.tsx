@@ -41,6 +41,7 @@ interface BookingCalendarProps {
   classType?: 'online' | 'in-person';
   isTrialSession?: boolean;
   selectedTier?: 'standard' | 'advanced';
+  redeemPackageId?: string; // Pre-select package for redemption flow
 }
 
 interface PackageOffer {
@@ -75,6 +76,7 @@ export const BookingCalendar = ({
   classType = 'online',
   isTrialSession = false,
   selectedTier = 'standard',
+  redeemPackageId,
 }: BookingCalendarProps) => {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
   const [availableSlots, setAvailableSlots] = useState<AvailabilitySlot[]>([]);
@@ -176,6 +178,17 @@ export const BookingCalendar = ({
     fetchPackageOffers();
     fetchExistingPackages();
   }, [tutorId]);
+
+  // Auto-select package for redemption flow
+  useEffect(() => {
+    if (redeemPackageId && existingPackages.length > 0) {
+      const packageToRedeem = existingPackages.find(p => p.id === redeemPackageId);
+      if (packageToRedeem) {
+        setSelectedExistingPackage(packageToRedeem);
+        setPaymentOption('package');
+      }
+    }
+  }, [redeemPackageId, existingPackages]);
 
   const effectiveRate = curriculumSpecificRate !== null ? curriculumSpecificRate : hourlyRate;
   const onlineRateDisplay = effectiveRate.toLocaleString();
@@ -1069,7 +1082,37 @@ export const BookingCalendar = ({
                         {/* Payment Option Selector */}
                         <div>
                           <Label className="text-sm font-medium mb-2 block">Payment Option *</Label>
-                          <div className="grid grid-cols-2 gap-3">
+                          <div className={`grid gap-3 ${existingPackages.length > 0 ? 'grid-cols-3' : 'grid-cols-2'}`}>
+                            {existingPackages.length > 0 && (
+                              <button
+                                type="button"
+                                className={`p-4 rounded-lg border-2 transition-all text-left ${
+                                  paymentOption === 'package' 
+                                    ? 'border-green-500 bg-green-50 dark:bg-green-950/30' 
+                                    : 'border-green-200 hover:border-green-400 bg-green-50/50 dark:bg-green-950/10'
+                                } ${paymentInitiated ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                                onClick={() => {
+                                  if (!paymentInitiated) {
+                                    setPaymentOption('package');
+                                    if (existingPackages.length === 1) {
+                                      setSelectedExistingPackage(existingPackages[0]);
+                                    }
+                                  }
+                                }}
+                                disabled={paymentInitiated}
+                              >
+                                <div className="flex items-center gap-2 mb-1">
+                                  <Package className="w-4 h-4 text-green-600" />
+                                  <span className="font-semibold text-green-700 dark:text-green-300">Use Package</span>
+                                </div>
+                                <div className="text-sm text-green-600 dark:text-green-400 mb-1">
+                                  {existingPackages.reduce((sum, p) => sum + p.sessions_remaining, 0)} sessions left
+                                </div>
+                                <div className="text-xs text-green-600/80 dark:text-green-400/80">
+                                  No payment needed
+                                </div>
+                              </button>
+                            )}
                             <button
                               type="button"
                               className={`p-4 rounded-lg border-2 transition-all text-left ${
@@ -1113,11 +1156,19 @@ export const BookingCalendar = ({
                   })()}
 
                   {/* Payment information message */}
-                  <div className="bg-muted/50 border border-border rounded-lg p-3">
-                    <p className="text-sm text-muted-foreground">
-                      💳 You'll be redirected to Pesapal, our secure payment partner, to complete your payment with M-Pesa, Card, or other payment methods.
-                    </p>
-                  </div>
+                  {paymentOption === 'package' && existingPackages.length > 0 ? (
+                    <div className="bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-lg p-3">
+                      <p className="text-sm text-green-700 dark:text-green-300">
+                        ✅ This session will be deducted from your package. No payment required.
+                      </p>
+                    </div>
+                  ) : (
+                    <div className="bg-muted/50 border border-border rounded-lg p-3">
+                      <p className="text-sm text-muted-foreground">
+                        💳 You'll be redirected to Pesapal, our secure payment partner, to complete your payment with M-Pesa, Card, or other payment methods.
+                      </p>
+                    </div>
+                  )}
                  </>
               )}
 
@@ -1125,17 +1176,19 @@ export const BookingCalendar = ({
                 <Button 
                   onClick={() => handleBookSlot(false)} 
                   disabled={loading || paymentInitiated} 
-                  className="w-full"
+                  className={`w-full ${paymentOption === 'package' && existingPackages.length > 0 ? 'bg-green-600 hover:bg-green-700' : ''}`}
                 >
                   {loading ? (
                     <>
                       <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                      {isTrialSession ? "Booking..." : "Processing..."}
+                      {isTrialSession ? "Booking..." : paymentOption === 'package' ? "Confirming..." : "Processing..."}
                     </>
                   ) : paymentInitiated ? (
                     "Waiting for Payment..."
                   ) : isTrialSession ? (
                     "Confirm Free Trial"
+                  ) : paymentOption === 'package' && existingPackages.length > 0 ? (
+                    "Confirm Booking (Use Package)"
                   ) : (
                     "Proceed to Payment"
                   )}
