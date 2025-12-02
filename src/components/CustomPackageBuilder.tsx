@@ -156,7 +156,42 @@ export const CustomPackageBuilder = ({
     }
   };
 
-  const handlePurchase = async () => {
+  const createPackagePurchase = async () => {
+    const { data: packagePurchase, error: purchaseError } = await supabase
+      .from("package_purchases")
+      .insert([{
+        student_id: currentUser.id,
+        tutor_id: tutorId,
+        package_offer_id: null,
+        total_sessions: totalSessions,
+        sessions_remaining: totalSessions,
+        sessions_used: 0,
+        total_amount: totalPrice,
+        amount_paid: 0,
+        payment_status: 'pending',
+        expires_at: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString(),
+        currency: 'KES',
+        metadata: {
+          type: 'custom_package',
+          paymentOption: paymentOption,
+          tutorName: tutorName,
+          subjects: selectedSubjects.map(s => ({ subject: s.subject, sessions: s.sessions })),
+          discount_percentage: discountPercentage,
+          created_via: 'custom_package_builder',
+          schedule_preference: {
+            mode: 'schedule_now',
+            recurringSchedule: recurringSchedule
+          },
+        } as any,
+      }])
+      .select()
+      .single();
+
+    if (purchaseError) throw purchaseError;
+    return packagePurchase;
+  };
+
+  const handleProceedToPayment = async () => {
     if (recurringSchedule.length === 0) {
       toast.error("Please build your schedule first");
       return;
@@ -170,43 +205,56 @@ export const CustomPackageBuilder = ({
     setLoading(true);
 
     try {
-      // Create package purchase for all selected subjects
-      const { data: packagePurchase, error: purchaseError } = await supabase
-        .from("package_purchases")
-        .insert([{
-          student_id: currentUser.id,
-          tutor_id: tutorId,
-          package_offer_id: null,
-          total_sessions: totalSessions,
-          sessions_remaining: totalSessions,
-          sessions_used: 0,
-          total_amount: totalPrice,
-          amount_paid: 0,
-          payment_status: 'pending',
-          expires_at: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString(),
-          currency: 'KES',
-          metadata: {
-            type: 'custom_package',
-            paymentOption: paymentOption,
-            tutorName: tutorName,
-            subjects: selectedSubjects.map(s => ({ subject: s.subject, sessions: s.sessions })),
-            discount_percentage: discountPercentage,
-            created_via: 'custom_package_builder',
-            schedule_preference: {
-              mode: 'schedule_now',
-              recurringSchedule: recurringSchedule
-            },
-          } as any,
-        }])
-        .select()
-        .single();
+      const packagePurchase = await createPackagePurchase();
+      
+      const amountToPay = paymentOption === 'deposit' ? depositAmount : totalPrice;
 
-      if (purchaseError) throw purchaseError;
+      // Initiate Pesapal payment directly
+      const { data, error } = await supabase.functions.invoke('initiate-pesapal-payment', {
+        body: {
+          amount: amountToPay,
+          paymentType: 'package',
+          referenceId: packagePurchase.id,
+          description: `${totalSessions} Session Package with ${tutorName}`,
+          callbackUrl: `${window.location.origin}/payment-callback`,
+          appOrigin: window.location.origin,
+        }
+      });
 
-      // Redirect to invoice preview page (same flow as other payments)
+      if (error) throw error;
+
+      if (data?.redirect_url) {
+        window.location.href = data.redirect_url;
+      } else {
+        throw new Error('No redirect URL received');
+      }
+    } catch (error: any) {
+      console.error("Payment error:", error);
+      toast.error(error.message || "Failed to initiate payment. Please try again.");
+      setLoading(false);
+    }
+  };
+
+  const handleGenerateInvoice = async () => {
+    if (recurringSchedule.length === 0) {
+      toast.error("Please build your schedule first");
+      return;
+    }
+
+    if (!currentUser) {
+      toast.error("Please sign in to continue");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const packagePurchase = await createPackagePurchase();
+
+      // Redirect to invoice preview page
       window.location.href = `/invoice-preview?type=package&packageId=${packagePurchase.id}`;
     } catch (error: any) {
-      console.error("Purchase error:", error);
+      console.error("Invoice error:", error);
       toast.error(error.message || "Failed to create package. Please try again.");
       setLoading(false);
     }
@@ -364,15 +412,15 @@ export const CustomPackageBuilder = ({
           <Card className="bg-red-50 border-red-100">
             <CardContent className="p-4">
               <p className="text-sm text-muted-foreground">
-                💳 You'll be redirected to Pesapal, our secure payment partner, to complete your payment with M-Pesa, Card, or other payment methods.
+                💳 Secure payment via PesaPal. After payment, you can start booking your sessions immediately from your dashboard.
               </p>
             </CardContent>
           </Card>
 
-          {/* Payment Buttons */}
+          {/* Payment Buttons - Dual Path */}
           <Button
-            onClick={handlePurchase}
-            className="w-full bg-primary hover:bg-primary/90"
+            onClick={handleProceedToPayment}
+            className="w-full bg-[#c75b4a] hover:bg-[#b54a3a] text-white"
             disabled={loading}
           >
             {loading ? "Processing..." : "Proceed to Payment"}
@@ -381,7 +429,7 @@ export const CustomPackageBuilder = ({
           <Button
             type="button"
             variant="outline"
-            onClick={handlePurchase}
+            onClick={handleGenerateInvoice}
             className="w-full"
             disabled={loading}
           >
@@ -391,9 +439,9 @@ export const CustomPackageBuilder = ({
 
           {/* Payment Info Bullets */}
           <ul className="text-sm text-muted-foreground space-y-1 px-2">
-            <li>• Pay only {paymentOption === 'deposit' ? '30%' : '1%'} deposit now to secure your booking</li>
-            <li>• Balance due before the session starts</li>
-            <li>• Choose M-Pesa, Card, or other payment methods on the next page</li>
+            <li>• {paymentOption === 'deposit' ? 'Pay 30% deposit' : 'Pay full amount'} to secure your package</li>
+            {paymentOption === 'deposit' && <li>• Balance due before booking sessions</li>}
+            <li>• Choose M-Pesa, Card, or other payment methods via PesaPal</li>
           </ul>
           
           <Separator className="my-2" />
