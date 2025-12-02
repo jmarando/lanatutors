@@ -17,10 +17,27 @@ interface IntensiveCartSimpleProps {
   onUpdateQuantity: (classId: string, quantity: number) => void;
 }
 
+// Get price per subject based on curriculum
+const getPricePerSubject = (curriculum: string): number => {
+  if (curriculum === "A-Level" || curriculum === "IB") return 6000;
+  if (curriculum === "IGCSE") return 5000;
+  return 4000; // CBC and 8-4-4
+};
+
+const getPricePerSession = (curriculum: string): number => {
+  if (curriculum === "A-Level" || curriculum === "IB") return 600;
+  if (curriculum === "IGCSE") return 500;
+  return 400; // CBC and 8-4-4
+};
+
 export const IntensiveCartSimple = ({ selectedClasses, onRemoveClass, onUpdateQuantity }: IntensiveCartSimpleProps) => {
   const navigate = useNavigate();
   const totalStudents = selectedClasses.reduce((sum, cls) => sum + cls.quantity, 0);
-  const totalAmount = totalStudents * 4000;
+  
+  // Calculate total amount based on curriculum-specific pricing
+  const totalAmount = selectedClasses.reduce((sum, cls) => {
+    return sum + (cls.quantity * getPricePerSubject(cls.curriculum));
+  }, 0);
 
   if (selectedClasses.length === 0) {
     return null;
@@ -46,63 +63,67 @@ export const IntensiveCartSimple = ({ selectedClasses, onRemoveClass, onUpdateQu
 
             {/* Selected classes with details */}
             <div className="space-y-3 mb-4 max-h-48 overflow-y-auto">
-              {selectedClasses.map((cls) => (
-                <div
-                  key={cls.id}
-                  className="flex items-center justify-between p-3 rounded-lg bg-background border"
-                >
-                  <div className="flex-1 min-w-0">
-                    <p className="font-medium text-sm">{cls.subject}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {cls.curriculum} • {cls.gradeLevel}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      KES {(cls.quantity * 4000).toLocaleString()}
-                    </p>
-                  </div>
-                  
-                  {/* Quantity controls */}
-                  <div className="flex items-center gap-2">
-                    <div className="flex items-center gap-1 bg-muted rounded-md">
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-7 w-7"
-                        onClick={() => onUpdateQuantity(cls.id, cls.quantity - 1)}
-                      >
-                        <Minus className="h-3 w-3" />
-                      </Button>
-                      <div className="flex items-center gap-1 px-2 min-w-[3rem] justify-center">
-                        <Users className="h-3 w-3 text-muted-foreground" />
-                        <span className="text-sm font-medium">{cls.quantity}</span>
-                      </div>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="h-7 w-7"
-                        onClick={() => onUpdateQuantity(cls.id, cls.quantity + 1)}
-                        disabled={cls.quantity >= 10}
-                      >
-                        <Plus className="h-3 w-3" />
-                      </Button>
+              {selectedClasses.map((cls) => {
+                const pricePerSubject = getPricePerSubject(cls.curriculum);
+                const pricePerSession = getPricePerSession(cls.curriculum);
+                return (
+                  <div
+                    key={cls.id}
+                    className="flex items-center justify-between p-3 rounded-lg bg-background border"
+                  >
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-sm">{cls.subject}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {cls.curriculum} • {cls.gradeLevel}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        KES {pricePerSession}/session × 10 = KES {(cls.quantity * pricePerSubject).toLocaleString()}
+                      </p>
                     </div>
                     
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7 text-destructive hover:text-destructive hover:bg-destructive/10"
-                      onClick={() => onRemoveClass(cls.id)}
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
+                    {/* Quantity controls */}
+                    <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1 bg-muted rounded-md">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7"
+                          onClick={() => onUpdateQuantity(cls.id, cls.quantity - 1)}
+                        >
+                          <Minus className="h-3 w-3" />
+                        </Button>
+                        <div className="flex items-center gap-1 px-2 min-w-[3rem] justify-center">
+                          <Users className="h-3 w-3 text-muted-foreground" />
+                          <span className="text-sm font-medium">{cls.quantity}</span>
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-7 w-7"
+                          onClick={() => onUpdateQuantity(cls.id, cls.quantity + 1)}
+                          disabled={cls.quantity >= 10}
+                        >
+                          <Plus className="h-3 w-3" />
+                        </Button>
+                      </div>
+                      
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 text-destructive hover:text-destructive hover:bg-destructive/10"
+                        onClick={() => onRemoveClass(cls.id)}
+                      >
+                        <X className="h-4 w-4" />
+                      </Button>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             {/* Price breakdown */}
             <div className="text-xs text-muted-foreground mb-4 p-2 bg-muted/50 rounded">
-              KES 400/session × 10 sessions × {totalStudents} student{totalStudents !== 1 ? "s" : ""} = <span className="font-semibold">KES {totalAmount.toLocaleString()}</span>
+              Pricing: CBC/8-4-4 KES 400/session • IGCSE KES 500/session • A-Level/IB KES 600/session
             </div>
 
             {/* Action buttons */}

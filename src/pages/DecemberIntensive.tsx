@@ -196,6 +196,11 @@ const DecemberIntensive = () => {
   const getSubjectIcon = (subject: string) => {
     const icons: Record<string, string> = {
       "Mathematics": "📐",
+      "Pure Mathematics": "📐",
+      "Statistics": "📊",
+      "Mechanics": "⚙️",
+      "Core Mathematics": "📐",
+      "Extended Mathematics": "📐",
       "Physics": "⚡",
       "Chemistry": "🧪",
       "Biology": "🔬",
@@ -238,8 +243,8 @@ const DecemberIntensive = () => {
   return (
     <>
       <SEO
-        title="December Intensive Program 2025 | LANA Tutors"
-        description="Join our 2-week December Intensive Program. 10 lessons per subject across Mathematics, Sciences, English, and more. December 8-19, 2025."
+        title="December Holiday Bootcamp 2025 | LANA Tutors"
+        description="Join our 2-week December Holiday Bootcamp. 10 lessons per subject across Mathematics, Sciences, English, and more. December 8-19, 2025."
       />
 
       <div className="min-h-screen bg-gradient-to-b from-background to-muted/20 pb-32">
@@ -247,7 +252,7 @@ const DecemberIntensive = () => {
         <div className="container mx-auto px-4 py-12">
           <div className="text-center max-w-4xl mx-auto mb-8">
             <h1 className="text-5xl font-bold mb-4 bg-gradient-to-r from-primary to-primary/60 bg-clip-text text-transparent">
-              December Intensive Program 2025
+              December Holiday Bootcamp 2025
             </h1>
             <p className="text-xl text-muted-foreground mb-2">
               December 8 - 19, 2025
@@ -313,7 +318,9 @@ const DecemberIntensive = () => {
               {selectedCurriculum && (
                 <div className="mb-6">
                   <p className="text-sm text-muted-foreground mb-3">
-                    Please select the grade your child will be going to next year:
+                    {(selectedCurriculum === "CBC" || selectedCurriculum === "8-4-4") 
+                      ? "Select the grade your child will be in next year (2026). E.g., if in Grade 6 in 2025, select Grade 7:"
+                      : "Select your child's current grade level:"}
                   </p>
                   <div className="flex flex-wrap gap-2">
                     {gradesByCurriculum[selectedCurriculum]?.map(grade => (
@@ -377,9 +384,13 @@ const DecemberIntensive = () => {
                                         <span className="text-lg">{getSubjectIcon(classAtTime.subject)}</span>
                                         <span className="font-medium">{classAtTime.subject}</span>
                                         <span className="text-sm text-muted-foreground">•</span>
-                                        <span className="font-semibold text-primary">KES 400/session</span>
+                                        <span className="font-semibold text-primary">
+                                          KES {selectedCurriculum === "A-Level" || selectedCurriculum === "IB" ? "600" : selectedCurriculum === "IGCSE" ? "500" : "400"}/session
+                                        </span>
                                       </div>
-                                      <p className="text-xs text-muted-foreground mt-1">10 sessions × KES 400 = KES 4,000 • 75 min each</p>
+                                      <p className="text-xs text-muted-foreground mt-1">
+                                        10 sessions × KES {selectedCurriculum === "A-Level" || selectedCurriculum === "IB" ? "600 = KES 6,000" : selectedCurriculum === "IGCSE" ? "500 = KES 5,000" : "400 = KES 4,000"} • 75 min each
+                                      </p>
                                       {classAtTime.tutor_name && classAtTime.tutor_id && (
                                         <div className="text-sm text-muted-foreground mt-1">
                                           with{" "}

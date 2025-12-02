@@ -376,8 +376,8 @@ export const BookingCalendar = ({
         const effectiveRate = curriculumSpecificRate !== null ? curriculumSpecificRate : hourlyRate;
         // Calculate rate (50% more for in-person)
         const baseRate = selectedClassType === 'in-person' ? effectiveRate * 1.5 : effectiveRate;
-        // Apply 5% discount for double sessions (2 hours)
-        const rate = sessionDuration === 2 ? baseRate * 0.95 : baseRate;
+        // Apply 15% discount for double in-person sessions only (no discount for online double)
+        const rate = (sessionDuration === 2 && selectedClassType === 'in-person') ? baseRate * 0.85 : baseRate;
         totalAmount = duration * rate;
         
         // Handle different payment options
@@ -988,13 +988,15 @@ export const BookingCalendar = ({
                     >
                       <div className="font-semibold mb-1 flex items-center gap-2">
                         Double Session (2 hours)
-                        <Badge variant="secondary" className="text-xs">Save 5%</Badge>
+                        {selectedClassType === 'in-person' && (
+                          <Badge variant="secondary" className="text-xs">Save 15%</Badge>
+                        )}
                       </div>
                       <div className="text-sm text-muted-foreground">
                         {curriculumSpecificRate !== null && curriculum ? (
-                          <>From KES {selectedClassType === 'online' ? (curriculumSpecificRate * 2 * 0.95).toFixed(0) : (curriculumSpecificRate * 1.5 * 2 * 0.95).toFixed(0)}</>
+                          <>From KES {selectedClassType === 'online' ? (curriculumSpecificRate * 2).toFixed(0) : (curriculumSpecificRate * 1.5 * 2 * 0.85).toFixed(0)}</>
                         ) : (
-                          <>KES {selectedClassType === 'online' ? (hourlyRate * 2 * 0.95).toFixed(0) : (hourlyRate * 1.5 * 2 * 0.95).toFixed(0)}</>
+                          <>KES {selectedClassType === 'online' ? (hourlyRate * 2).toFixed(0) : (hourlyRate * 1.5 * 2 * 0.85).toFixed(0)}</>
                         )}
                       </div>
                     </button>
