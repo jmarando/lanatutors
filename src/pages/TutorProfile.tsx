@@ -6,7 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Star, GraduationCap, Clock, BookOpen, Award, MapPin, Users, CheckCircle2, Heart, Sparkles, Video, Calendar, ArrowLeft, School, Building2, Home, ShoppingCart } from "lucide-react";
+import { Star, GraduationCap, Clock, BookOpen, Award, MapPin, Users, CheckCircle2, Heart, Sparkles, Video, Calendar, ArrowLeft, School, Building2, Home, Phone } from "lucide-react";
 import { toast } from "sonner";
 import { useToast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,9 +15,7 @@ import { TutorAvatar, TutorBioDisplay } from "@/components/TutorDisplayInfo";
 import { formatName } from "@/utils/textFormatting";
 import { BookingCalendar } from "@/components/BookingCalendar";
 import { PackageSelector } from "@/components/PackageSelector";
-import { CustomPackageBuilder } from "@/components/CustomPackageBuilder";
 import { LearningPlanRequest } from "@/components/LearningPlanRequest";
-import { AddToMultiTutorCart } from "@/components/AddToMultiTutorCart";
 import { cn } from "@/lib/utils";
 
 import tutor1 from "@/assets/tutor-1.jpg";
@@ -33,7 +31,7 @@ const TutorProfile = () => {
   const navigate = useNavigate();
   const [isBookingOpen, setIsBookingOpen] = useState(false);
   const [isPackagePurchaseOpen, setIsPackagePurchaseOpen] = useState(false);
-  const [isCustomPackageOpen, setIsCustomPackageOpen] = useState(false);
+  
   const [isLearningPlanOpen, setIsLearningPlanOpen] = useState(false);
   const [selectedPackage, setSelectedPackage] = useState<any>(null);
   const [packagePaymentOption, setPackagePaymentOption] = useState<'full' | 'deposit'>('full');
@@ -828,51 +826,24 @@ const TutorProfile = () => {
 
                     <Separator className="my-5" />
 
-                    {/* Custom Package Builder - Single Tutor */}
+                    {/* Custom Package - Redirect to Consultation */}
                     <div className="space-y-3">
                       <Button 
                         variant="outline"
                         className="w-full bg-primary/5 border-primary/30 hover:bg-primary/10 hover:border-primary h-auto py-5 text-foreground whitespace-normal text-wrap"
                         size="lg"
-                        onClick={async () => {
-                          const { data: { user } } = await supabase.auth.getUser();
-                          if (!user) {
-                            showToast({
-                              title: "Please Sign In",
-                              description: "You need to sign in to create a package",
-                              variant: "destructive",
-                            });
-                            navigate(`/login?redirect=${encodeURIComponent(window.location.pathname)}`);
-                            return;
-                          }
-                          setIsCustomPackageOpen(true);
-                        }}
+                        onClick={() => navigate('/book-consultation')}
                       >
                         <div className="flex flex-col items-center gap-2 w-full">
                           <div className="flex items-center gap-2">
-                            <Sparkles className="w-5 h-5 text-primary" />
-                            <span className="font-semibold text-base text-foreground">Custom Package with {tutor.name}</span>
+                            <Phone className="w-5 h-5 text-primary" />
+                            <span className="font-semibold text-base text-foreground">Want a Custom Package?</span>
                           </div>
-                          <span className="text-sm text-muted-foreground">Multiple subjects with this tutor</span>
+                          <span className="text-sm text-muted-foreground">Speak to our learning expert</span>
                         </div>
                       </Button>
                       <p className="text-xs text-center text-muted-foreground px-2">
-                        Build a package with {tutor.name} - select sessions per subject, get bulk discounts, and use flexibly over 90 days
-                      </p>
-                    </div>
-
-                    <Separator className="my-5" />
-
-                    {/* Multi-Tutor Package Builder */}
-                    <div className="space-y-3">
-                      <AddToMultiTutorCart
-                        tutorId={tutor.id}
-                        tutorName={tutor.name}
-                        tutorRate={getCurrentRate()}
-                        subjects={tutor.subjects}
-                      />
-                      <p className="text-xs text-center text-muted-foreground px-2">
-                        Add subjects from this tutor to your cart, then browse other tutors to build a comprehensive package with maximum savings
+                        For multi-session packages, multiple subjects, or cross-tutor bundles - book a free consultation and we'll design the perfect plan for you
                       </p>
                     </div>
 
@@ -1150,32 +1121,6 @@ const TutorProfile = () => {
               })()}
             </div>
           )}
-        </DialogContent>
-      </Dialog>
-
-      {/* Custom Package Dialog */}
-      <Dialog open={isCustomPackageOpen} onOpenChange={setIsCustomPackageOpen}>
-        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>Create Your Custom Package</DialogTitle>
-            <DialogDescription>
-              Build a personalized session package with {tutor.name}
-            </DialogDescription>
-          </DialogHeader>
-          
-          <CustomPackageBuilder
-            tutorId={tutor.id}
-            availabilityTutorId={tutor.userId}
-            tutorName={tutor.name}
-            tutorEmail={tutor.email}
-            tutorSubjects={tutor.subjects}
-            hourlyRate={currentRate}
-            onClose={() => setIsCustomPackageOpen(false)}
-            onPurchaseSuccess={() => {
-              setIsCustomPackageOpen(false);
-              toast.success("Package created! Redirecting to payment...");
-            }}
-          />
         </DialogContent>
       </Dialog>
 
