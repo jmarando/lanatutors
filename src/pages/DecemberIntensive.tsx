@@ -160,17 +160,9 @@ const DecemberIntensive = () => {
     if (existingIndex >= 0) {
       // Remove from cart
       setSelectedClasses(selectedClasses.filter(c => c.id !== classId));
-      toast({
-        title: "Removed from cart",
-        description: `${subject} has been removed from your cart`,
-      });
     } else {
       // Add to cart
       setSelectedClasses([...selectedClasses, { id: classId, subject, curriculum, gradeLevel }]);
-      toast({
-        title: "Added to cart",
-        description: `${subject} has been added to your cart`,
-      });
     }
   };
 
