@@ -38,7 +38,6 @@ const DecemberIntensiveEnrollment = () => {
   const [loading, setLoading] = useState(false);
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
   const [studentName, setStudentName] = useState("");
-  const [studentAge, setStudentAge] = useState("");
   const [parentPhone, setParentPhone] = useState("");
   const [parentEmail, setParentEmail] = useState("");
   const [programId, setProgramId] = useState<string | null>(null);
@@ -281,25 +280,14 @@ const DecemberIntensiveEnrollment = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="student-name">Student's Full Name *</Label>
-                    <Input
-                      id="student-name"
-                      placeholder="Enter student name"
-                      value={studentName}
-                      onChange={(e) => setStudentName(e.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="student-age">Age (Optional)</Label>
-                    <Input
-                      id="student-age"
-                      placeholder="e.g., 14"
-                      value={studentAge}
-                      onChange={(e) => setStudentAge(e.target.value)}
-                    />
-                  </div>
+                <div className="space-y-2">
+                  <Label htmlFor="student-name">Student's Full Name *</Label>
+                  <Input
+                    id="student-name"
+                    placeholder="Enter student name"
+                    value={studentName}
+                    onChange={(e) => setStudentName(e.target.value)}
+                  />
                 </div>
               </CardContent>
             </Card>
