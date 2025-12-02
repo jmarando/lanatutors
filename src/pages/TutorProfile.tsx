@@ -334,12 +334,6 @@ const TutorProfile = () => {
       const originalPrice = currentRate * selectedPackage.session_count;
       const discountedPrice = originalPrice * (1 - selectedPackage.discount_percentage / 100);
       
-      // Calculate amount based on payment option
-      const depositRate = 0.3;
-      const amount = packagePaymentOption === 'deposit' 
-        ? Math.round(discountedPrice * depositRate)
-        : Math.round(discountedPrice);
-
       // Get current user's currency preference
       const { data: profile } = await supabase
         .from('profiles')
@@ -348,9 +342,8 @@ const TutorProfile = () => {
         .single();
 
       const currency = profile?.preferred_currency || 'KES';
-      const phoneNumber = profile?.phone_number || '';
 
-      // Create package purchase record
+      // Create package purchase record with metadata including payment option
       const { data: purchase, error: purchaseError } = await supabase
         .from('package_purchases')
         .insert({
@@ -359,49 +352,32 @@ const TutorProfile = () => {
           package_offer_id: selectedPackage.id,
           total_sessions: selectedPackage.session_count,
           sessions_remaining: selectedPackage.session_count,
-          total_amount: selectedPackage.total_price,
-          amount_paid: packagePaymentOption === 'deposit' ? amount : selectedPackage.total_price,
-          payment_status: packagePaymentOption === 'deposit' ? 'partial' : 'pending',
+          total_amount: Math.round(discountedPrice),
+          amount_paid: 0,
+          payment_status: 'pending',
           currency: currency,
+          metadata: {
+            type: 'package_offer',
+            paymentOption: packagePaymentOption,
+            tutorName: tutor.name,
+            packageName: selectedPackage.name,
+            discountPercentage: selectedPackage.discount_percentage,
+            subjects: selectedPackage.subjects || [],
+          } as any,
         })
         .select()
         .single();
 
       if (purchaseError) throw purchaseError;
 
-      // Initiate payment via PesaPal
-      const { data: pesapalData, error: pesapalError } = await supabase.functions.invoke(
-        "initiate-pesapal-payment",
-        {
-          body: {
-            amount: amount,
-            currency: currency,
-            description: `${selectedPackage.name} with ${tutor.name}`,
-            referenceId: purchase.id,
-            paymentType: 'package_purchase',
-            phoneNumber: phoneNumber,
-            callbackUrl: `${window.location.origin}/payment-callback?type=package&id=${purchase.id}`,
-          },
-        }
-      );
-
-      if (pesapalError) {
-        console.error("Payment initiation error:", pesapalError);
-        throw pesapalError;
-      }
-
-      if (!pesapalData?.redirect_url) {
-        throw new Error("No payment redirect URL received");
-      }
-
-      // Redirect to payment gateway
-      window.location.href = pesapalData.redirect_url;
+      // Redirect to invoice preview page (same flow as other payments)
+      window.location.href = `/invoice-preview?type=package&packageId=${purchase.id}`;
 
     } catch (error: any) {
       console.error("Package purchase error:", error);
       showToast({
         title: "Payment Error",
-        description: error.message || "Failed to initiate payment. Please try again.",
+        description: error.message || "Failed to create package. Please try again.",
         variant: "destructive",
       });
     }

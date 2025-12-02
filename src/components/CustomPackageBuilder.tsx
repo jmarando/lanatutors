@@ -181,12 +181,14 @@ export const CustomPackageBuilder = ({
           sessions_remaining: totalSessions,
           sessions_used: 0,
           total_amount: totalPrice,
-          amount_paid: paymentOption === 'full' ? totalPrice : depositAmount,
+          amount_paid: 0,
           payment_status: 'pending',
           expires_at: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString(),
           currency: 'KES',
           metadata: {
             type: 'custom_package',
+            paymentOption: paymentOption,
+            tutorName: tutorName,
             subjects: selectedSubjects.map(s => ({ subject: s.subject, sessions: s.sessions })),
             discount_percentage: discountPercentage,
             created_via: 'custom_package_builder',
@@ -201,26 +203,7 @@ export const CustomPackageBuilder = ({
 
       if (purchaseError) throw purchaseError;
 
-      // Create payment record
-      const amountToPay = paymentOption === 'full' ? totalPrice : depositAmount;
-      
-      const { data: payment, error: paymentRecordError } = await supabase
-        .from("payments")
-        .insert({
-          user_id: currentUser.id,
-          amount: amountToPay,
-          phone_number: currentUser.phone || "0000000000",
-          payment_type: "package_purchase",
-          reference_id: packagePurchase.id,
-          status: 'pending',
-          currency: 'KES',
-        })
-        .select()
-        .single();
-
-      if (paymentRecordError) throw paymentRecordError;
-
-      // Redirect to invoice preview page instead of directly to Pesapal
+      // Redirect to invoice preview page (same flow as other payments)
       window.location.href = `/invoice-preview?type=package&packageId=${packagePurchase.id}`;
     } catch (error: any) {
       console.error("Purchase error:", error);

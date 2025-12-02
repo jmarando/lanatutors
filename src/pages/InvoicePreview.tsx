@@ -112,20 +112,24 @@ export default function InvoicePreview() {
           .eq("id", packagePurchase.tutor_id)
           .single();
 
-        // Fetch tutor name from profiles
-        const { data: tutorNameData } = await supabase
-          .from("profiles")
-          .select("full_name")
-          .eq("id", tutorProfile?.user_id)
-          .single();
-
         const metadata = packagePurchase.metadata as any;
+
+        // Get tutor name - first try from metadata, then from profile
+        let tutorName = metadata?.tutorName;
+        if (!tutorName && tutorProfile?.user_id) {
+          const { data: tutorNameData } = await supabase
+            .from("profiles")
+            .select("full_name")
+            .eq("id", tutorProfile.user_id)
+            .single();
+          tutorName = tutorNameData?.full_name || "Multiple Tutors";
+        }
 
         setInvoiceData({
           type: "package",
           packageId: packagePurchase.id,
           tutorId: packagePurchase.tutor_id,
-          tutorName: tutorNameData?.full_name || "Multiple Tutors",
+          tutorName: tutorName || "Multiple Tutors",
           totalSessions: packagePurchase.total_sessions,
           subjects: metadata?.subjects || [],
           totalAmount: packagePurchase.total_amount,
