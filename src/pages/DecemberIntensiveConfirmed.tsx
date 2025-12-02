@@ -6,12 +6,19 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { SEO } from "@/components/SEO";
 
+interface SessionTopic {
+  day: number;
+  topic: string;
+  date?: string;
+}
+
 interface EnrolledClass {
   id: string;
   subject: string;
   curriculum: string;
   grade_levels: string[];
   time_slot: string;
+  session_topics?: unknown;
 }
 
 const DecemberIntensiveConfirmed = () => {
@@ -42,7 +49,7 @@ const DecemberIntensiveConfirmed = () => {
 
         const { data: classes, error: classesError } = await supabase
           .from("intensive_classes")
-          .select("id, subject, curriculum, grade_levels, time_slot")
+          .select("id, subject, curriculum, grade_levels, time_slot, session_topics")
           .in("id", enrollment.enrolled_class_ids);
 
         if (classesError) {
@@ -98,22 +105,38 @@ const DecemberIntensiveConfirmed = () => {
                   <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
                 </div>
               ) : enrolledClasses.length > 0 ? (
-                <div className="space-y-3">
+                <div className="space-y-4">
                   {enrolledClasses.map((cls) => (
-                    <div
-                      key={cls.id}
-                      className="flex items-center justify-between p-3 bg-muted rounded-lg"
-                    >
-                      <div>
-                        <p className="font-medium text-foreground">{cls.subject}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {cls.curriculum} • {cls.grade_levels.join(", ")}
-                        </p>
+                    <div key={cls.id} className="border rounded-lg overflow-hidden">
+                      <div className="flex items-center justify-between p-4 bg-muted/50">
+                        <div>
+                          <p className="font-medium text-foreground">{cls.subject}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {cls.curriculum} • {cls.grade_levels.join(", ")}
+                          </p>
+                        </div>
+                        <div className="text-right">
+                          <p className="text-sm font-medium text-primary">{cls.time_slot}</p>
+                          <p className="text-xs text-muted-foreground">10 sessions</p>
+                        </div>
                       </div>
-                      <div className="text-right">
-                        <p className="text-sm font-medium text-primary">{cls.time_slot}</p>
-                        <p className="text-xs text-muted-foreground">10 sessions</p>
-                      </div>
+                      
+                      {/* Session Schedule */}
+                      {cls.session_topics && Array.isArray(cls.session_topics) && cls.session_topics.length > 0 && (
+                        <div className="p-4 border-t">
+                          <p className="text-sm font-medium text-foreground mb-3">10-Session Schedule</p>
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            {(cls.session_topics as SessionTopic[]).map((session, idx) => (
+                              <div key={idx} className="flex items-start gap-2 text-sm">
+                                <span className="bg-primary/10 text-primary font-medium rounded px-2 py-0.5 text-xs whitespace-nowrap">
+                                  Day {session.day || idx + 1}
+                                </span>
+                                <span className="text-muted-foreground">{session.topic}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   ))}
                 </div>
@@ -150,9 +173,9 @@ const DecemberIntensiveConfirmed = () => {
               </div>
               <div className="flex items-center gap-3">
                 <Users className="w-5 h-5 text-muted-foreground" />
-                <div>
+              <div>
                   <p className="font-medium text-foreground">Class Size</p>
-                  <p className="text-sm text-muted-foreground">Maximum 10 students per class</p>
+                  <p className="text-sm text-muted-foreground">Maximum 15 students per class</p>
                 </div>
               </div>
             </CardContent>

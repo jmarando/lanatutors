@@ -14,7 +14,7 @@ const BookingOptions = () => {
       features: [
         "December 8-19, 2025",
         "75-minute daily sessions",
-        "Maximum 10 students per class",
+        "Maximum 15 students per class",
         "All curricula supported"
       ],
       link: "/december-intensive",

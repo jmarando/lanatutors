@@ -208,7 +208,7 @@ const DecemberIntensive = () => {
   const features = [
     { icon: Calendar, title: "10 Lessons Per Subject", description: "Complete coverage across 2 weeks" },
     { icon: Clock, title: "75-Minute Sessions", description: "Extended lessons for deeper learning" },
-    { icon: Users, title: "Small Class Sizes", description: "Maximum 10 students per class" },
+    { icon: Users, title: "Small Class Sizes", description: "Maximum 15 students per class" },
     { icon: CheckCircle2, title: "Expert Tutors", description: "Qualified tutors for each subject" },
   ];
 
