@@ -19,7 +19,8 @@ import { formatConsultationDate, formatToEAT, formatFullDateTime } from "@/utils
 import { BlogManagement } from "@/components/admin/BlogManagement";
 import { TutorSignupList } from "@/components/admin/TutorSignupList";
 import { TutorEmailList } from "@/components/admin/TutorEmailList";
-import { GroupClassTutorAssignment } from "@/components/admin/GroupClassTutorAssignment";
+import { AdminIntensivePrograms } from "@/components/admin/AdminIntensivePrograms";
+import { Sparkles } from "lucide-react";
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -33,6 +34,7 @@ const AdminDashboard = () => {
   const [tutoringBookings, setTutoringBookings] = useState<any[]>([]);
   const [dashboardMetrics, setDashboardMetrics] = useState<any>(null);
   const [timeRange, setTimeRange] = useState<'7days' | '30days' | '90days'>('30days');
+  const [unassignedIntensiveClasses, setUnassignedIntensiveClasses] = useState(0);
   const [activeTab, setActiveTab] = useState<string>('dashboard');
   const [interviewFilter, setInterviewFilter] = useState<'all' | 'scheduled' | 'passed' | 'failed'>('all');
   const [editingNote, setEditingNote] = useState<string | null>(null);
@@ -319,7 +321,17 @@ Yehtu Tutors`
     fetchConsultationBookings();
     fetchTutoringBookings();
     fetchPriceStats();
+    fetchUnassignedIntensiveClasses();
     setLoading(false);
+  };
+
+  const fetchUnassignedIntensiveClasses = async () => {
+    const { count } = await supabase
+      .from("intensive_classes")
+      .select("*", { count: "exact", head: true })
+      .eq("status", "active")
+      .is("tutor_id", null);
+    setUnassignedIntensiveClasses(count || 0);
   };
 
   const fetchPriceStats = async () => {
@@ -1168,12 +1180,17 @@ The Lana Team`;
                 </span>
               </TabsTrigger>
               <TabsTrigger 
-                value="group-classes"
+                value="december-bootcamp"
                 className="data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:bg-transparent rounded-none bg-transparent px-4 py-3 border-b-2 border-transparent"
               >
                 <span className="flex items-center gap-2">
-                  <Users className="h-4 w-4" />
-                  Group Classes
+                  <Sparkles className="h-4 w-4" />
+                  December Bootcamp
+                  {unassignedIntensiveClasses > 0 && (
+                    <Badge className="rounded-full h-5 min-w-5 px-1.5 bg-orange-600">
+                      {unassignedIntensiveClasses}
+                    </Badge>
+                  )}
                 </span>
               </TabsTrigger>
               <TabsTrigger 
@@ -2321,8 +2338,8 @@ The Lana Team`;
                   <TutorEmailList />
                 </TabsContent>
 
-                <TabsContent value="group-classes">
-                  <GroupClassTutorAssignment />
+                <TabsContent value="december-bootcamp">
+                  <AdminIntensivePrograms />
                 </TabsContent>
     </Tabs>
 
