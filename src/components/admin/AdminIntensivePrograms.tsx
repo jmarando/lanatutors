@@ -6,7 +6,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Loader2, CheckCircle2, AlertCircle, Users, Filter } from "lucide-react";
+import { Loader2, CheckCircle2, AlertCircle, Users, Filter, Download } from "lucide-react";
+import { Json } from "@/integrations/supabase/types";
 
 interface IntensiveClass {
   id: string;
@@ -19,6 +20,8 @@ interface IntensiveClass {
   tutor_id: string | null;
   meeting_link: string | null;
   tutor_name?: string;
+  focus_topics?: string | null;
+  session_topics?: Json | null;
 }
 
 interface Tutor {
@@ -331,6 +334,87 @@ export const AdminIntensivePrograms = () => {
     }
   };
 
+  // Export classes to CSV
+  const handleExportCSV = () => {
+    const getSessionTopics = (topics: Json | null | undefined): { week1: string; week2: string } => {
+      if (!topics || typeof topics !== 'object' || Array.isArray(topics)) {
+        return { week1: '', week2: '' };
+      }
+      const topicsObj = topics as Record<string, string>;
+      const week1Topics: string[] = [];
+      const week2Topics: string[] = [];
+      
+      for (let i = 1; i <= 5; i++) {
+        if (topicsObj[`day${i}`]) week1Topics.push(`Day ${i}: ${topicsObj[`day${i}`]}`);
+      }
+      for (let i = 6; i <= 10; i++) {
+        if (topicsObj[`day${i}`]) week2Topics.push(`Day ${i}: ${topicsObj[`day${i}`]}`);
+      }
+      
+      return {
+        week1: week1Topics.join(' | '),
+        week2: week2Topics.join(' | ')
+      };
+    };
+
+    const headers = [
+      'Subject',
+      'Curriculum',
+      'Grade Levels',
+      'Time Slot',
+      'Assigned Tutor',
+      'Enrollment',
+      'Focus Topics / Description',
+      'Week 1 Topics',
+      'Week 2 Topics',
+      'Meeting Link'
+    ];
+
+    const rows = classes.map(cls => {
+      const { week1, week2 } = getSessionTopics(cls.session_topics);
+      return [
+        cls.subject,
+        cls.curriculum,
+        cls.grade_levels.join(', '),
+        cls.time_slot,
+        cls.tutor_name || 'Not assigned',
+        `${cls.current_enrollment}/${cls.max_students}`,
+        cls.focus_topics || '',
+        week1,
+        week2,
+        cls.meeting_link || ''
+      ];
+    });
+
+    // Escape CSV fields
+    const escapeCSV = (field: string) => {
+      if (field.includes(',') || field.includes('"') || field.includes('\n')) {
+        return `"${field.replace(/"/g, '""')}"`;
+      }
+      return field;
+    };
+
+    const csvContent = [
+      headers.map(escapeCSV).join(','),
+      ...rows.map(row => row.map(escapeCSV).join(','))
+    ].join('\n');
+
+    // Copy to clipboard
+    navigator.clipboard.writeText(csvContent).then(() => {
+      toast.success('CSV copied to clipboard! Paste into Excel or Google Sheets.');
+    }).catch(() => {
+      // Fallback: download as file
+      const blob = new Blob([csvContent], { type: 'text/csv' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'december-bootcamp-classes.csv';
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success('CSV downloaded!');
+    });
+  };
+
   // Get unique grade levels for filter
   const uniqueGrades = useMemo(() => {
     const grades = new Set<string>();
@@ -463,20 +547,29 @@ export const AdminIntensivePrograms = () => {
             <CardTitle>December Holiday Bootcamp Management</CardTitle>
             <CardDescription>Assign tutors with smart qualification matching and monitor enrollment</CardDescription>
           </div>
-          <Button 
-            onClick={handleGenerateAllLinks} 
-            disabled={generatingAllLinks}
-            variant="outline"
-          >
-            {generatingAllLinks ? (
-              <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Generating...
-              </>
-            ) : (
-              `Generate All Links (${classes.filter(c => !c.meeting_link).length})`
-            )}
-          </Button>
+          <div className="flex gap-2">
+            <Button 
+              onClick={handleExportCSV}
+              variant="outline"
+            >
+              <Download className="mr-2 h-4 w-4" />
+              Export CSV
+            </Button>
+            <Button 
+              onClick={handleGenerateAllLinks} 
+              disabled={generatingAllLinks}
+              variant="outline"
+            >
+              {generatingAllLinks ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Generating...
+                </>
+              ) : (
+                `Generate All Links (${classes.filter(c => !c.meeting_link).length})`
+              )}
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           {/* Filters */}
