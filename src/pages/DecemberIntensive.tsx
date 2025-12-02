@@ -225,7 +225,7 @@ const DecemberIntensive = () => {
   return (
     <>
       <SEO
-        title="December Holiday Bootcamp 2025 | LANA Tutors"
+        title="December Holiday Bootcamp 2025 | Lana Tutors"
         description="Join our 2-week December Holiday Bootcamp. 10 lessons per subject across Mathematics, Sciences, English, and more. December 8-19, 2025."
       />
 

@@ -139,7 +139,7 @@ serve(async (req) => {
 
               <p style="font-size: 16px;">
                 Best regards,<br>
-                <strong>The LANA Tutors Team</strong>
+                <strong>The Lana Tutors Team</strong>
               </p>
             </div>
           </body>
@@ -154,7 +154,7 @@ serve(async (req) => {
           Authorization: `Bearer ${RESEND_API_KEY}`,
         },
         body: JSON.stringify({
-          from: "LANA Tutors <info@lanatutors.africa>",
+          from: "Lana Tutors <info@lanatutors.africa>",
           to: [user.email],
           subject: `Today's December Intensive Schedule - ${todayDay}`,
           html: emailHTML,

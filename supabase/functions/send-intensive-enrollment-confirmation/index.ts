@@ -257,7 +257,7 @@ serve(async (req) => {
                         <td style="font-size: 15px; line-height: 1.6; color: #4a4a4a;">
                           We look forward to seeing you in class!<br><br>
                           Best regards,<br>
-                          <strong style="color: #D95436;">The LANA Tutors Team</strong>
+                          <strong style="color: #D95436;">The Lana Tutors Team</strong>
                         </td>
                       </tr>
                     </table>
@@ -269,7 +269,7 @@ serve(async (req) => {
                 <tr>
                   <td style="background-color: #f9fafb; padding: 20px 30px; text-align: center; border-top: 1px solid #e5e7eb;">
                     <p style="margin: 0; font-size: 12px; color: #9ca3af;">
-                      LANA Tutors • Quality Education, Accessible to All<br>
+                      Lana Tutors • Quality Education, Accessible to All<br>
                       <a href="https://lanatutors.africa" style="color: #D95436; text-decoration: none;">lanatutors.africa</a>
                     </p>
                   </td>
@@ -291,7 +291,7 @@ serve(async (req) => {
         Authorization: `Bearer ${RESEND_API_KEY}`,
       },
       body: JSON.stringify({
-        from: "LANA Tutors <info@lanatutors.africa>",
+        from: "Lana Tutors <info@lanatutors.africa>",
         to: [user.email],
         subject: `🎓 Welcome to December Bootcamp - Your Enrollment is Confirmed!`,
         html: emailHTML,

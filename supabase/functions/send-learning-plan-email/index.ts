@@ -194,11 +194,11 @@ ${personalMessage}
                   <tr>
                     <td style="padding: 30px; background-color: #f9fafb; text-align: center; border-radius: 0 0 8px 8px; border-top: 1px solid #e5e7eb;">
                       <p style="margin: 0 0 10px 0; color: #6b7280; font-size: 14px;">
-                        <strong>LANA Tutors</strong><br>
+                        <strong>Lana Tutors</strong><br>
                         Empowering Students Through Personalized Learning
                       </p>
                       <p style="margin: 0; color: #9ca3af; font-size: 12px;">
-                        © ${new Date().getFullYear()} LANA Tutors. All rights reserved.
+                        © ${new Date().getFullYear()} Lana Tutors. All rights reserved.
                       </p>
                     </td>
                   </tr>
@@ -217,7 +217,7 @@ ${personalMessage}
         Authorization: `Bearer ${RESEND_API_KEY}`,
       },
       body: JSON.stringify({
-        from: "LANA Tutors <info@lanatutors.africa>",
+        from: "Lana Tutors <info@lanatutors.africa>",
         to: [parentEmail],
         subject: `📚 Custom Learning Plan for ${studentName}`,
         html,

@@ -37,7 +37,7 @@ const RequestLearningPlan = () => {
     return (
       <>
         <SEO
-          title="Request a Learning Plan | LANA Tutors"
+          title="Request a Learning Plan | Lana Tutors"
           description="Get a personalized learning plan designed by expert tutors for your child's academic success"
         />
         <div className="min-h-screen bg-background py-12">
@@ -69,7 +69,7 @@ const RequestLearningPlan = () => {
   return (
     <>
       <SEO
-        title="Request a Learning Plan | LANA Tutors"
+        title="Request a Learning Plan | Lana Tutors"
         description="Get a personalized learning plan designed by expert tutors for your child's academic success"
       />
       <div className="min-h-screen bg-background">

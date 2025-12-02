@@ -101,7 +101,7 @@ const handler = async (req: Request): Promise<Response> => {
     `;
 
     const adminEmailResponse = await resend.emails.send({
-      from: "LANA Tutors <inquiries@lanatutors.africa>",
+      from: "Lana Tutors <inquiries@lanatutors.africa>",
       reply_to: parentEmail,
       to: ["info@lanatutors.africa"],
       subject: `New Learning Plan Request from ${parentName}`,
@@ -114,7 +114,7 @@ const handler = async (req: Request): Promise<Response> => {
     const parentEmailHtml = `
       <h1>Learning Plan Request Received</h1>
       <p>Hi ${parentName},</p>
-      <p>Thank you for requesting a personalized learning plan from LANA Tutors!</p>
+      <p>Thank you for requesting a personalized learning plan from Lana Tutors!</p>
       
       <h2>What Happens Next?</h2>
       <ol>
@@ -144,11 +144,11 @@ const handler = async (req: Request): Promise<Response> => {
       
       <p>If you have any questions in the meantime, feel free to reply to this email.</p>
       
-      <p>Best regards,<br>LANA Tutors Team</p>
+      <p>Best regards,<br>Lana Tutors Team</p>
     `;
 
     const parentEmailResponse = await resend.emails.send({
-      from: "LANA Tutors <inquiries@lanatutors.africa>",
+      from: "Lana Tutors <inquiries@lanatutors.africa>",
       to: [parentEmail],
       subject: "Your Learning Plan Request Has Been Sent",
       html: parentEmailHtml,

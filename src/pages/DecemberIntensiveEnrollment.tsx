@@ -217,7 +217,7 @@ const DecemberIntensiveEnrollment = () => {
   return (
     <>
       <SEO
-        title="Checkout - December Holiday Bootcamp | LANA Tutors"
+        title="Checkout - December Holiday Bootcamp | Lana Tutors"
         description="Complete your enrollment in the December 2025 Holiday Bootcamp."
       />
 
