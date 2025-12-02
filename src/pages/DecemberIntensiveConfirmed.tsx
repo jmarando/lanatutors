@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useSearchParams, Link } from "react-router-dom";
-import { CheckCircle, Calendar, Clock, BookOpen, Users, ArrowRight, Plus } from "lucide-react";
+import { CheckCircle, Calendar, Clock, BookOpen, Users, ArrowRight, Plus, Video } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
@@ -19,6 +19,9 @@ interface EnrolledClass {
   grade_levels: string[];
   time_slot: string;
   session_topics?: unknown;
+  meeting_link?: string | null;
+  tutor_id?: string | null;
+  tutor_name?: string | null;
 }
 
 const DecemberIntensiveConfirmed = () => {
@@ -49,13 +52,44 @@ const DecemberIntensiveConfirmed = () => {
 
         const { data: classes, error: classesError } = await supabase
           .from("intensive_classes")
-          .select("id, subject, curriculum, grade_levels, time_slot, session_topics")
+          .select("id, subject, curriculum, grade_levels, time_slot, session_topics, meeting_link, tutor_id")
           .in("id", enrollment.enrolled_class_ids);
 
         if (classesError) {
           console.error("Error fetching classes:", classesError);
         } else {
-          setEnrolledClasses(classes || []);
+          // Fetch tutor names
+          const tutorIds = classes?.map(c => c.tutor_id).filter(Boolean) as string[];
+          const tutorInfo: Record<string, string> = {};
+          
+          if (tutorIds.length > 0) {
+            const { data: tutorProfiles } = await supabase
+              .from("tutor_profiles")
+              .select("id, user_id")
+              .in("id", tutorIds);
+            
+            if (tutorProfiles) {
+              const userIds = tutorProfiles.map(tp => tp.user_id);
+              const { data: profiles } = await supabase
+                .from("profiles")
+                .select("id, full_name")
+                .in("id", userIds);
+              
+              if (profiles) {
+                tutorProfiles.forEach(tp => {
+                  const p = profiles.find(pr => pr.id === tp.user_id);
+                  if (p) tutorInfo[tp.id] = p.full_name || "TBA";
+                });
+              }
+            }
+          }
+
+          const enrichedClasses = classes?.map(cls => ({
+            ...cls,
+            tutor_name: cls.tutor_id ? tutorInfo[cls.tutor_id] || null : null
+          })) || [];
+          
+          setEnrolledClasses(enrichedClasses);
         }
       } catch (error) {
         console.error("Error:", error);
@@ -114,10 +148,26 @@ const DecemberIntensiveConfirmed = () => {
                           <p className="text-sm text-muted-foreground">
                             {cls.curriculum} • {cls.grade_levels.join(", ")}
                           </p>
+                          {cls.tutor_name && (
+                            <p className="text-sm text-muted-foreground mt-1">
+                              Tutor: <span className="font-medium">{cls.tutor_name}</span>
+                            </p>
+                          )}
                         </div>
-                        <div className="text-right">
+                        <div className="text-right space-y-2">
                           <p className="text-sm font-medium text-primary">{cls.time_slot}</p>
                           <p className="text-xs text-muted-foreground">10 sessions</p>
+                          {cls.meeting_link && (
+                            <a
+                              href={cls.meeting_link}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1 bg-primary text-primary-foreground px-3 py-1.5 rounded-md text-xs font-medium hover:bg-primary/90 transition-colors"
+                            >
+                              <Video className="w-3 h-3" />
+                              Join Class
+                            </a>
+                          )}
                         </div>
                       </div>
                       
