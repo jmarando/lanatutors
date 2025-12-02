@@ -2,6 +2,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { X, ShoppingCart } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/contexts/AuthContext";
 
 interface SelectedClass {
   id: string;
@@ -30,6 +31,7 @@ const getPricePerSession = (curriculum: string): number => {
 
 export const IntensiveCartSimple = ({ selectedClasses, onRemoveClass }: IntensiveCartSimpleProps) => {
   const navigate = useNavigate();
+  const { user } = useAuth();
   
   // Calculate total amount based on curriculum-specific pricing
   const totalAmount = selectedClasses.reduce((sum, cls) => {
@@ -105,7 +107,13 @@ export const IntensiveCartSimple = ({ selectedClasses, onRemoveClass }: Intensiv
                 Clear Cart
               </Button>
               <Button
-                onClick={() => navigate("/december-intensive/enroll")}
+                onClick={() => {
+                  if (!user) {
+                    navigate(`/login?redirect=${encodeURIComponent('/december-intensive/enroll')}`);
+                  } else {
+                    navigate("/december-intensive/enroll");
+                  }
+                }}
                 className="flex-1"
                 size="lg"
               >
