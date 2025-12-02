@@ -31,10 +31,10 @@ export const DecemberIntensiveBanner = ({ onViewProgram }: DecemberIntensiveBann
               </div>
               <div className="flex items-center gap-2">
                 <Users className="h-5 w-5 text-primary" />
-                <span className="text-sm font-medium">Max 20 students</span>
+                <span className="text-sm font-medium">Max 15 students</span>
               </div>
               <div className="flex items-center gap-2">
-                <span className="text-lg font-bold text-primary">KES 4,000 per subject</span>
+                <span className="text-lg font-bold text-primary">KES 400 per session</span>
               </div>
             </div>
           </div>
