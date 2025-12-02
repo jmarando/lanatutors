@@ -19,17 +19,19 @@ interface CartItem {
 
 type PaymentOption = 'deposit' | 'full';
 
-// Get price per subject based on curriculum
+// Get price per subject based on curriculum - TEST MODE: CBC = 100 KES
 const getPricePerSubject = (curriculum: string): number => {
   if (curriculum === "A-Level" || curriculum === "IB") return 6000;
   if (curriculum === "IGCSE") return 5000;
-  return 4000; // CBC and 8-4-4
+  if (curriculum === "CBC") return 100; // TEST PRICE
+  return 4000; // 8-4-4
 };
 
 const getPricePerSession = (curriculum: string): number => {
   if (curriculum === "A-Level" || curriculum === "IB") return 600;
   if (curriculum === "IGCSE") return 500;
-  return 400; // CBC and 8-4-4
+  if (curriculum === "CBC") return 10; // TEST PRICE
+  return 400; // 8-4-4
 };
 
 const DecemberIntensiveEnrollment = () => {
