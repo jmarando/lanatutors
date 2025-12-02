@@ -66,8 +66,8 @@ const DecemberIntensiveConfirmed = () => {
   return (
     <>
       <SEO
-        title="Enrollment Confirmed | December Intensive Program"
-        description="Your enrollment in the December Intensive Program has been confirmed."
+        title="Enrollment Confirmed | December Holiday Bootcamp"
+        description="Your enrollment in the December Holiday Bootcamp has been confirmed."
       />
       <div className="min-h-screen bg-background py-12 px-4">
         <div className="max-w-2xl mx-auto">

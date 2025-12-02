@@ -9,7 +9,6 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { Loader2, ShoppingCart, User, ArrowLeft, Trash2 } from "lucide-react";
-import { formatCurrency } from "@/utils/currencyUtils";
 
 interface CartItem {
   id: string;
@@ -23,6 +22,19 @@ interface StudentInfo {
   name: string;
   age: string;
 }
+
+// Get price per subject based on curriculum
+const getPricePerSubject = (curriculum: string): number => {
+  if (curriculum === "A-Level" || curriculum === "IB") return 6000;
+  if (curriculum === "IGCSE") return 5000;
+  return 4000; // CBC and 8-4-4
+};
+
+const getPricePerSession = (curriculum: string): number => {
+  if (curriculum === "A-Level" || curriculum === "IB") return 600;
+  if (curriculum === "IGCSE") return 500;
+  return 400; // CBC and 8-4-4
+};
 
 const DecemberIntensiveEnrollment = () => {
   const { user } = useAuth();
@@ -97,7 +109,11 @@ const DecemberIntensiveEnrollment = () => {
   };
 
   const totalStudents = cartItems.reduce((sum, item) => sum + item.quantity, 0);
-  const totalAmount = totalStudents * 4000;
+  
+  // Calculate total amount based on curriculum-specific pricing
+  const totalAmount = cartItems.reduce((sum, item) => {
+    return sum + (item.quantity * getPricePerSubject(item.curriculum));
+  }, 0);
 
   const handleStudentInfoChange = (index: number, field: keyof StudentInfo, value: string) => {
     const updated = [...studentInfo];
@@ -162,7 +178,7 @@ const DecemberIntensiveEnrollment = () => {
             email: parentEmail,
             paymentType: "intensive_enrollment",
             referenceId: enrollment.id,
-            description: `December Intensive - ${cartItems.length} subjects for ${totalStudents} student(s)`,
+            description: `December Holiday Bootcamp - ${cartItems.length} subjects for ${totalStudents} student(s)`,
             studentNames: studentInfo.map((s) => s.name).join(", "),
           },
         }
@@ -199,8 +215,8 @@ const DecemberIntensiveEnrollment = () => {
   return (
     <>
       <SEO
-        title="Checkout - December Intensive | LANA Tutors"
-        description="Complete your enrollment in the December 2025 Intensive Program."
+        title="Checkout - December Holiday Bootcamp | LANA Tutors"
+        description="Complete your enrollment in the December 2025 Holiday Bootcamp."
       />
 
       <div className="container mx-auto px-4 py-8 max-w-4xl">
@@ -228,32 +244,39 @@ const DecemberIntensiveEnrollment = () => {
               </CardHeader>
               <CardContent>
                 <div className="space-y-3">
-                  {cartItems.map((item) => (
-                    <div
-                      key={item.id}
-                      className="flex items-center justify-between p-3 bg-muted/50 rounded-lg"
-                    >
-                      <div>
-                        <p className="font-medium">{item.subject}</p>
-                        <p className="text-sm text-muted-foreground">
-                          {item.curriculum} • {item.gradeLevel} • {item.quantity} student{item.quantity > 1 ? "s" : ""}
-                        </p>
+                  {cartItems.map((item) => {
+                    const pricePerSubject = getPricePerSubject(item.curriculum);
+                    const pricePerSession = getPricePerSession(item.curriculum);
+                    return (
+                      <div
+                        key={item.id}
+                        className="flex items-center justify-between p-3 bg-muted/50 rounded-lg"
+                      >
+                        <div>
+                          <p className="font-medium">{item.subject}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {item.curriculum} • {item.gradeLevel} • {item.quantity} student{item.quantity > 1 ? "s" : ""}
+                          </p>
+                          <p className="text-xs text-muted-foreground">
+                            KES {pricePerSession}/session × 10 sessions
+                          </p>
+                        </div>
+                        <div className="flex items-center gap-3">
+                          <span className="font-semibold">
+                            KES {(item.quantity * pricePerSubject).toLocaleString()}
+                          </span>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-destructive"
+                            onClick={() => removeFromCart(item.id)}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </div>
-                      <div className="flex items-center gap-3">
-                        <span className="font-semibold">
-                          KES {(item.quantity * 4000).toLocaleString()}
-                        </span>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-8 w-8 text-destructive"
-                          onClick={() => removeFromCart(item.id)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               </CardContent>
             </Card>
@@ -349,13 +372,13 @@ const DecemberIntensiveEnrollment = () => {
                     <span>{totalStudents}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-muted-foreground">Price per subject</span>
-                    <span>KES 4,000</span>
-                  </div>
-                  <div className="flex justify-between">
                     <span className="text-muted-foreground">Sessions per subject</span>
                     <span>10 × 75 min</span>
                   </div>
+                </div>
+
+                <div className="text-xs text-muted-foreground p-2 bg-muted/50 rounded">
+                  CBC/8-4-4: KES 400/session • IGCSE: KES 500/session • A-Level/IB: KES 600/session
                 </div>
 
                 <div className="border-t pt-4">
