@@ -402,19 +402,21 @@ export default function UnifiedStudentDashboard() {
 
         {/* Upcoming Sessions */}
         <section className="mb-8">
-          <h2 className="text-xl font-semibold mb-4">Upcoming Sessions</h2>
+          <h2 className="text-xl font-semibold mb-4">Upcoming 1-on-1 Sessions</h2>
           {Object.keys(groupedUpcomingBookings).length === 0 ? (
             <Card>
-              <CardContent className="py-12 text-center">
-                <div className="w-16 h-16 mx-auto rounded-full bg-muted flex items-center justify-center mb-4">
-                  <Calendar className="w-8 h-8 text-muted-foreground" />
+              <CardContent className="py-8 text-center">
+                <div className="w-12 h-12 mx-auto rounded-full bg-muted flex items-center justify-center mb-3">
+                  <Calendar className="w-6 h-6 text-muted-foreground" />
                 </div>
-                <h3 className="font-semibold text-lg mb-2">No Upcoming Classes</h3>
+                <h3 className="font-medium mb-1">No upcoming 1-on-1 sessions</h3>
                 <p className="text-muted-foreground text-sm mb-4">
-                  Book a session with one of our expert tutors to get started.
+                  {bootcampEnrollments.length > 0 
+                    ? "Check your Bootcamp classes below for group sessions."
+                    : "Book a session with one of our expert tutors to get started."}
                 </p>
                 <Link to="/tutors">
-                  <Button>Find a Tutor</Button>
+                  <Button variant="outline" size="sm">Find a Tutor</Button>
                 </Link>
               </CardContent>
             </Card>
@@ -483,7 +485,7 @@ export default function UnifiedStudentDashboard() {
                           className="w-full" 
                           onClick={() => {
                             if (tutor?.profile_slug) {
-                              navigate(`/tutor/${tutor.profile_slug}`);
+                              navigate(`/tutors/${tutor.profile_slug}`);
                             } else {
                               navigate('/tutors');
                             }
@@ -503,67 +505,77 @@ export default function UnifiedStudentDashboard() {
         {/* December Bootcamp */}
         {bootcampEnrollments.length > 0 && (
           <section className="mb-8">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-xl font-semibold">December Holiday Bootcamp</h2>
-              {isProgramActive() && (
-                <Badge className="bg-green-500">
-                  <span className="animate-pulse mr-2">●</span> Program Active
-                </Badge>
-              )}
-            </div>
-            
-            {bootcampProgram && (
-              <p className="text-sm text-muted-foreground mb-4">
-                {format(parseISO(bootcampProgram.start_date), "MMM d")} - {format(parseISO(bootcampProgram.end_date), "MMM d, yyyy")}
-              </p>
-            )}
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {bootcampClasses.map((cls) => {
-                const enrollment = bootcampEnrollments.find(e => e.enrolled_class_ids.includes(cls.id));
-                
-                return (
-                  <Card key={cls.id} className="bg-gradient-to-br from-primary/5 to-primary/10 border-primary/20">
-                    <CardContent className="p-4">
-                      <div className="flex items-center justify-between mb-2">
-                        <h4 className="font-semibold">{cls.subject}</h4>
-                        {enrollment?.payment_status === "completed" ? (
-                          <Badge className="bg-green-500">Paid</Badge>
-                        ) : (
-                          <Badge variant="secondary" className="bg-yellow-500 text-white">Pending</Badge>
-                        )}
-                      </div>
-                      <div className="flex gap-2 mb-3">
-                        <Badge variant="outline">{cls.curriculum}</Badge>
-                        <Badge variant="outline">{cls.grade_levels[0]}</Badge>
-                      </div>
-                      <div className="text-sm text-muted-foreground space-y-1 mb-3">
-                        <div className="flex items-center gap-2">
-                          <Clock className="h-3 w-3" />
-                          <span>{cls.time_slot} EAT</span>
-                        </div>
-                        {cls.tutor_name && (
-                          <div className="flex items-center gap-2">
-                            <Users className="h-3 w-3" />
-                            <span>{cls.tutor_name}</span>
+            <Card className="border-2 border-primary/30 bg-gradient-to-br from-primary/5 to-primary/10">
+              <CardHeader className="pb-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="text-xl">December Holiday Bootcamp</CardTitle>
+                    {bootcampProgram && (
+                      <CardDescription>
+                        {format(parseISO(bootcampProgram.start_date), "MMM d")} - {format(parseISO(bootcampProgram.end_date), "MMM d, yyyy")}
+                      </CardDescription>
+                    )}
+                  </div>
+                  {isProgramActive() && (
+                    <Badge className="bg-green-500 text-white">
+                      <span className="animate-pulse mr-2">●</span> Live Now
+                    </Badge>
+                  )}
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {bootcampClasses.map((cls) => {
+                    const enrollment = bootcampEnrollments.find(e => e.enrolled_class_ids.includes(cls.id));
+                    
+                    return (
+                      <Card key={cls.id} className="bg-background">
+                        <CardContent className="p-4">
+                          <div className="flex items-center justify-between mb-2">
+                            <h4 className="font-semibold">{cls.subject}</h4>
+                            {enrollment?.payment_status === "completed" ? (
+                              <Badge className="bg-green-500 text-white text-xs">Paid</Badge>
+                            ) : (
+                              <Badge variant="secondary" className="bg-yellow-500 text-white text-xs">Pending</Badge>
+                            )}
                           </div>
-                        )}
-                      </div>
-                      {cls.meeting_link && isProgramActive() && (
-                        <Button 
-                          size="sm" 
-                          className="w-full"
-                          onClick={() => window.open(cls.meeting_link!, '_blank')}
-                        >
-                          <Video className="h-4 w-4 mr-2" />
-                          Join Class
-                        </Button>
-                      )}
-                    </CardContent>
-                  </Card>
-                );
-              })}
-            </div>
+                          <div className="flex gap-2 mb-3">
+                            <Badge variant="outline" className="text-xs">{cls.curriculum}</Badge>
+                            <Badge variant="outline" className="text-xs">{cls.grade_levels[0]}</Badge>
+                          </div>
+                          <div className="text-sm text-muted-foreground space-y-1 mb-4">
+                            <div className="flex items-center gap-2">
+                              <Clock className="h-3 w-3" />
+                              <span>{cls.time_slot} EAT daily</span>
+                            </div>
+                            {cls.tutor_name && (
+                              <div className="flex items-center gap-2">
+                                <Users className="h-3 w-3" />
+                                <span>{cls.tutor_name}</span>
+                              </div>
+                            )}
+                          </div>
+                          {cls.meeting_link ? (
+                            <Button 
+                              className="w-full"
+                              onClick={() => window.open(cls.meeting_link!, '_blank')}
+                            >
+                              <Video className="h-4 w-4 mr-2" />
+                              Join Class
+                            </Button>
+                          ) : (
+                            <Button variant="outline" className="w-full" disabled>
+                              <Clock className="h-4 w-4 mr-2" />
+                              Link Coming Soon
+                            </Button>
+                          )}
+                        </CardContent>
+                      </Card>
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
           </section>
         )}
 
