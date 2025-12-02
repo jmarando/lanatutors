@@ -24,6 +24,7 @@ interface IntensiveClass {
   tutor_id: string | null;
   tutor_name: string | null;
   tutor_avatar: string | null;
+  tutor_slug: string | null;
   session_topics: Record<string, string> | null;
 }
 
@@ -102,12 +103,12 @@ const DecemberIntensive = () => {
 
       // Get unique tutor_ids
       const tutorIds = [...new Set(classesData.map(c => c.tutor_id).filter(Boolean))] as string[];
-      const tutorInfo: Record<string, { name: string; avatar: string | null }> = {};
+      const tutorInfo: Record<string, { name: string; avatar: string | null; slug: string | null }> = {};
       
       if (tutorIds.length > 0) {
         const { data: tutorProfiles } = await supabase
           .from('tutor_profiles')
-          .select('id, user_id')
+          .select('id, user_id, profile_slug')
           .in('id', tutorIds);
 
         if (tutorProfiles) {
@@ -123,7 +124,8 @@ const DecemberIntensive = () => {
               if (profile) {
                 tutorInfo[tp.id] = {
                   name: profile.full_name || 'Unknown Tutor',
-                  avatar: profile.avatar_url
+                  avatar: profile.avatar_url,
+                  slug: tp.profile_slug
                 };
               }
             });
@@ -143,6 +145,7 @@ const DecemberIntensive = () => {
         tutor_id: cls.tutor_id,
         tutor_name: cls.tutor_id ? tutorInfo[cls.tutor_id]?.name || null : null,
         tutor_avatar: cls.tutor_id ? tutorInfo[cls.tutor_id]?.avatar || null : null,
+        tutor_slug: cls.tutor_id ? tutorInfo[cls.tutor_id]?.slug || null : null,
         session_topics: cls.session_topics as Record<string, string> | null,
       }));
 
@@ -370,11 +373,11 @@ const DecemberIntensive = () => {
                                       <p className="text-xs text-muted-foreground mt-1">
                                         10 sessions × KES {selectedCurriculum === "A-Level" || selectedCurriculum === "IB" ? "600 = KES 6,000" : selectedCurriculum === "IGCSE" ? "500 = KES 5,000" : "400 = KES 4,000"} • 75 min each
                                       </p>
-                                      {classAtTime.tutor_name && classAtTime.tutor_id && (
+                                      {classAtTime.tutor_name && classAtTime.tutor_slug && (
                                         <div className="text-sm text-muted-foreground mt-1">
                                           with{" "}
                                           <Link 
-                                            to={`/tutor/${classAtTime.tutor_id}`}
+                                            to={`/tutors/${classAtTime.tutor_slug}`}
                                             className="text-primary hover:underline"
                                           >
                                             {classAtTime.tutor_name}
