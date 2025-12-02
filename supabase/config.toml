@@ -99,3 +99,8 @@ verify_jwt = false
 [functions.validate-intensive-class-access]
 verify_jwt = true
 
+[functions.send-intensive-tutor-assignment]
+verify_jwt = false
+
+[functions.send-intensive-enrollment-notification]
+verify_jwt = false
