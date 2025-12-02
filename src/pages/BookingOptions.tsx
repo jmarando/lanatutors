@@ -8,9 +8,9 @@ const BookingOptions = () => {
   const bookingOptions = [
     {
       icon: Users,
-      title: "December Intensive Program",
+      title: "December Holiday Bootcamp",
       description: "Join our 2-week intensive holiday program with expert tutors",
-      price: "KES 4,000 per subject",
+      price: "From KES 400 per session",
       features: [
         "December 8-19, 2025",
         "75-minute daily sessions",

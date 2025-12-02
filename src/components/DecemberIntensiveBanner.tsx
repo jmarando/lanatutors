@@ -19,7 +19,7 @@ export const DecemberIntensiveBanner = ({ onViewProgram }: DecemberIntensiveBann
               </span>
             </div>
             <h2 className="text-3xl lg:text-4xl font-bold">
-              December Intensive Program
+              December Holiday Bootcamp
             </h2>
             <p className="text-lg text-muted-foreground max-w-2xl">
               Comprehensive 2-week revision program with 10 lessons per subject. Choose from Mathematics, Physics, Chemistry, Biology, English, and Kiswahili/TOK.

@@ -80,7 +80,7 @@ const DecemberIntensiveConfirmed = () => {
               Enrollment Confirmed!
             </h1>
             <p className="text-muted-foreground text-lg">
-              Your child is now enrolled in the December Intensive Program
+              Your child is now enrolled in the December Holiday Bootcamp
             </p>
           </div>
 
