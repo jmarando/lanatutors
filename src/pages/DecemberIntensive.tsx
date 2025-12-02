@@ -35,13 +35,12 @@ const DecemberIntensive = () => {
   const [selectedCurriculum, setSelectedCurriculum] = useState<string>("CBC");
   const [selectedGrade, setSelectedGrade] = useState<string>("Grade 7");
   
-  // Cart state
+  // Cart state - single student flow
   const [selectedClasses, setSelectedClasses] = useState<Array<{
     id: string;
     subject: string;
     curriculum: string;
     gradeLevel: string;
-    quantity: number;
   }>>([]);
 
   useEffect(() => {
@@ -166,25 +165,13 @@ const DecemberIntensive = () => {
         description: `${subject} has been removed from your cart`,
       });
     } else {
-      // Add to cart with quantity 1
-      setSelectedClasses([...selectedClasses, { id: classId, subject, curriculum, gradeLevel, quantity: 1 }]);
+      // Add to cart
+      setSelectedClasses([...selectedClasses, { id: classId, subject, curriculum, gradeLevel }]);
       toast({
         title: "Added to cart",
         description: `${subject} has been added to your cart`,
       });
     }
-  };
-
-  const handleUpdateQuantity = (classId: string, newQuantity: number) => {
-    if (newQuantity < 1) {
-      setSelectedClasses(selectedClasses.filter(c => c.id !== classId));
-      return;
-    }
-    if (newQuantity > 10) return; // Max 10 students per class
-    
-    setSelectedClasses(selectedClasses.map(c => 
-      c.id === classId ? { ...c, quantity: newQuantity } : c
-    ));
   };
 
   const handleRemoveClass = (classId: string) => {
@@ -562,7 +549,6 @@ const DecemberIntensive = () => {
       <IntensiveCartSimple
         selectedClasses={selectedClasses}
         onRemoveClass={handleRemoveClass}
-        onUpdateQuantity={handleUpdateQuantity}
       />
     </>
   );
