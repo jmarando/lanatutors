@@ -104,3 +104,6 @@ verify_jwt = false
 
 [functions.send-intensive-enrollment-notification]
 verify_jwt = false
+
+[functions.send-package-confirmation]
+verify_jwt = false

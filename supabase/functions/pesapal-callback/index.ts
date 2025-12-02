@@ -333,6 +333,41 @@ serve(async (req) => {
             amount: payment.amount,
           })
       }
+
+      // Handle package purchase - update status and send emails
+      if (payment.payment_type === 'package_purchase' && payment.reference_id) {
+        console.log('Processing package purchase:', payment.reference_id)
+        
+        // Update package purchase payment status
+        const { error: packageError } = await supabase
+          .from('package_purchases')
+          .update({ 
+            payment_status: 'completed',
+            amount_paid: payment.amount 
+          })
+          .eq('id', payment.reference_id)
+
+        if (packageError) {
+          console.error('Error updating package purchase:', packageError)
+        } else {
+          console.log('Package purchase confirmed')
+
+          // Send confirmation emails
+          try {
+            const emailResponse = await supabase.functions.invoke('send-package-confirmation', {
+              body: { packagePurchaseId: payment.reference_id }
+            })
+            
+            if (emailResponse.error) {
+              console.error('Error sending package confirmation email:', emailResponse.error)
+            } else {
+              console.log('Package confirmation emails sent successfully')
+            }
+          } catch (emailErr) {
+            console.error('Failed to send package confirmation emails:', emailErr)
+          }
+        }
+      }
     }
 
     // For GET requests (user redirect), redirect to the app's payment callback page
