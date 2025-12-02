@@ -33,14 +33,17 @@ interface Tutor {
 
 type CurriculumFilter = "all" | "CBC" | "8-4-4" | "IGCSE" | "A-Level" | "IB";
 type EnrollmentFilter = "all" | "empty" | "filling" | "almost-full" | "full";
+type GradeFilter = string;
 
 export const AdminIntensivePrograms = () => {
   const [classes, setClasses] = useState<IntensiveClass[]>([]);
   const [tutors, setTutors] = useState<Tutor[]>([]);
   const [loading, setLoading] = useState(true);
   const [assigningTutor, setAssigningTutor] = useState<string | null>(null);
+  const [generatingLink, setGeneratingLink] = useState<string | null>(null);
   const [curriculumFilter, setCurriculumFilter] = useState<CurriculumFilter>("all");
   const [enrollmentFilter, setEnrollmentFilter] = useState<EnrollmentFilter>("all");
+  const [gradeFilter, setGradeFilter] = useState<GradeFilter>("all");
 
   useEffect(() => {
     fetchData();
@@ -236,34 +239,65 @@ export const AdminIntensivePrograms = () => {
     }
   };
 
-  const handleGenerateMeetLink = async (classId: string) => {
+  const handleGenerateMeetLink = async (classId: string, cls: IntensiveClass) => {
+    setGeneratingLink(classId);
     try {
+      // Create meeting link with proper class details
+      const startDateTime = new Date("2025-12-08T08:00:00+03:00").toISOString();
+      const endDateTime = new Date("2025-12-08T09:15:00+03:00").toISOString();
+      
       const { data, error } = await supabase.functions.invoke("generate-google-meet-link", {
-        body: { title: `December Intensive - Class ${classId.substring(0, 8)}` },
+        body: { 
+          summary: `December Bootcamp: ${cls.subject} - ${cls.curriculum} ${cls.grade_levels.join(", ")}`,
+          description: `December Holiday Bootcamp class for ${cls.curriculum} ${cls.grade_levels.join(", ")} students. Time slot: ${cls.time_slot}`,
+          startDateTime,
+          endDateTime,
+        },
       });
 
       if (error) throw error;
 
+      const meetLink = data?.meetingLink || data?.meetLink;
+      if (!meetLink) {
+        throw new Error("No meeting link returned");
+      }
+
       const { error: updateError } = await supabase
         .from("intensive_classes")
-        .update({ meeting_link: data.meetLink })
+        .update({ meeting_link: meetLink })
         .eq("id", classId);
 
       if (updateError) throw updateError;
 
-      toast.success("Meeting link generated");
+      toast.success("Meeting link generated from info@lanatutors.africa");
       fetchData();
     } catch (error) {
       console.error("Error generating meeting link:", error);
       toast.error("Failed to generate meeting link");
+    } finally {
+      setGeneratingLink(null);
     }
   };
+
+  // Get unique grade levels for filter
+  const uniqueGrades = useMemo(() => {
+    const grades = new Set<string>();
+    classes.forEach((cls) => {
+      cls.grade_levels.forEach((g) => grades.add(g));
+    });
+    return Array.from(grades).sort();
+  }, [classes]);
 
   // Filter classes based on selected filters
   const filteredClasses = useMemo(() => {
     return classes.filter((cls) => {
       // Curriculum filter
       if (curriculumFilter !== "all" && cls.curriculum !== curriculumFilter) {
+        return false;
+      }
+
+      // Grade filter
+      if (gradeFilter !== "all" && !cls.grade_levels.includes(gradeFilter)) {
         return false;
       }
 
@@ -286,7 +320,7 @@ export const AdminIntensivePrograms = () => {
 
       return true;
     });
-  }, [classes, curriculumFilter, enrollmentFilter]);
+  }, [classes, curriculumFilter, gradeFilter, enrollmentFilter]);
 
   // Group filtered classes by time slot
   const groupedByTime = useMemo(() => {
@@ -408,6 +442,17 @@ export const AdminIntensivePrograms = () => {
                 <SelectItem value="full">Full (100%)</SelectItem>
               </SelectContent>
             </Select>
+            <Select value={gradeFilter} onValueChange={setGradeFilter}>
+              <SelectTrigger className="w-[150px]">
+                <SelectValue placeholder="Grade" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Grades</SelectItem>
+                {uniqueGrades.map((grade) => (
+                  <SelectItem key={grade} value={grade}>{grade}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
             <div className="text-sm text-muted-foreground ml-auto">
               Showing {filteredClasses.length} of {classes.length} classes
             </div>
@@ -513,9 +558,14 @@ export const AdminIntensivePrograms = () => {
                             <Button
                               size="sm"
                               variant="outline"
-                              onClick={() => handleGenerateMeetLink(cls.id)}
+                              onClick={() => handleGenerateMeetLink(cls.id, cls)}
+                              disabled={generatingLink === cls.id}
                             >
-                              Generate Link
+                              {generatingLink === cls.id ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                              ) : (
+                                "Generate Link"
+                              )}
                             </Button>
                           )}
                         </TableCell>
