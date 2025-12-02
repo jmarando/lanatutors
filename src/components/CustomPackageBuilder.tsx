@@ -359,32 +359,42 @@ export const CustomPackageBuilder = ({
 
       {/* Actions */}
       {recurringSchedule.length > 0 && (
-        <div className="space-y-3">
-          <div className="flex gap-3">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={onClose}
-              className="flex-1"
-              disabled={loading}
-            >
-              Cancel
-            </Button>
-            <Button
-              onClick={handlePurchase}
-              className="flex-1"
-              disabled={loading}
-            >
-              {loading ? (
-                "Processing..."
-              ) : (
-                <>
-                  <CreditCard className="w-4 h-4 mr-2" />
-                  Pay Now
-                </>
-              )}
-            </Button>
-          </div>
+        <div className="space-y-4">
+          {/* Pesapal Info Card */}
+          <Card className="bg-red-50 border-red-100">
+            <CardContent className="p-4">
+              <p className="text-sm text-muted-foreground">
+                💳 You'll be redirected to Pesapal, our secure payment partner, to complete your payment with M-Pesa, Card, or other payment methods.
+              </p>
+            </CardContent>
+          </Card>
+
+          {/* Payment Buttons */}
+          <Button
+            onClick={handlePurchase}
+            className="w-full bg-primary hover:bg-primary/90"
+            disabled={loading}
+          >
+            {loading ? "Processing..." : "Proceed to Payment"}
+          </Button>
+          
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handlePurchase}
+            className="w-full"
+            disabled={loading}
+          >
+            <CreditCard className="w-4 h-4 mr-2" />
+            Generate Invoice & Pay
+          </Button>
+
+          {/* Payment Info Bullets */}
+          <ul className="text-sm text-muted-foreground space-y-1 px-2">
+            <li>• Pay only {paymentOption === 'deposit' ? '30%' : '1%'} deposit now to secure your booking</li>
+            <li>• Balance due before the session starts</li>
+            <li>• Choose M-Pesa, Card, or other payment methods on the next page</li>
+          </ul>
           
           <Separator className="my-2" />
           
@@ -400,6 +410,16 @@ export const CustomPackageBuilder = ({
           <p className="text-xs text-center text-muted-foreground">
             Combine with other tutors for more bulk discounts
           </p>
+
+          <Button
+            type="button"
+            variant="ghost"
+            onClick={onClose}
+            className="w-full text-muted-foreground"
+            disabled={loading}
+          >
+            Cancel
+          </Button>
         </div>
       )}
 
