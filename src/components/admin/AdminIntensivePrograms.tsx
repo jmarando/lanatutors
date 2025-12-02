@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -6,8 +6,9 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
-import { Loader2, CheckCircle2, AlertCircle, Users, Filter, Download } from "lucide-react";
+import { Loader2, CheckCircle2, AlertCircle, Users, Filter, Download, Save } from "lucide-react";
 import { Json } from "@/integrations/supabase/types";
+import { Textarea } from "@/components/ui/textarea";
 
 interface IntensiveClass {
   id: string;
@@ -34,6 +35,13 @@ interface Tutor {
   assignment_count: number;
 }
 
+// Track local edits for inline editing
+interface ClassEdits {
+  focus_topics: string;
+  week1: string;
+  week2: string;
+}
+
 type CurriculumFilter = "all" | "CBC" | "8-4-4" | "IGCSE" | "A-Level" | "IB";
 type EnrollmentFilter = "all" | "empty" | "filling" | "almost-full" | "full";
 type GradeFilter = string;
@@ -48,6 +56,8 @@ export const AdminIntensivePrograms = () => {
   const [curriculumFilter, setCurriculumFilter] = useState<CurriculumFilter>("all");
   const [enrollmentFilter, setEnrollmentFilter] = useState<EnrollmentFilter>("all");
   const [gradeFilter, setGradeFilter] = useState<GradeFilter>("all");
+  const [classEdits, setClassEdits] = useState<Record<string, ClassEdits>>({});
+  const [savingClass, setSavingClass] = useState<string | null>(null);
 
   useEffect(() => {
     fetchData();
@@ -112,11 +122,95 @@ export const AdminIntensivePrograms = () => {
 
       setClasses(enrichedClasses);
       setTutors(enrichedTutors);
+      
+      // Initialize edits state for all classes
+      const initialEdits: Record<string, ClassEdits> = {};
+      enrichedClasses.forEach((cls) => {
+        const { focusTopics, week1, week2 } = parseClassTopics(cls);
+        initialEdits[cls.id] = { focus_topics: focusTopics, week1, week2 };
+      });
+      setClassEdits(initialEdits);
     } catch (error) {
       console.error("Error fetching data:", error);
       toast.error("Failed to load data");
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Parse class topics from focus_topics and session_topics
+  const parseClassTopics = (cls: IntensiveClass): { focusTopics: string; week1: string; week2: string } => {
+    let focusTopics = cls.focus_topics || '';
+    let week1 = '';
+    let week2 = '';
+    
+    // Try to extract from focus_topics if it contains Week 1/Week 2 format
+    if (focusTopics.includes('Week 1:') || focusTopics.includes('Week 2:')) {
+      const week1Match = focusTopics.match(/Week 1:([^|]+)/);
+      const week2Match = focusTopics.match(/Week 2:([^|]+)/);
+      week1 = week1Match ? week1Match[1].trim() : '';
+      week2 = week2Match ? week2Match[1].trim() : '';
+      // Remove week info from focus_topics for display
+      focusTopics = focusTopics.replace(/Week 1:[^|]+\|?/g, '').replace(/Week 2:[^|]+/g, '').trim();
+    }
+    
+    // Also check session_topics for detailed day-by-day breakdown
+    if (cls.session_topics && typeof cls.session_topics === 'object' && !Array.isArray(cls.session_topics)) {
+      const topicsObj = cls.session_topics as Record<string, string>;
+      const w1Topics: string[] = [];
+      const w2Topics: string[] = [];
+      for (let i = 1; i <= 5; i++) {
+        if (topicsObj[`day${i}`]) w1Topics.push(topicsObj[`day${i}`]);
+      }
+      for (let i = 6; i <= 10; i++) {
+        if (topicsObj[`day${i}`]) w2Topics.push(topicsObj[`day${i}`]);
+      }
+      if (w1Topics.length > 0 && !week1) week1 = w1Topics.join(', ');
+      if (w2Topics.length > 0 && !week2) week2 = w2Topics.join(', ');
+    }
+    
+    return { focusTopics, week1, week2 };
+  };
+
+  // Handle edit field changes
+  const handleEditChange = useCallback((classId: string, field: keyof ClassEdits, value: string) => {
+    setClassEdits(prev => ({
+      ...prev,
+      [classId]: {
+        ...prev[classId],
+        [field]: value
+      }
+    }));
+  }, []);
+
+  // Save class topics to database
+  const handleSaveTopics = async (classId: string) => {
+    const edits = classEdits[classId];
+    if (!edits) return;
+    
+    setSavingClass(classId);
+    try {
+      // Combine focus_topics with week summaries
+      const combinedFocusTopics = edits.focus_topics + 
+        (edits.week1 ? ` | Week 1: ${edits.week1}` : '') + 
+        (edits.week2 ? ` | Week 2: ${edits.week2}` : '');
+      
+      const { error } = await supabase
+        .from('intensive_classes')
+        .update({ 
+          focus_topics: combinedFocusTopics.trim()
+        })
+        .eq('id', classId);
+      
+      if (error) throw error;
+      
+      toast.success('Class topics saved successfully');
+      fetchData(); // Refresh to get updated data
+    } catch (error) {
+      console.error('Error saving topics:', error);
+      toast.error('Failed to save topics');
+    } finally {
+      setSavingClass(null);
     }
   };
 
@@ -458,16 +552,44 @@ export const AdminIntensivePrograms = () => {
     });
   }, [classes, curriculumFilter, gradeFilter, enrollmentFilter]);
 
-  // Group filtered classes by time slot
-  const groupedByTime = useMemo(() => {
-    return filteredClasses.reduce((acc, cls) => {
-      if (!acc[cls.time_slot]) {
-        acc[cls.time_slot] = [];
+  // Group filtered classes by curriculum, then sort by grade and subject
+  const sortedFilteredClasses = useMemo(() => {
+    // Define curriculum order
+    const curriculumOrder: Record<string, number> = { 'CBC': 1, '8-4-4': 2, 'IGCSE': 3, 'A-Level': 4, 'IB': 5 };
+    // Define grade order within curricula
+    const gradeOrder: Record<string, number> = {
+      'Grade 7': 1, 'Grade 8': 2, 'Grade 9': 3,
+      'Form 3': 1, 'Form 4': 2,
+      'Year 10': 1, 'Year 11': 2, 'Year 12': 1, 'Year 13': 2
+    };
+    
+    return [...filteredClasses].sort((a, b) => {
+      // Sort by curriculum first
+      const currDiff = (curriculumOrder[a.curriculum] || 99) - (curriculumOrder[b.curriculum] || 99);
+      if (currDiff !== 0) return currDiff;
+      
+      // Then by grade level
+      const aGrade = a.grade_levels[0] || '';
+      const bGrade = b.grade_levels[0] || '';
+      const gradeDiff = (gradeOrder[aGrade] || 99) - (gradeOrder[bGrade] || 99);
+      if (gradeDiff !== 0) return gradeDiff;
+      
+      // Then by subject alphabetically
+      return a.subject.localeCompare(b.subject);
+    });
+  }, [filteredClasses]);
+
+  // Group sorted classes by curriculum
+  const groupedByCurriculum = useMemo(() => {
+    return sortedFilteredClasses.reduce((acc, cls) => {
+      const key = cls.curriculum;
+      if (!acc[key]) {
+        acc[key] = [];
       }
-      acc[cls.time_slot].push(cls);
+      acc[key].push(cls);
       return acc;
     }, {} as Record<string, IntensiveClass[]>);
-  }, [filteredClasses]);
+  }, [sortedFilteredClasses]);
 
   // Enrollment stats
   const enrollmentStats = useMemo(() => {
@@ -619,152 +741,183 @@ export const AdminIntensivePrograms = () => {
             </div>
           </div>
 
-          {Object.entries(groupedByTime).map(([timeSlot, timeClasses]) => (
-            <div key={timeSlot} className="mb-8">
+          {Object.entries(groupedByCurriculum).map(([curriculum, curriculumClasses]) => (
+            <div key={curriculum} className="mb-8">
               <h3 className="text-lg font-semibold mb-4 bg-muted p-3 rounded flex items-center justify-between">
-                <span>{timeSlot} EAT</span>
-                <Badge variant="outline">{timeClasses.length} classes</Badge>
+                <span>{curriculum}</span>
+                <Badge variant="outline">{curriculumClasses.length} classes</Badge>
               </h3>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Subject</TableHead>
-                    <TableHead>Curriculum</TableHead>
-                    <TableHead>Grade Levels</TableHead>
-                    <TableHead>Enrollment</TableHead>
-                    <TableHead className="w-[300px]">Assigned Tutor</TableHead>
-                    <TableHead>Meeting Link</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {timeClasses.map((cls) => {
-                    const sortedTutors = getSortedTutorsForClass(cls);
-                    const enrollmentPercent = (cls.current_enrollment / cls.max_students) * 100;
+              <div className="overflow-x-auto">
+                <Table>
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead className="w-[120px]">Subject</TableHead>
+                      <TableHead className="w-[100px]">Grade</TableHead>
+                      <TableHead className="w-[100px]">Time</TableHead>
+                      <TableHead className="w-[80px]">Enrolled</TableHead>
+                      <TableHead className="w-[200px]">Assigned Tutor</TableHead>
+                      <TableHead className="min-w-[200px]">Description</TableHead>
+                      <TableHead className="min-w-[200px]">Week 1 Summary</TableHead>
+                      <TableHead className="min-w-[200px]">Week 2 Summary</TableHead>
+                      <TableHead className="w-[120px]">Actions</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {curriculumClasses.map((cls) => {
+                      const sortedTutors = getSortedTutorsForClass(cls);
+                      const edits = classEdits[cls.id] || { focus_topics: '', week1: '', week2: '' };
 
-                    return (
-                      <TableRow key={cls.id}>
-                        <TableCell className="font-medium">{cls.subject}</TableCell>
-                        <TableCell>
-                          <Badge variant="secondary">{cls.curriculum}</Badge>
-                        </TableCell>
-                        <TableCell>{cls.grade_levels.join(", ")}</TableCell>
-                        <TableCell>
-                          <div className="space-y-1">
-                            <div className="flex items-center gap-2">
-                              <Users className="h-4 w-4" />
-                              <span>{cls.current_enrollment} / {cls.max_students}</span>
-                              {getEnrollmentBadge(cls.current_enrollment, cls.max_students)}
+                      return (
+                        <TableRow key={cls.id}>
+                          <TableCell className="font-medium">{cls.subject}</TableCell>
+                          <TableCell>{cls.grade_levels.join(", ")}</TableCell>
+                          <TableCell className="text-xs">{cls.time_slot}</TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-1">
+                              <Users className="h-3 w-3" />
+                              <span className="text-sm">{cls.current_enrollment}/{cls.max_students}</span>
                             </div>
-                            <div className="h-2 w-full bg-secondary rounded-full overflow-hidden">
-                              <div
-                                className={`h-full transition-all ${getEnrollmentColor(cls.current_enrollment, cls.max_students)}`}
-                                style={{ width: `${Math.min(enrollmentPercent, 100)}%` }}
-                              />
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <Select
-                            value={cls.tutor_id || ""}
-                            onValueChange={(value) => handleAssignTutor(cls.id, value)}
-                            disabled={assigningTutor === cls.id}
-                          >
-                            <SelectTrigger className="w-full">
-                              <SelectValue placeholder="Select tutor">
-                                {cls.tutor_name || "Select tutor"}
-                              </SelectValue>
-                            </SelectTrigger>
-                            <SelectContent className="max-h-[400px] w-[400px]">
-                              {sortedTutors.map((tutor) => {
-                                const hasSubject = tutor.subjects.some(
-                                  (s: string) => s.toLowerCase().includes(cls.subject.toLowerCase()) ||
-                                           cls.subject.toLowerCase().includes(s.toLowerCase())
-                                );
-                                const hasCurriculum = tutor.curriculum.some(
-                                  (c: string) => c.toLowerCase().includes(cls.curriculum.toLowerCase())
-                                );
-                                
-                                return (
-                                  <SelectItem key={tutor.id} value={tutor.id} className="py-2">
-                                    <div className="flex flex-col gap-1 w-full">
-                                      <div className="flex items-center gap-2">
-                                        {tutor.matchScore >= 80 ? (
-                                          <CheckCircle2 className="h-4 w-4 text-green-500 flex-shrink-0" />
-                                        ) : tutor.matchScore >= 50 ? (
-                                          <AlertCircle className="h-4 w-4 text-yellow-500 flex-shrink-0" />
-                                        ) : (
-                                          <AlertCircle className="h-4 w-4 text-red-400 flex-shrink-0" />
-                                        )}
-                                        <span className="font-medium">{tutor.full_name}</span>
-                                        <span className="text-xs text-muted-foreground ml-auto">
-                                          ({tutor.assignment_count} classes)
-                                        </span>
-                                      </div>
-                                      <div className="flex flex-wrap gap-1 ml-6">
-                                        {hasSubject && (
-                                          <Badge variant="default" className="text-[10px] px-1.5 py-0 bg-green-600">
-                                            ✓ {cls.subject}
-                                          </Badge>
-                                        )}
-                                        {hasCurriculum && (
-                                          <Badge variant="default" className="text-[10px] px-1.5 py-0 bg-blue-600">
-                                            ✓ {cls.curriculum}
-                                          </Badge>
-                                        )}
-                                        {!hasSubject && (
-                                          <Badge variant="outline" className="text-[10px] px-1.5 py-0 text-muted-foreground">
-                                            No {cls.subject}
-                                          </Badge>
-                                        )}
-                                        {!hasCurriculum && (
-                                          <Badge variant="outline" className="text-[10px] px-1.5 py-0 text-muted-foreground">
-                                            No {cls.curriculum}
-                                          </Badge>
-                                        )}
-                                      </div>
-                                    </div>
-                                  </SelectItem>
-                                );
-                              })}
-                            </SelectContent>
-                          </Select>
-                        </TableCell>
-                        <TableCell>
-                          {cls.meeting_link ? (
-                            <a
-                              href={cls.meeting_link}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              className="text-primary hover:underline text-sm"
+                          </TableCell>
+                          <TableCell>
+                            <Select
+                              value={cls.tutor_id || ""}
+                              onValueChange={(value) => handleAssignTutor(cls.id, value)}
+                              disabled={assigningTutor === cls.id}
                             >
-                              View Link
-                            </a>
-                          ) : (
-                            <span className="text-muted-foreground text-sm">Not generated</span>
-                          )}
-                        </TableCell>
-                        <TableCell>
-                          {!cls.meeting_link && (
-                            <Button
-                              size="sm"
-                              variant="outline"
-                              onClick={() => handleGenerateMeetLink(cls.id, cls)}
-                              disabled={generatingLink === cls.id}
-                            >
-                              {generatingLink === cls.id ? (
-                                <Loader2 className="h-4 w-4 animate-spin" />
+                              <SelectTrigger className="w-full h-8 text-xs">
+                                <SelectValue placeholder="Select tutor">
+                                  {cls.tutor_name || "Select tutor"}
+                                </SelectValue>
+                              </SelectTrigger>
+                              <SelectContent className="max-h-[400px] w-[400px]">
+                                {sortedTutors.map((tutor) => {
+                                  const hasSubject = tutor.subjects.some(
+                                    (s: string) => s.toLowerCase().includes(cls.subject.toLowerCase()) ||
+                                             cls.subject.toLowerCase().includes(s.toLowerCase())
+                                  );
+                                  const hasCurriculum = tutor.curriculum.some(
+                                    (c: string) => c.toLowerCase().includes(cls.curriculum.toLowerCase())
+                                  );
+                                  
+                                  return (
+                                    <SelectItem key={tutor.id} value={tutor.id} className="py-2">
+                                      <div className="flex flex-col gap-1 w-full">
+                                        <div className="flex items-center gap-2">
+                                          {tutor.matchScore >= 80 ? (
+                                            <CheckCircle2 className="h-4 w-4 text-green-500 flex-shrink-0" />
+                                          ) : tutor.matchScore >= 50 ? (
+                                            <AlertCircle className="h-4 w-4 text-yellow-500 flex-shrink-0" />
+                                          ) : (
+                                            <AlertCircle className="h-4 w-4 text-red-400 flex-shrink-0" />
+                                          )}
+                                          <span className="font-medium">{tutor.full_name}</span>
+                                          <span className="text-xs text-muted-foreground ml-auto">
+                                            ({tutor.assignment_count} classes)
+                                          </span>
+                                        </div>
+                                        <div className="flex flex-wrap gap-1 ml-6">
+                                          {hasSubject && (
+                                            <Badge variant="default" className="text-[10px] px-1.5 py-0 bg-green-600">
+                                              ✓ {cls.subject}
+                                            </Badge>
+                                          )}
+                                          {hasCurriculum && (
+                                            <Badge variant="default" className="text-[10px] px-1.5 py-0 bg-blue-600">
+                                              ✓ {cls.curriculum}
+                                            </Badge>
+                                          )}
+                                          {!hasSubject && (
+                                            <Badge variant="outline" className="text-[10px] px-1.5 py-0 text-muted-foreground">
+                                              No {cls.subject}
+                                            </Badge>
+                                          )}
+                                          {!hasCurriculum && (
+                                            <Badge variant="outline" className="text-[10px] px-1.5 py-0 text-muted-foreground">
+                                              No {cls.curriculum}
+                                            </Badge>
+                                          )}
+                                        </div>
+                                      </div>
+                                    </SelectItem>
+                                  );
+                                })}
+                              </SelectContent>
+                            </Select>
+                          </TableCell>
+                          <TableCell>
+                            <Textarea
+                              value={edits.focus_topics}
+                              onChange={(e) => handleEditChange(cls.id, 'focus_topics', e.target.value)}
+                              placeholder="Class description..."
+                              className="min-h-[60px] text-xs resize-none"
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <Textarea
+                              value={edits.week1}
+                              onChange={(e) => handleEditChange(cls.id, 'week1', e.target.value)}
+                              placeholder="Week 1 topics..."
+                              className="min-h-[60px] text-xs resize-none"
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <Textarea
+                              value={edits.week2}
+                              onChange={(e) => handleEditChange(cls.id, 'week2', e.target.value)}
+                              placeholder="Week 2 topics..."
+                              className="min-h-[60px] text-xs resize-none"
+                            />
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex flex-col gap-1">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleSaveTopics(cls.id)}
+                                disabled={savingClass === cls.id}
+                                className="h-7 text-xs"
+                              >
+                                {savingClass === cls.id ? (
+                                  <Loader2 className="h-3 w-3 animate-spin" />
+                                ) : (
+                                  <>
+                                    <Save className="h-3 w-3 mr-1" />
+                                    Save
+                                  </>
+                                )}
+                              </Button>
+                              {cls.meeting_link ? (
+                                <a
+                                  href={cls.meeting_link}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="text-primary hover:underline text-xs"
+                                >
+                                  Meet Link
+                                </a>
                               ) : (
-                                "Generate Link"
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => handleGenerateMeetLink(cls.id, cls)}
+                                  disabled={generatingLink === cls.id}
+                                  className="h-7 text-xs"
+                                >
+                                  {generatingLink === cls.id ? (
+                                    <Loader2 className="h-3 w-3 animate-spin" />
+                                  ) : (
+                                    "Gen Link"
+                                  )}
+                                </Button>
                               )}
-                            </Button>
-                          )}
-                        </TableCell>
-                      </TableRow>
-                    );
-                  })}
-                </TableBody>
-              </Table>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  </TableBody>
+                </Table>
+              </div>
             </div>
           ))}
 
