@@ -13,7 +13,7 @@ import { format, isSameDay } from "date-fns";
 import { toZonedTime, fromZonedTime, formatInTimeZone } from "date-fns-tz";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, CreditCard, Smartphone, FileText } from "lucide-react";
+import { Loader2, CreditCard, Smartphone, FileText, Package } from "lucide-react";
 import { PaymentOptionsCard } from "./PaymentOptionsCard";
 import { NAIROBI_LOCATIONS } from "@/utils/locationData";
 import { getLevelsForCurriculum } from "@/utils/curriculumData";
@@ -719,6 +719,26 @@ export const BookingCalendar = ({
 
   return (
     <div className="space-y-6">
+      {/* Active Package Banner */}
+      {existingPackages.length > 0 && (
+        <div className="bg-green-50 dark:bg-green-950/30 border border-green-200 dark:border-green-800 rounded-lg p-4">
+          <div className="flex items-start gap-3">
+            <div className="bg-green-500 rounded-full p-2">
+              <Package className="w-5 h-5 text-white" />
+            </div>
+            <div className="flex-1">
+              <h3 className="font-semibold text-green-800 dark:text-green-200">
+                🎁 You have an active package with {tutorName}!
+              </h3>
+              <p className="text-sm text-green-700 dark:text-green-300 mt-1">
+                {existingPackages.reduce((sum, p) => sum + p.sessions_remaining, 0)} session{existingPackages.reduce((sum, p) => sum + p.sessions_remaining, 0) !== 1 ? 's' : ''} remaining. 
+                Select "Use Package" below to book without additional payment.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+      
       <div className="grid md:grid-cols-2 gap-6">
         <div className="space-y-2">
           <label className="text-sm font-medium block">Select Date</label>

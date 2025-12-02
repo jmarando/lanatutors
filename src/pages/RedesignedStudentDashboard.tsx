@@ -8,7 +8,8 @@ import { StudentClassesTab } from "@/components/student/StudentClassesTab";
 import { StudentClassroomsTab } from "@/components/student/StudentClassroomsTab";
 import { StudentProgressTab } from "@/components/student/StudentProgressTab";
 import { StudentBootcampTab } from "@/components/student/StudentBootcampTab";
-import { Calendar, GraduationCap, TrendingUp, Users, Sparkles } from "lucide-react";
+import { StudentPackagesTab } from "@/components/student/StudentPackagesTab";
+import { Calendar, GraduationCap, TrendingUp, Users, Sparkles, Package } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 const RedesignedStudentDashboard = () => {
@@ -58,6 +59,8 @@ const RedesignedStudentDashboard = () => {
     switch (currentTab) {
       case "classes":
         return <StudentClassesTab />;
+      case "packages":
+        return <StudentPackagesTab />;
       case "classrooms":
         return <StudentClassroomsTab />;
       case "progress":
@@ -144,13 +147,21 @@ const RedesignedStudentDashboard = () => {
             {/* Centered Navigation Tabs */}
             <div className="flex justify-center mb-8">
               <TabsList className="inline-flex bg-muted p-1 rounded-lg">
-                <TabsTrigger 
+              <TabsTrigger 
                   value="classes" 
                   className="flex items-center gap-2 px-6 py-3 data-[state=active]:bg-background"
                   onClick={() => window.location.hash = "classes"}
                 >
                   <Calendar className="w-4 h-4" />
                   <span className="font-medium">My Classes</span>
+                </TabsTrigger>
+                <TabsTrigger 
+                  value="packages" 
+                  className="flex items-center gap-2 px-6 py-3 data-[state=active]:bg-background"
+                  onClick={() => window.location.hash = "packages"}
+                >
+                  <Package className="w-4 h-4" />
+                  <span className="font-medium">My Packages</span>
                 </TabsTrigger>
                 <TabsTrigger 
                   value="classrooms" 
@@ -189,6 +200,9 @@ const RedesignedStudentDashboard = () => {
 
             {/* Tab Content */}
             <TabsContent value="classes" className="mt-0">
+              {renderTabContent()}
+            </TabsContent>
+            <TabsContent value="packages" className="mt-0">
               {renderTabContent()}
             </TabsContent>
             <TabsContent value="classrooms" className="mt-0">

@@ -200,14 +200,26 @@ serve(async (req) => {
                     </div>
                     ` : ''}
                     
-                    <!-- Next Steps -->
-                    <h3 style="color: #333; margin: 30px 0 15px 0;">What's Next?</h3>
-                    <ol style="color: #555; padding-left: 20px;">
-                      <li style="margin-bottom: 10px;">Log in to your Student Dashboard to view your package</li>
-                      ${isDeposit ? '<li style="margin-bottom: 10px;">Complete the remaining balance payment</li>' : ''}
-                      <li style="margin-bottom: 10px;">Schedule your sessions with ${tutorName}</li>
-                      <li style="margin-bottom: 10px;">Start learning!</li>
-                    </ol>
+                    <!-- How to Redeem Your Sessions -->
+                    <h3 style="color: #333; margin: 30px 0 15px 0;">📚 How to Redeem Your Sessions</h3>
+                    <div style="background-color: #f0f9ff; border-radius: 8px; padding: 20px; margin-bottom: 20px;">
+                      <ol style="color: #333; padding-left: 20px; margin: 0;">
+                        <li style="margin-bottom: 12px;"><strong>Log in</strong> to your <a href="https://lanatutors.africa/student/dashboard#packages" style="color: #7c3aed; text-decoration: underline;">Student Dashboard</a></li>
+                        <li style="margin-bottom: 12px;">Go to the <strong>"My Packages"</strong> tab</li>
+                        <li style="margin-bottom: 12px;">Find your package and click <strong>"Book a Session"</strong></li>
+                        <li style="margin-bottom: 12px;">Select a time slot on ${tutorName}'s calendar</li>
+                        <li style="margin-bottom: 12px;">Choose <strong>"Use Package"</strong> as your payment option</li>
+                        <li style="margin-bottom: 0;">Confirm your booking - no additional payment needed!</li>
+                      </ol>
+                    </div>
+                    
+                    ${isDeposit ? `
+                    <div style="background-color: #fef2f2; border-left: 4px solid #dc2626; padding: 15px; margin: 20px 0;">
+                      <p style="color: #991b1b; margin: 0; font-size: 14px;">
+                        <strong>⚠️ Important:</strong> Please complete the remaining payment of KES ${balanceDue.toLocaleString()} before scheduling your sessions. You can pay from your Student Dashboard → My Packages.
+                      </p>
+                    </div>
+                    ` : ''}
                     
                     <!-- CTA Button -->
                     <table width="100%" cellpadding="0" cellspacing="0" style="margin: 30px 0;">
