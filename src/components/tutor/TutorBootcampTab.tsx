@@ -3,10 +3,14 @@ import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Loader2, Calendar, Clock, Users, Video, BookOpen, ChevronDown, ChevronUp } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Loader2, Calendar, Clock, Users, Video, BookOpen, ChevronDown, ChevronUp, Edit2, Save, X } from "lucide-react";
 import { toast } from "sonner";
 import { format, parseISO } from "date-fns";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 
 interface IntensiveClass {
   id: string;
@@ -18,6 +22,7 @@ interface IntensiveClass {
   max_students: number;
   meeting_link: string | null;
   focus_topics: string | null;
+  session_topics?: unknown;
 }
 
 interface IntensiveProgram {
@@ -45,6 +50,12 @@ export const TutorBootcampTab = ({ tutorProfileId }: TutorBootcampTabProps) => {
   const [program, setProgram] = useState<IntensiveProgram | null>(null);
   const [enrolledStudents, setEnrolledStudents] = useState<Record<string, EnrolledStudent[]>>({});
   const [expandedClasses, setExpandedClasses] = useState<Set<string>>(new Set());
+  
+  // Editing state
+  const [editingClass, setEditingClass] = useState<IntensiveClass | null>(null);
+  const [editFocusTopics, setEditFocusTopics] = useState("");
+  const [editSessionTopics, setEditSessionTopics] = useState<Record<string, string>>({});
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     if (tutorProfileId) {
@@ -135,6 +146,45 @@ export const TutorBootcampTab = ({ tutorProfileId }: TutorBootcampTabProps) => {
       }
       return newSet;
     });
+  };
+
+  const openEditDialog = (cls: IntensiveClass) => {
+    setEditingClass(cls);
+    setEditFocusTopics(cls.focus_topics || "");
+    
+    // Initialize session topics for 10 days
+    const existingTopics = (cls.session_topics as Record<string, string>) || {};
+    const defaultTopics: Record<string, string> = {};
+    for (let i = 1; i <= 10; i++) {
+      defaultTopics[`day${i}`] = existingTopics[`day${i}`] || "";
+    }
+    setEditSessionTopics(defaultTopics);
+  };
+
+  const handleSaveTopics = async () => {
+    if (!editingClass) return;
+    
+    setSaving(true);
+    try {
+      const { error } = await supabase
+        .from("intensive_classes")
+        .update({
+          focus_topics: editFocusTopics,
+          session_topics: editSessionTopics,
+        })
+        .eq("id", editingClass.id);
+
+      if (error) throw error;
+
+      toast.success("Topics updated successfully");
+      setEditingClass(null);
+      fetchAssignments();
+    } catch (error) {
+      console.error("Error saving topics:", error);
+      toast.error("Failed to save topics");
+    } finally {
+      setSaving(false);
+    }
   };
 
   const getEnrollmentColor = (current: number, max: number): string => {
@@ -300,6 +350,17 @@ export const TutorBootcampTab = ({ tutorProfileId }: TutorBootcampTabProps) => {
                                   )}
                                 </div>
                                 <div className="flex items-center gap-4">
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      openEditDialog(cls);
+                                    }}
+                                  >
+                                    <Edit2 className="h-4 w-4 mr-1" />
+                                    Edit Topics
+                                  </Button>
                                   <div className="text-right">
                                     <div className={`font-bold ${getEnrollmentColor(cls.current_enrollment, cls.max_students)}`}>
                                       {cls.current_enrollment}/{cls.max_students}
@@ -363,6 +424,73 @@ export const TutorBootcampTab = ({ tutorProfileId }: TutorBootcampTabProps) => {
           </div>
         </CardContent>
       </Card>
+
+      {/* Edit Topics Dialog */}
+      <Dialog open={!!editingClass} onOpenChange={(open) => !open && setEditingClass(null)}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Edit Class Topics</DialogTitle>
+            <DialogDescription>
+              {editingClass?.subject} - {editingClass?.curriculum} ({editingClass?.grade_levels.join(", ")})
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-6 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="focus-topics">Focus Areas / Week Summary</Label>
+              <Textarea
+                id="focus-topics"
+                placeholder="e.g., Week 1: Algebra basics, equations | Week 2: Geometry, triangles"
+                value={editFocusTopics}
+                onChange={(e) => setEditFocusTopics(e.target.value)}
+                rows={3}
+              />
+              <p className="text-xs text-muted-foreground">
+                Describe the overall focus and week-by-week summary
+              </p>
+            </div>
+
+            <div className="space-y-3">
+              <Label>Session-by-Session Topics (10 sessions)</Label>
+              <div className="grid gap-3">
+                {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((day) => (
+                  <div key={day} className="flex items-center gap-3">
+                    <span className="text-sm font-medium w-16 shrink-0">Day {day}:</span>
+                    <Input
+                      placeholder={`Topic for Day ${day}`}
+                      value={editSessionTopics[`day${day}`] || ""}
+                      onChange={(e) => setEditSessionTopics(prev => ({
+                        ...prev,
+                        [`day${day}`]: e.target.value
+                      }))}
+                    />
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setEditingClass(null)}>
+              <X className="h-4 w-4 mr-2" />
+              Cancel
+            </Button>
+            <Button onClick={handleSaveTopics} disabled={saving}>
+              {saving ? (
+                <>
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <Save className="h-4 w-4 mr-2" />
+                  Save Topics
+                </>
+              )}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
