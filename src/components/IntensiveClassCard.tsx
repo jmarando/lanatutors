@@ -73,14 +73,6 @@ export const IntensiveClassCard = ({
               )}
             </div>
 
-            {/* Curriculum badges */}
-            <div className="flex flex-wrap gap-2 mb-2">
-              {classes.map(cls => (
-                <Badge key={cls.id} variant="secondary">
-                  {cls.curriculum} {cls.grade_levels.length > 0 && `(${cls.grade_levels.join(", ")})`}
-                </Badge>
-              ))}
-            </div>
           </div>
 
           {/* Add to cart button */}
