@@ -41,6 +41,7 @@ export const AdminIntensivePrograms = () => {
   const [loading, setLoading] = useState(true);
   const [assigningTutor, setAssigningTutor] = useState<string | null>(null);
   const [generatingLink, setGeneratingLink] = useState<string | null>(null);
+  const [generatingAllLinks, setGeneratingAllLinks] = useState(false);
   const [curriculumFilter, setCurriculumFilter] = useState<CurriculumFilter>("all");
   const [enrollmentFilter, setEnrollmentFilter] = useState<EnrollmentFilter>("all");
   const [gradeFilter, setGradeFilter] = useState<GradeFilter>("all");
@@ -279,6 +280,57 @@ export const AdminIntensivePrograms = () => {
     }
   };
 
+  const handleGenerateAllLinks = async () => {
+    const classesWithoutLinks = classes.filter((cls) => !cls.meeting_link);
+    if (classesWithoutLinks.length === 0) {
+      toast.info("All classes already have meeting links");
+      return;
+    }
+
+    setGeneratingAllLinks(true);
+    let successCount = 0;
+    let failCount = 0;
+
+    for (const cls of classesWithoutLinks) {
+      try {
+        const startDateTime = new Date("2025-12-08T08:00:00+03:00").toISOString();
+        const endDateTime = new Date("2025-12-08T09:15:00+03:00").toISOString();
+        
+        const { data, error } = await supabase.functions.invoke("generate-google-meet-link", {
+          body: { 
+            summary: `December Bootcamp: ${cls.subject} - ${cls.curriculum} ${cls.grade_levels.join(", ")}`,
+            description: `December Holiday Bootcamp class for ${cls.curriculum} ${cls.grade_levels.join(", ")} students. Time slot: ${cls.time_slot}`,
+            startDateTime,
+            endDateTime,
+          },
+        });
+
+        if (error) throw error;
+
+        const meetLink = data?.meetingLink || data?.meetLink;
+        if (meetLink) {
+          await supabase
+            .from("intensive_classes")
+            .update({ meeting_link: meetLink })
+            .eq("id", cls.id);
+          successCount++;
+        }
+      } catch (error) {
+        console.error(`Failed to generate link for ${cls.subject}:`, error);
+        failCount++;
+      }
+    }
+
+    setGeneratingAllLinks(false);
+    fetchData();
+    
+    if (failCount === 0) {
+      toast.success(`Generated ${successCount} meeting links successfully`);
+    } else {
+      toast.warning(`Generated ${successCount} links, ${failCount} failed`);
+    }
+  };
+
   // Get unique grade levels for filter
   const uniqueGrades = useMemo(() => {
     const grades = new Set<string>();
@@ -406,9 +458,25 @@ export const AdminIntensivePrograms = () => {
       </div>
 
       <Card>
-        <CardHeader>
-          <CardTitle>December Holiday Bootcamp Management</CardTitle>
-          <CardDescription>Assign tutors with smart qualification matching and monitor enrollment</CardDescription>
+        <CardHeader className="flex flex-row items-center justify-between">
+          <div>
+            <CardTitle>December Holiday Bootcamp Management</CardTitle>
+            <CardDescription>Assign tutors with smart qualification matching and monitor enrollment</CardDescription>
+          </div>
+          <Button 
+            onClick={handleGenerateAllLinks} 
+            disabled={generatingAllLinks}
+            variant="outline"
+          >
+            {generatingAllLinks ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Generating...
+              </>
+            ) : (
+              `Generate All Links (${classes.filter(c => !c.meeting_link).length})`
+            )}
+          </Button>
         </CardHeader>
         <CardContent>
           {/* Filters */}
