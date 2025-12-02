@@ -19,10 +19,23 @@ serve(async (req) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
     )
 
-    const body = await req.json()
-    console.log('Pesapal callback received for order:', body.OrderTrackingId)
+    // Handle both GET (user redirect) and POST (IPN webhook) requests
+    let OrderTrackingId: string | null = null
+    let OrderMerchantReference: string | null = null
 
-    const { OrderTrackingId, OrderMerchantReference } = body
+    if (req.method === 'GET') {
+      // User redirect from Pesapal - params in URL
+      const url = new URL(req.url)
+      OrderTrackingId = url.searchParams.get('OrderTrackingId') || url.searchParams.get('orderTrackingId')
+      OrderMerchantReference = url.searchParams.get('OrderMerchantReference') || url.searchParams.get('orderMerchantReference')
+      console.log('Pesapal callback received (GET redirect) for order:', OrderTrackingId)
+    } else {
+      // IPN webhook from Pesapal - params in JSON body
+      const body = await req.json()
+      OrderTrackingId = body.OrderTrackingId
+      OrderMerchantReference = body.OrderMerchantReference
+      console.log('Pesapal callback received (POST webhook) for order:', OrderTrackingId)
+    }
 
     if (!OrderTrackingId) {
       throw new Error('Missing OrderTrackingId in callback')
@@ -37,6 +50,19 @@ serve(async (req) => {
 
     if (existingPayment?.status === 'completed') {
       console.log('Payment already processed, ignoring duplicate webhook')
+      
+      // For GET requests (user redirect), redirect to appropriate page
+      if (req.method === 'GET') {
+        const baseUrl = Deno.env.get('SUPABASE_URL')?.replace('.supabase.co', '.lovableproject.com') || ''
+        return new Response(null, {
+          status: 302,
+          headers: {
+            ...corsHeaders,
+            'Location': `${baseUrl}/payment-callback?OrderTrackingId=${OrderTrackingId}`
+          }
+        })
+      }
+      
       return new Response(
         JSON.stringify({ success: true, message: 'Already processed' }),
         { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -146,6 +172,38 @@ serve(async (req) => {
     // Handle payment completion
     if (status === 'completed') {
       console.log('Payment completed successfully')
+
+      // Handle intensive enrollment payment
+      if (payment.reference_id && payment.payment_type === 'intensive_enrollment') {
+        console.log('Processing intensive enrollment payment for:', payment.reference_id)
+        
+        // Update enrollment payment status
+        const { error: enrollmentError } = await supabase
+          .from('intensive_enrollments')
+          .update({ payment_status: 'completed' })
+          .eq('id', payment.reference_id)
+
+        if (enrollmentError) {
+          console.error('Error updating intensive enrollment:', enrollmentError)
+        } else {
+          console.log('Intensive enrollment confirmed')
+
+          // Send confirmation email
+          try {
+            const emailResponse = await supabase.functions.invoke('send-intensive-enrollment-confirmation', {
+              body: { enrollmentId: payment.reference_id }
+            })
+            
+            if (emailResponse.error) {
+              console.error('Error sending enrollment confirmation email:', emailResponse.error)
+            } else {
+              console.log('Enrollment confirmation email sent successfully')
+            }
+          } catch (emailErr) {
+            console.error('Failed to send enrollment confirmation email:', emailErr)
+          }
+        }
+      }
 
       // If this is for a booking, update the booking status
       if (payment.reference_id && (payment.payment_type === 'booking' || payment.payment_type === 'tutor_booking_deposit')) {
@@ -268,6 +326,25 @@ serve(async (req) => {
       }
     }
 
+    // For GET requests (user redirect), redirect to the app's payment callback page
+    if (req.method === 'GET') {
+      // Get the app URL from environment or construct it
+      const supabaseUrl = Deno.env.get('SUPABASE_URL') || ''
+      // Extract project ref from supabase URL and construct app URL
+      const projectRef = supabaseUrl.match(/https:\/\/([^.]+)\.supabase\.co/)?.[1] || ''
+      const appUrl = `https://${projectRef}.lovableproject.com`
+      
+      console.log('Redirecting user to:', `${appUrl}/payment-callback?OrderTrackingId=${OrderTrackingId}`)
+      
+      return new Response(null, {
+        status: 302,
+        headers: {
+          ...corsHeaders,
+          'Location': `${appUrl}/payment-callback?OrderTrackingId=${OrderTrackingId}`
+        }
+      })
+    }
+
     return new Response(
       JSON.stringify({ success: true }),
       { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -275,6 +352,22 @@ serve(async (req) => {
 
   } catch (error) {
     console.error('Error processing Pesapal callback:', error)
+    
+    // For GET requests, redirect to error page instead of showing JSON
+    if (req.method === 'GET') {
+      const supabaseUrl = Deno.env.get('SUPABASE_URL') || ''
+      const projectRef = supabaseUrl.match(/https:\/\/([^.]+)\.supabase\.co/)?.[1] || ''
+      const appUrl = `https://${projectRef}.lovableproject.com`
+      
+      return new Response(null, {
+        status: 302,
+        headers: {
+          ...corsHeaders,
+          'Location': `${appUrl}/payment-callback?error=true`
+        }
+      })
+    }
+    
     return new Response(
       JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }),
       { 
