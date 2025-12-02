@@ -12,12 +12,14 @@ import {
   Star,
   TrendingUp,
   Clock,
-  Loader2
+  Loader2,
+  Sparkles
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { TutorAvailabilityManager } from "@/components/TutorAvailabilityManager";
+import { TutorBootcampTab } from "@/components/tutor/TutorBootcampTab";
 
 const EnhancedTutorDashboard = () => {
   const navigate = useNavigate();
@@ -204,9 +206,13 @@ const EnhancedTutorDashboard = () => {
         </div>
 
         <Tabs defaultValue="upcoming" className="space-y-6">
-          <TabsList>
+          <TabsList className="flex-wrap h-auto gap-1">
             <TabsTrigger value="upcoming">
               Upcoming Sessions ({upcomingBookings.length})
+            </TabsTrigger>
+            <TabsTrigger value="bootcamp" className="flex items-center gap-1">
+              <Sparkles className="h-4 w-4" />
+              December Bootcamp
             </TabsTrigger>
             <TabsTrigger value="group-classes">
               Group Classes ({groupClasses.length})
@@ -271,6 +277,10 @@ const EnhancedTutorDashboard = () => {
 
           <TabsContent value="availability">
             <TutorAvailabilityManager />
+          </TabsContent>
+
+          <TabsContent value="bootcamp">
+            <TutorBootcampTab tutorProfileId={tutorProfile?.id} />
           </TabsContent>
 
           <TabsContent value="group-classes" className="space-y-4">
