@@ -582,28 +582,58 @@ export const AdminIntensivePrograms = () => {
                                 {cls.tutor_name || "Select tutor"}
                               </SelectValue>
                             </SelectTrigger>
-                            <SelectContent className="max-h-[300px]">
-                              {sortedTutors.map((tutor) => (
-                                <SelectItem key={tutor.id} value={tutor.id}>
-                                  <div className="flex items-center gap-2 w-full">
-                                    {tutor.matchScore >= 80 && (
-                                      <CheckCircle2 className="h-4 w-4 text-green-500 flex-shrink-0" />
-                                    )}
-                                    {tutor.matchScore >= 50 && tutor.matchScore < 80 && (
-                                      <AlertCircle className="h-4 w-4 text-yellow-500 flex-shrink-0" />
-                                    )}
-                                    <span className="flex-1">{tutor.full_name}</span>
-                                    <span className="text-xs text-muted-foreground">
-                                      ({tutor.assignment_count} assigned)
-                                    </span>
-                                    {tutor.matchDetails.length > 0 && (
-                                      <span className="text-xs text-green-600">
-                                        ✓ {tutor.matchDetails.join(", ")}
-                                      </span>
-                                    )}
-                                  </div>
-                                </SelectItem>
-                              ))}
+                            <SelectContent className="max-h-[400px] w-[400px]">
+                              {sortedTutors.map((tutor) => {
+                                const hasSubject = tutor.subjects.some(
+                                  (s: string) => s.toLowerCase().includes(cls.subject.toLowerCase()) ||
+                                           cls.subject.toLowerCase().includes(s.toLowerCase())
+                                );
+                                const hasCurriculum = tutor.curriculum.some(
+                                  (c: string) => c.toLowerCase().includes(cls.curriculum.toLowerCase())
+                                );
+                                
+                                return (
+                                  <SelectItem key={tutor.id} value={tutor.id} className="py-2">
+                                    <div className="flex flex-col gap-1 w-full">
+                                      <div className="flex items-center gap-2">
+                                        {tutor.matchScore >= 80 ? (
+                                          <CheckCircle2 className="h-4 w-4 text-green-500 flex-shrink-0" />
+                                        ) : tutor.matchScore >= 50 ? (
+                                          <AlertCircle className="h-4 w-4 text-yellow-500 flex-shrink-0" />
+                                        ) : (
+                                          <AlertCircle className="h-4 w-4 text-red-400 flex-shrink-0" />
+                                        )}
+                                        <span className="font-medium">{tutor.full_name}</span>
+                                        <span className="text-xs text-muted-foreground ml-auto">
+                                          ({tutor.assignment_count} classes)
+                                        </span>
+                                      </div>
+                                      <div className="flex flex-wrap gap-1 ml-6">
+                                        {hasSubject && (
+                                          <Badge variant="default" className="text-[10px] px-1.5 py-0 bg-green-600">
+                                            ✓ {cls.subject}
+                                          </Badge>
+                                        )}
+                                        {hasCurriculum && (
+                                          <Badge variant="default" className="text-[10px] px-1.5 py-0 bg-blue-600">
+                                            ✓ {cls.curriculum}
+                                          </Badge>
+                                        )}
+                                        {!hasSubject && (
+                                          <Badge variant="outline" className="text-[10px] px-1.5 py-0 text-muted-foreground">
+                                            No {cls.subject}
+                                          </Badge>
+                                        )}
+                                        {!hasCurriculum && (
+                                          <Badge variant="outline" className="text-[10px] px-1.5 py-0 text-muted-foreground">
+                                            No {cls.curriculum}
+                                          </Badge>
+                                        )}
+                                      </div>
+                                    </div>
+                                  </SelectItem>
+                                );
+                              })}
                             </SelectContent>
                           </Select>
                         </TableCell>
