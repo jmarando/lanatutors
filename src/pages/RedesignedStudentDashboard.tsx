@@ -7,7 +7,8 @@ import { Badge } from "@/components/ui/badge";
 import { StudentClassesTab } from "@/components/student/StudentClassesTab";
 import { StudentClassroomsTab } from "@/components/student/StudentClassroomsTab";
 import { StudentProgressTab } from "@/components/student/StudentProgressTab";
-import { Calendar, GraduationCap, TrendingUp, Users } from "lucide-react";
+import { StudentBootcampTab } from "@/components/student/StudentBootcampTab";
+import { Calendar, GraduationCap, TrendingUp, Users, Sparkles } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 const RedesignedStudentDashboard = () => {
@@ -61,6 +62,8 @@ const RedesignedStudentDashboard = () => {
         return <StudentClassroomsTab />;
       case "progress":
         return <StudentProgressTab />;
+      case "bootcamp":
+        return <StudentBootcampTab />;
       case "group-classes":
         return (
           <div className="space-y-6">
@@ -166,6 +169,14 @@ const RedesignedStudentDashboard = () => {
                   <span className="font-medium">Progress</span>
                 </TabsTrigger>
                 <TabsTrigger 
+                  value="bootcamp" 
+                  className="flex items-center gap-2 px-6 py-3 data-[state=active]:bg-background"
+                  onClick={() => window.location.hash = "bootcamp"}
+                >
+                  <Sparkles className="w-4 h-4" />
+                  <span className="font-medium">December Bootcamp</span>
+                </TabsTrigger>
+                <TabsTrigger 
                   value="group-classes" 
                   className="flex items-center gap-2 px-6 py-3 data-[state=active]:bg-background"
                   onClick={() => window.location.hash = "group-classes"}
@@ -184,6 +195,9 @@ const RedesignedStudentDashboard = () => {
               {renderTabContent()}
             </TabsContent>
             <TabsContent value="progress" className="mt-0">
+              {renderTabContent()}
+            </TabsContent>
+            <TabsContent value="bootcamp" className="mt-0">
               {renderTabContent()}
             </TabsContent>
             <TabsContent value="group-classes" className="mt-0">

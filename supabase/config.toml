@@ -96,3 +96,6 @@ verify_jwt = false
 [functions.send-group-class-tutor-notification]
 verify_jwt = false
 
+[functions.validate-intensive-class-access]
+verify_jwt = true
+
