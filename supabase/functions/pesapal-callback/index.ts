@@ -53,14 +53,23 @@ serve(async (req) => {
       
       // For GET requests (user redirect), redirect to appropriate page
       if (req.method === 'GET') {
-        const baseUrl = Deno.env.get('SUPABASE_URL')?.replace('.supabase.co', '.lovableproject.com') || ''
-        return new Response(null, {
-          status: 302,
-          headers: {
-            ...corsHeaders,
-            'Location': `${baseUrl}/payment-callback?OrderTrackingId=${OrderTrackingId}`
-          }
-        })
+        // Get the redirect URL from payment record
+        const { data: paymentRecord } = await supabase
+          .from('payments')
+          .select('redirect_url')
+          .eq('pesapal_order_tracking_id', OrderTrackingId)
+          .single()
+        
+        const appUrl = paymentRecord?.redirect_url || ''
+        if (appUrl) {
+          return new Response(null, {
+            status: 302,
+            headers: {
+              ...corsHeaders,
+              'Location': `${appUrl}/payment-callback?OrderTrackingId=${OrderTrackingId}`
+            }
+          })
+        }
       }
       
       return new Response(
@@ -328,11 +337,16 @@ serve(async (req) => {
 
     // For GET requests (user redirect), redirect to the app's payment callback page
     if (req.method === 'GET') {
-      // Get the app URL from environment or construct it
-      const supabaseUrl = Deno.env.get('SUPABASE_URL') || ''
-      // Extract project ref from supabase URL and construct app URL
-      const projectRef = supabaseUrl.match(/https:\/\/([^.]+)\.supabase\.co/)?.[1] || ''
-      const appUrl = `https://${projectRef}.lovableproject.com`
+      // Use the stored app origin URL from the payment record
+      const appUrl = payment.redirect_url || ''
+      
+      if (!appUrl) {
+        console.error('No redirect URL stored for payment')
+        return new Response(
+          JSON.stringify({ error: 'Missing redirect URL' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
       
       console.log('Redirecting user to:', `${appUrl}/payment-callback?OrderTrackingId=${OrderTrackingId}`)
       
@@ -352,21 +366,6 @@ serve(async (req) => {
 
   } catch (error) {
     console.error('Error processing Pesapal callback:', error)
-    
-    // For GET requests, redirect to error page instead of showing JSON
-    if (req.method === 'GET') {
-      const supabaseUrl = Deno.env.get('SUPABASE_URL') || ''
-      const projectRef = supabaseUrl.match(/https:\/\/([^.]+)\.supabase\.co/)?.[1] || ''
-      const appUrl = `https://${projectRef}.lovableproject.com`
-      
-      return new Response(null, {
-        status: 302,
-        headers: {
-          ...corsHeaders,
-          'Location': `${appUrl}/payment-callback?error=true`
-        }
-      })
-    }
     
     return new Response(
       JSON.stringify({ error: error instanceof Error ? error.message : 'Unknown error' }),
