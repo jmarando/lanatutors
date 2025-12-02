@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useSearchParams, Link } from "react-router-dom";
-import { CheckCircle, Calendar, Clock, BookOpen, Users, ArrowRight, Mail } from "lucide-react";
+import { CheckCircle, Calendar, Clock, BookOpen, Users, ArrowRight, Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
@@ -154,6 +154,28 @@ const DecemberIntensiveConfirmed = () => {
                   <p className="font-medium text-foreground">Class Size</p>
                   <p className="text-sm text-muted-foreground">Maximum 10 students per class</p>
                 </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Enroll Another Student */}
+          <Card className="mb-6 bg-primary/5 border-primary/20">
+            <CardContent className="p-6">
+              <div className="flex items-center gap-4">
+                <div className="bg-primary/10 rounded-full p-3">
+                  <Plus className="w-6 h-6 text-primary" />
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-semibold text-foreground">Have another child to enroll?</h3>
+                  <p className="text-sm text-muted-foreground">
+                    You can enroll additional students in the same or different classes
+                  </p>
+                </div>
+                <Button asChild>
+                  <Link to="/december-intensive">
+                    Enroll Another Student
+                  </Link>
+                </Button>
               </div>
             </CardContent>
           </Card>

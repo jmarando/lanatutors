@@ -15,12 +15,6 @@ interface CartItem {
   subject: string;
   curriculum: string;
   gradeLevel: string;
-  quantity: number;
-}
-
-interface StudentInfo {
-  name: string;
-  age: string;
 }
 
 // Get price per subject based on curriculum
@@ -41,7 +35,8 @@ const DecemberIntensiveEnrollment = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
-  const [studentInfo, setStudentInfo] = useState<StudentInfo[]>([]);
+  const [studentName, setStudentName] = useState("");
+  const [studentAge, setStudentAge] = useState("");
   const [parentPhone, setParentPhone] = useState("");
   const [parentEmail, setParentEmail] = useState("");
   const [programId, setProgramId] = useState<string | null>(null);
@@ -53,14 +48,6 @@ const DecemberIntensiveEnrollment = () => {
       setParentEmail(user.email);
     }
   }, [user]);
-
-  useEffect(() => {
-    // Initialize student info based on total students in cart
-    const totalStudents = cartItems.reduce((sum, item) => sum + item.quantity, 0);
-    if (totalStudents > 0 && studentInfo.length !== totalStudents) {
-      setStudentInfo(Array(totalStudents).fill(null).map(() => ({ name: "", age: "" })));
-    }
-  }, [cartItems]);
 
   const loadCartFromStorage = () => {
     const saved = localStorage.getItem("december_intensive_cart");
@@ -108,33 +95,23 @@ const DecemberIntensiveEnrollment = () => {
     }
   };
 
-  const totalStudents = cartItems.reduce((sum, item) => sum + item.quantity, 0);
-  
   // Calculate total amount based on curriculum-specific pricing
   const totalAmount = cartItems.reduce((sum, item) => {
-    return sum + (item.quantity * getPricePerSubject(item.curriculum));
+    return sum + getPricePerSubject(item.curriculum);
   }, 0);
 
-  const handleStudentInfoChange = (index: number, field: keyof StudentInfo, value: string) => {
-    const updated = [...studentInfo];
-    updated[index] = { ...updated[index], [field]: value };
-    setStudentInfo(updated);
-  };
-
   const validateForm = () => {
-    if (!parentPhone) {
+    if (!studentName.trim()) {
+      toast.error("Please enter the student's name");
+      return false;
+    }
+    if (!parentPhone.trim()) {
       toast.error("Please enter your phone number");
       return false;
     }
-    if (!parentEmail) {
+    if (!parentEmail.trim()) {
       toast.error("Please enter your email address");
       return false;
-    }
-    for (let i = 0; i < studentInfo.length; i++) {
-      if (!studentInfo[i]?.name) {
-        toast.error(`Please enter name for Student ${i + 1}`);
-        return false;
-      }
     }
     return true;
   };
@@ -178,8 +155,8 @@ const DecemberIntensiveEnrollment = () => {
             email: parentEmail,
             paymentType: "intensive_enrollment",
             referenceId: enrollment.id,
-            description: `December Holiday Bootcamp - ${cartItems.length} subjects for ${totalStudents} student(s)`,
-            studentNames: studentInfo.map((s) => s.name).join(", "),
+            description: `December Holiday Bootcamp - ${cartItems.length} subject(s) for ${studentName}`,
+            studentNames: studentName,
           },
         }
       );
@@ -255,7 +232,7 @@ const DecemberIntensiveEnrollment = () => {
                         <div>
                           <p className="font-medium">{item.subject}</p>
                           <p className="text-sm text-muted-foreground">
-                            {item.curriculum} • {item.gradeLevel} • {item.quantity} student{item.quantity > 1 ? "s" : ""}
+                            {item.curriculum} • {item.gradeLevel}
                           </p>
                           <p className="text-xs text-muted-foreground">
                             KES {pricePerSession}/session × 10 sessions
@@ -263,7 +240,7 @@ const DecemberIntensiveEnrollment = () => {
                         </div>
                         <div className="flex items-center gap-3">
                           <span className="font-semibold">
-                            KES {(item.quantity * pricePerSubject).toLocaleString()}
+                            KES {pricePerSubject.toLocaleString()}
                           </span>
                           <Button
                             variant="ghost"
@@ -289,35 +266,30 @@ const DecemberIntensiveEnrollment = () => {
                   Student Details
                 </CardTitle>
                 <CardDescription>
-                  Enter details for each student being enrolled
+                  Enter details for the student being enrolled
                 </CardDescription>
               </CardHeader>
-              <CardContent className="space-y-6">
-                {studentInfo.map((student, index) => (
-                  <div key={index} className="p-4 border rounded-lg space-y-4">
-                    <h4 className="font-semibold">Student {index + 1}</h4>
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label htmlFor={`student-name-${index}`}>Full Name *</Label>
-                        <Input
-                          id={`student-name-${index}`}
-                          placeholder="Enter student name"
-                          value={student?.name || ""}
-                          onChange={(e) => handleStudentInfoChange(index, "name", e.target.value)}
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor={`student-age-${index}`}>Age (Optional)</Label>
-                        <Input
-                          id={`student-age-${index}`}
-                          placeholder="e.g., 14"
-                          value={student?.age || ""}
-                          onChange={(e) => handleStudentInfoChange(index, "age", e.target.value)}
-                        />
-                      </div>
-                    </div>
+              <CardContent>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="student-name">Student's Full Name *</Label>
+                    <Input
+                      id="student-name"
+                      placeholder="Enter student name"
+                      value={studentName}
+                      onChange={(e) => setStudentName(e.target.value)}
+                    />
                   </div>
-                ))}
+                  <div className="space-y-2">
+                    <Label htmlFor="student-age">Age (Optional)</Label>
+                    <Input
+                      id="student-age"
+                      placeholder="e.g., 14"
+                      value={studentAge}
+                      onChange={(e) => setStudentAge(e.target.value)}
+                    />
+                  </div>
+                </div>
               </CardContent>
             </Card>
 
@@ -366,10 +338,6 @@ const DecemberIntensiveEnrollment = () => {
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Subjects</span>
                     <span>{cartItems.length}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-muted-foreground">Students</span>
-                    <span>{totalStudents}</span>
                   </div>
                   <div className="flex justify-between">
                     <span className="text-muted-foreground">Sessions per subject</span>
