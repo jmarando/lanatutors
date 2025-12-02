@@ -108,8 +108,13 @@ export default function PaymentCallback() {
         setTimeout(() => {
           navigate(`/booking-confirmed?bookingId=${paymentInfo.reference_id}`);
         }, redirectDelay);
+      } else if (paymentInfo.payment_type === "package_purchase" && paymentInfo.reference_id) {
+        // Package purchase - redirect to package confirmed
+        setTimeout(() => {
+          navigate(`/package-confirmed?packageId=${paymentInfo.reference_id}`);
+        }, redirectDelay);
       } else {
-        // Package or other payment - redirect to dashboard
+        // Other payment - redirect to dashboard
         setTimeout(() => {
           navigate("/student/dashboard");
         }, redirectDelay);
@@ -141,7 +146,9 @@ export default function PaymentCallback() {
                 ? "Redirecting to enrollment confirmation..."
                 : paymentInfo?.payment_type === "booking" || paymentInfo?.payment_type === "booking_balance"
                 ? "Redirecting to booking confirmation..."
-                : "Your package has been purchased. Redirecting to dashboard..."}
+                : paymentInfo?.payment_type === "package_purchase"
+                ? "Redirecting to package confirmation..."
+                : "Redirecting to dashboard..."}
             </p>
           </>
         )}

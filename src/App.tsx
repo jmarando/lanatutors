@@ -47,6 +47,7 @@ const DecemberIntensiveConfirmed = lazy(() => import("./pages/DecemberIntensiveC
 const NotFound = lazy(() => import("./pages/NotFound"));
 const TestEmail = lazy(() => import("./pages/TestEmail"));
 const BookingConfirmed = lazy(() => import("./pages/BookingConfirmed"));
+const PackageConfirmed = lazy(() => import("./pages/PackageConfirmed"));
 const TutorProfileSetup = lazy(() => import("./pages/TutorProfileSetup"));
 const TutorProfileEdit = lazy(() => import("./pages/TutorProfileEdit"));
 const TutorProfileSubmitted = lazy(() => import("./pages/TutorProfileSubmitted"));
@@ -113,6 +114,7 @@ const App = () => {
                 <Route path="/book-consultation" element={<BookConsultation />} />
                 <Route path="/test-email" element={<TestEmail />} />
                 <Route path="/booking-confirmed" element={<BookingConfirmed />} />
+                <Route path="/package-confirmed" element={<PackageConfirmed />} />
                 <Route path="/consultation-confirmed" element={<ConsultationConfirmed />} />
                 <Route path="/setup-central-calendar" element={<SetupCentralCalendar />} />
                 <Route path="/payment-callback" element={<PaymentCallback />} />
