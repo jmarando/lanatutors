@@ -440,7 +440,7 @@ const DecemberIntensiveEnrollment = () => {
                   size="lg"
                   className="w-full"
                   onClick={handleProceedToPayment}
-                  disabled={loading}
+                  disabled={loading || !studentName.trim() || !parentPhone.trim() || !parentEmail.trim()}
                 >
                   {loading ? (
                     <>
@@ -457,7 +457,7 @@ const DecemberIntensiveEnrollment = () => {
                   size="lg"
                   className="w-full"
                   onClick={() => navigate(`/december-intensive/invoice?amount=${amountToPay}&total=${totalAmount}&deposit=${depositAmount}&balance=${paymentOption === 'deposit' ? balanceDue : 0}&subjects=${cartItems.length}&student=${encodeURIComponent(studentName)}&phone=${encodeURIComponent(parentPhone)}&email=${encodeURIComponent(parentEmail)}&option=${paymentOption}`)}
-                  disabled={loading || !studentName || !parentPhone || !parentEmail}
+                  disabled={loading || !studentName.trim() || !parentPhone.trim() || !parentEmail.trim()}
                 >
                   <FileText className="mr-2 h-4 w-4" />
                   Generate Invoice & Pay
