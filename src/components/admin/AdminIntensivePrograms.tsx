@@ -153,8 +153,8 @@ export const AdminIntensivePrograms = () => {
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <CardTitle>December Intensive Program Management</CardTitle>
-          <CardDescription>Assign tutors and manage classes for the intensive program</CardDescription>
+          <CardTitle>December Holiday Bootcamp Management</CardTitle>
+          <CardDescription>Assign tutors and manage classes for the holiday bootcamp</CardDescription>
         </CardHeader>
         <CardContent>
           {Object.entries(groupedByTime).map(([timeSlot, timeClasses]) => (

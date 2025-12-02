@@ -1165,7 +1165,7 @@ The Lana Team`;
             </TabsTrigger>
             <TabsTrigger value="intensive-programs">
               <CalendarIcon className="h-4 w-4 mr-2" />
-              December Intensive
+              December Bootcamp
             </TabsTrigger>
             <TabsTrigger value="group-classes">
               <Users className="h-4 w-4 mr-2" />
