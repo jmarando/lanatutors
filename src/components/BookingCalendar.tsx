@@ -209,6 +209,7 @@ export const BookingCalendar = ({
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
+    // Fetch packages that are completed, have sessions remaining, and either have no expiration or aren't expired yet
     const { data } = await supabase
       .from("package_purchases")
       .select("*")
@@ -216,7 +217,7 @@ export const BookingCalendar = ({
       .eq("tutor_id", tutorId)
       .eq("payment_status", "completed")
       .gt("sessions_remaining", 0)
-      .gt("expires_at", new Date().toISOString());
+      .or(`expires_at.is.null,expires_at.gt.${new Date().toISOString()}`);
     
     if (data) setExistingPackages(data);
   };
