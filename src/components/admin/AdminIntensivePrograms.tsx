@@ -180,6 +180,52 @@ export const AdminIntensivePrograms = () => {
 
       if (error) throw error;
 
+      // Get the class details and tutor info for email notification
+      const cls = classes.find((c) => c.id === classId);
+      const tutor = tutors.find((t) => t.id === tutorId);
+      
+      if (cls && tutor) {
+        // Fetch tutor email from tutor_profiles
+        const { data: tutorProfile } = await supabase
+          .from("tutor_profiles")
+          .select("email")
+          .eq("id", tutorId)
+          .single();
+
+        // Fetch program details
+        const { data: classWithProgram } = await supabase
+          .from("intensive_classes")
+          .select("program_id, meeting_link, intensive_programs(name, start_date, end_date)")
+          .eq("id", classId)
+          .single();
+
+        const program = classWithProgram?.intensive_programs as { name: string; start_date: string; end_date: string } | null;
+
+        if (tutorProfile?.email && program) {
+          // Send assignment notification email
+          try {
+            await supabase.functions.invoke("send-intensive-tutor-assignment", {
+              body: {
+                tutorEmail: tutorProfile.email,
+                tutorName: tutor.full_name,
+                subject: cls.subject,
+                curriculum: cls.curriculum,
+                gradeLevels: cls.grade_levels,
+                timeSlot: cls.time_slot,
+                programName: program.name,
+                startDate: new Date(program.start_date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
+                endDate: new Date(program.end_date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
+                meetingLink: classWithProgram?.meeting_link,
+              },
+            });
+            console.log("Tutor assignment email sent to:", tutorProfile.email);
+          } catch (emailError) {
+            console.error("Failed to send assignment email:", emailError);
+            // Don't fail the assignment if email fails
+          }
+        }
+      }
+
       toast.success("Tutor assigned successfully");
       fetchData();
     } catch (error) {
