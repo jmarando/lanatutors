@@ -10,7 +10,7 @@ const MultiTutorPackage = () => {
   return (
     <>
       <SEO
-        title="Custom Learning Packages | LANA Tutors"
+        title="Custom Learning Packages | Lana Tutors"
         description="Get a personalized learning package designed by our education experts. Multiple subjects, multiple tutors, one tailored plan."
       />
       

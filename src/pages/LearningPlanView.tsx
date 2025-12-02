@@ -137,7 +137,7 @@ const LearningPlanView = () => {
   return (
     <>
       <SEO
-        title={`${plan.title} | LANA Tutors`}
+        title={`${plan.title} | Lana Tutors`}
         description={`Review your personalized learning plan`}
       />
       <div className="min-h-screen bg-[image:var(--gradient-page)] py-12 px-4">
@@ -149,7 +149,7 @@ const LearningPlanView = () => {
                 <div>
                   <CardTitle className="text-2xl mb-2">{plan.title}</CardTitle>
                   <p className="text-muted-foreground">
-                    Tutor: {plan.profiles?.full_name || "LANA Tutors Team"}
+                    Tutor: {plan.profiles?.full_name || "Lana Tutors Team"}
                   </p>
                 </div>
                 <Badge className={getStatusColor(plan.status)}>

@@ -3,7 +3,7 @@ import lanaLogo from "@/assets/lana-tutors-logo-hd.png";
 
 const TutorGuidePrintable = () => {
   useEffect(() => {
-    document.title = "LANA Tutors - Tutor Dashboard Guide";
+    document.title = "Lana Tutors - Tutor Dashboard Guide";
   }, []);
 
   return (
@@ -11,11 +11,11 @@ const TutorGuidePrintable = () => {
       {/* Cover Page */}
       <div className="page cover-page">
         <div className="cover-content">
-          <img src={lanaLogo} alt="LANA Tutors" className="cover-logo" />
+          <img src={lanaLogo} alt="Lana Tutors" className="cover-logo" />
           <h1 className="cover-title">Tutor Dashboard Guide</h1>
           <p className="cover-subtitle">Complete Guide to Using Your Tutor Dashboard</p>
           <div className="cover-footer">
-            <p>LANA Tutors</p>
+            <p>Lana Tutors</p>
             <p>© {new Date().getFullYear()} All Rights Reserved</p>
           </div>
         </div>
@@ -113,8 +113,8 @@ const TutorGuidePrintable = () => {
         <h3 className="subsection-title">1.1 First Time Login</h3>
         <ol className="guide-list">
           <li>
-            <strong>Visit the LANA Tutors website:</strong>
-            <p>Go to the LANA Tutors platform and click "Login" in the top right corner.</p>
+            <strong>Visit the Lana Tutors website:</strong>
+            <p>Go to the Lana Tutors platform and click "Login" in the top right corner.</p>
           </li>
           <li>
             <strong>Enter your credentials:</strong>
@@ -546,7 +546,7 @@ const TutorGuidePrintable = () => {
       <div className="page">
         <h2 className="section-title">11. Need Help?</h2>
         
-        <p>If you encounter any issues not covered in this guide, LANA Tutors support is here to help!</p>
+        <p>If you encounter any issues not covered in this guide, Lana Tutors support is here to help!</p>
 
         <div className="contact-box">
           <h4>Contact Support</h4>
@@ -574,7 +574,7 @@ const TutorGuidePrintable = () => {
         </ul>
 
         <div className="success-box">
-          <h4>🎉 Welcome to the LANA Tutors Family!</h4>
+          <h4>🎉 Welcome to the Lana Tutors Family!</h4>
           <p>We're excited to have you as part of our team. Your expertise and dedication make a real difference in students' lives. Here's to a successful tutoring journey!</p>
         </div>
 

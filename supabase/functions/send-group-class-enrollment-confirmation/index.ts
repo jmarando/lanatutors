@@ -147,10 +147,10 @@ serve(async (req) => {
             <p>If you have any questions, reply to this email or contact us at <a href="mailto:info@lanatutors.africa">info@lanatutors.africa</a>.</p>
 
             <p>See you in class!</p>
-            <p><strong>The LANA Tutors Team</strong></p>
+            <p><strong>The Lana Tutors Team</strong></p>
           </div>
           <div class="footer">
-            <p>© 2025 LANA Tutors. All rights reserved.</p>
+            <p>© 2025 Lana Tutors. All rights reserved.</p>
             <p>Empowering students through quality online education.</p>
           </div>
         </div>
@@ -165,7 +165,7 @@ serve(async (req) => {
         Authorization: `Bearer ${RESEND_API_KEY}`,
       },
       body: JSON.stringify({
-        from: "LANA Tutors <bookings@lanatutors.africa>",
+        from: "Lana Tutors <bookings@lanatutors.africa>",
         to: [userEmail.user.email],
         subject: `✅ Enrollment Confirmed: ${enrollment.group_classes.title}`,
         html: emailHtml,

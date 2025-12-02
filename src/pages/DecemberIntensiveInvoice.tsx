@@ -141,7 +141,7 @@ const DecemberIntensiveInvoice = () => {
   return (
     <>
       <SEO
-        title="Invoice - December Holiday Bootcamp | LANA Tutors"
+        title="Invoice - December Holiday Bootcamp | Lana Tutors"
         description="Review your December Holiday Bootcamp enrollment invoice."
       />
 
@@ -155,7 +155,7 @@ const DecemberIntensiveInvoice = () => {
         <Card className="mb-6">
           <CardHeader className="border-b">
             <div className="flex items-center justify-between">
-              <img src={lanaLogo} alt="LANA Tutors" className="h-12" />
+              <img src={lanaLogo} alt="Lana Tutors" className="h-12" />
               <div className="text-right">
                 <CardTitle className="text-xl">Invoice</CardTitle>
                 <p className="text-sm text-muted-foreground">{today}</p>

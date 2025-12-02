@@ -125,10 +125,10 @@ const handler = async (req: Request): Promise<Response> => {
           <tr>
             <td style="background-color: #f8f7ff; padding: 24px; text-align: center; border-top: 1px solid #e5e5e5;">
               <p style="color: #6b6b8a; font-size: 14px; margin: 0 0 8px 0;">
-                Thank you for being part of the LANA Tutors team!
+                Thank you for being part of the Lana Tutors team!
               </p>
               <p style="color: #9b9bae; font-size: 12px; margin: 0;">
-                © 2024 LANA Tutors. All rights reserved.
+                © 2024 Lana Tutors. All rights reserved.
               </p>
             </td>
           </tr>
@@ -144,7 +144,7 @@ const handler = async (req: Request): Promise<Response> => {
         Authorization: `Bearer ${RESEND_API_KEY}`,
       },
       body: JSON.stringify({
-        from: "LANA Tutors <info@lanatutors.africa>",
+        from: "Lana Tutors <info@lanatutors.africa>",
         to: [tutorEmail],
         subject: `New Student Enrolled: ${studentName} - ${subject} (${programName})`,
         html: emailHtml,

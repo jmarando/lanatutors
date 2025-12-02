@@ -155,10 +155,10 @@ serve(async (req) => {
             <p>If you have any questions, contact us at <a href="mailto:info@lanatutors.africa">info@lanatutors.africa</a>.</p>
 
             <p>Happy teaching!</p>
-            <p><strong>The LANA Tutors Team</strong></p>
+            <p><strong>The Lana Tutors Team</strong></p>
           </div>
           <div class="footer">
-            <p>© 2025 LANA Tutors. All rights reserved.</p>
+            <p>© 2025 Lana Tutors. All rights reserved.</p>
           </div>
         </div>
       </body>
@@ -172,7 +172,7 @@ serve(async (req) => {
         Authorization: `Bearer ${RESEND_API_KEY}`,
       },
       body: JSON.stringify({
-        from: "LANA Tutors <notifications@lanatutors.africa>",
+        from: "Lana Tutors <notifications@lanatutors.africa>",
         to: [tutorUser.user.email],
         subject: `New Student Enrolled: ${enrollment.group_classes.title}`,
         html: emailHtml,

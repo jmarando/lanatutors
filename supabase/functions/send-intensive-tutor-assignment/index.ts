@@ -52,7 +52,7 @@ const handler = async (req: Request): Promise<Response> => {
         <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width: 600px; margin: 0 auto; background-color: #ffffff;">
           <tr>
             <td style="background: linear-gradient(135deg, #9b87f5 0%, #7E69AB 100%); padding: 32px; text-align: center;">
-              <h1 style="color: #ffffff; margin: 0; font-size: 24px; font-weight: 700;">LANA Tutors</h1>
+              <h1 style="color: #ffffff; margin: 0; font-size: 24px; font-weight: 700;">Lana Tutors</h1>
               <p style="color: rgba(255,255,255,0.9); margin: 8px 0 0 0; font-size: 14px;">December Holiday Bootcamp</p>
             </td>
           </tr>
@@ -120,10 +120,10 @@ const handler = async (req: Request): Promise<Response> => {
           <tr>
             <td style="background-color: #f8f7ff; padding: 24px; text-align: center; border-top: 1px solid #e5e5e5;">
               <p style="color: #6b6b8a; font-size: 14px; margin: 0 0 8px 0;">
-                Thank you for being part of the LANA Tutors team!
+                Thank you for being part of the Lana Tutors team!
               </p>
               <p style="color: #9b9bae; font-size: 12px; margin: 0;">
-                © 2024 LANA Tutors. All rights reserved.
+                © 2024 Lana Tutors. All rights reserved.
               </p>
             </td>
           </tr>
@@ -139,7 +139,7 @@ const handler = async (req: Request): Promise<Response> => {
         Authorization: `Bearer ${RESEND_API_KEY}`,
       },
       body: JSON.stringify({
-        from: "LANA Tutors <info@lanatutors.africa>",
+        from: "Lana Tutors <info@lanatutors.africa>",
         to: [tutorEmail],
         subject: `You've Been Assigned to ${programName} - ${subject}`,
         html: emailHtml,

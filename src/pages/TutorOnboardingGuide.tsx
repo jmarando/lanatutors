@@ -110,7 +110,7 @@ const TutorOnboardingGuide = () => {
     },
     {
       question: "How do earnings work?",
-      answer: "You earn 70% of the session fee, with LANA Tutors keeping 30% to maintain the platform. Earnings are paid out monthly within the first 5 business days of each month."
+      answer: "You earn 70% of the session fee, with Lana Tutors keeping 30% to maintain the platform. Earnings are paid out monthly within the first 5 business days of each month."
     },
     {
       question: "How do I manage my availability?",
@@ -125,8 +125,8 @@ const TutorOnboardingGuide = () => {
   return (
     <>
       <SEO 
-        title="Tutor Onboarding Guide - LANA Tutors"
-        description="Complete guide to becoming a LANA tutor. Learn about our application process, profile setup, and how to start teaching students."
+        title="Tutor Onboarding Guide - Lana Tutors"
+        description="Complete guide to becoming a Lana tutor. Learn about our application process, profile setup, and how to start teaching students."
       />
       
       <div className="min-h-screen bg-gradient-to-b from-background to-muted/20">

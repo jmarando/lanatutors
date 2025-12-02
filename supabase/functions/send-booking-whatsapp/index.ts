@@ -49,7 +49,7 @@ const handler = async (req: Request): Promise<Response> => {
     });
 
     const message = `
-🎓 *LANA Tutors - Booking Confirmed!*
+🎓 *Lana Tutors - Booking Confirmed!*
 
 Hi ${parentName},
 
@@ -80,7 +80,7 @@ ${balanceDue > 0 ? `⏳ Balance Due: KES ${balanceDue.toLocaleString()}` : '✅ 
 
 Looking forward to a great learning session! 📚✨
 
-- LANA Tutors Team
+- Lana Tutors Team
 `.trim();
 
     const formattedPhone = phoneNumber.replace(/\s+/g, '').replace('+', '');
