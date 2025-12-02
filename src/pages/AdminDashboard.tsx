@@ -40,6 +40,7 @@ const AdminDashboard = () => {
   const [dashboardMetrics, setDashboardMetrics] = useState<any>(null);
   const [timeRange, setTimeRange] = useState<'7days' | '30days' | '90days'>('30days');
   const [activeTab, setActiveTab] = useState('dashboard');
+  const [unassignedIntensiveClasses, setUnassignedIntensiveClasses] = useState(0);
   const [interviewFilter, setInterviewFilter] = useState<'all' | 'scheduled' | 'passed' | 'failed'>('all');
   const [editingNote, setEditingNote] = useState<string | null>(null);
   const [noteContent, setNoteContent] = useState("");
@@ -323,7 +324,17 @@ Yehtu Tutors`
     fetchConsultationBookings();
     fetchTutoringBookings();
     fetchLearningPlanRequests();
+    fetchUnassignedIntensiveClasses();
     setLoading(false);
+  };
+
+  const fetchUnassignedIntensiveClasses = async () => {
+    const { count } = await supabase
+      .from("intensive_classes")
+      .select("*", { count: "exact", head: true })
+      .eq("status", "active")
+      .is("tutor_id", null);
+    setUnassignedIntensiveClasses(count || 0);
   };
 
   const fetchDashboardMetrics = async () => {
@@ -1163,9 +1174,12 @@ The Lana Team`;
               <Users className="h-4 w-4 mr-2" />
               Students
             </TabsTrigger>
-            <TabsTrigger value="intensive-programs">
+            <TabsTrigger value="intensive-programs" className="relative">
               <CalendarIcon className="h-4 w-4 mr-2" />
               December Bootcamp
+              {unassignedIntensiveClasses > 0 && (
+                <Badge className="ml-2 bg-orange-600">{unassignedIntensiveClasses}</Badge>
+              )}
             </TabsTrigger>
             <TabsTrigger value="group-classes">
               <Users className="h-4 w-4 mr-2" />
