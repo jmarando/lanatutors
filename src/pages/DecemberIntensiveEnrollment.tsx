@@ -46,12 +46,19 @@ const DecemberIntensiveEnrollment = () => {
   const [paymentOption, setPaymentOption] = useState<PaymentOption>('deposit');
 
   useEffect(() => {
+    // Redirect to login if not authenticated
+    if (!user) {
+      toast.error("Please sign in to continue enrollment");
+      navigate(`/login?redirect=${encodeURIComponent('/december-intensive/enroll')}`);
+      return;
+    }
+    
     loadCartFromStorage();
     fetchProgram();
-    if (user?.email) {
+    if (user.email) {
       setParentEmail(user.email);
     }
-  }, [user]);
+  }, [user, navigate]);
 
   const loadCartFromStorage = () => {
     const saved = localStorage.getItem("december_intensive_cart");
@@ -126,6 +133,12 @@ const DecemberIntensiveEnrollment = () => {
   };
 
   const handleProceedToPayment = async () => {
+    if (!user?.id) {
+      toast.error("Please sign in to continue");
+      navigate(`/login?redirect=${encodeURIComponent('/december-intensive/enroll')}`);
+      return;
+    }
+    
     if (!validateForm()) return;
     if (!programId) {
       toast.error("Program not found");
@@ -136,14 +149,13 @@ const DecemberIntensiveEnrollment = () => {
 
     try {
       const enrolledClassIds = cartItems.map((item) => item.id);
-      const userId = user?.id || null;
 
       // Create enrollment record
       const { data: enrollment, error: enrollmentError } = await supabase
         .from("intensive_enrollments")
         .insert({
           program_id: programId,
-          student_id: userId || "00000000-0000-0000-0000-000000000000", // placeholder for guest
+          student_id: user.id,
           enrolled_class_ids: enrolledClassIds,
           total_subjects: cartItems.length,
           total_amount: totalAmount,
