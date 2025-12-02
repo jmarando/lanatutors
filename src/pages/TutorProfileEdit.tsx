@@ -547,7 +547,6 @@ const TutorProfileEdit = () => {
 
       console.log("Profile update complete!");
       toast.success("Profile updated successfully!");
-      navigate("/tutor/dashboard");
     } catch (error: any) {
       console.error("Error updating profile:", error);
       console.error("Error details:", {
