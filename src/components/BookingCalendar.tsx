@@ -58,6 +58,7 @@ interface PackagePurchase {
   id: string;
   sessions_remaining: number;
   expires_at: string;
+  metadata?: any;
 }
 
 export const BookingCalendar = ({
@@ -179,16 +180,30 @@ export const BookingCalendar = ({
     fetchExistingPackages();
   }, [tutorId]);
 
-  // Auto-select package for redemption flow
+  // Auto-select package for redemption flow and populate saved curriculum/level/subject
   useEffect(() => {
     if (redeemPackageId && existingPackages.length > 0) {
       const packageToRedeem = existingPackages.find(p => p.id === redeemPackageId);
       if (packageToRedeem) {
         setSelectedExistingPackage(packageToRedeem);
         setPaymentOption('package');
+        
+        // Auto-populate curriculum/level/subject from package metadata if available
+        const metadata = packageToRedeem.metadata;
+        if (metadata) {
+          if (metadata.curriculum && tutorCurriculum?.includes(metadata.curriculum)) {
+            setCurriculum(metadata.curriculum);
+          }
+          if (metadata.level) {
+            setLevel(metadata.level);
+          }
+          if (metadata.subject && tutorSubjects?.includes(metadata.subject)) {
+            setSubject(metadata.subject);
+          }
+        }
       }
     }
-  }, [redeemPackageId, existingPackages]);
+  }, [redeemPackageId, existingPackages, tutorCurriculum, tutorSubjects]);
 
   const effectiveRate = curriculumSpecificRate !== null ? curriculumSpecificRate : hourlyRate;
   const onlineRateDisplay = effectiveRate.toLocaleString();
@@ -547,11 +562,25 @@ export const BookingCalendar = ({
 
       // Handle payment based on payment option
       if (paymentOption === 'package' && selectedExistingPackage) {
-        // Using existing package - book for free, confirm immediately
+      // Using existing package - book for free, confirm immediately
         await supabase
           .from("bookings")
           .update({ status: "confirmed" })
           .eq("id", booking.id);
+
+        // Save curriculum/level/subject to package metadata for future redemptions
+        const existingMetadata = selectedExistingPackage.metadata || {};
+        await supabase
+          .from("package_purchases")
+          .update({
+            metadata: {
+              ...existingMetadata,
+              curriculum: curriculum,
+              level: level,
+              subject: subject.trim(),
+            }
+          })
+          .eq("id", selectedExistingPackage.id);
 
         await supabase.functions.invoke("send-booking-email", {
           body: {
@@ -819,94 +848,117 @@ export const BookingCalendar = ({
 
           {selectedSlot && (
             <div className="space-y-4 pt-4 border-t">
-              <div>
-                <Label className="text-sm font-medium mb-2 block">Curriculum *</Label>
-                {tutorCurriculum && tutorCurriculum.length > 0 ? (
-                  <Select 
-                    value={curriculum} 
-                    onValueChange={(val) => {
-                      setCurriculum(val);
-                      setLevel(""); // Reset level when curriculum changes
-                    }} 
-                    disabled={paymentInitiated}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select curriculum" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-background z-50">
-                      {tutorCurriculum.map((curr) => (
-                        <SelectItem key={curr} value={curr}>
-                          {curr}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                ) : (
-                  <Input
-                    placeholder="e.g., CBC, IGCSE, 8-4-4"
-                    value={curriculum}
-                    onChange={(e) => {
-                      setCurriculum(e.target.value);
-                      setLevel(""); // Reset level when curriculum changes
-                    }}
-                    disabled={paymentInitiated}
-                  />
-                )}
-              </div>
-
-              {curriculum && (
-                <div>
-                  <Label className="text-sm font-medium mb-2 block">Level/Grade *</Label>
-                  <Select value={level} onValueChange={setLevel} disabled={paymentInitiated}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select level/grade" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-background z-50 max-h-[300px]">
-                      {getLevelsForCurriculum(curriculum)
-                        .filter((lvl) => {
-                          // Only show levels that the tutor actually teaches for this curriculum
-                          const tutorLevelKey = `${curriculum} - ${lvl.value}`;
-                          return tutorTeachingLevels.some(tl => tl === tutorLevelKey);
-                        })
-                        .map((lvl) => (
-                          <SelectItem key={lvl.value} value={lvl.value}>
-                            {lvl.label}
-                          </SelectItem>
-                        ))}
-                    </SelectContent>
-                  </Select>
-                  {curriculumSpecificRate !== null && curriculum && level && (
-                    <p className="text-sm font-semibold text-primary mt-2">
-                      Rate for {curriculum} - {level}: KES {curriculumSpecificRate.toLocaleString()}/hr
-                    </p>
-                  )}
+              {/* In redemption mode with pre-populated data, show read-only display */}
+              {redeemPackageId && selectedExistingPackage?.metadata?.curriculum && selectedExistingPackage?.metadata?.level && selectedExistingPackage?.metadata?.subject ? (
+                <div className="bg-green-50 dark:bg-green-950/30 border border-green-200 rounded-lg p-4 space-y-2">
+                  <p className="text-sm font-medium text-green-800 dark:text-green-200">Session Details (from package)</p>
+                  <div className="grid grid-cols-3 gap-2 text-sm">
+                    <div>
+                      <span className="text-muted-foreground">Curriculum:</span>
+                      <p className="font-medium">{curriculum}</p>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Level:</span>
+                      <p className="font-medium">{level}</p>
+                    </div>
+                    <div>
+                      <span className="text-muted-foreground">Subject:</span>
+                      <p className="font-medium">{subject}</p>
+                    </div>
+                  </div>
                 </div>
-              )}
+              ) : (
+                <>
+                  <div>
+                    <Label className="text-sm font-medium mb-2 block">Curriculum *</Label>
+                    {tutorCurriculum && tutorCurriculum.length > 0 ? (
+                      <Select 
+                        value={curriculum} 
+                        onValueChange={(val) => {
+                          setCurriculum(val);
+                          setLevel(""); // Reset level when curriculum changes
+                        }} 
+                        disabled={paymentInitiated}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select curriculum" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-background z-50">
+                          {tutorCurriculum.map((curr) => (
+                            <SelectItem key={curr} value={curr}>
+                              {curr}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <Input
+                        placeholder="e.g., CBC, IGCSE, 8-4-4"
+                        value={curriculum}
+                        onChange={(e) => {
+                          setCurriculum(e.target.value);
+                          setLevel(""); // Reset level when curriculum changes
+                        }}
+                        disabled={paymentInitiated}
+                      />
+                    )}
+                  </div>
 
-              <div>
-                <Label className="text-sm font-medium mb-2 block">Subject *</Label>
-                {tutorSubjects && tutorSubjects.length > 0 ? (
-                  <Select value={subject} onValueChange={setSubject} disabled={paymentInitiated}>
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select a subject" />
-                    </SelectTrigger>
-                    <SelectContent className="bg-background z-50">
-                      {tutorSubjects.map((subj) => (
-                        <SelectItem key={subj} value={subj}>
-                          {subj}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                ) : (
-                  <Input
-                    placeholder="e.g., Mathematics - Algebra"
-                    value={subject}
-                    onChange={(e) => setSubject(e.target.value)}
-                    disabled={paymentInitiated}
-                  />
-                )}
-              </div>
+                  {curriculum && (
+                    <div>
+                      <Label className="text-sm font-medium mb-2 block">Level/Grade *</Label>
+                      <Select value={level} onValueChange={setLevel} disabled={paymentInitiated}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select level/grade" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-background z-50 max-h-[300px]">
+                          {getLevelsForCurriculum(curriculum)
+                            .filter((lvl) => {
+                              // Only show levels that the tutor actually teaches for this curriculum
+                              const tutorLevelKey = `${curriculum} - ${lvl.value}`;
+                              return tutorTeachingLevels.some(tl => tl === tutorLevelKey);
+                            })
+                            .map((lvl) => (
+                              <SelectItem key={lvl.value} value={lvl.value}>
+                                {lvl.label}
+                              </SelectItem>
+                            ))}
+                        </SelectContent>
+                      </Select>
+                      {curriculumSpecificRate !== null && curriculum && level && (
+                        <p className="text-sm font-semibold text-primary mt-2">
+                          Rate for {curriculum} - {level}: KES {curriculumSpecificRate.toLocaleString()}/hr
+                        </p>
+                      )}
+                    </div>
+                  )}
+
+                  <div>
+                    <Label className="text-sm font-medium mb-2 block">Subject *</Label>
+                    {tutorSubjects && tutorSubjects.length > 0 ? (
+                      <Select value={subject} onValueChange={setSubject} disabled={paymentInitiated}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select a subject" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-background z-50">
+                          {tutorSubjects.map((subj) => (
+                            <SelectItem key={subj} value={subj}>
+                              {subj}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    ) : (
+                      <Input
+                        placeholder="e.g., Mathematics - Algebra"
+                        value={subject}
+                        onChange={(e) => setSubject(e.target.value)}
+                        disabled={paymentInitiated}
+                      />
+                    )}
+                  </div>
+                </>
+              )}
 
               {!isTrialSession && (
                 <div>
