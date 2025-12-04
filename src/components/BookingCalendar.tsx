@@ -562,17 +562,24 @@ export const BookingCalendar = ({
 
       // Handle payment based on payment option
       if (paymentOption === 'package' && selectedExistingPackage) {
-      // Using existing package - book for free, confirm immediately
+        // Using existing package - book for free, confirm immediately
         await supabase
           .from("bookings")
           .update({ status: "confirmed" })
           .eq("id", booking.id);
 
-        // Save curriculum/level/subject to package metadata for future redemptions
+        // Deduct sessions from package - double sessions deduct 2, single deduct 1
+        const sessionsToDeduct = sessionDuration; // 1 for single, 2 for double
+        const newSessionsRemaining = Math.max(0, selectedExistingPackage.sessions_remaining - sessionsToDeduct);
+        const newSessionsUsed = (selectedExistingPackage.metadata?.sessions_used || 0) + sessionsToDeduct;
+        
+        // Save curriculum/level/subject to package metadata and deduct sessions
         const existingMetadata = selectedExistingPackage.metadata || {};
         await supabase
           .from("package_purchases")
           .update({
+            sessions_remaining: newSessionsRemaining,
+            sessions_used: newSessionsUsed,
             metadata: {
               ...existingMetadata,
               curriculum: curriculum,
@@ -602,7 +609,7 @@ export const BookingCalendar = ({
 
         toast({
           title: "Booking confirmed!",
-          description: "Your session has been booked using your package credits.",
+          description: `Your session has been booked using ${sessionsToDeduct} package credit${sessionsToDeduct > 1 ? 's' : ''}. ${newSessionsRemaining} remaining.`,
         });
 
         window.location.href = `/booking-confirmed?bookingId=${booking.id}`;
