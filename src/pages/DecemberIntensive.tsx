@@ -384,40 +384,6 @@ const DecemberIntensive = () => {
                       </Card>
 
                     </>}
-
-                  {/* Classes by Time Slot and Grade */}
-                  {timeSlots.map(timeSlot => {
-                const classesAtTime = filteredClasses.filter(cls => cls.time_slot === timeSlot);
-                if (classesAtTime.length === 0) return null;
-
-                // Group by subject AND grade level
-                const subjectGradeGroups: Record<string, IntensiveClass[]> = {};
-                classesAtTime.forEach(cls => {
-                  const gradeLevel = cls.grade_levels[0] || "";
-                  const key = `${cls.subject}-${gradeLevel}`;
-                  if (!subjectGradeGroups[key]) {
-                    subjectGradeGroups[key] = [];
-                  }
-                  subjectGradeGroups[key].push(cls);
-                });
-                return <div key={timeSlot} className="mb-8">
-                        <div className="flex items-center gap-2 mb-4">
-                          <Clock className="h-5 w-5 text-primary" />
-                          <h3 className="text-xl font-semibold">{timeSlot} EAT</h3>
-                          <Badge variant="outline">75 min</Badge>
-                          <span className="text-sm text-muted-foreground ml-2">Mon - Fri</span>
-                        </div>
-
-                        <div className="grid gap-4">
-                          {Object.entries(subjectGradeGroups).map(([key, classes]) => {
-                      const firstClass = classes[0];
-                      const gradeLevel = firstClass.grade_levels[0] || "";
-                      const isInCart = selectedClasses.some(c => c.id === firstClass.id);
-                      return <IntensiveClassCard key={key} subject={`${firstClass.subject} - ${gradeLevel}`} icon={getSubjectIcon(firstClass.subject)} classes={classes} isInCart={isInCart} onAddToCart={() => handleAddToCart(firstClass.id, firstClass.subject, firstClass.curriculum, gradeLevel)} weekDates={allDates} />;
-                    })}
-                        </div>
-                      </div>;
-              })}
                 </>}
             </Tabs>
           </div>
