@@ -80,6 +80,7 @@ export type Database = {
           payment_option: string | null
           status: string | null
           student_id: string
+          student_profile_id: string | null
           subject: string
           tutor_id: string
           updated_at: string | null
@@ -104,6 +105,7 @@ export type Database = {
           payment_option?: string | null
           status?: string | null
           student_id: string
+          student_profile_id?: string | null
           subject: string
           tutor_id: string
           updated_at?: string | null
@@ -128,6 +130,7 @@ export type Database = {
           payment_option?: string | null
           status?: string | null
           student_id?: string
+          student_profile_id?: string | null
           subject?: string
           tutor_id?: string
           updated_at?: string | null
@@ -145,6 +148,13 @@ export type Database = {
             columns: ["package_purchase_id"]
             isOneToOne: false
             referencedRelation: "package_purchases"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookings_student_profile_id_fkey"
+            columns: ["student_profile_id"]
+            isOneToOne: false
+            referencedRelation: "students"
             referencedColumns: ["id"]
           },
         ]
@@ -444,6 +454,7 @@ export type Database = {
           starts_at: string
           status: string | null
           student_id: string
+          student_profile_id: string | null
           updated_at: string | null
         }
         Insert: {
@@ -458,6 +469,7 @@ export type Database = {
           starts_at: string
           status?: string | null
           student_id: string
+          student_profile_id?: string | null
           updated_at?: string | null
         }
         Update: {
@@ -472,6 +484,7 @@ export type Database = {
           starts_at?: string
           status?: string | null
           student_id?: string
+          student_profile_id?: string | null
           updated_at?: string | null
         }
         Relationships: [
@@ -480,6 +493,13 @@ export type Database = {
             columns: ["group_class_id"]
             isOneToOne: false
             referencedRelation: "group_classes"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "group_class_enrollments_student_profile_id_fkey"
+            columns: ["student_profile_id"]
+            isOneToOne: false
+            referencedRelation: "students"
             referencedColumns: ["id"]
           },
         ]
@@ -712,6 +732,7 @@ export type Database = {
           pesapal_order_tracking_id: string | null
           program_id: string
           student_id: string
+          student_profile_id: string | null
           total_amount: number
           total_subjects: number
           updated_at: string | null
@@ -724,6 +745,7 @@ export type Database = {
           pesapal_order_tracking_id?: string | null
           program_id: string
           student_id: string
+          student_profile_id?: string | null
           total_amount: number
           total_subjects: number
           updated_at?: string | null
@@ -736,6 +758,7 @@ export type Database = {
           pesapal_order_tracking_id?: string | null
           program_id?: string
           student_id?: string
+          student_profile_id?: string | null
           total_amount?: number
           total_subjects?: number
           updated_at?: string | null
@@ -746,6 +769,13 @@ export type Database = {
             columns: ["program_id"]
             isOneToOne: false
             referencedRelation: "intensive_programs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "intensive_enrollments_student_profile_id_fkey"
+            columns: ["student_profile_id"]
+            isOneToOne: false
+            referencedRelation: "students"
             referencedColumns: ["id"]
           },
         ]
@@ -941,6 +971,7 @@ export type Database = {
           sessions_remaining: number
           sessions_used: number | null
           student_id: string
+          student_profile_id: string | null
           total_amount: number
           total_sessions: number
           tutor_id: string
@@ -960,6 +991,7 @@ export type Database = {
           sessions_remaining: number
           sessions_used?: number | null
           student_id: string
+          student_profile_id?: string | null
           total_amount: number
           total_sessions: number
           tutor_id: string
@@ -979,6 +1011,7 @@ export type Database = {
           sessions_remaining?: number
           sessions_used?: number | null
           student_id?: string
+          student_profile_id?: string | null
           total_amount?: number
           total_sessions?: number
           tutor_id?: string
@@ -990,6 +1023,13 @@ export type Database = {
             columns: ["package_offer_id"]
             isOneToOne: false
             referencedRelation: "package_offers"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "package_purchases_student_profile_id_fkey"
+            columns: ["student_profile_id"]
+            isOneToOne: false
+            referencedRelation: "students"
             referencedColumns: ["id"]
           },
           {
@@ -1155,6 +1195,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          account_type: string | null
           age: number | null
           avatar_url: string | null
           created_at: string | null
@@ -1172,6 +1213,7 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          account_type?: string | null
           age?: number | null
           avatar_url?: string | null
           created_at?: string | null
@@ -1189,6 +1231,7 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          account_type?: string | null
           age?: number | null
           avatar_url?: string | null
           created_at?: string | null
@@ -1325,6 +1368,51 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      students: {
+        Row: {
+          age: number | null
+          avatar_url: string | null
+          created_at: string | null
+          curriculum: string
+          email: string | null
+          full_name: string
+          grade_level: string
+          id: string
+          learning_goals: string | null
+          parent_id: string
+          subjects_of_interest: string[] | null
+          updated_at: string | null
+        }
+        Insert: {
+          age?: number | null
+          avatar_url?: string | null
+          created_at?: string | null
+          curriculum: string
+          email?: string | null
+          full_name: string
+          grade_level: string
+          id?: string
+          learning_goals?: string | null
+          parent_id: string
+          subjects_of_interest?: string[] | null
+          updated_at?: string | null
+        }
+        Update: {
+          age?: number | null
+          avatar_url?: string | null
+          created_at?: string | null
+          curriculum?: string
+          email?: string | null
+          full_name?: string
+          grade_level?: string
+          id?: string
+          learning_goals?: string | null
+          parent_id?: string
+          subjects_of_interest?: string[] | null
+          updated_at?: string | null
+        }
+        Relationships: []
       }
       tutor_applications: {
         Row: {
