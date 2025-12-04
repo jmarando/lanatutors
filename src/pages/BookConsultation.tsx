@@ -16,25 +16,19 @@ import { validateAndNormalizePhone } from "@/utils/phoneValidation";
 import { SEO } from "@/components/SEO";
 import { getCurriculums, getLevelsForCurriculum, getSubjectsForCurriculumLevel } from "@/utils/curriculumData";
 import { startOfDay, addHours, format, parse, isAfter } from "date-fns";
-
-const CONSULTATION_BENEFITS = [
-  {
-    icon: Users,
-    title: "Personalized Matching",
-    description: "We'll help identify the perfect tutor based on your student's specific needs, learning style, and academic goals"
-  },
-  {
-    icon: GraduationCap,
-    title: "Expert Guidance",
-    description: "Speak with experienced education consultants who understand Kenya's education system inside and out"
-  },
-  {
-    icon: Target,
-    title: "Custom Learning Plan",
-    description: "Get a tailored roadmap for success with subject recommendations, session frequency, and progress milestones"
-  }
-];
-
+const CONSULTATION_BENEFITS = [{
+  icon: Users,
+  title: "Personalized Matching",
+  description: "We'll help identify the perfect tutor based on your student's specific needs, learning style, and academic goals"
+}, {
+  icon: GraduationCap,
+  title: "Expert Guidance",
+  description: "Speak with experienced education consultants who understand Kenya's education system inside and out"
+}, {
+  icon: Target,
+  title: "Custom Learning Plan",
+  description: "Get a tailored roadmap for success with subject recommendations, session frequency, and progress milestones"
+}];
 const BookConsultation = () => {
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
@@ -48,62 +42,51 @@ const BookConsultation = () => {
     curriculum: "",
     gradeLevel: "",
     subjects: [] as string[],
-    additionalNotes: "",
+    additionalNotes: ""
   });
-
   const curriculums = getCurriculums();
   const availableLevels = formData.curriculum ? getLevelsForCurriculum(formData.curriculum) : [];
-  const availableSubjects = formData.curriculum && formData.gradeLevel 
-    ? getSubjectsForCurriculumLevel(formData.curriculum, formData.gradeLevel) 
-    : [];
+  const availableSubjects = formData.curriculum && formData.gradeLevel ? getSubjectsForCurriculumLevel(formData.curriculum, formData.gradeLevel) : [];
   const [loading, setLoading] = useState(false);
-
-  const availableTimeSlots = [
-    "09:00 AM", "10:00 AM", "11:00 AM", "12:00 PM",
-    "02:00 PM", "03:00 PM", "04:00 PM", "05:00 PM", "06:00 PM"
-  ];
+  const availableTimeSlots = ["09:00 AM", "10:00 AM", "11:00 AM", "12:00 PM", "02:00 PM", "03:00 PM", "04:00 PM", "05:00 PM", "06:00 PM"];
 
   // Filter time slots based on selected date and current time
   const filteredTimeSlots = useMemo(() => {
     if (!selectedDate) return availableTimeSlots;
-    
     const now = new Date();
     const isToday = startOfDay(selectedDate).getTime() === startOfDay(now).getTime();
-    
     if (!isToday) {
       // Future date - show all slots
       return availableTimeSlots;
     }
-    
+
     // Today - only show slots at least 1 hour from now
     const oneHourFromNow = addHours(now, 1);
-    
     return availableTimeSlots.filter(timeSlot => {
       // Parse the time slot (e.g., "09:00 AM") into a Date object for today
       const slotTime = parse(timeSlot, "hh:mm a", selectedDate);
       return isAfter(slotTime, oneHourFromNow);
     });
   }, [selectedDate, availableTimeSlots]);
-
-  const progress = (step / 4) * 100;
-
+  const progress = step / 4 * 100;
   const validateStep1 = () => {
     if (!formData.parentName || !formData.studentName || !formData.phoneNumber || !formData.email) {
       toast.error("Please fill in all required fields");
       return false;
     }
-    
     const phoneValidation = validateAndNormalizePhone(formData.phoneNumber);
     if (!phoneValidation.isValid) {
       toast.error(phoneValidation.error || "Invalid phone number");
       return false;
     }
-    
+
     // Update the phone number to normalized format
-    setFormData({ ...formData, phoneNumber: phoneValidation.normalized });
+    setFormData({
+      ...formData,
+      phoneNumber: phoneValidation.normalized
+    });
     return true;
   };
-
   const validateStep2 = () => {
     if (!formData.curriculum || !formData.gradeLevel || formData.subjects.length === 0) {
       toast.error("Please fill in all required fields");
@@ -111,7 +94,6 @@ const BookConsultation = () => {
     }
     return true;
   };
-
   const validateStep3 = () => {
     if (!selectedDate || !selectedTime) {
       toast.error("Please select a date and time");
@@ -119,54 +101,50 @@ const BookConsultation = () => {
     }
     return true;
   };
-
   const handleNext = () => {
     // Step 1 is just benefits overview, no validation needed
     // Step 2 needs validateStep1 (basic info: parent, student, phone)
     // Step 3 needs validateStep2 (learning details: grade, subjects, mode) and validateStep3 (date & time)
-    
+
     if (step === 2 && !validateStep1()) return;
     if (step === 3 && !validateStep2()) return;
     if (step === 3 && !validateStep3()) return;
-    
     if (step === 3) {
       handleSubmit();
     } else {
       setStep(step + 1);
     }
   };
-
   const handleSubmit = async () => {
     setLoading(true);
-
     try {
       // Step 1: Create Google Calendar event
-      const { data: calendarData, error: calendarError } = await supabase.functions.invoke(
-        "create-consultation-calendar-event",
-        {
-          body: {
-            parentName: formData.parentName,
-            studentName: formData.studentName,
-            email: formData.email,
-            phoneNumber: formData.phoneNumber,
-            consultationDate: selectedDate!.toISOString().split('T')[0],
-            consultationTime: selectedTime,
-            subjects: formData.subjects,
-            gradeLevel: `${formData.curriculum} - ${formData.gradeLevel}`,
-            notes: formData.additionalNotes,
-          },
+      const {
+        data: calendarData,
+        error: calendarError
+      } = await supabase.functions.invoke("create-consultation-calendar-event", {
+        body: {
+          parentName: formData.parentName,
+          studentName: formData.studentName,
+          email: formData.email,
+          phoneNumber: formData.phoneNumber,
+          consultationDate: selectedDate!.toISOString().split('T')[0],
+          consultationTime: selectedTime,
+          subjects: formData.subjects,
+          gradeLevel: `${formData.curriculum} - ${formData.gradeLevel}`,
+          notes: formData.additionalNotes
         }
-      );
-
+      });
       if (calendarError) {
         console.error("Calendar event error:", calendarError);
         throw new Error("Failed to create calendar event");
       }
-
       const meetingLink = calendarData.meetingLink;
 
       // Step 2: Insert booking into database with meeting link
-      const { error: dbError } = await supabase.from("consultation_bookings").insert({
+      const {
+        error: dbError
+      } = await supabase.from("consultation_bookings").insert({
         parent_name: formData.parentName,
         student_name: formData.studentName,
         phone_number: formData.phoneNumber,
@@ -178,9 +156,8 @@ const BookConsultation = () => {
         consultation_date: selectedDate!.toISOString().split('T')[0],
         consultation_time: selectedTime,
         status: "confirmed",
-        meeting_link: meetingLink,
+        meeting_link: meetingLink
       });
-
       if (dbError) throw dbError;
 
       // Step 3: Send confirmation email
@@ -191,12 +168,11 @@ const BookConsultation = () => {
           studentName: formData.studentName,
           consultationDate: selectedDate!.toISOString().split('T')[0],
           consultationTime: selectedTime,
-          meetingLink,
-        },
+          meetingLink
+        }
       });
-
       toast.success("Consultation booked! Check your email for details.");
-      
+
       // Navigate to confirmation page with details
       navigate(`/consultation-confirmed?parentName=${encodeURIComponent(formData.parentName)}&studentName=${encodeURIComponent(formData.studentName)}&date=${selectedDate!.toISOString().split('T')[0]}&time=${encodeURIComponent(selectedTime)}&email=${encodeURIComponent(formData.email)}`);
     } catch (error: any) {
@@ -206,14 +182,8 @@ const BookConsultation = () => {
       setLoading(false);
     }
   };
-
-  return (
-    <div className="min-h-screen bg-[image:var(--gradient-page)] py-12 px-6">
-      <SEO
-        title="Book Free Consultation - Get Expert Tutor Matching"
-        description="Schedule a free 30-minute consultation with Lana education experts. Get personalized tutor recommendations, custom learning plan, and expert guidance for your child's success."
-        keywords="free tutoring consultation Kenya, education consultation, tutor matching Kenya, academic counseling, learning plan Kenya"
-      />
+  return <div className="min-h-screen bg-[image:var(--gradient-page)] py-12 px-6">
+      <SEO title="Book Free Consultation - Get Expert Tutor Matching" description="Schedule a free 30-minute consultation with Lana education experts. Get personalized tutor recommendations, custom learning plan, and expert guidance for your child's success." keywords="free tutoring consultation Kenya, education consultation, tutor matching Kenya, academic counseling, learning plan Kenya" />
       
       <div className="max-w-4xl mx-auto">
         <Link to="/" className="flex items-center justify-center gap-2 mb-8" aria-label="Lana Home">
@@ -233,13 +203,10 @@ const BookConsultation = () => {
             </CardDescription>
           </CardHeader>
           <CardContent className="pt-0">{/* Step 1: Choose Path or Why Book */}
-            {step === 1 && (
-              <div className="space-y-6">
+            {step === 1 && <div className="space-y-6">
                 <div>
-                  <h3 className="font-semibold text-xl mb-2 text-center">Choose Your Path</h3>
-                  <p className="text-sm text-muted-foreground text-center mb-8">
-                    Get started with personalized tutor matching
-                  </p>
+                  
+                  
                 </div>
 
                 {/* Traditional Consultation - Now First */}
@@ -259,17 +226,15 @@ const BookConsultation = () => {
 
                     <div className="grid gap-3 mt-4">
                       {CONSULTATION_BENEFITS.map((benefit, index) => {
-                        const Icon = benefit.icon;
-                        return (
-                          <div key={index} className="flex gap-3">
+                    const Icon = benefit.icon;
+                    return <div key={index} className="flex gap-3">
                             <Icon className="w-5 h-5 text-primary flex-shrink-0 mt-0.5" />
                             <div>
                               <h5 className="font-medium text-sm">{benefit.title}</h5>
                               <p className="text-xs text-muted-foreground">{benefit.description}</p>
                             </div>
-                          </div>
-                        );
-                      })}
+                          </div>;
+                  })}
                     </div>
 
                     <Button className="w-full mt-4" onClick={() => setStep(2)}>
@@ -299,13 +264,11 @@ const BookConsultation = () => {
                     <Button variant="ghost">Back to Home</Button>
                   </Link>
                 </div>
-              </div>
-            )}
+              </div>}
 
 
             {/* Step 2: Basic Information */}
-            {step === 2 && (
-              <div className="space-y-4">
+            {step === 2 && <div className="space-y-4">
                 <div>
                   <h3 className="font-semibold text-lg mb-1">Basic Information</h3>
                   <p className="text-sm text-muted-foreground">
@@ -316,48 +279,35 @@ const BookConsultation = () => {
                 <div className="grid md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="parentName">Parent/Guardian Name *</Label>
-                    <Input
-                      id="parentName"
-                      value={formData.parentName}
-                      onChange={(e) => setFormData({ ...formData, parentName: e.target.value })}
-                      placeholder="Your full name"
-                      required
-                    />
+                    <Input id="parentName" value={formData.parentName} onChange={e => setFormData({
+                  ...formData,
+                  parentName: e.target.value
+                })} placeholder="Your full name" required />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="studentName">Student Name *</Label>
-                    <Input
-                      id="studentName"
-                      value={formData.studentName}
-                      onChange={(e) => setFormData({ ...formData, studentName: e.target.value })}
-                      placeholder="Student's full name"
-                      required
-                    />
+                    <Input id="studentName" value={formData.studentName} onChange={e => setFormData({
+                  ...formData,
+                  studentName: e.target.value
+                })} placeholder="Student's full name" required />
                   </div>
                 </div>
 
                 <div className="grid md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="phoneNumber">Phone Number *</Label>
-                    <Input
-                      id="phoneNumber"
-                      placeholder="+254712345678 or 0712345678"
-                      value={formData.phoneNumber}
-                      onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
-                      required
-                    />
+                    <Input id="phoneNumber" placeholder="+254712345678 or 0712345678" value={formData.phoneNumber} onChange={e => setFormData({
+                  ...formData,
+                  phoneNumber: e.target.value
+                })} required />
                     <p className="text-xs text-muted-foreground">Accepts: +254, 254, or 0 prefix</p>
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="email">Email *</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      placeholder="your@email.com"
-                      value={formData.email}
-                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                      required
-                    />
+                    <Input id="email" type="email" placeholder="your@email.com" value={formData.email} onChange={e => setFormData({
+                  ...formData,
+                  email: e.target.value
+                })} required />
                   </div>
                 </div>
 
@@ -369,12 +319,10 @@ const BookConsultation = () => {
                     Continue
                   </Button>
                 </div>
-              </div>
-            )}
+              </div>}
 
             {/* Step 3: Learning Details & Schedule */}
-            {step === 3 && (
-              <div className="space-y-4">
+            {step === 3 && <div className="space-y-4">
                 <div>
                   <h3 className="font-semibold text-lg mb-1">Learning Details</h3>
                   <p className="text-sm text-muted-foreground">
@@ -385,44 +333,37 @@ const BookConsultation = () => {
                 <div className="grid md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="curriculum">Curriculum *</Label>
-                    <Select 
-                      value={formData.curriculum} 
-                      onValueChange={(value) => setFormData({ 
-                        ...formData, 
-                        curriculum: value, 
-                        gradeLevel: "",
-                        subjects: []
-                      })}
-                    >
+                    <Select value={formData.curriculum} onValueChange={value => setFormData({
+                  ...formData,
+                  curriculum: value,
+                  gradeLevel: "",
+                  subjects: []
+                })}>
                       <SelectTrigger>
                         <SelectValue placeholder="Select curriculum" />
                       </SelectTrigger>
                       <SelectContent className="bg-background z-50">
-                        {curriculums.map(curriculum => (
-                          <SelectItem key={curriculum} value={curriculum}>
+                        {curriculums.map(curriculum => <SelectItem key={curriculum} value={curriculum}>
                             {curriculum}
-                          </SelectItem>
-                        ))}
+                          </SelectItem>)}
                       </SelectContent>
                     </Select>
                   </div>
 
                   <div className="space-y-2">
                     <Label htmlFor="gradeLevel">Level/Year *</Label>
-                    <Select 
-                      value={formData.gradeLevel} 
-                      onValueChange={(value) => setFormData({ ...formData, gradeLevel: value, subjects: [] })}
-                      disabled={!formData.curriculum}
-                    >
+                    <Select value={formData.gradeLevel} onValueChange={value => setFormData({
+                  ...formData,
+                  gradeLevel: value,
+                  subjects: []
+                })} disabled={!formData.curriculum}>
                       <SelectTrigger>
                         <SelectValue placeholder={formData.curriculum ? "Select level" : "Select curriculum first"} />
                       </SelectTrigger>
                       <SelectContent className="bg-background z-50">
-                        {availableLevels.map(level => (
-                          <SelectItem key={level.value} value={level.value}>
+                        {availableLevels.map(level => <SelectItem key={level.value} value={level.value}>
                             {level.label}
-                          </SelectItem>
-                      ))}
+                          </SelectItem>)}
                     </SelectContent>
                   </Select>
                   </div>
@@ -431,54 +372,33 @@ const BookConsultation = () => {
                 <div className="space-y-2">
                   <Label htmlFor="subjects">Subjects of Interest *</Label>
                   <div className="border rounded-md p-2.5 min-h-[60px] bg-muted/30">
-                    {formData.subjects.length > 0 ? (
-                      <div className="flex flex-wrap gap-1.5 mb-2">
-                        {formData.subjects.map(subject => (
-                          <Badge key={subject} variant="secondary" className="cursor-pointer text-xs" onClick={() => {
-                            setFormData({
-                              ...formData,
-                              subjects: formData.subjects.filter(s => s !== subject)
-                            });
-                          }}>
+                    {formData.subjects.length > 0 ? <div className="flex flex-wrap gap-1.5 mb-2">
+                        {formData.subjects.map(subject => <Badge key={subject} variant="secondary" className="cursor-pointer text-xs" onClick={() => {
+                    setFormData({
+                      ...formData,
+                      subjects: formData.subjects.filter(s => s !== subject)
+                    });
+                  }}>
                             {subject} ×
-                          </Badge>
-                        ))}
-                      </div>
-                    ) : (
-                      <p className="text-xs text-muted-foreground mb-2">
-                        {!formData.curriculum || !formData.gradeLevel 
-                          ? "Please select curriculum and level first" 
-                          : "Select subjects from the dropdown below"}
-                      </p>
-                    )}
-                    <Select
-                      disabled={!formData.curriculum || !formData.gradeLevel}
-                      onValueChange={(value) => {
-                        if (!formData.subjects.includes(value)) {
-                          setFormData({
-                            ...formData,
-                            subjects: [...formData.subjects, value]
-                          });
-                        }
-                      }}
-                    >
+                          </Badge>)}
+                      </div> : <p className="text-xs text-muted-foreground mb-2">
+                        {!formData.curriculum || !formData.gradeLevel ? "Please select curriculum and level first" : "Select subjects from the dropdown below"}
+                      </p>}
+                    <Select disabled={!formData.curriculum || !formData.gradeLevel} onValueChange={value => {
+                  if (!formData.subjects.includes(value)) {
+                    setFormData({
+                      ...formData,
+                      subjects: [...formData.subjects, value]
+                    });
+                  }
+                }}>
                       <SelectTrigger>
-                        <SelectValue placeholder={
-                          !formData.curriculum || !formData.gradeLevel 
-                            ? "Select curriculum and level first" 
-                            : "Add a subject..."
-                        } />
+                        <SelectValue placeholder={!formData.curriculum || !formData.gradeLevel ? "Select curriculum and level first" : "Add a subject..."} />
                       </SelectTrigger>
                       <SelectContent className="bg-background z-50 max-h-[300px]">
-                        {availableSubjects.map(subject => (
-                          <SelectItem 
-                            key={subject} 
-                            value={subject}
-                            disabled={formData.subjects.includes(subject)}
-                          >
+                        {availableSubjects.map(subject => <SelectItem key={subject} value={subject} disabled={formData.subjects.includes(subject)}>
                             {subject}
-                          </SelectItem>
-                        ))}
+                          </SelectItem>)}
                       </SelectContent>
                     </Select>
                   </div>
@@ -487,14 +407,10 @@ const BookConsultation = () => {
 
                 <div className="space-y-2">
                   <Label htmlFor="additionalNotes">Additional Notes (Optional)</Label>
-                  <Textarea
-                    id="additionalNotes"
-                    placeholder="Any specific concerns or questions you'd like to discuss?"
-                    value={formData.additionalNotes}
-                    onChange={(e) => setFormData({ ...formData, additionalNotes: e.target.value })}
-                    rows={2}
-                    className="resize-none"
-                  />
+                  <Textarea id="additionalNotes" placeholder="Any specific concerns or questions you'd like to discuss?" value={formData.additionalNotes} onChange={e => setFormData({
+                ...formData,
+                additionalNotes: e.target.value
+              })} rows={2} className="resize-none" />
                 </div>
 
                 <div className="border-t pt-4 mt-4">
@@ -505,18 +421,12 @@ const BookConsultation = () => {
                   <div className="grid md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label>Choose Date *</Label>
-                      <Calendar
-                        mode="single"
-                        selected={selectedDate}
-                        onSelect={setSelectedDate}
-                        disabled={(date) => {
-                          const today = startOfDay(new Date());
-                          const checkDate = startOfDay(date);
-                          // Disable past dates (before today) and Sundays
-                          return checkDate < today || date.getDay() === 0;
-                        }}
-                        className="rounded-md border"
-                      />
+                      <Calendar mode="single" selected={selectedDate} onSelect={setSelectedDate} disabled={date => {
+                    const today = startOfDay(new Date());
+                    const checkDate = startOfDay(date);
+                    // Disable past dates (before today) and Sundays
+                    return checkDate < today || date.getDay() === 0;
+                  }} className="rounded-md border" />
                       <p className="text-xs text-muted-foreground">Consultations available Monday-Saturday</p>
                     </div>
                     <div className="space-y-2">
@@ -524,34 +434,21 @@ const BookConsultation = () => {
                         <Label>Choose Time *</Label>
                         <span className="text-xs text-muted-foreground">EAT</span>
                       </div>
-                      {filteredTimeSlots.length === 0 ? (
-                        <div className="text-sm text-muted-foreground p-3 border rounded-md">
+                      {filteredTimeSlots.length === 0 ? <div className="text-sm text-muted-foreground p-3 border rounded-md">
                           No available time slots for today. Please select a future date or try again later.
-                        </div>
-                      ) : (
-                        <div className="grid grid-cols-2 gap-2">
-                          {filteredTimeSlots.map((time) => (
-                            <Button
-                              key={time}
-                              type="button"
-                              variant={selectedTime === time ? "default" : "outline"}
-                              size="sm"
-                              onClick={() => setSelectedTime(time)}
-                              className="justify-start"
-                            >
+                        </div> : <div className="grid grid-cols-2 gap-2">
+                          {filteredTimeSlots.map(time => <Button key={time} type="button" variant={selectedTime === time ? "default" : "outline"} size="sm" onClick={() => setSelectedTime(time)} className="justify-start">
                               <Clock className="w-4 h-4 mr-2" />
                               {time}
-                            </Button>
-                          ))}
-                        </div>
-                      )}
+                            </Button>)}
+                        </div>}
                     </div>
                   </div>
                 </div>
 
                 <div className="bg-blue-50 dark:bg-blue-950 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
                   <p className="text-sm text-blue-900 dark:text-blue-100">
-                    <strong>📧 What happens next:</strong><br/>
+                    <strong>📧 What happens next:</strong><br />
                     After booking, you'll receive:
                   </p>
                   <ul className="text-sm text-blue-800 dark:text-blue-200 mt-2 space-y-1 ml-4 list-disc">
@@ -568,12 +465,10 @@ const BookConsultation = () => {
                     {loading ? "Booking..." : "Confirm Booking"}
                   </Button>
                 </div>
-              </div>
-            )}
+              </div>}
 
             {/* Step 4: Confirmation */}
-            {step === 4 && (
-              <div className="space-y-6 py-8 text-center">
+            {step === 4 && <div className="space-y-6 py-8 text-center">
                 <div className="flex justify-center">
                   <div className="rounded-full bg-primary/10 p-6">
                     <CheckCircle className="w-16 h-16 text-primary" />
@@ -634,13 +529,10 @@ const BookConsultation = () => {
                 <Link to="/">
                   <Button size="lg">Return to Home</Button>
                 </Link>
-              </div>
-            )}
+              </div>}
           </CardContent>
         </Card>
       </div>
-    </div>
-  );
+    </div>;
 };
-
 export default BookConsultation;
