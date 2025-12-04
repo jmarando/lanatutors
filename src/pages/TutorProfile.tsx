@@ -18,6 +18,8 @@ import { formatName } from "@/utils/textFormatting";
 import { BookingCalendar } from "@/components/BookingCalendar";
 import { PackageSelector } from "@/components/PackageSelector";
 import { LearningPlanRequest } from "@/components/LearningPlanRequest";
+import { StudentPicker } from "@/components/StudentPicker";
+import { Student } from "@/hooks/useStudents";
 import { cn } from "@/lib/utils";
 import { getCurriculums, getLevelsForCurriculum, getSubjectsForCurriculumLevel } from "@/utils/curriculumData";
 
@@ -41,6 +43,8 @@ const TutorProfile = () => {
   const [packageCurriculum, setPackageCurriculum] = useState<string>('');
   const [packageLevel, setPackageLevel] = useState<string>('');
   const [packageSubject, setPackageSubject] = useState<string>('');
+  const [packageStudent, setPackageStudent] = useState<Student | null>(null);
+  const [packageBookingForSelf, setPackageBookingForSelf] = useState(false);
   const [bookingType, setBookingType] = useState<'paid' | 'trial' | 'free' | 'single' | 'double'>('paid');
   const [tutor, setTutor] = useState<any>(null);
   const [currentUser, setCurrentUser] = useState<any>(null);
@@ -306,10 +310,12 @@ const TutorProfile = () => {
 
   const handlePackageSelect = async (pkg: any) => {
     setSelectedPackage(pkg);
-    // Reset curriculum/level/subject selections
+    // Reset curriculum/level/subject/student selections
     setPackageCurriculum('');
     setPackageLevel('');
     setPackageSubject('');
+    setPackageStudent(null);
+    setPackageBookingForSelf(false);
     
     if (!currentUser) {
       const { data: { user } } = await supabase.auth.getUser();
@@ -366,7 +372,7 @@ const TutorProfile = () => {
 
       const currency = profile?.preferred_currency || 'KES';
 
-      // Create package purchase record with metadata including curriculum/level/subject
+      // Create package purchase record with metadata including curriculum/level/subject and student
       const { data: purchase, error: purchaseError } = await supabase
         .from('package_purchases')
         .insert({
@@ -379,6 +385,7 @@ const TutorProfile = () => {
           amount_paid: 0,
           payment_status: 'pending',
           currency: currency,
+          student_profile_id: packageStudent?.id || null,
           metadata: {
             type: 'package_offer',
             paymentOption: packagePaymentOption,
@@ -389,6 +396,7 @@ const TutorProfile = () => {
             curriculum: packageCurriculum,
             level: packageLevel,
             subject: packageSubject,
+            studentName: packageStudent?.full_name || null,
           } as any,
         })
         .select()
@@ -1013,6 +1021,18 @@ const TutorProfile = () => {
                         </div>
                       </CardContent>
                     </Card>
+
+                    {/* Student Picker for package */}
+                    <StudentPicker
+                      onStudentSelect={(student, forSelf) => {
+                        setPackageStudent(student);
+                        setPackageBookingForSelf(forSelf);
+                      }}
+                      selectedStudentId={packageStudent?.id}
+                      bookingForSelf={packageBookingForSelf}
+                      defaultCurriculum={packageCurriculum}
+                      defaultLevel={packageLevel}
+                    />
 
                     {/* Curriculum, Level, and Subject Selection */}
                     <Card className="bg-muted/30 border-border/50">

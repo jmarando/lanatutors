@@ -52,6 +52,19 @@ serve(async (req) => {
       .eq("id", enrollment.student_id)
       .single();
 
+    // If enrollment has student_profile_id, fetch the student's name from students table
+    let actualStudentName = profile?.full_name;
+    if (enrollment.student_profile_id) {
+      const { data: studentChildProfile } = await supabaseAdmin
+        .from("students")
+        .select("full_name")
+        .eq("id", enrollment.student_profile_id)
+        .maybeSingle();
+      if (studentChildProfile?.full_name) {
+        actualStudentName = studentChildProfile.full_name;
+      }
+    }
+
     // Fetch enrolled classes WITH meeting_link and tutor info
     const { data: classes } = await supabaseAdmin
       .from("intensive_classes")
@@ -152,6 +165,12 @@ serve(async (req) => {
                     <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
                       <tr>
                         <td style="padding-bottom: 8px; font-size: 18px; font-weight: 600; color: #1a1a1a;">Hi ${profile?.full_name || "there"},</td>
+                      </tr>
+                      ${actualStudentName && actualStudentName !== profile?.full_name ? `
+                      <tr>
+                        <td style="padding-bottom: 8px; font-size: 14px; color: #4a4a4a;">Enrollment for: <strong>${actualStudentName}</strong></td>
+                      </tr>
+                      ` : ''}
                       </tr>
                       <tr>
                         <td style="padding-bottom: 20px; font-size: 15px; line-height: 1.6; color: #4a4a4a;">

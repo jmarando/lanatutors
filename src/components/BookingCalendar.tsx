@@ -17,6 +17,8 @@ import { Loader2, CreditCard, Smartphone, FileText, Package } from "lucide-react
 import { PaymentOptionsCard } from "./PaymentOptionsCard";
 import { NAIROBI_LOCATIONS } from "@/utils/locationData";
 import { getLevelsForCurriculum } from "@/utils/curriculumData";
+import { StudentPicker } from "./StudentPicker";
+import { Student } from "@/hooks/useStudents";
 
 interface AvailabilitySlot {
   id: string;
@@ -104,6 +106,8 @@ export const BookingCalendar = ({
   const { toast } = useToast();
   const navigate = useNavigate();
   const [tutorUserId, setTutorUserId] = useState<string | null>(null);
+  const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
+  const [bookingForSelf, setBookingForSelf] = useState(false);
 
   useEffect(() => {
     // Determine curriculum-level-specific rate when curriculum or level changes
@@ -495,6 +499,7 @@ export const BookingCalendar = ({
           payment_option: isTrialSession ? 'deposit' : paymentOption,
           package_purchase_id: packagePurchaseId,
           booking_group_id: bookingGroupId,
+          student_profile_id: selectedStudent?.id || null,
         })
         .select()
         .single();
@@ -855,6 +860,18 @@ export const BookingCalendar = ({
 
           {selectedSlot && (
             <div className="space-y-4 pt-4 border-t">
+              {/* Student Picker for parent accounts */}
+              <StudentPicker
+                onStudentSelect={(student, forSelf) => {
+                  setSelectedStudent(student);
+                  setBookingForSelf(forSelf);
+                }}
+                selectedStudentId={selectedStudent?.id}
+                bookingForSelf={bookingForSelf}
+                defaultCurriculum={curriculum}
+                defaultLevel={level}
+              />
+              
               {/* In redemption mode with pre-populated data, show read-only display */}
               {redeemPackageId && selectedExistingPackage?.metadata?.curriculum && selectedExistingPackage?.metadata?.level && selectedExistingPackage?.metadata?.subject ? (
                 <div className="bg-green-50 dark:bg-green-950/30 border border-green-200 rounded-lg p-4 space-y-2">
