@@ -25,6 +25,7 @@ import { StudentList } from "@/components/admin/StudentList";
 import { AdminGroupClasses } from "@/components/admin/AdminGroupClasses";
 import { GroupClassTutorAssignment } from "@/components/admin/GroupClassTutorAssignment";
 import { AdminIntensivePrograms } from "@/components/admin/AdminIntensivePrograms";
+import { AdminTutorProfileEdit } from "@/components/admin/AdminTutorProfileEdit";
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -1184,6 +1185,10 @@ The Lana Team`;
             <TabsTrigger value="group-classes">
               <Users className="h-4 w-4 mr-2" />
               Group Classes
+            </TabsTrigger>
+            <TabsTrigger value="edit-tutors">
+              <Edit className="h-4 w-4 mr-2" />
+              Edit Tutors
             </TabsTrigger>
           </TabsList>
 
@@ -2395,6 +2400,11 @@ The Lana Team`;
       {/* Group Classes Tab */}
       <TabsContent value="group-classes">
         <AdminGroupClasses />
+      </TabsContent>
+
+      {/* Edit Tutors Tab */}
+      <TabsContent value="edit-tutors">
+        <AdminTutorProfileEdit />
       </TabsContent>
     </Tabs>
 
