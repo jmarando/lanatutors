@@ -22,6 +22,7 @@ interface IntensiveClass {
   meeting_link: string | null;
   tutor_name?: string;
   focus_topics?: string | null;
+  description?: string | null;
   session_topics?: Json | null;
 }
 
@@ -37,6 +38,7 @@ interface Tutor {
 
 // Track local edits for inline editing
 interface ClassEdits {
+  description: string;
   focus_topics: string;
   week1: string;
   week2: string;
@@ -127,7 +129,7 @@ export const AdminIntensivePrograms = () => {
       const initialEdits: Record<string, ClassEdits> = {};
       enrichedClasses.forEach((cls) => {
         const { focusTopics, week1, week2 } = parseClassTopics(cls);
-        initialEdits[cls.id] = { focus_topics: focusTopics, week1, week2 };
+        initialEdits[cls.id] = { description: (cls as any).description || '', focus_topics: focusTopics, week1, week2 };
       });
       setClassEdits(initialEdits);
     } catch (error) {
@@ -198,17 +200,18 @@ export const AdminIntensivePrograms = () => {
       const { error } = await supabase
         .from('intensive_classes')
         .update({ 
-          focus_topics: combinedFocusTopics.trim()
-        })
+          focus_topics: combinedFocusTopics.trim(),
+          description: edits.description || null
+        } as any)
         .eq('id', classId);
       
       if (error) throw error;
       
-      toast.success('Class topics saved successfully');
+      toast.success('Class saved successfully');
       fetchData(); // Refresh to get updated data
     } catch (error) {
-      console.error('Error saving topics:', error);
-      toast.error('Failed to save topics');
+      console.error('Error saving:', error);
+      toast.error('Failed to save');
     } finally {
       setSavingClass(null);
     }
@@ -765,7 +768,7 @@ export const AdminIntensivePrograms = () => {
                   <TableBody>
                     {curriculumClasses.map((cls) => {
                       const sortedTutors = getSortedTutorsForClass(cls);
-                      const edits = classEdits[cls.id] || { focus_topics: '', week1: '', week2: '' };
+                      const edits = classEdits[cls.id] || { description: '', focus_topics: '', week1: '', week2: '' };
 
                       return (
                         <TableRow key={cls.id}>
@@ -846,8 +849,8 @@ export const AdminIntensivePrograms = () => {
                           </TableCell>
                           <TableCell>
                             <Textarea
-                              value={edits.focus_topics}
-                              onChange={(e) => handleEditChange(cls.id, 'focus_topics', e.target.value)}
+                              value={edits.description}
+                              onChange={(e) => handleEditChange(cls.id, 'description', e.target.value)}
                               placeholder="Class description..."
                               className="min-h-[60px] text-xs resize-none"
                             />
