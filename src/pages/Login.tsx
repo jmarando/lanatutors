@@ -282,7 +282,7 @@ const Login = () => {
                 <div className="flex flex-col gap-3 text-sm">
                 <div className="flex justify-between items-center">
                   <p className="text-muted-foreground">
-                    New student?{" "}
+                    New here?{" "}
                     <Link 
                       to={`/student-signup${window.location.search}`} 
                       className="text-primary hover:underline font-medium"
