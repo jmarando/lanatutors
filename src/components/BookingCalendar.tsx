@@ -507,54 +507,14 @@ export const BookingCalendar = ({
 
       if (bookingError) throw bookingError;
 
-      // Try to create Google Meet session for all bookings (optional)
-      let meetData = null;
-      try {
-        const { data, error: meetError } = await supabase.functions.invoke(
-          "create-google-meet-session",
-          {
-            body: {
-              bookingId: booking.id,
-              tutorEmail: tutorEmail || "tutor@example.com",
-              studentEmail: studentEmail || "student@example.com",
-              studentName: studentName || "Student",
-              tutorName: tutorName,
-              subject,
-              startTime: selectedSlot.start_time,
-              endTime: selectedSlot.end_time,
-            },
-          }
-        );
-
-        if (meetError) {
-          console.error("Failed to create Google Meet session:", meetError);
-        } else {
-          meetData = data;
-        }
-      } catch (error) {
-        console.error("Error creating Google Meet session:", error);
-        // Continue with booking process even if Meet link fails
-      }
+      // Note: Google Meet and email sending happens via create-booking-with-meet after payment
+      // For immediate booking flows (trial, package redemption), it's called directly below
 
       // For trial sessions, skip payment and send confirmation immediately
       if (isTrialSession) {
-        // Send email notifications
-        await supabase.functions.invoke("send-booking-email", {
-          body: {
-            studentEmail,
-            studentName,
-            tutorEmail,
-            tutorName,
-            subject: `FREE CONSULTATION: ${subject.trim()}`,
-            startTime: selectedSlot.start_time,
-            endTime: selectedSlot.end_time,
-            meetingLink: meetData?.meetLink,
-            classType: selectedClassType,
-            totalAmount: 0,
-            depositPaid: 0,
-            balanceDue: 0,
-            testEmail: "justin@glab.africa", // TEST MODE
-          },
+        // Create meet link and send booking confirmation emails
+        await supabase.functions.invoke("create-booking-with-meet", {
+          body: { bookingId: booking.id },
         });
 
         toast({
@@ -595,22 +555,9 @@ export const BookingCalendar = ({
           })
           .eq("id", selectedExistingPackage.id);
 
-        await supabase.functions.invoke("send-booking-email", {
-          body: {
-            studentEmail,
-            studentName,
-            tutorEmail,
-            tutorName,
-            subject: subject.trim(),
-            startTime: selectedSlot.start_time,
-            endTime: selectedSlot.end_time,
-            meetingLink: meetData?.meetLink,
-            classType: selectedClassType,
-            totalAmount: 0,
-            depositPaid: 0,
-            balanceDue: 0,
-            testEmail: "justin@glab.africa", // TEST MODE
-          },
+        // Create meet link and send booking email
+        await supabase.functions.invoke("create-booking-with-meet", {
+          body: { bookingId: booking.id },
         });
 
         toast({
