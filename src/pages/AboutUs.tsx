@@ -70,7 +70,7 @@ const AboutUs = () => {
       title: "2. Get Matched with Perfect Tutor",
       description: "We'll connect you with verified tutors from Kenya's top schools who specialize in your subject areas.",
       details: [
-        "Access 500+ verified tutors from Alliance, Starehe, Kenya High, and more",
+        "Access verified tutors from Kenya's top schools",
         "View detailed profiles with qualifications and experience",
         "Read verified reviews from students and parents worldwide",
         "Learn online from anywhere or choose in-person sessions in Kenya"
@@ -115,7 +115,7 @@ const AboutUs = () => {
     {
       icon: ShieldCheck,
       title: "Verified Expert Tutors",
-      description: "Every tutor is a verified teacher from top Kenyan schools including Alliance, Starehe, Kenya High, and more. Students worldwide can access these expert tutors online. We verify teaching credentials, academic qualifications, and conduct thorough background checks. Only the top 15% of applicants are accepted.",
+      description: "Every tutor is a verified teacher from Kenya's top schools. Students worldwide can access these expert tutors online. We verify teaching credentials, academic qualifications, and conduct thorough background checks. Only the top 15% of applicants are accepted.",
       highlights: [
         "Background-checked educators",
         "From top-tier Kenyan schools",
