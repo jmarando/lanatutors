@@ -26,7 +26,7 @@ interface StudentSelectorProps {
 
 const allCurricula = ["CBC", "8-4-4", "IGCSE", "A-Level", "IB"];
 const gradesByCurriculum: Record<string, string[]> = {
-  "CBC": ["Grade 7", "Grade 8", "Grade 9"],
+  "CBC": ["Grade 8", "Grade 9"],
   "8-4-4": ["Form 3", "Form 4"],
   "IGCSE": ["Year 10", "Year 11"],
   "A-Level": ["Year 12", "Year 13"],

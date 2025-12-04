@@ -561,7 +561,7 @@ export const AdminIntensivePrograms = () => {
     const curriculumOrder: Record<string, number> = { 'CBC': 1, '8-4-4': 2, 'IGCSE': 3, 'A-Level': 4, 'IB': 5 };
     // Define grade order within curricula
     const gradeOrder: Record<string, number> = {
-      'Grade 7': 1, 'Grade 8': 2, 'Grade 9': 3,
+      'Grade 8': 1, 'Grade 9': 2,
       'Form 3': 1, 'Form 4': 2,
       'Year 10': 1, 'Year 11': 2, 'Year 12': 1, 'Year 13': 2
     };
