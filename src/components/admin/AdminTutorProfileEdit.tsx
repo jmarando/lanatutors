@@ -49,6 +49,7 @@ export const AdminTutorProfileEdit = () => {
   }>({});
 
   const [formData, setFormData] = useState({
+    fullName: "",
     bio: "",
     experienceYears: "",
     currentInstitution: "",
@@ -224,14 +225,15 @@ export const AdminTutorProfileEdit = () => {
 
     setCurriculumLevels(reconstructedCurriculumLevels);
 
-    // Load user profile for avatar
+    // Load user profile for avatar and name
     const { data: userProfile } = await supabase
       .from("profiles")
-      .select("avatar_url")
+      .select("avatar_url, full_name")
       .eq("id", tutor.user_id)
       .single();
 
     setFormData({
+      fullName: userProfile?.full_name || tutor.full_name || "",
       bio: tutorProfile.bio || "",
       experienceYears: tutorProfile.experience_years?.toString() || "",
       currentInstitution: tutorProfile.current_institution || "",
@@ -461,11 +463,11 @@ export const AdminTutorProfileEdit = () => {
 
           const { error: profileUpdateError } = await supabase
             .from("profiles")
-            .update({ avatar_url: avatarUrl })
+            .update({ avatar_url: avatarUrl, full_name: formData.fullName })
             .eq("id", tutor.user_id);
 
           if (profileUpdateError) {
-            throw new Error(`Failed to update profile photo: ${profileUpdateError.message}`);
+            throw new Error(`Failed to update profile: ${profileUpdateError.message}`);
           }
 
           setFormData(prev => ({ ...prev, avatarUrl }));
@@ -473,8 +475,17 @@ export const AdminTutorProfileEdit = () => {
         } catch (photoError: any) {
           toast.error(`Photo upload failed: ${photoError.message}`);
         }
-      }
+      } else {
+        // Update just the name if no new photo
+        const { error: profileUpdateError } = await supabase
+          .from("profiles")
+          .update({ full_name: formData.fullName })
+          .eq("id", tutor.user_id);
 
+        if (profileUpdateError) {
+          throw new Error(`Failed to update name: ${profileUpdateError.message}`);
+        }
+      }
       // Update tutor profile
       const { error: profileError } = await supabase
         .from("tutor_profiles")
@@ -709,6 +720,17 @@ export const AdminTutorProfileEdit = () => {
                   </p>
                 </div>
               </div>
+            </div>
+
+            {/* Full Name */}
+            <div>
+              <Label htmlFor="fullName">Full Name *</Label>
+              <Input
+                id="fullName"
+                value={formData.fullName}
+                onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+                placeholder="Tutor's full name"
+              />
             </div>
 
             {/* Bio */}
