@@ -74,8 +74,8 @@ serve(async (req) => {
         const currentDate = new Date(startDate);
         currentDate.setDate(startDate.getDate() + (week * 7) + day);
 
-        // Generate hourly slots from 8 AM to 8 PM EAT (12 slots per day)
-        for (let hour = 8; hour < 20; hour++) {
+        // Generate hourly slots from 6 AM to 10 PM EAT (16 slots per day)
+        for (let hour = 6; hour < 22; hour++) {
           const slotStart = new Date(currentDate);
           slotStart.setHours(hour, 0, 0, 0);
 

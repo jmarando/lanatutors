@@ -266,12 +266,12 @@ export const TutorAvailabilityManager = () => {
 
     setLoading(true);
 
-    // Block from 8 AM to 8 PM
+    // Block from 6 AM to 10 PM
     const blockStart = new Date(selectedDate);
-    blockStart.setHours(8, 0, 0, 0);
+    blockStart.setHours(6, 0, 0, 0);
 
     const blockEnd = new Date(selectedDate);
-    blockEnd.setHours(20, 0, 0, 0);
+    blockEnd.setHours(22, 0, 0, 0);
 
     const { error } = await supabase
       .from("tutor_availability")
@@ -293,7 +293,7 @@ export const TutorAvailabilityManager = () => {
     } else {
       toast({
         title: "Entire day blocked",
-        description: `${format(selectedDate, "MMMM d, yyyy")} is now unavailable (8 AM - 8 PM)`,
+        description: `${format(selectedDate, "MMMM d, yyyy")} is now unavailable (6 AM - 10 PM)`,
       });
       fetchBlockedSlots();
       fetchWeekSlots();
