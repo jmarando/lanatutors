@@ -20,6 +20,7 @@ interface IntensiveClass {
   current_enrollment: number;
   max_students: number;
   focus_topics: string | null;
+  description: string | null;
   tutor_id: string | null;
   tutor_name: string | null;
   tutor_avatar: string | null;
@@ -128,6 +129,7 @@ const DecemberIntensive = () => {
         current_enrollment: cls.current_enrollment,
         max_students: cls.max_students,
         focus_topics: cls.focus_topics,
+        description: (cls as any).description || null,
         tutor_id: cls.tutor_id,
         tutor_name: cls.tutor_id ? tutorInfo[cls.tutor_id]?.name || null : null,
         tutor_avatar: cls.tutor_id ? tutorInfo[cls.tutor_id]?.avatar || null : null,
@@ -349,6 +351,9 @@ const DecemberIntensive = () => {
                                             {classAtTime.tutor_name}
                                           </Link>
                                         </div>}
+                                      {classAtTime.description && (
+                                        <p className="text-sm text-muted-foreground mt-2">{classAtTime.description}</p>
+                                      )}
                                     </div>
                                     <div className="flex items-center gap-2">
                                       <Button size="sm" variant={isInCart ? "secondary" : "default"} onClick={() => handleAddToCart(classAtTime.id, classAtTime.subject, classAtTime.curriculum, selectedGrade)} className="ml-2">

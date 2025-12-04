@@ -636,6 +636,7 @@ export type Database = {
           created_at: string | null
           current_enrollment: number
           curriculum: string
+          description: string | null
           focus_topics: string | null
           grade_levels: string[]
           id: string
@@ -653,6 +654,7 @@ export type Database = {
           created_at?: string | null
           current_enrollment?: number
           curriculum: string
+          description?: string | null
           focus_topics?: string | null
           grade_levels: string[]
           id?: string
@@ -670,6 +672,7 @@ export type Database = {
           created_at?: string | null
           current_enrollment?: number
           curriculum?: string
+          description?: string | null
           focus_topics?: string | null
           grade_levels?: string[]
           id?: string
