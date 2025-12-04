@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { IntensiveClassCard } from "@/components/IntensiveClassCard";
 import { IntensiveCartSimple } from "@/components/IntensiveCartSimple";
 import { useToast } from "@/hooks/use-toast";
+import { PriceDisplay } from "@/components/PriceDisplay";
 interface IntensiveClass {
   id: string;
   subject: string;
@@ -343,11 +344,11 @@ const DecemberIntensive = () => {
                                         <span className="font-medium">{classAtTime.subject}</span>
                                         <span className="text-sm text-muted-foreground">•</span>
                                         <span className="font-semibold text-primary">
-                                          KES {selectedCurriculum === "A-Level" || selectedCurriculum === "IB" ? "600" : selectedCurriculum === "IGCSE" ? "500" : "400"}/session
+                                          <PriceDisplay amountKES={selectedCurriculum === "A-Level" || selectedCurriculum === "IB" ? 600 : selectedCurriculum === "IGCSE" ? 500 : 400} />/session
                                         </span>
                                       </div>
                                       <p className="text-xs text-muted-foreground mt-1">
-                                        10 sessions × KES {selectedCurriculum === "A-Level" || selectedCurriculum === "IB" ? "600 = KES 6,000" : selectedCurriculum === "IGCSE" ? "500 = KES 5,000" : "400 = KES 4,000"} • 75 min each
+                                        10 sessions × <PriceDisplay amountKES={selectedCurriculum === "A-Level" || selectedCurriculum === "IB" ? 600 : selectedCurriculum === "IGCSE" ? 500 : 400} /> = <PriceDisplay amountKES={selectedCurriculum === "A-Level" || selectedCurriculum === "IB" ? 6000 : selectedCurriculum === "IGCSE" ? 5000 : 4000} /> • 75 min each
                                       </p>
                                       {classAtTime.description && (
                                         <p className="text-sm text-muted-foreground mt-2">{classAtTime.description}</p>

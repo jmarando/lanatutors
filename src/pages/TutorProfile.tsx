@@ -22,6 +22,7 @@ import { StudentPicker } from "@/components/StudentPicker";
 import { Student } from "@/hooks/useStudents";
 import { cn } from "@/lib/utils";
 import { getCurriculums, getLevelsForCurriculum, getSubjectsForCurriculumLevel } from "@/utils/curriculumData";
+import { PriceDisplay } from "@/components/PriceDisplay";
 
 import tutor1 from "@/assets/tutor-1.jpg";
 import tutor2 from "@/assets/tutor-2.jpg";
@@ -854,7 +855,7 @@ const TutorProfile = () => {
                             <span>Book a Session</span>
                           </span>
                           <span className="font-bold text-base">
-                            From KES {currentRate.toLocaleString()}/hr
+                            From <PriceDisplay amountKES={currentRate} />/hr
                           </span>
                         </div>
                       </Button>

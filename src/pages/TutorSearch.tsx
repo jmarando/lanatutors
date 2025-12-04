@@ -28,6 +28,7 @@ import tutor6 from "@/assets/tutor-6.jpg";
 import calvinProfilePhoto from "@/assets/calvin-profile.png";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { GeneralLearningPlanRequest } from "@/components/GeneralLearningPlanRequest";
+import { PriceDisplay } from "@/components/PriceDisplay";
 const TutorSearch = () => {
   const navigate = useNavigate();
   const [selectedSubject, setSelectedSubject] = useState("all");
@@ -361,7 +362,7 @@ const TutorSearch = () => {
                           <span className="font-semibold">Curricula:</span> {tutor.curriculum.join(", ")}
                         </p>}
                       <p className="mt-1 text-xs font-semibold text-primary">
-                        From KES {tutor.hourlyRate.toLocaleString()}/hr
+                        From <PriceDisplay amountKES={tutor.hourlyRate} />/hr
                       </p>
                     </div>
                   </div>
