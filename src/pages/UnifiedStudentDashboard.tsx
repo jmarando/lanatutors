@@ -47,6 +47,7 @@ interface PackagePurchase {
   expires_at: string | null;
   created_at: string;
   currency: string;
+  metadata?: any;
 }
 
 interface TutorInfo {
@@ -454,6 +455,18 @@ export default function UnifiedStudentDashboard() {
                             <p className="text-sm text-muted-foreground">
                               with {tutor.full_name}
                             </p>
+                          )}
+                          {/* Display curriculum/level/subject from metadata */}
+                          {pkg.metadata?.curriculum && (
+                            <div className="flex flex-wrap gap-1 mt-2">
+                              <Badge variant="outline" className="text-xs">{pkg.metadata.curriculum}</Badge>
+                              {pkg.metadata.level && (
+                                <Badge variant="outline" className="text-xs">{pkg.metadata.level}</Badge>
+                              )}
+                              {pkg.metadata.subject && (
+                                <Badge variant="secondary" className="text-xs">{pkg.metadata.subject}</Badge>
+                              )}
+                            </div>
                           )}
                         </div>
                         <Badge className="bg-green-500">Active</Badge>

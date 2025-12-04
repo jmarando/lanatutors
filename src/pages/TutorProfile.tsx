@@ -6,6 +6,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Label } from "@/components/ui/label";
 import { Star, GraduationCap, Clock, BookOpen, Award, MapPin, Users, CheckCircle2, Heart, Sparkles, Video, Calendar, ArrowLeft, School, Building2, Home, Phone } from "lucide-react";
 import { toast } from "sonner";
 import { useToast } from "@/hooks/use-toast";
@@ -17,6 +19,7 @@ import { BookingCalendar } from "@/components/BookingCalendar";
 import { PackageSelector } from "@/components/PackageSelector";
 import { LearningPlanRequest } from "@/components/LearningPlanRequest";
 import { cn } from "@/lib/utils";
+import { getCurriculums, getLevelsForCurriculum, getSubjectsForCurriculumLevel } from "@/utils/curriculumData";
 
 import tutor1 from "@/assets/tutor-1.jpg";
 import tutor2 from "@/assets/tutor-2.jpg";
@@ -35,6 +38,9 @@ const TutorProfile = () => {
   const [isLearningPlanOpen, setIsLearningPlanOpen] = useState(false);
   const [selectedPackage, setSelectedPackage] = useState<any>(null);
   const [packagePaymentOption, setPackagePaymentOption] = useState<'full' | 'deposit'>('full');
+  const [packageCurriculum, setPackageCurriculum] = useState<string>('');
+  const [packageLevel, setPackageLevel] = useState<string>('');
+  const [packageSubject, setPackageSubject] = useState<string>('');
   const [bookingType, setBookingType] = useState<'paid' | 'trial' | 'free' | 'single' | 'double'>('paid');
   const [tutor, setTutor] = useState<any>(null);
   const [currentUser, setCurrentUser] = useState<any>(null);
@@ -300,6 +306,10 @@ const TutorProfile = () => {
 
   const handlePackageSelect = async (pkg: any) => {
     setSelectedPackage(pkg);
+    // Reset curriculum/level/subject selections
+    setPackageCurriculum('');
+    setPackageLevel('');
+    setPackageSubject('');
     
     if (!currentUser) {
       const { data: { user } } = await supabase.auth.getUser();
@@ -332,6 +342,16 @@ const TutorProfile = () => {
   const handlePackagePurchase = async () => {
     if (!selectedPackage || !currentUser) return;
 
+    // Validate curriculum, level, and subject are selected
+    if (!packageCurriculum || !packageLevel || !packageSubject) {
+      showToast({
+        title: "Missing Information",
+        description: "Please select curriculum, level, and subject for your sessions.",
+        variant: "destructive",
+      });
+      return;
+    }
+
     try {
       // Recalculate package price based on minimum rate to ensure consistency
       const originalPrice = currentRate * selectedPackage.session_count;
@@ -346,7 +366,7 @@ const TutorProfile = () => {
 
       const currency = profile?.preferred_currency || 'KES';
 
-      // Create package purchase record with metadata including payment option
+      // Create package purchase record with metadata including curriculum/level/subject
       const { data: purchase, error: purchaseError } = await supabase
         .from('package_purchases')
         .insert({
@@ -366,6 +386,9 @@ const TutorProfile = () => {
             packageName: selectedPackage.name,
             discountPercentage: selectedPackage.discount_percentage,
             subjects: selectedPackage.subjects || [],
+            curriculum: packageCurriculum,
+            level: packageLevel,
+            subject: packageSubject,
           } as any,
         })
         .select()
@@ -986,6 +1009,81 @@ const TutorProfile = () => {
                           <div className="flex items-start gap-2">
                             <CheckCircle2 className="w-4 h-4 text-primary shrink-0 mt-0.5" />
                             <span><strong>No pressure:</strong> There's no obligation to use all sessions at once - spread them out as needed</span>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    {/* Curriculum, Level, and Subject Selection */}
+                    <Card className="bg-muted/30 border-border/50">
+                      <CardContent className="p-4">
+                        <div className="space-y-4">
+                          <label className="text-sm font-medium">Session Details <span className="text-destructive">*</span></label>
+                          <p className="text-xs text-muted-foreground -mt-2">
+                            Select the curriculum, level, and subject for your sessions. This will be fixed for all sessions in this package.
+                          </p>
+                          
+                          <div className="grid gap-3">
+                            <div className="space-y-2">
+                              <Label className="text-xs">Curriculum</Label>
+                              <Select value={packageCurriculum} onValueChange={(value) => {
+                                setPackageCurriculum(value);
+                                setPackageLevel('');
+                                setPackageSubject('');
+                              }}>
+                                <SelectTrigger>
+                                  <SelectValue placeholder="Select curriculum" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {(tutor.curriculum || getCurriculums()).map((curr: string) => (
+                                    <SelectItem key={curr} value={curr}>{curr}</SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            </div>
+                            
+                            {packageCurriculum && (
+                              <div className="space-y-2">
+                                <Label className="text-xs">Level/Grade</Label>
+                                <Select value={packageLevel} onValueChange={(value) => {
+                                  setPackageLevel(value);
+                                  setPackageSubject('');
+                                }}>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select level" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {getLevelsForCurriculum(packageCurriculum).map((level) => (
+                                      <SelectItem key={level.value} value={level.value}>{level.label}</SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            )}
+                            
+                            {packageCurriculum && packageLevel && (
+                              <div className="space-y-2">
+                                <Label className="text-xs">Subject</Label>
+                                <Select value={packageSubject} onValueChange={setPackageSubject}>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select subject" />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {getSubjectsForCurriculumLevel(packageCurriculum, packageLevel)
+                                      .filter((subj: string) => 
+                                        !tutor.subjects || tutor.subjects.length === 0 || 
+                                        tutor.subjects.some((ts: string) => 
+                                          ts.toLowerCase().includes(subj.toLowerCase()) || 
+                                          subj.toLowerCase().includes(ts.toLowerCase())
+                                        )
+                                      )
+                                      .map((subj: string) => (
+                                        <SelectItem key={subj} value={subj}>{subj}</SelectItem>
+                                      ))}
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                            )}
                           </div>
                         </div>
                       </CardContent>
