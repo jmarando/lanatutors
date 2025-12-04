@@ -41,6 +41,24 @@ serve(async (req) => {
       .eq('id', packageData.student_id)
       .single();
 
+    // If package has student_profile_id, fetch the student's name from students table
+    let actualStudentName = studentProfile?.full_name;
+    if (packageData.student_profile_id) {
+      const { data: studentChildProfile } = await supabase
+        .from('students')
+        .select('full_name')
+        .eq('id', packageData.student_profile_id)
+        .maybeSingle();
+      if (studentChildProfile?.full_name) {
+        actualStudentName = studentChildProfile.full_name;
+      }
+    }
+    
+    // Check metadata for student name
+    if ((packageData.metadata as any)?.studentName) {
+      actualStudentName = (packageData.metadata as any).studentName;
+    }
+
     // Get student email from auth
     const { data: { user: studentUser } } = await supabase.auth.admin.getUserById(packageData.student_id);
     const studentEmail = studentUser?.email;
@@ -98,8 +116,7 @@ serve(async (req) => {
 
     const balanceDue = packageData.total_amount - (packageData.amount_paid || 0);
     const isDeposit = balanceDue > 0;
-
-    const studentName = studentProfile?.full_name || 'Student';
+    const studentName = actualStudentName || 'Student';
     
     // Build curriculum details HTML
     const curriculumDetailsHtml = (curriculum || level || subject) ? `

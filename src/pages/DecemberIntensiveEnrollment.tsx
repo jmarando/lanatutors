@@ -9,6 +9,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { Loader2, ShoppingCart, User, ArrowLeft, Trash2, Zap, CreditCard, Check, FileText, CreditCard as CardIcon } from "lucide-react";
+import { StudentPicker } from "@/components/StudentPicker";
+import { Student } from "@/hooks/useStudents";
 
 interface CartItem {
   id: string;
@@ -39,7 +41,8 @@ const DecemberIntensiveEnrollment = () => {
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
-  const [studentName, setStudentName] = useState("");
+  const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
+  const [bookingForSelf, setBookingForSelf] = useState(false);
   const [parentPhone, setParentPhone] = useState("");
   const [parentEmail, setParentEmail] = useState("");
   const [programId, setProgramId] = useState<string | null>(null);
@@ -117,8 +120,9 @@ const DecemberIntensiveEnrollment = () => {
   const amountToPay = paymentOption === 'deposit' ? depositAmount : totalAmount;
 
   const validateForm = () => {
-    if (!studentName.trim()) {
-      toast.error("Please enter the student's name");
+    // Student must be selected (either self or child)
+    if (!bookingForSelf && !selectedStudent) {
+      toast.error("Please select which child this enrollment is for");
       return false;
     }
     if (!parentPhone.trim()) {
@@ -130,6 +134,13 @@ const DecemberIntensiveEnrollment = () => {
       return false;
     }
     return true;
+  };
+
+  const getStudentName = () => {
+    if (bookingForSelf) {
+      return user?.user_metadata?.full_name || "Student";
+    }
+    return selectedStudent?.full_name || "Student";
   };
 
   const handleProceedToPayment = async () => {
@@ -149,6 +160,7 @@ const DecemberIntensiveEnrollment = () => {
 
     try {
       const enrolledClassIds = cartItems.map((item) => item.id);
+      const studentName = getStudentName();
 
       // Create enrollment record
       const { data: enrollment, error: enrollmentError } = await supabase
@@ -160,6 +172,7 @@ const DecemberIntensiveEnrollment = () => {
           total_subjects: cartItems.length,
           total_amount: totalAmount,
           payment_status: paymentOption === 'deposit' ? 'deposit_paid' : 'pending',
+          student_profile_id: selectedStudent?.id || null,
         })
         .select()
         .single();
@@ -283,7 +296,7 @@ const DecemberIntensiveEnrollment = () => {
               </CardContent>
             </Card>
 
-            {/* Student Details */}
+            {/* Student Details - Now using StudentPicker */}
             <Card>
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
@@ -291,19 +304,30 @@ const DecemberIntensiveEnrollment = () => {
                   Student Details
                 </CardTitle>
                 <CardDescription>
-                  Enter details for the student being enrolled
+                  Select the student being enrolled
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="space-y-2">
-                  <Label htmlFor="student-name">Student's Full Name *</Label>
-                  <Input
-                    id="student-name"
-                    placeholder="Enter student name"
-                    value={studentName}
-                    onChange={(e) => setStudentName(e.target.value)}
-                  />
-                </div>
+                <StudentPicker
+                  onStudentSelect={(student, forSelf) => {
+                    setSelectedStudent(student);
+                    setBookingForSelf(forSelf);
+                  }}
+                  selectedStudentId={selectedStudent?.id}
+                  bookingForSelf={bookingForSelf}
+                />
+                {(selectedStudent || bookingForSelf) && (
+                  <div className="mt-3 p-3 bg-green-50 dark:bg-green-950/30 rounded-lg border border-green-200 dark:border-green-800">
+                    <p className="text-sm text-green-800 dark:text-green-200">
+                      <strong>Enrolling:</strong> {getStudentName()}
+                      {selectedStudent && (
+                        <span className="text-green-600 dark:text-green-400 ml-2">
+                          ({selectedStudent.curriculum} {selectedStudent.grade_level})
+                        </span>
+                      )}
+                    </p>
+                  </div>
+                )}
               </CardContent>
             </Card>
 
@@ -453,7 +477,7 @@ const DecemberIntensiveEnrollment = () => {
                   size="lg"
                   className="w-full"
                   onClick={handleProceedToPayment}
-                  disabled={loading || !studentName.trim() || !parentPhone.trim() || !parentEmail.trim()}
+                  disabled={loading || (!bookingForSelf && !selectedStudent) || !parentPhone.trim() || !parentEmail.trim()}
                 >
                   {loading ? (
                     <>
@@ -469,8 +493,8 @@ const DecemberIntensiveEnrollment = () => {
                   variant="outline"
                   size="lg"
                   className="w-full"
-                  onClick={() => navigate(`/december-intensive/invoice?amount=${amountToPay}&total=${totalAmount}&deposit=${depositAmount}&balance=${paymentOption === 'deposit' ? balanceDue : 0}&subjects=${cartItems.length}&student=${encodeURIComponent(studentName)}&phone=${encodeURIComponent(parentPhone)}&email=${encodeURIComponent(parentEmail)}&option=${paymentOption}`)}
-                  disabled={loading || !studentName.trim() || !parentPhone.trim() || !parentEmail.trim()}
+                  onClick={() => navigate(`/december-intensive/invoice?amount=${amountToPay}&total=${totalAmount}&deposit=${depositAmount}&balance=${paymentOption === 'deposit' ? balanceDue : 0}&subjects=${cartItems.length}&student=${encodeURIComponent(getStudentName())}&phone=${encodeURIComponent(parentPhone)}&email=${encodeURIComponent(parentEmail)}&option=${paymentOption}`)}
+                  disabled={loading || (!bookingForSelf && !selectedStudent) || !parentPhone.trim() || !parentEmail.trim()}
                 >
                   <FileText className="mr-2 h-4 w-4" />
                   Generate Invoice & Pay

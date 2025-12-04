@@ -43,6 +43,19 @@ const handler = async (req: Request): Promise<Response> => {
       .eq('id', booking.student_id)
       .maybeSingle();
 
+    // If booking has student_profile_id, fetch the student's name from students table
+    let actualStudentName = studentProfile?.full_name;
+    if (booking.student_profile_id) {
+      const { data: studentChildProfile } = await supabase
+        .from('students')
+        .select('full_name')
+        .eq('id', booking.student_profile_id)
+        .maybeSingle();
+      if (studentChildProfile?.full_name) {
+        actualStudentName = studentChildProfile.full_name;
+      }
+    }
+
     // Get student email from auth.users
     const { data: studentAuth } = await supabase.auth.admin.getUserById(booking.student_id);
     const studentEmail = studentAuth?.user?.email;
@@ -152,6 +165,12 @@ const handler = async (req: Request): Promise<Response> => {
                       <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
                         <tr>
                           <td style="padding-bottom: 8px; font-size: 18px; font-weight: 600; color: #1a1a1a;">Hi ${studentProfile?.full_name || 'Parent'},</td>
+                        </tr>
+                        ${actualStudentName && actualStudentName !== studentProfile?.full_name ? `
+                        <tr>
+                          <td style="padding-bottom: 8px; font-size: 14px; color: #4a4a4a;">Session booked for: <strong>${actualStudentName}</strong></td>
+                        </tr>
+                        ` : ''}
                         </tr>
                         <tr>
                           <td style="padding-bottom: 20px; font-size: 15px; line-height: 1.6; color: #4a4a4a;">Great news! Your tutoring session has been successfully booked and confirmed. We're excited to support your learning journey! 🎓</td>
@@ -413,7 +432,7 @@ const handler = async (req: Request): Promise<Response> => {
                                   <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
                                     <tr>
                                       <td style="padding: 10px 0; border-bottom: 1px solid #FFD6D6; font-size: 14px; color: #666666; width: 40%;">Student:</td>
-                                      <td style="padding: 10px 0; border-bottom: 1px solid #FFD6D6; font-size: 14px; color: #1a1a1a; font-weight: 500; text-align: right;">${studentProfile?.full_name || 'Student'}</td>
+                                      <td style="padding: 10px 0; border-bottom: 1px solid #FFD6D6; font-size: 14px; color: #1a1a1a; font-weight: 500; text-align: right;">${actualStudentName || 'Student'}</td>
                                     </tr>
                                     <tr>
                                       <td style="padding: 10px 0; border-bottom: 1px solid #FFD6D6; font-size: 14px; color: #666666;">Subject:</td>
