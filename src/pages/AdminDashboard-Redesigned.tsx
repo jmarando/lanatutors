@@ -1172,15 +1172,6 @@ The Lana Team`;
                 </span>
               </TabsTrigger>
               <TabsTrigger 
-                value="tutor-emails"
-                className="data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:bg-transparent rounded-none bg-transparent px-4 py-3 border-b-2 border-transparent"
-              >
-                <span className="flex items-center gap-2">
-                  <Mail className="h-4 w-4" />
-                  Tutor Emails
-                </span>
-              </TabsTrigger>
-              <TabsTrigger 
                 value="december-bootcamp"
                 className="data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:bg-transparent rounded-none bg-transparent px-4 py-3 border-b-2 border-transparent"
               >
@@ -1190,19 +1181,6 @@ The Lana Team`;
                   {unassignedIntensiveClasses > 0 && (
                     <Badge className="rounded-full h-5 min-w-5 px-1.5 bg-orange-600">
                       {unassignedIntensiveClasses}
-                    </Badge>
-                  )}
-                </span>
-              </TabsTrigger>
-              <TabsTrigger 
-                value="tools"
-                className="data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:bg-transparent rounded-none bg-transparent px-4 py-3 border-b-2 border-transparent"
-              >
-                <span className="flex items-center gap-2">
-                  Data Tools
-                  {priceStats && priceStats.needsFix > 0 && (
-                    <Badge className="rounded-full h-5 min-w-5 px-1.5 bg-amber-600">
-                      {priceStats.needsFix}
                     </Badge>
                   )}
                 </span>
@@ -1720,50 +1698,6 @@ The Lana Team`;
             <BlogManagement />
           </TabsContent>
 
-          <TabsContent value="tools" className="space-y-4">
-            <div className="max-w-2xl">
-              <Card>
-                <CardHeader>
-                  <CardTitle>Package Price Fix Tool</CardTitle>
-                  <CardDescription>
-                    Fix package prices that were incorrectly stored in hundreds instead of full amounts
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {priceStats && (
-                    <div className="bg-muted p-4 rounded-lg space-y-2">
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-muted-foreground">Total Packages:</span>
-                        <span className="font-medium">{priceStats.total}</span>
-                      </div>
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="text-muted-foreground">Need Price Fix:</span>
-                        <span className="font-bold text-amber-600">{priceStats.needsFix}</span>
-                      </div>
-                    </div>
-                  )}
-                  
-                  <div className="space-y-2">
-                    <p className="text-sm text-muted-foreground">
-                      This will multiply all package prices under 100 by 1000 to correct currency values.
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                      Example: 9 → 9,000 KES
-                    </p>
-                  </div>
-
-                  <Button 
-                    onClick={handleBulkPriceFix} 
-                    disabled={fixingPrices || (priceStats && priceStats.needsFix === 0)}
-                    className="w-full"
-                    variant={priceStats && priceStats.needsFix > 0 ? "default" : "outline"}
-                  >
-                    {fixingPrices ? "Fixing Prices..." : `Fix ${priceStats?.needsFix || 0} Package Prices`}
-                  </Button>
-                </CardContent>
-              </Card>
-            </div>
-          </TabsContent>
 
           <TabsContent value="edit-tutors" className="space-y-4">
             <AdminTutorProfileEdit />
@@ -2347,9 +2281,6 @@ The Lana Team`;
                   <TutorSignupList />
                 </TabsContent>
 
-                <TabsContent value="tutor-emails">
-                  <TutorEmailList />
-                </TabsContent>
 
                 <TabsContent value="december-bootcamp">
                   <AdminIntensivePrograms />
