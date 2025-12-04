@@ -172,7 +172,7 @@ serve(async (req) => {
         Authorization: `Bearer ${RESEND_API_KEY}`,
       },
       body: JSON.stringify({
-        from: "Lana Tutors <notifications@lanatutors.africa>",
+        from: "Lana Tutors <info@lanatutors.africa>",
         to: [tutorUser.user.email],
         subject: `New Student Enrolled: ${enrollment.group_classes.title}`,
         html: emailHtml,

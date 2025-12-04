@@ -26,7 +26,7 @@ const handler = async (req: Request): Promise<Response> => {
     console.log("Sending rejection email to:", email);
 
     const emailResponse = await resend.emails.send({
-      from: "Lana Tutors <noreply@lanatutors.africa>",
+      from: "Lana Tutors <info@lanatutors.africa>",
       to: [email],
       subject: "Update on Your Lana Tutors Application",
       html: `

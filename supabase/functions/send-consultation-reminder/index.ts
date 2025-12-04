@@ -120,7 +120,7 @@ const handler = async (req: Request): Promise<Response> => {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            from: "Lana Tutors <noreply@lanatutors.africa>",
+            from: "Lana Tutors <info@lanatutors.africa>",
             to: [reminder.email],
             subject: `Reminder: Consultation in ${timeUntil} - ${reminder.student_name}`,
             html: `

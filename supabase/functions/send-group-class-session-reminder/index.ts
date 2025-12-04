@@ -141,7 +141,7 @@ serve(async (req) => {
             Authorization: `Bearer ${RESEND_API_KEY}`,
           },
           body: JSON.stringify({
-            from: "Lana Tutors <reminders@lanatutors.africa>",
+            from: "Lana Tutors <info@lanatutors.africa>",
             to: [userEmail.user.email],
             subject: `⏰ Reminder: ${enrollment.group_classes.title} Tomorrow`,
             html: emailHtml,

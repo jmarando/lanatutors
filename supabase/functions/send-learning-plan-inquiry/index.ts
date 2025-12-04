@@ -223,7 +223,7 @@ const handler = async (req: Request): Promise<Response> => {
     `;
 
     const tutorEmailResponse = await resend.emails.send({
-      from: "Lana Tutors <inquiries@lanatutors.africa>",
+      from: "Lana Tutors <info@lanatutors.africa>",
       reply_to: parentEmail,
       to: [tutorEmail],
       subject: `New Learning Plan Request from ${parentName}`,
@@ -338,7 +338,7 @@ const handler = async (req: Request): Promise<Response> => {
     `;
 
     const parentEmailResponse = await resend.emails.send({
-      from: "Lana Tutors <inquiries@lanatutors.africa>",
+      from: "Lana Tutors <info@lanatutors.africa>",
       to: [parentEmail],
       subject: "Your Learning Plan Request Has Been Sent",
       html: parentEmailHtml,

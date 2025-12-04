@@ -299,7 +299,7 @@ serve(async (req) => {
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
-        from: "LANA Tutors <info@lanatutors.africa>",
+        from: "Lana Tutors <info@lanatutors.africa>",
         to: [studentEmail],
         subject: `Package Confirmed: ${packageData.total_sessions} Sessions with ${tutorName}`,
         html: studentEmailHtml,
@@ -417,7 +417,7 @@ serve(async (req) => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          from: "LANA Tutors <info@lanatutors.africa>",
+          from: "Lana Tutors <info@lanatutors.africa>",
           to: [tutorEmail],
           subject: `New Package Purchase: ${packageData.total_sessions} Sessions from ${studentName}`,
           html: tutorEmailHtml,
