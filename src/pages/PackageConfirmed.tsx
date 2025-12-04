@@ -20,6 +20,9 @@ interface PackageDetails {
   student_email: string;
   created_at: string;
   subjects: string[];
+  curriculum?: string;
+  level?: string;
+  subject?: string;
 }
 
 const PackageConfirmed = () => {
@@ -104,6 +107,9 @@ const PackageConfirmed = () => {
         student_email: studentUser?.user?.email || "",
         created_at: packageData.created_at,
         subjects: subjects.length > 0 ? subjects : [`${packageData.total_sessions} sessions`],
+        curriculum: metadata?.curriculum,
+        level: metadata?.level,
+        subject: metadata?.subject,
       });
     } catch (error) {
       console.error("Error fetching package:", error);
@@ -179,23 +185,35 @@ const PackageConfirmed = () => {
                   </div>
                 </div>
 
-                <div className="flex items-start gap-3">
-                  <User className="w-5 h-5 text-muted-foreground mt-0.5" />
-                  <div>
-                    <p className="text-sm text-muted-foreground">Tutor</p>
-                    <p className="font-semibold">{packageDetails.tutor_name}</p>
+                {packageDetails.curriculum && (
+                  <div className="flex items-start gap-3">
+                    <BookOpen className="w-5 h-5 text-muted-foreground mt-0.5" />
+                    <div>
+                      <p className="text-sm text-muted-foreground">Curriculum</p>
+                      <p className="font-semibold">{packageDetails.curriculum}</p>
+                    </div>
                   </div>
-                </div>
+                )}
 
-                <div className="flex items-start gap-3">
-                  <BookOpen className="w-5 h-5 text-muted-foreground mt-0.5" />
-                  <div>
-                    <p className="text-sm text-muted-foreground">Sessions Included</p>
-                    {packageDetails.subjects.map((subject, idx) => (
-                      <p key={idx} className="font-semibold text-sm">{subject}</p>
-                    ))}
+                {packageDetails.level && (
+                  <div className="flex items-start gap-3">
+                    <BookOpen className="w-5 h-5 text-muted-foreground mt-0.5" />
+                    <div>
+                      <p className="text-sm text-muted-foreground">Level</p>
+                      <p className="font-semibold">{packageDetails.level}</p>
+                    </div>
                   </div>
-                </div>
+                )}
+
+                {packageDetails.subject && (
+                  <div className="flex items-start gap-3">
+                    <BookOpen className="w-5 h-5 text-muted-foreground mt-0.5" />
+                    <div>
+                      <p className="text-sm text-muted-foreground">Subject</p>
+                      <p className="font-semibold">{packageDetails.subject}</p>
+                    </div>
+                  </div>
+                )}
 
                 <div className="flex items-start gap-3">
                   <Calendar className="w-5 h-5 text-muted-foreground mt-0.5" />
