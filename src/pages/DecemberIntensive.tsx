@@ -345,12 +345,6 @@ const DecemberIntensive = () => {
                                       <p className="text-xs text-muted-foreground mt-1">
                                         10 sessions × KES {selectedCurriculum === "A-Level" || selectedCurriculum === "IB" ? "600 = KES 6,000" : selectedCurriculum === "IGCSE" ? "500 = KES 5,000" : "400 = KES 4,000"} • 75 min each
                                       </p>
-                                      {classAtTime.tutor_name && classAtTime.tutor_slug && <div className="text-sm text-muted-foreground mt-1">
-                                          with{" "}
-                                          <Link to={`/tutors/${classAtTime.tutor_slug}`} className="text-primary hover:underline">
-                                            {classAtTime.tutor_name}
-                                          </Link>
-                                        </div>}
                                       {classAtTime.description && (
                                         <p className="text-sm text-muted-foreground mt-2">{classAtTime.description}</p>
                                       )}
