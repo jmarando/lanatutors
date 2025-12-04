@@ -2022,6 +2022,7 @@ export type Database = {
         Args: never
         Returns: {
           availability: string
+          avatar_url: string
           bio: string
           created_at: string
           current_institution: string
@@ -2030,6 +2031,7 @@ export type Database = {
           display_institution: boolean
           education: Json
           experience_years: number
+          full_name: string
           gender: string
           graduation_year: number
           hourly_rate: number
