@@ -76,7 +76,18 @@ const TutorProfile = () => {
       setBookingType(type);
       setIsBookingOpen(true);
     }
-  }, []);
+    // Auto-open package purchase dialog when returning from login
+    if (params.get('openPackage') === '1') {
+      const packageId = params.get('packageId');
+      if (packageId && packages.length > 0) {
+        const pkg = packages.find(p => p.id === packageId);
+        if (pkg) {
+          setSelectedPackage(pkg);
+          setIsPackagePurchaseOpen(true);
+        }
+      }
+    }
+  }, [packages]);
 
   // Get redeemPackageId from URL for package redemption flow
   const redeemPackageId = new URLSearchParams(window.location.search).get('redeemPackageId') || undefined;
@@ -342,7 +353,8 @@ const TutorProfile = () => {
           description: "You need to sign in to purchase a package",
           variant: "destructive",
         });
-        navigate(`/login?redirect=${encodeURIComponent(window.location.pathname)}`);
+        const urlWithIntent = `${window.location.pathname}?openPackage=1&packageId=${pkg.id}`;
+        navigate(`/login?redirect=${encodeURIComponent(urlWithIntent)}`);
         return;
       }
       
@@ -991,7 +1003,7 @@ const TutorProfile = () => {
 
       {/* Package Purchase Dialog */}
       <Dialog open={isPackagePurchaseOpen} onOpenChange={setIsPackagePurchaseOpen}>
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Purchase Package</DialogTitle>
             <DialogDescription>
