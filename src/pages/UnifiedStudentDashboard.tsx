@@ -13,20 +13,18 @@ import {
   Video, 
   ChevronDown,
   ChevronUp,
-  CalendarClock,
   Sparkles,
   MessageSquare,
   Search,
   Clock,
   Users,
   Loader2,
-  DollarSign,
-  ExternalLink
 } from "lucide-react";
 import { formatInTimeZone } from "date-fns-tz";
 import { format, parseISO, isWithinInterval } from "date-fns";
 import { useToast } from "@/hooks/use-toast";
 import { GroupedBookingCard } from "@/components/student/GroupedBookingCard";
+import { ManageChildren } from "@/components/ManageChildren";
 import {
   Dialog,
   DialogContent,
@@ -86,6 +84,7 @@ interface IntensiveProgram {
 
 export default function UnifiedStudentDashboard() {
   const navigate = useNavigate();
+  const [accountType, setAccountType] = useState<string | null>(null);
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [userName, setUserName] = useState("");
@@ -124,13 +123,14 @@ export default function UnifiedStudentDashboard() {
     // Fetch user profile
     const { data: profile } = await supabase
       .from("profiles")
-      .select("full_name")
+      .select("full_name, account_type")
       .eq("id", user.id)
       .single();
     
     if (profile?.full_name) {
       setUserName(profile.full_name.split(" ")[0]);
     }
+    setAccountType(profile?.account_type || 'student');
 
     // Fetch all data in parallel
     await Promise.all([
@@ -400,6 +400,13 @@ export default function UnifiedStudentDashboard() {
             </CardContent>
           </Card>
         </div>
+
+        {/* My Children (for parents) */}
+        {accountType === 'parent' && (
+          <section className="mb-8">
+            <ManageChildren />
+          </section>
+        )}
 
         {/* Upcoming Sessions */}
         <section className="mb-8">

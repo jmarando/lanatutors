@@ -4,10 +4,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Award, Eye, EyeOff } from "lucide-react";
+import { Award, Eye, EyeOff, User } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { Separator } from "@/components/ui/separator";
@@ -21,13 +20,6 @@ import { z } from "zod";
 
 const emailSchema = z.string().email({ message: "Please enter a valid email address" });
 
-const LEARNING_STYLES = [
-  "Visual (diagrams, videos)",
-  "Auditory (listening, discussion)",
-  "Reading/Writing (notes, books)",
-  "Kinesthetic (hands-on, practice)"
-];
-
 const StudentSignup = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
@@ -37,6 +29,7 @@ const StudentSignup = () => {
   const [timezone, setTimezone] = useState<string>(getUserTimezone());
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [accountType, setAccountType] = useState<'parent' | 'student' | null>(null);
   
   const [formData, setFormData] = useState({
     email: "",
@@ -47,14 +40,23 @@ const StudentSignup = () => {
     age: "",
     curriculum: "",
     gradeLevel: "",
-    learningGoals: "",
-    learningStyle: ""
+    // Child info (for parents)
+    childName: "",
+    childAge: "",
+    childCurriculum: "",
+    childGradeLevel: "",
   });
 
   const curriculums = getCurriculums();
-  const availableLevels = formData.curriculum ? getLevelsForCurriculum(formData.curriculum) : [];
-  const availableSubjects = formData.curriculum && formData.gradeLevel
-    ? getSubjectsForCurriculumLevel(formData.curriculum, formData.gradeLevel)
+  
+  // For students, use their curriculum/level. For parents, use child's
+  const activeCurriculum = accountType === 'parent' ? formData.childCurriculum : formData.curriculum;
+  const activeGradeLevel = accountType === 'parent' ? formData.childGradeLevel : formData.gradeLevel;
+  
+  const availableLevels = activeCurriculum ? getLevelsForCurriculum(activeCurriculum) : [];
+  const childLevels = formData.childCurriculum ? getLevelsForCurriculum(formData.childCurriculum) : [];
+  const availableSubjects = activeCurriculum && activeGradeLevel
+    ? getSubjectsForCurriculumLevel(activeCurriculum, activeGradeLevel)
     : [];
 
   const handleSubjectToggle = (subject: string) => {
@@ -74,7 +76,6 @@ const StudentSignup = () => {
           redirectTo: `${window.location.origin}/student/dashboard`,
         }
       });
-
       if (error) throw error;
     } catch (error: any) {
       toast({
@@ -89,16 +90,16 @@ const StudentSignup = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (selectedSubjects.length === 0) {
+    if (!accountType) {
       toast({
-        title: "Select at least one subject",
-        description: "Please select subjects you need help with",
+        title: "Please select account type",
+        description: "Choose whether you're signing up as a student or parent",
         variant: "destructive"
       });
       return;
     }
 
-    // Validate email format
+    // Validate email
     const emailValidation = emailSchema.safeParse(formData.email);
     if (!emailValidation.success) {
       toast({
@@ -109,7 +110,7 @@ const StudentSignup = () => {
       return;
     }
 
-    // Validate password confirmation
+    // Validate password
     if (formData.password !== formData.confirmPassword) {
       toast({
         title: "Passwords don't match",
@@ -119,55 +120,79 @@ const StudentSignup = () => {
       return;
     }
 
-    // Validate and normalize phone number
-    const phoneValidation = validateAndNormalizePhone(formData.phoneNumber);
-    if (!phoneValidation.isValid) {
-      toast({
-        title: "Invalid phone number",
-        description: phoneValidation.error,
-        variant: "destructive"
-      });
-      return;
+    // Validate phone if provided
+    let normalizedPhone = null;
+    if (formData.phoneNumber) {
+      const phoneValidation = validateAndNormalizePhone(formData.phoneNumber);
+      if (!phoneValidation.isValid) {
+        toast({
+          title: "Invalid phone number",
+          description: phoneValidation.error,
+          variant: "destructive"
+        });
+        return;
+      }
+      normalizedPhone = phoneValidation.normalized;
+    }
+
+    // Validate child info for parents
+    if (accountType === 'parent') {
+      if (!formData.childName || !formData.childCurriculum || !formData.childGradeLevel) {
+        toast({
+          title: "Missing child information",
+          description: "Please fill in your child's details",
+          variant: "destructive"
+        });
+        return;
+      }
+    }
+
+    // Validate student info for students
+    if (accountType === 'student') {
+      if (!formData.curriculum || !formData.gradeLevel) {
+        toast({
+          title: "Missing information",
+          description: "Please select your curriculum and grade level",
+          variant: "destructive"
+        });
+        return;
+      }
     }
 
     setIsLoading(true);
 
     try {
-      // Sign up the user
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email: formData.email,
         password: formData.password,
         options: {
           emailRedirectTo: `${window.location.origin}/`,
-          data: {
-            full_name: formData.fullName
-          }
+          data: { full_name: formData.fullName }
         }
       });
 
       if (authError) throw authError;
       if (!authData.user) throw new Error("No user data returned");
 
-      // Create profile with normalized phone number
+      // Create profile
       const { error: profileError } = await supabase
         .from("profiles")
         .insert({
           id: authData.user.id,
           full_name: formData.fullName,
-          phone_number: phoneValidation.normalized,
-          age: parseInt(formData.age),
-          curriculum: formData.curriculum,
-          grade_level: formData.gradeLevel,
-          subjects_struggling: selectedSubjects,
-          learning_goals: formData.learningGoals,
-          preferred_learning_style: formData.learningStyle,
+          phone_number: normalizedPhone,
+          age: accountType === 'student' && formData.age ? parseInt(formData.age) : null,
+          curriculum: accountType === 'student' ? formData.curriculum : null,
+          grade_level: accountType === 'student' ? formData.gradeLevel : null,
+          subjects_struggling: accountType === 'student' ? selectedSubjects : null,
           preferred_currency: preferredCurrency,
-          timezone: timezone
+          timezone: timezone,
+          account_type: accountType,
         });
 
       if (profileError) throw profileError;
 
-      // Assign student role using secure database function
+      // Assign student role
       const { error: roleError } = await supabase.rpc("assign_user_role", {
         _user_id: authData.user.id,
         _role: "student"
@@ -175,9 +200,23 @@ const StudentSignup = () => {
 
       if (roleError) throw roleError;
 
+      // If parent, create first child profile
+      if (accountType === 'parent') {
+        await supabase.from("students").insert({
+          parent_id: authData.user.id,
+          full_name: formData.childName,
+          age: formData.childAge ? parseInt(formData.childAge) : null,
+          curriculum: formData.childCurriculum,
+          grade_level: formData.childGradeLevel,
+          subjects_of_interest: selectedSubjects,
+        });
+      }
+
       toast({
         title: "Welcome to Lana!",
-        description: "Your account has been created successfully"
+        description: accountType === 'parent' 
+          ? "Your account has been created. You can now book sessions for your child."
+          : "Your account has been created successfully"
       });
 
       navigate("/student/dashboard");
@@ -204,7 +243,10 @@ const StudentSignup = () => {
           <CardHeader>
             <CardTitle className="text-2xl">Start Your Learning Journey</CardTitle>
             <CardDescription>
-              Tell us about yourself so we can connect you with the perfect tutor
+              {accountType === 'parent' 
+                ? "Create your parent account to book tutoring for your child"
+                : "Tell us about yourself so we can connect you with the perfect tutor"
+              }
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -219,22 +261,10 @@ const StudentSignup = () => {
                 disabled={isLoading}
               >
                 <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
-                  <path
-                    fill="currentColor"
-                    d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"
-                  />
-                  <path
-                    fill="currentColor"
-                    d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"
-                  />
-                  <path
-                    fill="currentColor"
-                    d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"
-                  />
-                  <path
-                    fill="currentColor"
-                    d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"
-                  />
+                  <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                  <path fill="currentColor" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                  <path fill="currentColor" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
+                  <path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
                 </svg>
                 Continue with Google
               </Button>
@@ -248,215 +278,296 @@ const StudentSignup = () => {
             </div>
 
             <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Basic Info */}
-              <div className="space-y-4">
-                <h3 className="font-semibold text-lg">Basic Information</h3>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="fullName">Full Name *</Label>
-                    <Input
-                      id="fullName"
-                      value={formData.fullName}
-                      onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="age">Age *</Label>
-                    <Input
-                      id="age"
-                      type="number"
-                      min="5"
-                      max="100"
-                      value={formData.age}
-                      onChange={(e) => setFormData({ ...formData, age: e.target.value })}
-                      required
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="email">Email *</Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      value={formData.email}
-                      onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                      required
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="phoneNumber">Phone Number</Label>
-                    <Input
-                      id="phoneNumber"
-                      type="tel"
-                      placeholder="+254712345678 or 0712345678"
-                      value={formData.phoneNumber}
-                      onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
-                    />
-                    <p className="text-xs text-muted-foreground">Accepts: +254, 254, or 0 prefix</p>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="currency">Preferred Currency *</Label>
-                    <CurrencySelector 
-                      value={preferredCurrency}
-                      onChange={setPreferredCurrency}
-                    />
-                    <p className="text-xs text-muted-foreground">All prices will be shown in this currency</p>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="timezone">Your Timezone *</Label>
-                    <TimezoneSelector 
-                      value={timezone}
-                      onChange={setTimezone}
-                    />
-                    <p className="text-xs text-muted-foreground">Session times will be shown in your timezone</p>
-                  </div>
-                </div>
-              </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="password">Password *</Label>
-                  <div className="relative">
-                    <Input
-                      id="password"
-                      type={showPassword ? "text" : "password"}
-                      value={formData.password}
-                      onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                      required
-                      minLength={6}
-                      className="pr-10"
-                    />
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                      onClick={() => setShowPassword(!showPassword)}
-                    >
-                      {showPassword ? (
-                        <EyeOff className="h-4 w-4 text-muted-foreground" />
-                      ) : (
-                        <Eye className="h-4 w-4 text-muted-foreground" />
-                      )}
-                    </Button>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="confirmPassword">Confirm Password *</Label>
-                  <div className="relative">
-                    <Input
-                      id="confirmPassword"
-                      type={showConfirmPassword ? "text" : "password"}
-                      value={formData.confirmPassword}
-                      onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-                      required
-                      minLength={6}
-                      className="pr-10"
-                    />
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
-                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    >
-                      {showConfirmPassword ? (
-                        <EyeOff className="h-4 w-4 text-muted-foreground" />
-                      ) : (
-                        <Eye className="h-4 w-4 text-muted-foreground" />
-                      )}
-                    </Button>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="curriculum">Curriculum *</Label>
-                  <Select
-                    value={formData.curriculum}
-                    onValueChange={(value) => {
-                      setFormData({ ...formData, curriculum: value, gradeLevel: "" });
-                      setSelectedSubjects([]);
-                    }}
-                    required
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Select curriculum" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {curriculums.map(curriculum => (
-                        <SelectItem key={curriculum} value={curriculum}>
-                          {curriculum}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {formData.curriculum && (
-                  <div className="space-y-2">
-                    <Label htmlFor="gradeLevel">Level/Year *</Label>
-                    <Select
-                      value={formData.gradeLevel}
-                      onValueChange={(value) => {
-                        setFormData({ ...formData, gradeLevel: value });
-                        setSelectedSubjects([]);
-                      }}
-                      required
-                    >
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select level/year" />
-                      </SelectTrigger>
-                      <SelectContent className="max-h-[300px]">
-                        {availableLevels.map(level => (
-                          <SelectItem key={level.value} value={level.value}>
-                            {level.label}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                )}
-              </div>
-
-              {/* Subjects */}
-              {formData.curriculum && formData.gradeLevel && availableSubjects.length > 0 && (
+              {/* Account Type Selection */}
+              {!accountType && (
                 <div className="space-y-4">
-                  <h3 className="font-semibold text-lg">What subjects do you need help with? *</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Subjects available for {formData.curriculum} - {availableLevels.find(l => l.value === formData.gradeLevel)?.label}
-                  </p>
-                  <div className="grid grid-cols-2 gap-3">
-                    {availableSubjects.map((subject) => (
-                      <div key={subject} className="flex items-center space-x-2">
-                        <Checkbox
-                          id={subject}
-                          checked={selectedSubjects.includes(subject)}
-                          onCheckedChange={() => handleSubjectToggle(subject)}
-                        />
-                        <Label htmlFor={subject} className="cursor-pointer">
-                          {subject}
-                        </Label>
-                      </div>
-                    ))}
+                  <h3 className="font-semibold text-lg">I am signing up as...</h3>
+                  <div className="grid grid-cols-2 gap-4">
+                    <Card 
+                      className="cursor-pointer transition-all hover:border-primary"
+                      onClick={() => setAccountType('student')}
+                    >
+                      <CardContent className="p-6 text-center">
+                        <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-primary/10 flex items-center justify-center">
+                          <Award className="w-6 h-6 text-primary" />
+                        </div>
+                        <h4 className="font-semibold">A Student</h4>
+                        <p className="text-sm text-muted-foreground mt-1">I'm booking tutoring for myself</p>
+                      </CardContent>
+                    </Card>
+                    <Card 
+                      className="cursor-pointer transition-all hover:border-primary"
+                      onClick={() => setAccountType('parent')}
+                    >
+                      <CardContent className="p-6 text-center">
+                        <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-primary/10 flex items-center justify-center">
+                          <User className="w-6 h-6 text-primary" />
+                        </div>
+                        <h4 className="font-semibold">A Parent</h4>
+                        <p className="text-sm text-muted-foreground mt-1">I'm booking tutoring for my child</p>
+                      </CardContent>
+                    </Card>
                   </div>
                 </div>
               )}
 
+              {accountType && (
+                <>
+                  {/* Account Info */}
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <h3 className="font-semibold text-lg">
+                        {accountType === 'parent' ? 'Your Information' : 'Basic Information'}
+                      </h3>
+                      <Button variant="ghost" size="sm" type="button" onClick={() => setAccountType(null)}>
+                        Change
+                      </Button>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="fullName">Full Name *</Label>
+                        <Input
+                          id="fullName"
+                          value={formData.fullName}
+                          onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
+                          required
+                        />
+                      </div>
+                      {accountType === 'student' && (
+                        <div className="space-y-2">
+                          <Label htmlFor="age">Age</Label>
+                          <Input
+                            id="age"
+                            type="number"
+                            min="5"
+                            max="100"
+                            value={formData.age}
+                            onChange={(e) => setFormData({ ...formData, age: e.target.value })}
+                          />
+                        </div>
+                      )}
+                    </div>
 
-              <Button type="submit" className="w-full" size="lg" disabled={isLoading}>
-                {isLoading ? "Creating your account..." : "Create Account & Find Tutors"}
-              </Button>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="email">Email *</Label>
+                        <Input
+                          id="email"
+                          type="email"
+                          value={formData.email}
+                          onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                          required
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="phoneNumber">Phone Number</Label>
+                        <Input
+                          id="phoneNumber"
+                          type="tel"
+                          placeholder="+254712345678"
+                          value={formData.phoneNumber}
+                          onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
+                        />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>Preferred Currency</Label>
+                        <CurrencySelector value={preferredCurrency} onChange={setPreferredCurrency} />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Your Timezone</Label>
+                        <TimezoneSelector value={timezone} onChange={setTimezone} />
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="password">Password *</Label>
+                        <div className="relative">
+                          <Input
+                            id="password"
+                            type={showPassword ? "text" : "password"}
+                            value={formData.password}
+                            onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                            required
+                            minLength={6}
+                            className="pr-10"
+                          />
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                            onClick={() => setShowPassword(!showPassword)}
+                          >
+                            {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                          </Button>
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="confirmPassword">Confirm Password *</Label>
+                        <div className="relative">
+                          <Input
+                            id="confirmPassword"
+                            type={showConfirmPassword ? "text" : "password"}
+                            value={formData.confirmPassword}
+                            onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+                            required
+                            minLength={6}
+                            className="pr-10"
+                          />
+                          <Button
+                            type="button"
+                            variant="ghost"
+                            size="sm"
+                            className="absolute right-0 top-0 h-full px-3 py-2 hover:bg-transparent"
+                            onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                          >
+                            {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                          </Button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Student's Academic Info (for students) */}
+                  {accountType === 'student' && (
+                    <div className="space-y-4">
+                      <h3 className="font-semibold text-lg">Academic Information</h3>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label>Curriculum *</Label>
+                          <Select
+                            value={formData.curriculum}
+                            onValueChange={(value) => {
+                              setFormData({ ...formData, curriculum: value, gradeLevel: "" });
+                              setSelectedSubjects([]);
+                            }}
+                          >
+                            <SelectTrigger><SelectValue placeholder="Select curriculum" /></SelectTrigger>
+                            <SelectContent>
+                              {curriculums.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        {formData.curriculum && (
+                          <div className="space-y-2">
+                            <Label>Grade/Level *</Label>
+                            <Select
+                              value={formData.gradeLevel}
+                              onValueChange={(value) => {
+                                setFormData({ ...formData, gradeLevel: value });
+                                setSelectedSubjects([]);
+                              }}
+                            >
+                              <SelectTrigger><SelectValue placeholder="Select level" /></SelectTrigger>
+                              <SelectContent className="max-h-[300px]">
+                                {availableLevels.map(l => <SelectItem key={l.value} value={l.value}>{l.label}</SelectItem>)}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Child Info (for parents) */}
+                  {accountType === 'parent' && (
+                    <div className="space-y-4">
+                      <h3 className="font-semibold text-lg">Your Child's Information</h3>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="childName">Child's Name *</Label>
+                          <Input
+                            id="childName"
+                            value={formData.childName}
+                            onChange={(e) => setFormData({ ...formData, childName: e.target.value })}
+                            placeholder="e.g., Sarah"
+                            required
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label htmlFor="childAge">Child's Age</Label>
+                          <Input
+                            id="childAge"
+                            type="number"
+                            min="5"
+                            max="25"
+                            value={formData.childAge}
+                            onChange={(e) => setFormData({ ...formData, childAge: e.target.value })}
+                          />
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label>Child's Curriculum *</Label>
+                          <Select
+                            value={formData.childCurriculum}
+                            onValueChange={(value) => {
+                              setFormData({ ...formData, childCurriculum: value, childGradeLevel: "" });
+                              setSelectedSubjects([]);
+                            }}
+                          >
+                            <SelectTrigger><SelectValue placeholder="Select curriculum" /></SelectTrigger>
+                            <SelectContent>
+                              {curriculums.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        {formData.childCurriculum && (
+                          <div className="space-y-2">
+                            <Label>Child's Grade/Level *</Label>
+                            <Select
+                              value={formData.childGradeLevel}
+                              onValueChange={(value) => {
+                                setFormData({ ...formData, childGradeLevel: value });
+                                setSelectedSubjects([]);
+                              }}
+                            >
+                              <SelectTrigger><SelectValue placeholder="Select level" /></SelectTrigger>
+                              <SelectContent className="max-h-[300px]">
+                                {childLevels.map(l => <SelectItem key={l.value} value={l.value}>{l.label}</SelectItem>)}
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Subjects Selection */}
+                  {availableSubjects.length > 0 && (
+                    <div className="space-y-4">
+                      <h3 className="font-semibold text-lg">
+                        {accountType === 'parent' ? "What subjects does your child need help with?" : "What subjects do you need help with?"}
+                      </h3>
+                      <div className="grid grid-cols-2 gap-3">
+                        {availableSubjects.map((subject) => (
+                          <div key={subject} className="flex items-center space-x-2">
+                            <Checkbox
+                              id={subject}
+                              checked={selectedSubjects.includes(subject)}
+                              onCheckedChange={() => handleSubjectToggle(subject)}
+                            />
+                            <Label htmlFor={subject} className="cursor-pointer">{subject}</Label>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  <Button type="submit" className="w-full" size="lg" disabled={isLoading}>
+                    {isLoading ? "Creating your account..." : "Create Account & Find Tutors"}
+                  </Button>
+                </>
+              )}
 
               <p className="text-sm text-center text-muted-foreground">
                 Already have an account?{" "}
-                <Link to="/login" className="text-primary hover:underline">
-                  Sign in
-                </Link>
+                <Link to="/login" className="text-primary hover:underline">Sign in</Link>
               </p>
             </form>
           </CardContent>
