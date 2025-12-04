@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Calendar, Clock, Users } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Calendar, Clock, Users, Video, Smartphone, GraduationCap } from "lucide-react";
 
 interface DecemberIntensiveBannerProps {
   onViewProgram: () => void;
@@ -24,7 +25,21 @@ export const DecemberIntensiveBanner = ({ onViewProgram }: DecemberIntensiveBann
             <p className="text-lg text-muted-foreground max-w-2xl">
               Comprehensive 2-week revision program with 10 lessons per subject. Choose from Mathematics, Physics, Chemistry, Biology, English, and Kiswahili/TOK.
             </p>
-            <div className="flex flex-wrap gap-6 pt-2">
+            
+            {/* Curricula badges */}
+            <div className="flex flex-wrap gap-2 pt-1">
+              <div className="flex items-center gap-2 mr-2">
+                <GraduationCap className="h-4 w-4 text-primary" />
+                <span className="text-sm font-medium">Curricula:</span>
+              </div>
+              {["CBC", "8-4-4", "IGCSE", "A-Level", "IB"].map((curriculum) => (
+                <Badge key={curriculum} variant="secondary" className="text-xs">
+                  {curriculum}
+                </Badge>
+              ))}
+            </div>
+            
+            <div className="flex flex-wrap gap-4 md:gap-6 pt-2">
               <div className="flex items-center gap-2">
                 <Clock className="h-5 w-5 text-primary" />
                 <span className="text-sm font-medium">75-minute sessions</span>
@@ -32,6 +47,14 @@ export const DecemberIntensiveBanner = ({ onViewProgram }: DecemberIntensiveBann
               <div className="flex items-center gap-2">
                 <Users className="h-5 w-5 text-primary" />
                 <span className="text-sm font-medium">Max 15 students</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Video className="h-5 w-5 text-primary" />
+                <span className="text-sm font-medium">Via Google Meet</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Smartphone className="h-5 w-5 text-primary" />
+                <span className="text-sm font-medium">Mobile-friendly</span>
               </div>
               <div className="flex items-center gap-2">
                 <span className="text-lg font-bold text-primary">KES 400 per session</span>
