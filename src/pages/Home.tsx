@@ -596,7 +596,7 @@ const Home = () => {
               <p className="text-lg mb-6 opacity-90">Join thousands of students learning with Lana</p>
               <Link to="/tutors">
                 <Button size="lg" variant="secondary" className="text-lg px-8 shadow-lg">
-                  Find Your Tutor Now
+                  Book a Class Now
                 </Button>
               </Link>
             </CardContent>
