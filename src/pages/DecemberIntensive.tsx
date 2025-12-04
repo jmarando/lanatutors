@@ -35,7 +35,7 @@ const DecemberIntensive = () => {
   const [classes, setClasses] = useState<IntensiveClass[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedCurriculum, setSelectedCurriculum] = useState<string>("CBC");
-  const [selectedGrade, setSelectedGrade] = useState<string>("Grade 7");
+  const [selectedGrade, setSelectedGrade] = useState<string>("Grade 8");
 
   // Cart state - single student flow
   const [selectedClasses, setSelectedClasses] = useState<Array<{
@@ -181,7 +181,7 @@ const DecemberIntensive = () => {
     return icons[subject] || "📖";
   };
   const gradesByCurriculum: Record<string, string[]> = {
-    "CBC": ["Grade 7", "Grade 8", "Grade 9"],
+    "CBC": ["Grade 8", "Grade 9"],
     "8-4-4": ["Form 3", "Form 4"],
     "IGCSE": ["Year 10", "Year 11"],
     "A-Level": ["Year 12", "Year 13"],
@@ -291,7 +291,7 @@ const DecemberIntensive = () => {
               {/* Grade level chips */}
               {selectedCurriculum && <div className="mb-6">
                   <p className="text-sm text-muted-foreground mb-3">
-                    {selectedCurriculum === "CBC" || selectedCurriculum === "8-4-4" ? "Select the grade your child will be in next year (2026). E.g., if in Grade 6 in 2025, select Grade 7:" : "Select your child's current grade level:"}
+                    {selectedCurriculum === "CBC" || selectedCurriculum === "8-4-4" ? "Select the grade your child will be in next year (2026). E.g., if in Grade 7 in 2025, select Grade 8:" : "Select your child's current grade level:"}
                   </p>
                   <div className="flex flex-wrap gap-2">
                     {gradesByCurriculum[selectedCurriculum]?.map(grade => <Badge key={grade} variant={selectedGrade === grade ? "default" : "outline"} className="cursor-pointer" onClick={() => setSelectedGrade(grade)}>
