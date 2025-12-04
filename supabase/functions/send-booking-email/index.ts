@@ -116,6 +116,18 @@ const handler = async (req: Request): Promise<Response> => {
       timeZone: 'Africa/Nairobi'
     }) + ' EAT';
 
+    // Generate calendar URLs
+    const formatGoogleDate = (date: Date) => {
+      return date.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+    };
+
+    const eventTitle = encodeURIComponent(`${booking.subject} Session with ${tutorUserProfile?.full_name || 'Your Tutor'}`);
+    const eventDescription = encodeURIComponent(`Tutoring session with Lana Tutors.\n\nSubject: ${booking.subject}\nTutor: ${tutorUserProfile?.full_name || 'Your Tutor'}\n\nJoin here: ${finalMeetingLink}`);
+    const eventLocation = encodeURIComponent(finalMeetingLink);
+
+    const googleCalendarUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${eventTitle}&dates=${formatGoogleDate(startTime)}/${formatGoogleDate(endTime)}&details=${eventDescription}&location=${eventLocation}`;
+    const outlookCalendarUrl = `https://outlook.live.com/calendar/0/action/compose?subject=${eventTitle}&startdt=${startTime.toISOString()}&enddt=${endTime.toISOString()}&body=${eventDescription}&location=${eventLocation}`;
+
     // Send to student
     if (recipientType === 'student' || recipientType === 'both') {
       console.log(`Attempting to send email to student: ${studentEmail}`);
@@ -254,6 +266,25 @@ const handler = async (req: Request): Promise<Response> => {
                                     </tr>
                                     `}
                                   </table>
+                                </td>
+                              </tr>
+                            </table>
+                          </td>
+                        </tr>
+                      </table>
+                      
+                      <!-- Add to Calendar -->
+                      <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%" style="background-color: #f9f9f9; border-radius: 12px; margin: 24px 0;">
+                        <tr>
+                          <td style="padding: 20px; text-align: center;">
+                            <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
+                              <tr>
+                                <td align="center" style="padding-bottom: 12px; font-size: 14px; font-weight: 600; color: #1a1a1a;">📅 Add to Calendar</td>
+                              </tr>
+                              <tr>
+                                <td align="center">
+                                  <a href="${googleCalendarUrl}" target="_blank" style="display: inline-block; background-color: #4285F4; color: #ffffff; text-decoration: none; padding: 10px 20px; border-radius: 6px; font-size: 14px; margin: 5px;">Google Calendar</a>
+                                  <a href="${outlookCalendarUrl}" target="_blank" style="display: inline-block; background-color: #0078D4; color: #ffffff; text-decoration: none; padding: 10px 20px; border-radius: 6px; font-size: 14px; margin: 5px;">Outlook</a>
                                 </td>
                               </tr>
                             </table>

@@ -113,6 +113,35 @@ const handler = async (req: Request): Promise<Response> => {
 
         const timeUntil = reminder.reminderType === "24h" ? "24 hours" : "1 hour";
 
+        // Parse the time properly (handle 12-hour format)
+        const parseTime = (timeStr: string) => {
+          const match = timeStr.match(/(\d{1,2}):(\d{2})\s*(AM|PM)?/i);
+          if (!match) return { hours: 9, minutes: 0 };
+          let hours = parseInt(match[1]);
+          const minutes = parseInt(match[2]);
+          const isPM = match[3]?.toUpperCase() === 'PM';
+          if (isPM && hours !== 12) hours += 12;
+          if (!isPM && hours === 12) hours = 0;
+          return { hours, minutes };
+        };
+
+        const { hours, minutes } = parseTime(reminder.consultation_time);
+        const startDateTime = new Date(reminder.consultation_date);
+        startDateTime.setHours(hours, minutes, 0, 0);
+        const endDateTime = new Date(startDateTime.getTime() + 30 * 60000);
+
+        // Format for Google Calendar URL
+        const formatGoogleDate = (date: Date) => {
+          return date.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+        };
+
+        const eventTitle = encodeURIComponent(`Free Consultation with Lana Tutors - ${reminder.student_name}`);
+        const eventDescription = encodeURIComponent(`Your free consultation session with Lana Tutors.\n\nJoin here: ${reminder.meeting_link || ''}`);
+        const eventLocation = encodeURIComponent(reminder.meeting_link || '');
+
+        const googleCalendarUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${eventTitle}&dates=${formatGoogleDate(startDateTime)}/${formatGoogleDate(endDateTime)}&details=${eventDescription}&location=${eventLocation}`;
+        const outlookCalendarUrl = `https://outlook.live.com/calendar/0/action/compose?subject=${eventTitle}&startdt=${startDateTime.toISOString()}&enddt=${endDateTime.toISOString()}&body=${eventDescription}&location=${eventLocation}`;
+
         const emailResponse = await fetch('https://api.resend.com/emails', {
           method: 'POST',
           headers: {
@@ -172,7 +201,7 @@ const handler = async (req: Request): Promise<Response> => {
                               
                               ${reminder.meeting_link ? `
                               <!-- CTA Button -->
-                              <table role="presentation" style="width: 100%; border-collapse: collapse; margin-bottom: 30px;">
+                              <table role="presentation" style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
                                 <tr>
                                   <td style="text-align: center;">
                                     <a href="${reminder.meeting_link}" 
@@ -183,6 +212,17 @@ const handler = async (req: Request): Promise<Response> => {
                                 </tr>
                               </table>
                               ` : ''}
+
+                              <!-- Add to Calendar -->
+                              <table role="presentation" style="width: 100%; border-collapse: collapse; background-color: #f9f9f9; border-radius: 8px; margin-bottom: 30px;">
+                                <tr>
+                                  <td style="padding: 20px; text-align: center;">
+                                    <p style="margin: 0 0 15px 0; color: #1A1A1A; font-size: 14px; font-weight: bold;">📅 Add to Calendar</p>
+                                    <a href="${googleCalendarUrl}" target="_blank" style="display: inline-block; background-color: #4285F4; color: #ffffff; text-decoration: none; padding: 10px 20px; border-radius: 6px; font-size: 14px; margin: 5px;">Google Calendar</a>
+                                    <a href="${outlookCalendarUrl}" target="_blank" style="display: inline-block; background-color: #0078D4; color: #ffffff; text-decoration: none; padding: 10px 20px; border-radius: 6px; font-size: 14px; margin: 5px;">Outlook</a>
+                                  </td>
+                                </tr>
+                              </table>
                               
                               <p style="margin: 0 0 10px 0; color: #737373; font-size: 14px; line-height: 1.5;">
                                 <strong>Preparation Tips:</strong>

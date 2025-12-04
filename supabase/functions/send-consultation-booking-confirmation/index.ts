@@ -44,24 +44,38 @@ const handler = async (req: Request): Promise<Response> => {
       day: 'numeric' 
     });
 
-    // Create calendar event data for .ics file
-    const startDateTime = new Date(`${consultationDate}T${consultationTime.replace(' AM', ':00').replace(' PM', ':00')}`);
+    // Parse the time properly (handle 12-hour format)
+    const parseTime = (timeStr: string) => {
+      const match = timeStr.match(/(\d{1,2}):(\d{2})\s*(AM|PM)/i);
+      if (!match) return { hours: 9, minutes: 0 };
+      let hours = parseInt(match[1]);
+      const minutes = parseInt(match[2]);
+      const isPM = match[3].toUpperCase() === 'PM';
+      if (isPM && hours !== 12) hours += 12;
+      if (!isPM && hours === 12) hours = 0;
+      return { hours, minutes };
+    };
+
+    const { hours, minutes } = parseTime(consultationTime);
+    const startDateTime = new Date(consultationDate);
+    startDateTime.setHours(hours, minutes, 0, 0);
     const endDateTime = new Date(startDateTime.getTime() + 30 * 60000); // 30 minutes later
 
-    const calendarData = `BEGIN:VCALENDAR
-VERSION:2.0
-PRODID:-//Lana//EN
-BEGIN:VEVENT
-UID:${crypto.randomUUID()}@learnwithlana.com
-DTSTAMP:${new Date().toISOString().replace(/[-:]/g, '').split('.')[0]}Z
-DTSTART:${startDateTime.toISOString().replace(/[-:]/g, '').split('.')[0]}Z
-DTEND:${endDateTime.toISOString().replace(/[-:]/g, '').split('.')[0]}Z
-SUMMARY:Free Consultation with Lana
-DESCRIPTION:Your free consultation session with Lana. Join here: ${meetingLink}
-LOCATION:${meetingLink}
-STATUS:CONFIRMED
-END:VEVENT
-END:VCALENDAR`;
+    // Format for Google Calendar URL (YYYYMMDDTHHmmssZ format)
+    const formatGoogleDate = (date: Date) => {
+      return date.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+    };
+
+    const eventTitle = encodeURIComponent(`Free Consultation with Lana Tutors - ${studentName}`);
+    const eventDescription = encodeURIComponent(`Your free consultation session with Lana Tutors to discuss ${studentName}'s learning needs.\n\nJoin here: ${meetingLink}`);
+    const eventLocation = encodeURIComponent(meetingLink);
+
+    // Google Calendar link
+    const googleCalendarUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${eventTitle}&dates=${formatGoogleDate(startDateTime)}/${formatGoogleDate(endDateTime)}&details=${eventDescription}&location=${eventLocation}`;
+
+    // Outlook Calendar link
+    const formatOutlookDate = (date: Date) => date.toISOString();
+    const outlookCalendarUrl = `https://outlook.live.com/calendar/0/action/compose?subject=${eventTitle}&startdt=${formatOutlookDate(startDateTime)}&enddt=${formatOutlookDate(endDateTime)}&body=${eventDescription}&location=${eventLocation}`;
 
     const emailHtml = `
       <!DOCTYPE html>
@@ -127,6 +141,12 @@ END:VCALENDAR`;
 
             <div style="text-align: center; margin: 30px 0;">
               <a href="${meetingLink}" class="button">📹 Join Meeting</a>
+            </div>
+
+            <div style="text-align: center; margin: 20px 0; padding: 20px; background: #F9FAFB; border-radius: 8px;">
+              <p style="color: #1A1A1A; margin: 0 0 15px 0; font-weight: 600;">📅 Add to Calendar</p>
+              <a href="${googleCalendarUrl}" target="_blank" style="display: inline-block; background: #4285F4; color: #ffffff; padding: 10px 20px; text-decoration: none; border-radius: 6px; font-size: 14px; margin: 5px;">Google Calendar</a>
+              <a href="${outlookCalendarUrl}" target="_blank" style="display: inline-block; background: #0078D4; color: #ffffff; padding: 10px 20px; text-decoration: none; border-radius: 6px; font-size: 14px; margin: 5px;">Outlook</a>
             </div>
             
             <div class="info-box">
