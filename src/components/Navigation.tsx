@@ -140,7 +140,7 @@ const Navigation = () => {
                   <Link to="/tutors" className="flex items-start gap-3 p-3 cursor-pointer">
                     <User className="w-5 h-5 text-primary mt-0.5" />
                     <div className="flex-1">
-                      <div className="font-medium">Individual Tutor</div>
+                      <div className="font-medium">Book a Tutor</div>
                       <div className="text-xs text-muted-foreground">1-on-1 sessions</div>
                     </div>
                   </Link>
