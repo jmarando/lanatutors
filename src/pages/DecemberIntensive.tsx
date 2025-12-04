@@ -383,45 +383,6 @@ const DecemberIntensive = () => {
                         </CardContent>
                       </Card>
 
-                      {/* Week-by-Week Topics Summary */}
-                      <Card className="mb-8">
-                        <CardHeader>
-                          <CardTitle>{selectedGrade} Topics Overview</CardTitle>
-                          <CardDescription>Subject coverage across the 2-week program</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                          <div className="overflow-x-auto">
-                            <table className="w-full border-collapse">
-                              <thead>
-                                <tr className="border-b">
-                                  <th className="text-left p-3 font-semibold">Subject</th>
-                                  <th className="text-left p-3 font-semibold">Week 1 (Dec 8-12)</th>
-                                  <th className="text-left p-3 font-semibold">Week 2 (Dec 15-19)</th>
-                                </tr>
-                              </thead>
-                              <tbody>
-                                {filteredClasses.map(cls => {
-                            const topics = cls.focus_topics || '';
-                            const week1Match = topics.match(/Week 1:([^|]+)/);
-                            const week2Match = topics.match(/Week 2:([^|]+)/);
-                            const week1Topics = week1Match ? week1Match[1].trim() : 'Topics to be announced';
-                            const week2Topics = week2Match ? week2Match[1].trim() : 'Topics to be announced';
-                            return <tr key={cls.id} className="border-b last:border-0">
-                                      <td className="p-3">
-                                        <div className="flex items-center gap-2">
-                                          <span className="text-lg">{getSubjectIcon(cls.subject)}</span>
-                                          <span className="font-medium">{cls.subject}</span>
-                                        </div>
-                                      </td>
-                                      <td className="p-3 text-sm text-muted-foreground">{week1Topics}</td>
-                                      <td className="p-3 text-sm text-muted-foreground">{week2Topics}</td>
-                                    </tr>;
-                          })}
-                              </tbody>
-                            </table>
-                          </div>
-                        </CardContent>
-                      </Card>
                     </>}
 
                   {/* Classes by Time Slot and Grade */}
