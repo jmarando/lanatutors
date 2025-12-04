@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -18,6 +18,8 @@ const emailSchema = z.string().email({ message: "Please enter a valid email addr
 
 const StudentSignup = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const redirectTo = searchParams.get("redirect");
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
@@ -64,10 +66,15 @@ const StudentSignup = () => {
   const handleGoogleSignup = async () => {
     setIsLoading(true);
     try {
+      // Determine where to redirect after OAuth
+      const finalRedirect = redirectTo 
+        ? `${window.location.origin}${redirectTo}`
+        : `${window.location.origin}/student/dashboard`;
+      
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/student/dashboard`,
+          redirectTo: finalRedirect,
         }
       });
       if (error) throw error;
@@ -211,7 +218,8 @@ const StudentSignup = () => {
           : "Your account has been created successfully"
       });
 
-      navigate("/student/dashboard");
+      // Redirect to original destination or dashboard
+      navigate(redirectTo || "/student/dashboard");
     } catch (error: any) {
       toast({
         title: "Signup failed",
