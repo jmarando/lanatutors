@@ -22,6 +22,7 @@ import { SEO } from "@/components/SEO";
 import { supabase } from "@/integrations/supabase/client";
 import { GroupClassBanner } from "@/components/GroupClassBanner";
 import { DecemberIntensiveBanner } from "@/components/DecemberIntensiveBanner";
+import { PriceDisplay } from "@/components/PriceDisplay";
 import { useNavigate } from "react-router-dom";
 import heroVideo from "@/assets/hero-video.mp4";
 import heroImage from "@/assets/hero-image.jpg";
@@ -458,7 +459,7 @@ const Home = () => {
                       {tutor.experienceYears}+ years experience
                     </div>
                     <div className="text-xl font-bold text-primary mb-3">
-                      KES {tutor.hourlyRate.toLocaleString()}/hr
+                      <PriceDisplay amountKES={tutor.hourlyRate} />/hr
                     </div>
                   </div>
                   <Link to={`/tutors/${tutor.profileSlug || tutor.id}`}>

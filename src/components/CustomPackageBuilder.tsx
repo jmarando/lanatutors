@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { RecurringScheduleBuilder } from "./RecurringScheduleBuilder";
+import { PriceDisplay } from "@/components/PriceDisplay";
 
 interface CustomPackageBuilderProps {
   tutorId: string; // tutor_profiles.id for package ownership
@@ -321,7 +322,7 @@ export const CustomPackageBuilder = ({
                       </div>
                     </div>
                     <div className="text-sm font-medium">
-                      KES {(hourlyRate * item.sessions).toLocaleString()}
+                      <PriceDisplay amountKES={hourlyRate * item.sessions} />
                     </div>
                   </div>
                 ))}
@@ -334,7 +335,7 @@ export const CustomPackageBuilder = ({
             <CardContent className="p-4 space-y-3">
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Rate per session:</span>
-                <span className="font-medium">KES {hourlyRate.toLocaleString()}</span>
+                <span className="font-medium"><PriceDisplay amountKES={hourlyRate} /></span>
               </div>
               <div className="flex justify-between text-sm">
                 <span className="text-muted-foreground">Total sessions:</span>
@@ -351,11 +352,11 @@ export const CustomPackageBuilder = ({
                 <span className="font-semibold">Total Price:</span>
                 <div className="text-right">
                   <p className="text-xl font-bold text-primary">
-                    KES {totalPrice.toLocaleString()}
+                    <PriceDisplay amountKES={totalPrice} />
                   </p>
                   {discountPercentage > 0 && (
                     <p className="text-xs text-muted-foreground line-through">
-                      KES {(hourlyRate * totalSessions).toLocaleString()}
+                      <PriceDisplay amountKES={hourlyRate * totalSessions} />
                     </p>
                   )}
                 </div>

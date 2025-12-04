@@ -1,7 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 
 export const SUPPORTED_CURRENCIES = {
-  KES: { symbol: 'KSh', name: 'Kenyan Shilling', flag: '🇰🇪' },
+  KES: { symbol: 'KES ', name: 'Kenyan Shilling', flag: '🇰🇪' },
   USD: { symbol: '$', name: 'US Dollar', flag: '🇺🇸' },
   EUR: { symbol: '€', name: 'Euro', flag: '🇪🇺' },
   GBP: { symbol: '£', name: 'British Pound', flag: '🇬🇧' },
@@ -123,9 +123,11 @@ export async function convertToKES(
  */
 export function formatCurrency(amount: number, currency: Currency): string {
   const currencyInfo = SUPPORTED_CURRENCIES[currency];
+  // KES doesn't use decimal places
+  const decimals = currency === 'KES' ? 0 : 2;
   return `${currencyInfo.symbol}${amount.toLocaleString('en-US', {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals
   })}`;
 }
 
