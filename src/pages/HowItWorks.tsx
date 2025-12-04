@@ -59,8 +59,7 @@ const HowItWorks = () => {
       details: [
         "Online: Join from browser - no downloads required",
         "In-Person: Meet at agreed locations across Nairobi",
-        "Interactive 1-on-1 learning with digital whiteboards",
-        "Access Google Classroom for materials and assignments"
+        "Interactive 1-on-1 learning with digital whiteboards"
       ]
     }
   ];

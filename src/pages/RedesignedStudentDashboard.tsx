@@ -5,11 +5,10 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { StudentClassesTab } from "@/components/student/StudentClassesTab";
-import { StudentClassroomsTab } from "@/components/student/StudentClassroomsTab";
 import { StudentProgressTab } from "@/components/student/StudentProgressTab";
 import { StudentBootcampTab } from "@/components/student/StudentBootcampTab";
 import { StudentPackagesTab } from "@/components/student/StudentPackagesTab";
-import { Calendar, GraduationCap, TrendingUp, Users, Sparkles, Package } from "lucide-react";
+import { Calendar, TrendingUp, Users, Sparkles, Package } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 const RedesignedStudentDashboard = () => {
@@ -61,8 +60,6 @@ const RedesignedStudentDashboard = () => {
         return <StudentClassesTab />;
       case "packages":
         return <StudentPackagesTab />;
-      case "classrooms":
-        return <StudentClassroomsTab />;
       case "progress":
         return <StudentProgressTab />;
       case "bootcamp":
@@ -164,15 +161,7 @@ const RedesignedStudentDashboard = () => {
                   <span className="font-medium">My Packages</span>
                 </TabsTrigger>
                 <TabsTrigger 
-                  value="classrooms" 
-                  className="flex items-center gap-2 px-6 py-3 data-[state=active]:bg-background"
-                  onClick={() => window.location.hash = "classrooms"}
-                >
-                  <GraduationCap className="w-4 h-4" />
-                  <span className="font-medium">Classrooms</span>
-                </TabsTrigger>
-                <TabsTrigger 
-                  value="progress" 
+                  value="progress"
                   className="flex items-center gap-2 px-6 py-3 data-[state=active]:bg-background"
                   onClick={() => window.location.hash = "progress"}
                 >
@@ -203,9 +192,6 @@ const RedesignedStudentDashboard = () => {
               {renderTabContent()}
             </TabsContent>
             <TabsContent value="packages" className="mt-0">
-              {renderTabContent()}
-            </TabsContent>
-            <TabsContent value="classrooms" className="mt-0">
               {renderTabContent()}
             </TabsContent>
             <TabsContent value="progress" className="mt-0">

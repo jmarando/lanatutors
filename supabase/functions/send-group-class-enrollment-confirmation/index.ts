@@ -140,7 +140,6 @@ serve(async (req) => {
             <ul>
               <li>You'll receive a reminder email before each scheduled session</li>
               <li>Access your class anytime from your <a href="https://lanatutors.africa/student/dashboard">Student Dashboard</a></li>
-              <li>Your tutor will share learning materials via Google Classroom</li>
               <li>Attendance will be tracked automatically when you join sessions</li>
             </ul>
 
