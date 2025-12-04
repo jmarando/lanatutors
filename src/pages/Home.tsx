@@ -104,7 +104,7 @@ const Home = () => {
     {
       icon: ShieldCheck,
       title: "Verified Expert Tutors",
-      description: "Every tutor is a verified teacher from top Kenyan schools including Alliance, Starehe, Kenya High, and more. Learn online from anywhere - Kenya, East Africa, or the diaspora. We verify teaching credentials and conduct background checks. Only the top 15% of applicants are accepted."
+      description: "Every tutor is a verified teacher from Kenya's top schools. Learn online from anywhere - Kenya, East Africa, or the diaspora. We verify teaching credentials and conduct background checks. Only the top 15% of applicants are accepted."
     },
     {
       icon: Clock,
