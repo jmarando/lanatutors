@@ -19,6 +19,7 @@ import { NAIROBI_LOCATIONS } from "@/utils/locationData";
 import { getLevelsForCurriculum } from "@/utils/curriculumData";
 import { StudentPicker } from "./StudentPicker";
 import { Student } from "@/hooks/useStudents";
+import { PriceDisplay } from "@/components/PriceDisplay";
 
 interface AvailabilitySlot {
   id: string;
@@ -951,7 +952,7 @@ export const BookingCalendar = ({
                       </Select>
                       {curriculumSpecificRate !== null && curriculum && level && (
                         <p className="text-sm font-semibold text-primary mt-2">
-                          Rate for {curriculum} - {level}: KES {curriculumSpecificRate.toLocaleString()}/hr
+                          Rate for {curriculum} - {level}: <PriceDisplay amountKES={curriculumSpecificRate} />/hr
                         </p>
                       )}
                     </div>
@@ -1080,9 +1081,9 @@ export const BookingCalendar = ({
                       <div className="font-semibold mb-1">Single Session (1 hour)</div>
                       <div className="text-sm text-muted-foreground">
                         {curriculumSpecificRate !== null && curriculum ? (
-                          <>From KES {selectedClassType === 'online' ? curriculumSpecificRate : (curriculumSpecificRate * 1.5).toFixed(0)}</>
+                          <>From <PriceDisplay amountKES={selectedClassType === 'online' ? curriculumSpecificRate : (curriculumSpecificRate * 1.5)} /></>
                         ) : (
-                          <>KES {selectedClassType === 'online' ? hourlyRate : (hourlyRate * 1.5).toFixed(0)}</>
+                          <><PriceDisplay amountKES={selectedClassType === 'online' ? hourlyRate : (hourlyRate * 1.5)} /></>
                         )}
                       </div>
                     </button>
@@ -1104,9 +1105,9 @@ export const BookingCalendar = ({
                       </div>
                       <div className="text-sm text-muted-foreground">
                         {curriculumSpecificRate !== null && curriculum ? (
-                          <>From KES {selectedClassType === 'online' ? (curriculumSpecificRate * 2).toFixed(0) : (curriculumSpecificRate * 1.5 * 2 * 0.85).toFixed(0)}</>
+                          <>From <PriceDisplay amountKES={selectedClassType === 'online' ? (curriculumSpecificRate * 2) : (curriculumSpecificRate * 1.5 * 2 * 0.85)} /></>
                         ) : (
-                          <>KES {selectedClassType === 'online' ? (hourlyRate * 2).toFixed(0) : (hourlyRate * 1.5 * 2 * 0.85).toFixed(0)}</>
+                          <><PriceDisplay amountKES={selectedClassType === 'online' ? (hourlyRate * 2) : (hourlyRate * 1.5 * 2 * 0.85)} /></>
                         )}
                       </div>
                     </button>
@@ -1156,7 +1157,7 @@ export const BookingCalendar = ({
                           {!isRedemptionMode && (
                             <div className="flex justify-between items-center">
                               <span className="text-sm font-medium">Total Amount:</span>
-                              <span className="text-lg font-bold text-primary">KES {total.toFixed(0)}</span>
+                              <span className="text-lg font-bold text-primary"><PriceDisplay amountKES={total} /></span>
                             </div>
                           )}
                         </div>

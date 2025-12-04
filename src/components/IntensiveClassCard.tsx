@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Plus, Check } from "lucide-react";
 import { useState } from "react";
-
+import { PriceDisplay } from "@/components/PriceDisplay";
 interface IntensiveClass {
   id: string;
   subject: string;
@@ -150,7 +150,9 @@ export const IntensiveClassCard = ({
         )}
 
         <div className="mt-4 pt-4 border-t">
-          <p className="text-lg font-semibold">KES 4,000</p>
+          <p className="text-lg font-semibold">
+            <PriceDisplay amountKES={4000} />
+          </p>
           <p className="text-xs text-muted-foreground">10 sessions • 75 minutes each</p>
         </div>
       </CardContent>

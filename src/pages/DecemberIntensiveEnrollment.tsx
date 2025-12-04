@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { Loader2, ShoppingCart, User, ArrowLeft, Trash2, Zap, CreditCard, Check, FileText, CreditCard as CardIcon } from "lucide-react";
 import { StudentPicker } from "@/components/StudentPicker";
 import { Student } from "@/hooks/useStudents";
+import { PriceDisplay } from "@/components/PriceDisplay";
 
 interface CartItem {
   id: string;
@@ -273,12 +274,12 @@ const DecemberIntensiveEnrollment = () => {
                             {item.curriculum} • {item.gradeLevel}
                           </p>
                           <p className="text-xs text-muted-foreground">
-                            KES {pricePerSession}/session × 10 sessions
+                            <PriceDisplay amountKES={pricePerSession} />/session × 10 sessions
                           </p>
                         </div>
                         <div className="flex items-center gap-3">
                           <span className="font-semibold">
-                            KES {pricePerSubject.toLocaleString()}
+                            <PriceDisplay amountKES={pricePerSubject} />
                           </span>
                           <Button
                             variant="ghost"
@@ -384,13 +385,13 @@ const DecemberIntensiveEnrollment = () => {
                 </div>
 
                 <div className="text-xs text-muted-foreground p-2 bg-muted/50 rounded">
-                  CBC/8-4-4: KES 400/session • IGCSE: KES 500/session • A-Level/IB: KES 600/session
+                  CBC/8-4-4: <PriceDisplay amountKES={400} />/session • IGCSE: <PriceDisplay amountKES={500} />/session • A-Level/IB: <PriceDisplay amountKES={600} />/session
                 </div>
 
                 <div className="border-t pt-4">
                   <div className="flex justify-between text-lg font-bold">
                     <span>Total Amount</span>
-                    <span className="text-primary">KES {totalAmount.toLocaleString()}</span>
+                    <span className="text-primary"><PriceDisplay amountKES={totalAmount} /></span>
                   </div>
                 </div>
 
@@ -421,10 +422,10 @@ const DecemberIntensiveEnrollment = () => {
                               )}
                             </div>
                             <p className="text-xs text-muted-foreground mt-1">
-                              Pay KES {depositAmount.toLocaleString()} now
+                              Pay <PriceDisplay amountKES={depositAmount} /> now
                             </p>
                             <p className="text-xs text-amber-600 dark:text-amber-400">
-                              Balance due: KES {balanceDue.toLocaleString()}
+                              Balance due: <PriceDisplay amountKES={balanceDue} />
                             </p>
                           </div>
                         </div>
@@ -455,7 +456,7 @@ const DecemberIntensiveEnrollment = () => {
                               )}
                             </div>
                             <p className="text-xs text-muted-foreground mt-1">
-                              Pay KES {totalAmount.toLocaleString()} now
+                              Pay <PriceDisplay amountKES={totalAmount} /> now
                             </p>
                             <p className="text-xs text-green-600 dark:text-green-400">
                               No balance due

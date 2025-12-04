@@ -3,6 +3,7 @@ import { Card } from "@/components/ui/card";
 import { X, ShoppingCart } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { PriceDisplay } from "@/components/PriceDisplay";
 
 interface SelectedClass {
   id: string;
@@ -56,7 +57,9 @@ export const IntensiveCartSimple = ({ selectedClasses, onRemoveClass }: Intensiv
                 <p className="text-sm text-muted-foreground">
                   {selectedClasses.length} subject{selectedClasses.length !== 1 ? "s" : ""} for 1 student
                 </p>
-                <p className="text-xl font-bold">KES {totalAmount.toLocaleString()}</p>
+                <p className="text-xl font-bold">
+                  <PriceDisplay amountKES={totalAmount} />
+                </p>
               </div>
             </div>
 
@@ -73,7 +76,7 @@ export const IntensiveCartSimple = ({ selectedClasses, onRemoveClass }: Intensiv
                     <div className="flex-1 min-w-0">
                       <p className="font-medium text-sm">{cls.subject}</p>
                       <p className="text-xs text-muted-foreground">
-                        {cls.curriculum} • {cls.gradeLevel} • KES {pricePerSession}/session × 10 = KES {pricePerSubject.toLocaleString()}
+                        {cls.curriculum} • {cls.gradeLevel} • <PriceDisplay amountKES={pricePerSession} />/session × 10 = <PriceDisplay amountKES={pricePerSubject} />
                       </p>
                     </div>
                     <Button
@@ -91,7 +94,7 @@ export const IntensiveCartSimple = ({ selectedClasses, onRemoveClass }: Intensiv
 
             {/* Price breakdown */}
             <div className="text-xs text-muted-foreground mb-4 p-2 bg-muted/50 rounded">
-              Pricing: CBC/8-4-4 KES 400/session • IGCSE KES 500/session • A-Level/IB KES 600/session
+              Pricing: CBC/8-4-4 <PriceDisplay amountKES={400} />/session • IGCSE <PriceDisplay amountKES={500} />/session • A-Level/IB <PriceDisplay amountKES={600} />/session
             </div>
 
             {/* Action buttons */}
