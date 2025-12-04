@@ -104,27 +104,49 @@ const TutorProfile = () => {
     let tutorProfile;
     let error;
     
-    const { data: profileBySlug, error: slugError } = await supabase
-      .from("tutor_profiles")
-      .select("*")
-      .eq("profile_slug", id)
-      .eq("verified", true)
-      .single();
-
-    if (profileBySlug) {
-      tutorProfile = profileBySlug;
-    } else {
-      const { data: profileById, error: idError } = await supabase
+    // Check if user is authenticated
+    const { data: { user } } = await supabase.auth.getUser();
+    
+    if (user) {
+      // Authenticated users can query the full table
+      const { data: profileBySlug, error: slugError } = await supabase
         .from("tutor_profiles")
         .select("*")
-        .eq("id", id)
+        .eq("profile_slug", id)
         .eq("verified", true)
         .single();
-      tutorProfile = profileById;
-      error = idError;
+
+      if (profileBySlug) {
+        tutorProfile = profileBySlug;
+      } else {
+        const { data: profileById, error: idError } = await supabase
+          .from("tutor_profiles")
+          .select("*")
+          .eq("id", id)
+          .eq("verified", true)
+          .single();
+        tutorProfile = profileById;
+        error = idError;
+      }
+    } else {
+      // Unauthenticated users use the secure RPC function
+      const { data: publicTutors, error: rpcError } = await supabase.rpc("get_public_tutor_profiles");
+      
+      if (rpcError) {
+        error = rpcError;
+      } else {
+        // Find the specific tutor by slug or id
+        tutorProfile = publicTutors?.find((t: any) => t.profile_slug === id || t.id === id);
+      }
     }
 
     if (error && !tutorProfile) {
+      toast.error("Tutor profile not found");
+      setLoading(false);
+      return;
+    }
+    
+    if (!tutorProfile) {
       toast.error("Tutor profile not found");
       setLoading(false);
       return;
@@ -138,13 +160,8 @@ const TutorProfile = () => {
       .eq("id", tutorProfile.user_id)
       .maybeSingle();
 
-    console.log('User profile data:', userProfile);
-    console.log('Profile fetch error:', profileError);
-
     // Only use real uploaded avatar, no AI fallback photos
     const photoUrl = userProfile?.avatar_url || null;
-
-    console.log('Setting tutor name to:', userProfile?.full_name || tutorProfile.email?.split('@')[0] || "Tutor");
 
     setTutor({
       id: tutorProfile.id,

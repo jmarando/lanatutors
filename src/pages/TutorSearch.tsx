@@ -67,11 +67,24 @@ const TutorSearch = () => {
   const fetchTutors = async () => {
     setLoading(true);
     try {
-      // 1) Fetch tutor profiles (verified)
-      const {
-        data: tutorProfiles,
-        error: tutorError
-      } = await supabase.from("tutor_profiles").select("*, profile_slug").eq("verified", true);
+      // Check if user is authenticated
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      let tutorProfiles;
+      let tutorError;
+      
+      if (user) {
+        // Authenticated users can query the full table (RLS allows verified tutors)
+        const result = await supabase.from("tutor_profiles").select("*, profile_slug").eq("verified", true);
+        tutorProfiles = result.data;
+        tutorError = result.error;
+      } else {
+        // Unauthenticated users use the secure RPC function that excludes sensitive data
+        const result = await supabase.rpc("get_public_tutor_profiles");
+        tutorProfiles = result.data;
+        tutorError = result.error;
+      }
+      
       if (tutorError) throw tutorError;
       const profilesById = new Map<string, any>();
 
