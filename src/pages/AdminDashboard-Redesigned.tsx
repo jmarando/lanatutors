@@ -20,7 +20,8 @@ import { BlogManagement } from "@/components/admin/BlogManagement";
 import { TutorSignupList } from "@/components/admin/TutorSignupList";
 import { TutorEmailList } from "@/components/admin/TutorEmailList";
 import { AdminIntensivePrograms } from "@/components/admin/AdminIntensivePrograms";
-import { Sparkles } from "lucide-react";
+import { AdminTutorProfileEdit } from "@/components/admin/AdminTutorProfileEdit";
+import { Sparkles, UserCog } from "lucide-react";
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -1206,6 +1207,15 @@ The Lana Team`;
                   )}
                 </span>
               </TabsTrigger>
+              <TabsTrigger 
+                value="edit-tutors"
+                className="data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:bg-transparent rounded-none bg-transparent px-4 py-3 border-b-2 border-transparent"
+              >
+                <span className="flex items-center gap-2">
+                  <UserCog className="h-4 w-4" />
+                  Edit Tutors
+                </span>
+              </TabsTrigger>
             </TabsList>
           </div>
 
@@ -1755,6 +1765,9 @@ The Lana Team`;
             </div>
           </TabsContent>
 
+          <TabsContent value="edit-tutors" className="space-y-4">
+            <AdminTutorProfileEdit />
+          </TabsContent>
 
           <TabsContent value="consultations" className="space-y-4">
             {/* Conversion Metrics Dashboard */}
