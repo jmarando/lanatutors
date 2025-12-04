@@ -76,11 +76,16 @@ serve(async (req) => {
       }
     }
 
-    // Check metadata for tutor name
+    // Check metadata for tutor name and curriculum details
     const metadata = packageData.metadata as any;
     if (metadata?.tutorName) {
       tutorName = metadata.tutorName;
     }
+
+    // Extract curriculum details from metadata
+    const curriculum = metadata?.curriculum || '';
+    const level = metadata?.level || '';
+    const subject = metadata?.subject || '';
 
     // Fetch subject allocations
     const { data: allocations } = await supabase
@@ -95,6 +100,34 @@ serve(async (req) => {
     const isDeposit = balanceDue > 0;
 
     const studentName = studentProfile?.full_name || 'Student';
+    
+    // Build curriculum details HTML
+    const curriculumDetailsHtml = (curriculum || level || subject) ? `
+      ${curriculum ? `<tr>
+        <td style="border-bottom: 1px solid #e5e7eb;">
+          <strong style="color: #6b7280;">Curriculum:</strong>
+        </td>
+        <td style="border-bottom: 1px solid #e5e7eb; text-align: right;">
+          ${curriculum}
+        </td>
+      </tr>` : ''}
+      ${level ? `<tr>
+        <td style="border-bottom: 1px solid #e5e7eb;">
+          <strong style="color: #6b7280;">Level:</strong>
+        </td>
+        <td style="border-bottom: 1px solid #e5e7eb; text-align: right;">
+          ${level}
+        </td>
+      </tr>` : ''}
+      ${subject ? `<tr>
+        <td style="border-bottom: 1px solid #e5e7eb;">
+          <strong style="color: #6b7280;">Subject:</strong>
+        </td>
+        <td style="border-bottom: 1px solid #e5e7eb; text-align: right;">
+          ${subject}
+        </td>
+      </tr>` : ''}
+    ` : '';
 
     // Send confirmation email to student/parent
     const studentEmailHtml = `
@@ -146,24 +179,7 @@ serve(async (req) => {
                           <strong>${packageData.total_sessions} Session Bundle</strong>
                         </td>
                       </tr>
-                      <tr>
-                        <td style="border-bottom: 1px solid #e5e7eb;">
-                          <strong style="color: #6b7280;">Tutor:</strong>
-                        </td>
-                        <td style="border-bottom: 1px solid #e5e7eb; text-align: right;">
-                          ${tutorName}
-                        </td>
-                      </tr>
-                      <tr>
-                        <td style="border-bottom: 1px solid #e5e7eb;">
-                          <strong style="color: #6b7280;">Sessions Included:</strong>
-                        </td>
-                        <td style="border-bottom: 1px solid #e5e7eb; text-align: right;">
-                          <ul style="margin: 0; padding-left: 20px; text-align: left;">
-                            ${subjectsList}
-                          </ul>
-                        </td>
-                      </tr>
+                      ${curriculumDetailsHtml}
                       <tr>
                         <td style="border-bottom: 1px solid #e5e7eb;">
                           <strong style="color: #6b7280;">Total Amount:</strong>
@@ -340,16 +356,7 @@ serve(async (req) => {
                             ${packageData.total_sessions} Session Bundle
                           </td>
                         </tr>
-                        <tr>
-                          <td>
-                            <strong style="color: #6b7280;">Sessions:</strong>
-                          </td>
-                          <td style="text-align: right;">
-                            <ul style="margin: 0; padding-left: 20px; text-align: left;">
-                              ${subjectsList}
-                            </ul>
-                          </td>
-                        </tr>
+                        ${curriculumDetailsHtml}
                       </table>
                       
                       <p style="color: #555; font-size: 14px; margin: 20px 0;">
