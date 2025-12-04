@@ -307,6 +307,13 @@ export type Database = {
             referencedRelation: "tutor_profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "curriculum_level_tier_assignments_tutor_id_fkey"
+            columns: ["tutor_id"]
+            isOneToOne: false
+            referencedRelation: "tutor_profiles_public"
+            referencedColumns: ["id"]
+          },
         ]
       }
       exchange_rates: {
@@ -439,6 +446,13 @@ export type Database = {
             referencedRelation: "tutor_profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "group_class_attendance_tutor_id_fkey"
+            columns: ["tutor_id"]
+            isOneToOne: false
+            referencedRelation: "tutor_profiles_public"
+            referencedColumns: ["id"]
+          },
         ]
       }
       group_class_enrollments: {
@@ -545,6 +559,13 @@ export type Database = {
             columns: ["tutor_id"]
             isOneToOne: false
             referencedRelation: "tutor_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "group_class_tutor_assignments_tutor_id_fkey"
+            columns: ["tutor_id"]
+            isOneToOne: false
+            referencedRelation: "tutor_profiles_public"
             referencedColumns: ["id"]
           },
         ]
@@ -721,6 +742,13 @@ export type Database = {
             referencedRelation: "tutor_profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "intensive_classes_tutor_id_fkey"
+            columns: ["tutor_id"]
+            isOneToOne: false
+            referencedRelation: "tutor_profiles_public"
+            referencedColumns: ["id"]
+          },
         ]
       }
       intensive_enrollments: {
@@ -886,6 +914,13 @@ export type Database = {
             referencedRelation: "tutor_profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "learning_plans_tutor_id_fkey"
+            columns: ["tutor_id"]
+            isOneToOne: false
+            referencedRelation: "tutor_profiles_public"
+            referencedColumns: ["id"]
+          },
         ]
       }
       package_offers: {
@@ -952,6 +987,13 @@ export type Database = {
             columns: ["tutor_id"]
             isOneToOne: false
             referencedRelation: "tutor_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "package_offers_tutor_id_fkey"
+            columns: ["tutor_id"]
+            isOneToOne: false
+            referencedRelation: "tutor_profiles_public"
             referencedColumns: ["id"]
           },
         ]
@@ -1037,6 +1079,13 @@ export type Database = {
             columns: ["tutor_id"]
             isOneToOne: false
             referencedRelation: "tutor_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "package_purchases_tutor_id_fkey"
+            columns: ["tutor_id"]
+            isOneToOne: false
+            referencedRelation: "tutor_profiles_public"
             referencedColumns: ["id"]
           },
         ]
@@ -1129,6 +1178,13 @@ export type Database = {
             columns: ["tutor_id"]
             isOneToOne: false
             referencedRelation: "tutor_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "package_subject_allocations_tutor_id_fkey"
+            columns: ["tutor_id"]
+            isOneToOne: false
+            referencedRelation: "tutor_profiles_public"
             referencedColumns: ["id"]
           },
         ]
@@ -1585,6 +1641,13 @@ export type Database = {
             referencedRelation: "tutor_profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "tutor_inquiries_tutor_id_fkey"
+            columns: ["tutor_id"]
+            isOneToOne: false
+            referencedRelation: "tutor_profiles_public"
+            referencedColumns: ["id"]
+          },
         ]
       }
       tutor_pricing_tiers: {
@@ -1618,6 +1681,13 @@ export type Database = {
             columns: ["tutor_id"]
             isOneToOne: false
             referencedRelation: "tutor_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tutor_pricing_tiers_tutor_id_fkey"
+            columns: ["tutor_id"]
+            isOneToOne: false
+            referencedRelation: "tutor_profiles_public"
             referencedColumns: ["id"]
           },
         ]
@@ -1800,6 +1870,13 @@ export type Database = {
             referencedRelation: "tutor_profiles"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "tutor_reviews_tutor_id_fkey"
+            columns: ["tutor_id"]
+            isOneToOne: false
+            referencedRelation: "tutor_profiles_public"
+            referencedColumns: ["id"]
+          },
         ]
       }
       user_roles: {
@@ -1835,6 +1912,102 @@ export type Database = {
         }
         Relationships: []
       }
+      tutor_profiles_public: {
+        Row: {
+          availability: string | null
+          bio: string | null
+          created_at: string | null
+          current_institution: string | null
+          curriculum: string[] | null
+          diaspora_friendly: boolean | null
+          display_institution: boolean | null
+          education: Json | null
+          experience_years: number | null
+          gender: string | null
+          graduation_year: number | null
+          hourly_rate: number | null
+          id: string | null
+          institution_years: number | null
+          profile_slug: string | null
+          qualifications: string[] | null
+          rating: number | null
+          services_offered: string[] | null
+          specializations: string | null
+          subjects: string[] | null
+          teaching_experience: Json | null
+          teaching_levels: string[] | null
+          teaching_location: string | null
+          teaching_mode: string[] | null
+          total_reviews: number | null
+          tutoring_experience: string | null
+          user_id: string | null
+          verified: boolean | null
+          why_students_love: string[] | null
+        }
+        Insert: {
+          availability?: string | null
+          bio?: string | null
+          created_at?: string | null
+          current_institution?: string | null
+          curriculum?: string[] | null
+          diaspora_friendly?: boolean | null
+          display_institution?: boolean | null
+          education?: Json | null
+          experience_years?: number | null
+          gender?: string | null
+          graduation_year?: number | null
+          hourly_rate?: number | null
+          id?: string | null
+          institution_years?: number | null
+          profile_slug?: string | null
+          qualifications?: string[] | null
+          rating?: number | null
+          services_offered?: string[] | null
+          specializations?: string | null
+          subjects?: string[] | null
+          teaching_experience?: Json | null
+          teaching_levels?: string[] | null
+          teaching_location?: string | null
+          teaching_mode?: string[] | null
+          total_reviews?: number | null
+          tutoring_experience?: string | null
+          user_id?: string | null
+          verified?: boolean | null
+          why_students_love?: string[] | null
+        }
+        Update: {
+          availability?: string | null
+          bio?: string | null
+          created_at?: string | null
+          current_institution?: string | null
+          curriculum?: string[] | null
+          diaspora_friendly?: boolean | null
+          display_institution?: boolean | null
+          education?: Json | null
+          experience_years?: number | null
+          gender?: string | null
+          graduation_year?: number | null
+          hourly_rate?: number | null
+          id?: string | null
+          institution_years?: number | null
+          profile_slug?: string | null
+          qualifications?: string[] | null
+          rating?: number | null
+          services_offered?: string[] | null
+          specializations?: string | null
+          subjects?: string[] | null
+          teaching_experience?: Json | null
+          teaching_levels?: string[] | null
+          teaching_location?: string | null
+          teaching_mode?: string[] | null
+          total_reviews?: number | null
+          tutoring_experience?: string | null
+          user_id?: string | null
+          verified?: boolean | null
+          why_students_love?: string[] | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       assign_user_role: {
@@ -1844,6 +2017,40 @@ export type Database = {
       generate_tutor_slug: {
         Args: { full_name: string; tutor_id: string }
         Returns: string
+      }
+      get_public_tutor_profiles: {
+        Args: never
+        Returns: {
+          availability: string
+          bio: string
+          created_at: string
+          current_institution: string
+          curriculum: string[]
+          diaspora_friendly: boolean
+          display_institution: boolean
+          education: Json
+          experience_years: number
+          gender: string
+          graduation_year: number
+          hourly_rate: number
+          id: string
+          institution_years: number
+          profile_slug: string
+          qualifications: string[]
+          rating: number
+          services_offered: string[]
+          specializations: string
+          subjects: string[]
+          teaching_experience: Json
+          teaching_levels: string[]
+          teaching_location: string
+          teaching_mode: string[]
+          total_reviews: number
+          tutoring_experience: string
+          user_id: string
+          verified: boolean
+          why_students_love: string[]
+        }[]
       }
       get_user_email: { Args: { _user_id: string }; Returns: string }
       has_recording_access: {
