@@ -88,30 +88,59 @@ export const AdminTutorProfileEdit = () => {
 
   const fetchTutors = async () => {
     setLoadingTutors(true);
-    const { data, error } = await supabase
-      .from("tutor_profiles")
-      .select(`
-        id,
-        user_id,
-        subjects,
-        verified,
-        profiles!tutor_profiles_user_id_fkey(full_name, avatar_url)
-      `)
-      .order("created_at", { ascending: false });
+    try {
+      // First fetch all tutor profiles
+      const { data: tutorProfiles, error: tutorError } = await supabase
+        .from("tutor_profiles")
+        .select("id, user_id, subjects, verified")
+        .order("created_at", { ascending: false });
 
-    if (error) {
-      console.error("Error fetching tutors:", error);
-      toast.error("Failed to load tutors");
-    } else {
-      const formattedTutors = (data || []).map((t: any) => ({
-        id: t.id,
-        user_id: t.user_id,
-        full_name: t.profiles?.full_name || "Unknown",
-        avatar_url: t.profiles?.avatar_url,
-        subjects: t.subjects || [],
-        verified: t.verified
-      }));
+      if (tutorError) {
+        console.error("Error fetching tutor profiles:", tutorError);
+        toast.error("Failed to load tutors");
+        setLoadingTutors(false);
+        return;
+      }
+
+      if (!tutorProfiles || tutorProfiles.length === 0) {
+        setTutors([]);
+        setLoadingTutors(false);
+        return;
+      }
+
+      // Get all user IDs
+      const userIds = tutorProfiles.map(t => t.user_id);
+
+      // Fetch profiles for these users
+      const { data: profiles, error: profilesError } = await supabase
+        .from("profiles")
+        .select("id, full_name, avatar_url")
+        .in("id", userIds);
+
+      if (profilesError) {
+        console.error("Error fetching profiles:", profilesError);
+      }
+
+      // Create a map of user_id to profile
+      const profileMap = new Map((profiles || []).map(p => [p.id, p]));
+
+      // Combine the data
+      const formattedTutors = tutorProfiles.map(t => {
+        const profile = profileMap.get(t.user_id);
+        return {
+          id: t.id,
+          user_id: t.user_id,
+          full_name: profile?.full_name || "Unknown",
+          avatar_url: profile?.avatar_url || null,
+          subjects: t.subjects || [],
+          verified: t.verified
+        };
+      });
+
       setTutors(formattedTutors);
+    } catch (error) {
+      console.error("Error in fetchTutors:", error);
+      toast.error("Failed to load tutors");
     }
     setLoadingTutors(false);
   };
