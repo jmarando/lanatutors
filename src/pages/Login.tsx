@@ -124,10 +124,17 @@ const Login = () => {
 
   const handleGoogleSignIn = async () => {
     try {
+      // Get redirect param to pass through OAuth flow
+      const params = new URLSearchParams(window.location.search);
+      const redirect = params.get("redirect");
+      const finalRedirect = redirect 
+        ? `${window.location.origin}${redirect}`
+        : `${window.location.origin}/login`;
+      
       const { error } = await supabase.auth.signInWithOAuth({
         provider: 'google',
         options: {
-          redirectTo: `${window.location.origin}/login`,
+          redirectTo: finalRedirect,
         }
       });
 
@@ -272,11 +279,14 @@ const Login = () => {
               <Button type="submit" className="w-full" disabled={isLoading}>
                 {isLoading ? "Signing in..." : "Sign In"}
               </Button>
-              <div className="flex flex-col gap-3 text-sm">
+                <div className="flex flex-col gap-3 text-sm">
                 <div className="flex justify-between items-center">
                   <p className="text-muted-foreground">
                     New student?{" "}
-                    <Link to="/student-signup" className="text-primary hover:underline font-medium">
+                    <Link 
+                      to={`/student-signup${window.location.search}`} 
+                      className="text-primary hover:underline font-medium"
+                    >
                       Create account
                     </Link>
                   </p>
