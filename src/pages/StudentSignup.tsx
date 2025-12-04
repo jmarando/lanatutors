@@ -12,10 +12,6 @@ import { useToast } from "@/hooks/use-toast";
 import { Separator } from "@/components/ui/separator";
 import { validateAndNormalizePhone } from "@/utils/phoneValidation";
 import { getCurriculums, getLevelsForCurriculum, getSubjectsForCurriculumLevel } from "@/utils/curriculumData";
-import { CurrencySelector } from "@/components/CurrencySelector";
-import { TimezoneSelector } from "@/components/TimezoneSelector";
-import { Currency } from "@/utils/currencyUtils";
-import { getUserTimezone } from "@/utils/timezoneUtils";
 import { z } from "zod";
 
 const emailSchema = z.string().email({ message: "Please enter a valid email address" });
@@ -25,8 +21,6 @@ const StudentSignup = () => {
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [selectedSubjects, setSelectedSubjects] = useState<string[]>([]);
-  const [preferredCurrency, setPreferredCurrency] = useState<Currency>('KES');
-  const [timezone, setTimezone] = useState<string>(getUserTimezone());
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [accountType, setAccountType] = useState<'parent' | 'student' | null>(null);
@@ -185,8 +179,6 @@ const StudentSignup = () => {
           curriculum: accountType === 'student' ? formData.curriculum : null,
           grade_level: accountType === 'student' ? formData.gradeLevel : null,
           subjects_struggling: accountType === 'student' ? selectedSubjects : null,
-          preferred_currency: preferredCurrency,
-          timezone: timezone,
           account_type: accountType,
         });
 
@@ -372,16 +364,6 @@ const StudentSignup = () => {
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label>Preferred Currency</Label>
-                        <CurrencySelector value={preferredCurrency} onChange={setPreferredCurrency} />
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Your Timezone</Label>
-                        <TimezoneSelector value={timezone} onChange={setTimezone} />
-                      </div>
-                    </div>
 
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
