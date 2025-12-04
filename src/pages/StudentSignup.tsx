@@ -542,7 +542,7 @@ const StudentSignup = () => {
                   )}
 
                   <Button type="submit" className="w-full" size="lg" disabled={isLoading}>
-                    {isLoading ? "Creating your account..." : "Create Account & Find Tutors"}
+                    {isLoading ? "Creating your account..." : "Create Account & Book a Class"}
                   </Button>
                 </>
               )}
