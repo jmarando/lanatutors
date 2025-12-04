@@ -233,6 +233,7 @@ serve(async (req) => {
                                 • <strong>Join your classes</strong> using the links above on December 8th<br>
                                 • All times are in <strong>East Africa Time (EAT)</strong><br>
                                 • You'll receive daily reminders at 7:00 AM EAT<br>
+                                • <strong>Manage your classes</strong> anytime via your <a href="https://lanatutors.africa/student/dashboard" style="color: #D95436; text-decoration: underline;">Student Dashboard</a><br>
                                 • Ensure a quiet study space and stable internet connection
                               </td>
                             </tr>
