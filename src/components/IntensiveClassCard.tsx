@@ -52,26 +52,6 @@ export const IntensiveClassCard = ({
               <h3 className="text-xl font-bold">{subject}</h3>
             </div>
 
-            {/* Tutor Info */}
-            <div className="flex items-center gap-2 mb-3">
-              {firstClass.tutor_name ? (
-                <>
-                  <Avatar className="h-8 w-8">
-                    <AvatarImage src={firstClass.tutor_avatar || undefined} />
-                    <AvatarFallback className="text-xs">
-                      {firstClass.tutor_name.split(' ').map(n => n[0]).join('')}
-                    </AvatarFallback>
-                  </Avatar>
-                  <span className="text-sm text-muted-foreground">
-                    Taught by <span className="font-medium text-foreground">{firstClass.tutor_name}</span>
-                  </span>
-                </>
-              ) : (
-                <span className="text-sm text-muted-foreground italic">
-                  Tutor: To be announced
-                </span>
-              )}
-            </div>
 
           </div>
 
