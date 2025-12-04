@@ -67,37 +67,10 @@ const TutorSearch = () => {
   const fetchTutors = async () => {
     setLoading(true);
     try {
-      // Check if user is authenticated
-      const { data: { user } } = await supabase.auth.getUser();
-      
-      let tutorProfiles;
-      let tutorError;
-      
-      if (user) {
-        // Authenticated users can query the full table (RLS allows verified tutors)
-        const result = await supabase.from("tutor_profiles").select("*, profile_slug").eq("verified", true);
-        tutorProfiles = result.data;
-        tutorError = result.error;
-      } else {
-        // Unauthenticated users use the secure RPC function that excludes sensitive data
-        const result = await supabase.rpc("get_public_tutor_profiles");
-        tutorProfiles = result.data;
-        tutorError = result.error;
-      }
+      // Use the secure RPC function that includes tutor names and avatars
+      const { data: tutorProfiles, error: tutorError } = await supabase.rpc("get_public_tutor_profiles");
       
       if (tutorError) throw tutorError;
-      const profilesById = new Map<string, any>();
-
-      // 2) Fetch matching user profiles and index by id
-      const userIds = (tutorProfiles || []).map((tp: any) => tp.user_id).filter(Boolean);
-      if (userIds.length) {
-        const {
-          data: profiles,
-          error: profileError
-        } = await supabase.from("profiles").select("id, full_name, avatar_url").in("id", userIds);
-        if (profileError) throw profileError;
-        (profiles || []).forEach((p: any) => profilesById.set(p.id, p));
-      }
 
       // 3) Fetch pricing tiers for all tutors to get their rate ranges
       const tutorProfileIds = (tutorProfiles || []).map((tp: any) => tp.id);
@@ -115,8 +88,8 @@ const TutorSearch = () => {
       // 4) Merge and format
       const tutorImages = [tutor1, tutor2, tutor3, tutor4, tutor5, tutor6];
       const formattedTutors = (tutorProfiles || []).map((tp: any, index: number) => {
-        const prof = profilesById.get(tp.user_id);
-        const name = prof?.full_name || "Tutor";
+        // Name and avatar now come directly from RPC function
+        const name = tp.full_name || "Tutor";
 
         // Get pricing tiers for this tutor
         const tiers = tiersByTutor.get(tp.id) || [];
@@ -135,7 +108,7 @@ const TutorSearch = () => {
           : hourlyRate;
 
         // Only show real uploaded avatars, no AI fallback photos
-        const uploadedAvatar = prof?.avatar_url;
+        const uploadedAvatar = tp.avatar_url;
         return {
           id: tp.id,
           name,
