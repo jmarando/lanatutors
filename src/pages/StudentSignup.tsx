@@ -211,6 +211,18 @@ const StudentSignup = () => {
         });
       }
 
+      // Send welcome email (fire and forget - don't block signup)
+      supabase.functions.invoke('send-welcome-email', {
+        body: {
+          email: formData.email,
+          name: formData.fullName,
+          accountType: accountType,
+          childName: accountType === 'parent' ? formData.childName : undefined,
+        }
+      }).then(({ error }) => {
+        if (error) console.error('Welcome email error:', error);
+      });
+
       toast({
         title: "Welcome to Lana!",
         description: accountType === 'parent' 
