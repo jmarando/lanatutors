@@ -202,8 +202,6 @@ const DecemberIntensiveInvoice = () => {
                           ? "6,000"
                           : item.curriculum === "IGCSE"
                           ? "5,000"
-                          : item.curriculum === "CBC"
-                          ? "100" // Test price
                           : "4,000"}
                       </td>
                     </tr>
