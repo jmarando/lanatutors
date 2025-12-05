@@ -136,6 +136,13 @@ const Home = () => {
 
   useEffect(() => {
     const fetchFeaturedTutors = async () => {
+      // Specific featured tutors: Calvins Onuko, Akuba Tyson, Peter Mbithi
+      const featuredTutorIds = [
+        '93a8ddd3-0525-43c3-89a1-5c584b793adb', // Calvins Onuko
+        '6ddded20-9252-4caa-9747-96a5a919cb28', // Akuba Tyson
+        'bac5403f-7e6f-45ec-9dd9-b4600cae6828'  // Peter Mbithi
+      ];
+
       const { data: tutorProfiles, error } = await supabase
         .from("tutor_profiles")
         .select(`
@@ -150,15 +157,7 @@ const Home = () => {
           bio,
           experience_years
         `)
-        .eq("verified", true)
-        .not("bio", "is", null)
-        .not("current_institution", "is", null)
-        .not("hourly_rate", "is", null)
-        .neq("user_id", "9de6bfdd-4282-4ce0-9c2a-661feae63970") // Exclude Kefa
-        .gte("experience_years", 5) // At least 5 years experience
-        .order("experience_years", { ascending: false })
-        .order("rating", { ascending: false })
-        .limit(3);
+        .in("id", featuredTutorIds);
 
       if (error) {
         console.error("Error fetching tutors:", error);
