@@ -828,7 +828,7 @@ Yehtu Tutors`
         (bookingsData || []).map(async (booking) => {
           const [studentRes, tutorRes] = await Promise.all([
             supabase.from("profiles").select("full_name, phone_number").eq("id", booking.student_id).single(),
-            supabase.from("tutor_profiles").select("id, user_id").eq("id", booking.tutor_id).single()
+            supabase.from("tutor_profiles").select("id, user_id").eq("user_id", booking.tutor_id).single()
           ]);
 
           let tutorProfile = null;
