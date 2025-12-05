@@ -235,8 +235,9 @@ const Navigation = () => {
               <Menu className="h-6 w-6" />
             </Button>
           </SheetTrigger>
-          <SheetContent side="right" className="w-[300px] overflow-y-auto">
-            <div className="flex flex-col gap-6 mt-8 pb-8">
+          <SheetContent side="right" className="w-[300px] flex flex-col">
+            <div className="flex-1 overflow-y-auto">
+              <div className="flex flex-col gap-6 mt-8 pb-20">
               {user && <div className="pb-4 border-b space-y-3">
                   <div className="text-xs text-muted-foreground px-2">{user.email}</div>
                   <Link to="/student/dashboard" onClick={() => setOpen(false)}>
@@ -313,7 +314,10 @@ const Navigation = () => {
                     <Button className="w-full">Get Started</Button>
                   </Link>
                 </>}
+              </div>
             </div>
+            {/* Scroll indicator gradient */}
+            <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-background to-transparent" />
           </SheetContent>
         </Sheet>
       </div>
