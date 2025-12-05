@@ -22,6 +22,7 @@ export const GeneralLearningPlanRequest = ({
 }: GeneralLearningPlanRequestProps) => {
   const [loading, setLoading] = useState(false);
   const [loadingProfile, setLoadingProfile] = useState(true);
+  const [accountType, setAccountType] = useState<'student' | 'parent'>('parent');
   const [formData, setFormData] = useState({
     parentName: "",
     parentEmail: "",
@@ -46,6 +47,9 @@ export const GeneralLearningPlanRequest = ({
     ? getSubjectsForCurriculumLevel(formData.curriculum, formData.gradeLevel)
     : [];
 
+  // Determine if user is booking for themselves (student account)
+  const isStudentAccount = accountType === 'student';
+
   useEffect(() => {
     fetchUserProfile();
   }, []);
@@ -63,11 +67,16 @@ export const GeneralLearningPlanRequest = ({
           .single();
         
         if (profile) {
+          const userAccountType = profile.account_type === 'student' ? 'student' : 'parent';
+          setAccountType(userAccountType);
+          
           setFormData(prev => ({
             ...prev,
             parentName: profile.full_name || "",
             parentEmail: user.email || "",
             parentPhone: profile.phone_number || "",
+            // For student accounts, auto-fill student name with their own name
+            studentName: userAccountType === 'student' ? (profile.full_name || "") : "",
           }));
         }
       }
@@ -106,7 +115,10 @@ export const GeneralLearningPlanRequest = ({
       return;
     }
 
-    if (!formData.parentName || !formData.parentEmail || !formData.studentName || !formData.gradeLevel || !formData.curriculum) {
+    // For student accounts, studentName is auto-filled from parentName
+    const studentNameToSubmit = isStudentAccount ? formData.parentName : formData.studentName;
+
+    if (!formData.parentName || !formData.parentEmail || !studentNameToSubmit || !formData.gradeLevel || !formData.curriculum) {
       toast.error("Please fill in all required fields");
       return;
     }
@@ -120,7 +132,7 @@ export const GeneralLearningPlanRequest = ({
           parentName: formData.parentName,
           parentEmail: formData.parentEmail,
           parentPhone: formData.parentPhone,
-          studentName: formData.studentName,
+          studentName: studentNameToSubmit,
           gradeLevel: formData.gradeLevel,
           curriculum: formData.curriculum,
           subjects: selectedSubjects,
@@ -129,6 +141,7 @@ export const GeneralLearningPlanRequest = ({
           preferredSessions: formData.preferredSessions,
           desiredDurationWeeks: formData.desiredDurationWeeks,
           availableTimePerWeek: formData.availableTimePerWeek,
+          accountType: accountType, // Include account type for admin reference
         },
       });
 
@@ -161,7 +174,7 @@ export const GeneralLearningPlanRequest = ({
               <ul className="text-xs text-muted-foreground space-y-1">
                 <li className="flex items-start gap-2">
                   <CheckCircle2 className="w-3 h-3 shrink-0 mt-0.5 text-primary" />
-                  <span>Our expert team will review your child's needs and match you with the perfect tutor(s)</span>
+                  <span>Our expert team will review {isStudentAccount ? "your" : "your child's"} needs and match you with the perfect tutor(s)</span>
                 </li>
                 <li className="flex items-start gap-2">
                   <CheckCircle2 className="w-3 h-3 shrink-0 mt-0.5 text-primary" />
@@ -178,10 +191,10 @@ export const GeneralLearningPlanRequest = ({
       </Card>
 
       <form onSubmit={handleSubmit} className="space-y-4">
-        {/* Parent Information - Pre-filled from profile */}
+        {/* Contact Information - Pre-filled from profile */}
         <div className="space-y-3">
           <h4 className="font-semibold text-sm flex items-center gap-2">
-            Parent/Guardian Information
+            {isStudentAccount ? "Your Information" : "Parent/Guardian Information"}
             <Badge variant="secondary" className="text-xs">Auto-filled from your profile</Badge>
           </h4>
           
@@ -222,20 +235,22 @@ export const GeneralLearningPlanRequest = ({
           </div>
         </div>
 
-        {/* Student Information */}
+        {/* Student Information - Only show name field for parent accounts */}
         <div className="space-y-3">
-          <h4 className="font-semibold text-sm">Student Information</h4>
+          <h4 className="font-semibold text-sm">{isStudentAccount ? "Academic Information" : "Student Information"}</h4>
           
-          <div>
-            <Label htmlFor="studentName">Student's Name *</Label>
-            <Input
-              id="studentName"
-              value={formData.studentName}
-              onChange={(e) => setFormData({ ...formData, studentName: e.target.value })}
-              placeholder="e.g., Mary Wanjiku"
-              required
-            />
-          </div>
+          {!isStudentAccount && (
+            <div>
+              <Label htmlFor="studentName">Student's Name *</Label>
+              <Input
+                id="studentName"
+                value={formData.studentName}
+                onChange={(e) => setFormData({ ...formData, studentName: e.target.value })}
+                placeholder="e.g., Mary Wanjiku"
+                required
+              />
+            </div>
+          )}
 
           <div>
             <Label htmlFor="curriculum">Curriculum *</Label>
