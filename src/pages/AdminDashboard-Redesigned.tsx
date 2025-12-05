@@ -930,6 +930,8 @@ The Lana Team`;
     }
   };
 
+  const [sendingEmail, setSendingEmail] = useState(false);
+
   const handleSendMessage = async () => {
     if (!selectedBooking || !customMessage) {
       toast.error("Please select a template or write a message");
@@ -941,9 +943,35 @@ The Lana Team`;
       window.open(`https://wa.me/${phoneNumber}?text=${encodeURIComponent(customMessage)}`, '_blank');
       toast.success("WhatsApp opened with message");
     } else {
-      // For email, copy to clipboard
-      navigator.clipboard.writeText(customMessage);
-      toast.success("Email content copied to clipboard!");
+      // Send email via edge function
+      if (!selectedBooking.email) {
+        toast.error("No email address available for this contact");
+        return;
+      }
+
+      setSendingEmail(true);
+      try {
+        const { data, error } = await supabase.functions.invoke("send-admin-email", {
+          body: {
+            to: selectedBooking.email,
+            recipientName: selectedBooking.parent_name,
+            subject: `Lana Tutors - ${selectedTemplate === 'confirmation' ? 'Consultation Confirmed' : 
+                     selectedTemplate === 'reminder_24h' ? '24-Hour Reminder' :
+                     selectedTemplate === 'reminder_1h' ? '1-Hour Reminder' :
+                     selectedTemplate === 'post_consultation' ? 'Post-Consultation Summary' :
+                     selectedTemplate === 'follow_up_3days' ? 'Follow-up' : 'Message'}`,
+            message: customMessage,
+          },
+        });
+
+        if (error) throw error;
+        toast.success("Email sent successfully!");
+      } catch (error: any) {
+        console.error("Failed to send email:", error);
+        toast.error("Failed to send email: " + error.message);
+      } finally {
+        setSendingEmail(false);
+      }
     }
 
     setMessageDialog(false);
@@ -2376,9 +2404,9 @@ The Lana Team`;
           <Button variant="outline" onClick={() => setMessageDialog(false)}>
             Cancel
           </Button>
-          <Button onClick={handleSendMessage} disabled={!customMessage}>
+          <Button onClick={handleSendMessage} disabled={!customMessage || sendingEmail}>
             <Send className="h-4 w-4 mr-2" />
-            {messageType === 'email' ? 'Prepare Email' : 'Open WhatsApp'}
+            {messageType === 'email' ? (sendingEmail ? 'Sending...' : 'Send Email') : 'Open WhatsApp'}
           </Button>
         </DialogFooter>
       </DialogContent>
