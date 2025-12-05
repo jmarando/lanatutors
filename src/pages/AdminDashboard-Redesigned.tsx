@@ -21,6 +21,8 @@ import { TutorSignupList } from "@/components/admin/TutorSignupList";
 import { TutorEmailList } from "@/components/admin/TutorEmailList";
 import { AdminIntensivePrograms } from "@/components/admin/AdminIntensivePrograms";
 import { AdminTutorProfileEdit } from "@/components/admin/AdminTutorProfileEdit";
+import { StudentList } from "@/components/admin/StudentList";
+import { BootcampEnrollments } from "@/components/admin/BootcampEnrollments";
 import { Sparkles, UserCog } from "lucide-react";
 
 const AdminDashboard = () => {
@@ -1194,6 +1196,24 @@ The Lana Team`;
                   Edit Tutors
                 </span>
               </TabsTrigger>
+              <TabsTrigger 
+                value="students"
+                className="data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:bg-transparent rounded-none bg-transparent px-4 py-3 border-b-2 border-transparent"
+              >
+                <span className="flex items-center gap-2">
+                  <Users className="h-4 w-4" />
+                  Students
+                </span>
+              </TabsTrigger>
+              <TabsTrigger 
+                value="bootcamp-enrollments"
+                className="data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:bg-transparent rounded-none bg-transparent px-4 py-3 border-b-2 border-transparent"
+              >
+                <span className="flex items-center gap-2">
+                  <Sparkles className="h-4 w-4" />
+                  Bootcamp Students
+                </span>
+              </TabsTrigger>
             </TabsList>
           </div>
 
@@ -1701,6 +1721,16 @@ The Lana Team`;
 
           <TabsContent value="edit-tutors" className="space-y-4">
             <AdminTutorProfileEdit />
+          </TabsContent>
+
+          {/* Students Tab */}
+          <TabsContent value="students" className="space-y-4">
+            <StudentList />
+          </TabsContent>
+
+          {/* Bootcamp Enrollments Tab */}
+          <TabsContent value="bootcamp-enrollments" className="space-y-4">
+            <BootcampEnrollments />
           </TabsContent>
 
           <TabsContent value="consultations" className="space-y-4">
