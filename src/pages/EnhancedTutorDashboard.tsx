@@ -123,10 +123,17 @@ const EnhancedTutorDashboard = () => {
     new Date(b.tutor_availability.start_time) > new Date()
   );
 
-  const totalEarnings = payments.reduce((sum, p) => sum + Number(p.amount), 0);
-  const thisMonthEarnings = payments
+  // Tutors receive 70% of payments (30% platform commission)
+  const TUTOR_SHARE = 0.70;
+  const calculateNetEarnings = (gross: number) => gross * TUTOR_SHARE;
+
+  const totalGrossEarnings = payments.reduce((sum, p) => sum + Number(p.amount), 0);
+  const totalEarnings = calculateNetEarnings(totalGrossEarnings);
+  
+  const thisMonthGross = payments
     .filter(p => new Date(p.created_at).getMonth() === new Date().getMonth())
     .reduce((sum, p) => sum + Number(p.amount), 0);
+  const thisMonthEarnings = calculateNetEarnings(thisMonthGross);
 
   if (loading) {
     return (
@@ -253,7 +260,7 @@ const EnhancedTutorDashboard = () => {
                           </Badge>
                           <Badge variant="secondary">{booking.class_type}</Badge>
                           <Badge className="bg-green-600">
-                            KES {Number(booking.amount).toFixed(0)}
+                            KES {calculateNetEarnings(Number(booking.amount)).toFixed(0)}
                           </Badge>
                         </div>
                         {booking.notes && (
