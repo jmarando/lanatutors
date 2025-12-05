@@ -45,7 +45,7 @@ const RequestLearningPlan = () => {
             <div className="mb-8 text-center">
               <h1 className="text-3xl font-bold mb-3">Request Your Custom Learning Plan</h1>
               <p className="text-muted-foreground">
-                Complete the form below and our team will create a personalized plan for your child
+                Complete the form below and our team will create a personalized plan for you
               </p>
             </div>
             
