@@ -384,7 +384,7 @@ export const TutorAvailabilityManager = () => {
     return "Available";
   };
 
-  const hours = Array.from({ length: 14 }, (_, i) => i + 6); // 6 AM to 8 PM
+  const hours = Array.from({ length: 16 }, (_, i) => i + 6); // 6 AM to 10 PM (6-21)
   const weekDays = Array.from({ length: 7 }, (_, i) => addDays(currentWeekStart, i));
 
   const getSlotsForDayAndHour = (day: Date, hour: number) => {
