@@ -307,7 +307,14 @@ export const BookingCalendar = ({
       return !blockedIntervals.some((b) => overlaps(sStart, sEnd, b.start, b.end));
     });
 
-    setAvailableSlots(filtered);
+    // Filter to only show slots between 6 AM and 10 PM EAT
+    const filteredByTime = filtered.filter((s: any) => {
+      const slotStartEAT = toZonedTime(new Date(s.start_time), EAT_TIMEZONE);
+      const hour = slotStartEAT.getHours();
+      return hour >= 6 && hour < 22; // 6 AM to 10 PM (slot starting at 9 PM ends at 10 PM)
+    });
+
+    setAvailableSlots(filteredByTime);
   };
   const fetchMonthSlots = async () => {
     if (!selectedDate) return;
