@@ -235,8 +235,8 @@ const Navigation = () => {
               <Menu className="h-6 w-6" />
             </Button>
           </SheetTrigger>
-          <SheetContent side="right" className="w-[300px]">
-            <div className="flex flex-col gap-6 mt-8">
+          <SheetContent side="right" className="w-[300px] overflow-y-auto">
+            <div className="flex flex-col gap-6 mt-8 pb-8">
               {user && <div className="pb-4 border-b space-y-3">
                   <div className="text-xs text-muted-foreground px-2">{user.email}</div>
                   <Link to="/student/dashboard" onClick={() => setOpen(false)}>
