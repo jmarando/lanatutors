@@ -13,7 +13,7 @@ export const SEO = ({
   title, 
   description, 
   keywords = "Kenyan tutors online, KCSE tutors worldwide, KCPE tutors diaspora, CBC tutors global, verified Kenyan teachers, online tutoring East Africa",
-  ogImage = "https://lovable.dev/opengraph-image-p98pqg.png",
+  ogImage = "/og-image.png",
   structuredData,
   canonical
 }: SEOProps) => {
