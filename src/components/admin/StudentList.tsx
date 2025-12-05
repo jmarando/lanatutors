@@ -4,21 +4,26 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Phone, Copy, Users } from "lucide-react";
+import { Phone, Mail, Copy, Users } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 
-interface Student {
+interface StudentWithParent {
   id: string;
-  full_name: string | null;
-  phone_number: string | null;
+  full_name: string;
+  age: number | null;
+  curriculum: string;
+  grade_level: string;
+  email: string | null;
   created_at: string;
-  curriculum: string | null;
-  grade_level: string | null;
+  parent_id: string;
+  parent_name: string | null;
+  parent_phone: string | null;
+  parent_email: string | null;
 }
 
 export function StudentList() {
-  const [students, setStudents] = useState<Student[]>([]);
+  const [students, setStudents] = useState<StudentWithParent[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -27,32 +32,50 @@ export function StudentList() {
 
   const fetchStudents = async () => {
     try {
-      // Get all user IDs with student role
-      const { data: studentRoles, error: rolesError } = await supabase
-        .from("user_roles")
-        .select("user_id")
-        .eq("role", "student");
-
-      if (rolesError) throw rolesError;
-
-      if (!studentRoles || studentRoles.length === 0) {
-        setStudents([]);
-        setLoading(false);
-        return;
-      }
-
-      const studentIds = studentRoles.map(role => role.user_id);
-
-      // Get profiles for these students
-      const { data: profiles, error: profilesError } = await supabase
-        .from("profiles")
-        .select("id, full_name, phone_number, created_at, curriculum, grade_level")
-        .in("id", studentIds)
+      // Fetch students from the students table
+      const { data: studentsData, error: studentsError } = await supabase
+        .from("students")
+        .select("*")
         .order("created_at", { ascending: false });
 
-      if (profilesError) throw profilesError;
+      if (studentsError) throw studentsError;
 
-      setStudents(profiles || []);
+      // Enrich with parent info
+      const enrichedStudents = await Promise.all(
+        (studentsData || []).map(async (student) => {
+          let parentName = null;
+          let parentPhone = null;
+          let parentEmail = null;
+
+          if (student.parent_id) {
+            const { data: parent } = await supabase
+              .from("profiles")
+              .select("full_name, phone_number")
+              .eq("id", student.parent_id)
+              .single();
+            
+            if (parent) {
+              parentName = parent.full_name;
+              parentPhone = parent.phone_number;
+            }
+
+            // Get parent email
+            const { data: emailData } = await supabase.rpc('get_user_email', {
+              _user_id: student.parent_id
+            });
+            parentEmail = emailData;
+          }
+
+          return {
+            ...student,
+            parent_name: parentName,
+            parent_phone: parentPhone,
+            parent_email: parentEmail,
+          } as StudentWithParent;
+        })
+      );
+
+      setStudents(enrichedStudents);
     } catch (error: any) {
       console.error("Error fetching students:", error);
       toast.error("Failed to load students");
@@ -62,14 +85,28 @@ export function StudentList() {
   };
 
   const copyAllEmails = () => {
-    const phoneNumbers = students
-      .map(s => s.phone_number)
+    const emails = students
+      .map(s => s.parent_email || s.email)
       .filter(Boolean)
       .join(", ");
     
-    if (phoneNumbers) {
-      navigator.clipboard.writeText(phoneNumbers);
-      toast.success(`Copied ${students.filter(s => s.phone_number).length} phone numbers`);
+    if (emails) {
+      navigator.clipboard.writeText(emails);
+      toast.success(`Copied ${students.filter(s => s.parent_email || s.email).length} emails`);
+    } else {
+      toast.error("No emails found");
+    }
+  };
+
+  const copyAllPhones = () => {
+    const phones = students
+      .map(s => s.parent_phone)
+      .filter(Boolean)
+      .join(", ");
+    
+    if (phones) {
+      navigator.clipboard.writeText(phones);
+      toast.success(`Copied ${students.filter(s => s.parent_phone).length} phone numbers`);
     } else {
       toast.error("No phone numbers found");
     }
@@ -92,7 +129,7 @@ export function StudentList() {
           <Users className="w-16 h-16 mx-auto mb-4 text-muted-foreground opacity-50" />
           <p className="text-muted-foreground font-medium">No students registered yet</p>
           <p className="text-sm text-muted-foreground mt-2">
-            Students will appear here when they sign up
+            Students will appear here when parents add them
           </p>
         </CardContent>
       </Card>
@@ -103,17 +140,24 @@ export function StudentList() {
     <Card>
       <CardHeader className="flex flex-row items-center justify-between">
         <CardTitle>Registered Students ({students.length})</CardTitle>
-        <Button onClick={copyAllEmails} size="sm" variant="outline">
-          <Copy className="h-4 w-4 mr-2" />
-          Copy All Phone Numbers
-        </Button>
+        <div className="flex gap-2">
+          <Button onClick={copyAllEmails} size="sm" variant="outline">
+            <Mail className="h-4 w-4 mr-2" />
+            Copy Emails
+          </Button>
+          <Button onClick={copyAllPhones} size="sm" variant="outline">
+            <Phone className="h-4 w-4 mr-2" />
+            Copy Phones
+          </Button>
+        </div>
       </CardHeader>
       <CardContent>
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Phone</TableHead>
+              <TableHead>Student Name</TableHead>
+              <TableHead>Parent</TableHead>
+              <TableHead>Contact</TableHead>
               <TableHead>Curriculum</TableHead>
               <TableHead>Grade</TableHead>
               <TableHead>Registered</TableHead>
@@ -123,20 +167,40 @@ export function StudentList() {
             {students.map((student) => (
               <TableRow key={student.id}>
                 <TableCell className="font-medium">
-                  {student.full_name || "—"}
+                  <div>
+                    <p>{student.full_name}</p>
+                    {student.age && (
+                      <p className="text-xs text-muted-foreground">{student.age} years old</p>
+                    )}
+                  </div>
                 </TableCell>
                 <TableCell>
-                  {student.phone_number ? (
-                    <a 
-                      href={`tel:${student.phone_number}`}
-                      className="text-primary hover:underline flex items-center gap-1"
-                    >
-                      <Phone className="h-3 w-3" />
-                      {student.phone_number}
-                    </a>
-                  ) : (
-                    <span className="text-muted-foreground">—</span>
-                  )}
+                  {student.parent_name || "—"}
+                </TableCell>
+                <TableCell>
+                  <div className="space-y-1">
+                    {(student.parent_email || student.email) && (
+                      <a 
+                        href={`mailto:${student.parent_email || student.email}`}
+                        className="text-primary hover:underline text-sm flex items-center gap-1"
+                      >
+                        <Mail className="h-3 w-3" />
+                        {student.parent_email || student.email}
+                      </a>
+                    )}
+                    {student.parent_phone && (
+                      <a 
+                        href={`tel:${student.parent_phone}`}
+                        className="text-primary hover:underline text-sm flex items-center gap-1"
+                      >
+                        <Phone className="h-3 w-3" />
+                        {student.parent_phone}
+                      </a>
+                    )}
+                    {!student.parent_email && !student.email && !student.parent_phone && (
+                      <span className="text-muted-foreground">—</span>
+                    )}
+                  </div>
                 </TableCell>
                 <TableCell>
                   {student.curriculum ? (
