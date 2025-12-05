@@ -335,37 +335,45 @@ const DecemberIntensive = () => {
                         const week2Topics = week2Match ? week2Match[1].trim() : 'Topics to be announced';
                         const isInCart = selectedClasses.some(c => c.id === classAtTime.id);
                         return <div key={slot} className="p-4 rounded-lg border bg-card">
-                                  <div className="flex items-center gap-3 mb-3">
-                                    <Clock className="h-5 w-5 text-primary flex-shrink-0" />
-                                    <div className="flex-1">
-                                      <div className="font-semibold mb-1">{slot} EAT</div>
-                                      <div className="flex items-center gap-2">
-                                        <span className="text-lg">{getSubjectIcon(classAtTime.subject)}</span>
-                                        <span className="font-medium">{classAtTime.subject}</span>
-                                        <span className="text-sm text-muted-foreground">•</span>
-                                        <span className="font-semibold text-primary">
-                                          <PriceDisplay amountKES={selectedCurriculum === "A-Level" || selectedCurriculum === "IB" ? 600 : selectedCurriculum === "IGCSE" ? 500 : 400} />/session
-                                        </span>
-                                      </div>
-                                      <p className="text-xs text-muted-foreground mt-1">
-                                        10 sessions × <PriceDisplay amountKES={selectedCurriculum === "A-Level" || selectedCurriculum === "IB" ? 600 : selectedCurriculum === "IGCSE" ? 500 : 400} /> = <PriceDisplay amountKES={selectedCurriculum === "A-Level" || selectedCurriculum === "IB" ? 6000 : selectedCurriculum === "IGCSE" ? 5000 : 4000} /> • 75 min each
-                                      </p>
-                                      {classAtTime.description && (
-                                        <p className="text-sm text-muted-foreground mt-2">{classAtTime.description}</p>
-                                      )}
-                                    </div>
+                                  {/* Time slot header */}
+                                  <div className="font-semibold text-base mb-3">{slot} EAT</div>
+                                  
+                                  {/* Subject and price row */}
+                                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
                                     <div className="flex items-center gap-2">
-                                      <Button size="sm" variant={isInCart ? "secondary" : "default"} onClick={() => handleAddToCart(classAtTime.id, classAtTime.subject, classAtTime.curriculum, selectedGrade)} className="ml-2">
-                                        {isInCart ? <>
-                                            <Check className="h-4 w-4 mr-1" />
-                                            Added
-                                          </> : <>
-                                            <Plus className="h-4 w-4 mr-1" />
-                                            Add
-                                          </>}
-                                      </Button>
+                                      <span className="text-lg">{getSubjectIcon(classAtTime.subject)}</span>
+                                      <span className="font-medium">{classAtTime.subject}</span>
                                     </div>
+                                    <span className="font-semibold text-primary whitespace-nowrap">
+                                      <PriceDisplay amountKES={selectedCurriculum === "A-Level" || selectedCurriculum === "IB" ? 600 : selectedCurriculum === "IGCSE" ? 500 : 400} />/session
+                                    </span>
                                   </div>
+                                  
+                                  {/* Session info */}
+                                  <p className="text-xs text-muted-foreground mb-3">
+                                    10 sessions × <PriceDisplay amountKES={selectedCurriculum === "A-Level" || selectedCurriculum === "IB" ? 600 : selectedCurriculum === "IGCSE" ? 500 : 400} /> = <PriceDisplay amountKES={selectedCurriculum === "A-Level" || selectedCurriculum === "IB" ? 6000 : selectedCurriculum === "IGCSE" ? 5000 : 4000} /> • 75 min each
+                                  </p>
+                                  
+                                  {/* Description */}
+                                  {classAtTime.description && (
+                                    <p className="text-sm text-muted-foreground mb-3">{classAtTime.description}</p>
+                                  )}
+                                  
+                                  {/* Add button */}
+                                  <Button 
+                                    size="sm" 
+                                    variant={isInCart ? "secondary" : "default"} 
+                                    onClick={() => handleAddToCart(classAtTime.id, classAtTime.subject, classAtTime.curriculum, selectedGrade)} 
+                                    className="w-full sm:w-auto"
+                                  >
+                                    {isInCart ? <>
+                                        <Check className="h-4 w-4 mr-1" />
+                                        Added
+                                      </> : <>
+                                        <Plus className="h-4 w-4 mr-1" />
+                                        Add to Cart
+                                      </>}
+                                  </Button>
                                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-3 pt-3 border-t text-sm">
                                     <div>
                                       <div className="font-semibold text-xs uppercase text-muted-foreground mb-1">Week 1 (Dec 8-12)</div>
