@@ -243,28 +243,7 @@ const DecemberIntensive = () => {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="flex gap-3 p-3 rounded-lg bg-muted/50">
-                  <CheckCircle2 className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
-                  <div>
-                    <h4 className="font-semibold text-sm">Beat the January Rush</h4>
-                    <p className="text-sm text-muted-foreground">Students who revise during holidays start the new term confident and ahead of their peers</p>
-                  </div>
-                </div>
-                <div className="flex gap-3 p-3 rounded-lg bg-muted/50">
-                  <CheckCircle2 className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
-                  <div>
-                    <h4 className="font-semibold text-sm">Fill Knowledge Gaps</h4>
-                    <p className="text-sm text-muted-foreground">Our tutors identify and address weak areas before they become bigger problems next year</p>
-                  </div>
-                </div>
-                <div className="flex gap-3 p-3 rounded-lg bg-muted/50">
-                  <CheckCircle2 className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
-                  <div>
-                    <h4 className="font-semibold text-sm">Structured Holiday Learning</h4>
-                    <p className="text-sm text-muted-foreground">Keep your child productively engaged during the long December break instead of losing momentum</p>
-                  </div>
-                </div>
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="flex gap-3 p-3 rounded-lg bg-muted/50">
                   <CheckCircle2 className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
                   <div>
