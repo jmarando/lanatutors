@@ -68,8 +68,10 @@ const TutorSearch = () => {
   const fetchTutors = async () => {
     setLoading(true);
     try {
-      // Use the secure RPC function that includes tutor names and avatars
+      // Use the secure RPC function that includes tutor names and avatars from profiles table
       const { data: tutorProfiles, error: tutorError } = await supabase.rpc("get_public_tutor_profiles");
+      
+      console.log("Fetched tutor profiles:", tutorProfiles?.slice(0, 2));
       
       if (tutorError) throw tutorError;
 
