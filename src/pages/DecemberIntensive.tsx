@@ -234,6 +234,67 @@ const DecemberIntensive = () => {
             </p>
           </div>
 
+          {/* Why Join Section */}
+          <Card className="max-w-4xl mx-auto mb-12 border-2 border-primary/30 bg-gradient-to-br from-primary/5 to-background">
+            <CardHeader className="text-center pb-2">
+              <CardTitle className="text-2xl">Why Join Our December Bootcamp?</CardTitle>
+              <CardDescription className="text-base">
+                Give your child the best preparation for the new academic year
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="flex gap-3 p-3 rounded-lg bg-muted/50">
+                  <CheckCircle2 className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+                  <div>
+                    <h4 className="font-semibold text-sm">Beat the January Rush</h4>
+                    <p className="text-sm text-muted-foreground">Students who revise during holidays start the new term confident and ahead of their peers</p>
+                  </div>
+                </div>
+                <div className="flex gap-3 p-3 rounded-lg bg-muted/50">
+                  <CheckCircle2 className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+                  <div>
+                    <h4 className="font-semibold text-sm">Fill Knowledge Gaps</h4>
+                    <p className="text-sm text-muted-foreground">Our tutors identify and address weak areas before they become bigger problems next year</p>
+                  </div>
+                </div>
+                <div className="flex gap-3 p-3 rounded-lg bg-muted/50">
+                  <CheckCircle2 className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+                  <div>
+                    <h4 className="font-semibold text-sm">Structured Holiday Learning</h4>
+                    <p className="text-sm text-muted-foreground">Keep your child productively engaged during the long December break instead of losing momentum</p>
+                  </div>
+                </div>
+                <div className="flex gap-3 p-3 rounded-lg bg-muted/50">
+                  <CheckCircle2 className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+                  <div>
+                    <h4 className="font-semibold text-sm">Small Groups, Big Impact</h4>
+                    <p className="text-sm text-muted-foreground">Maximum 15 students per class means personalized attention and interactive learning</p>
+                  </div>
+                </div>
+                <div className="flex gap-3 p-3 rounded-lg bg-muted/50">
+                  <CheckCircle2 className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+                  <div>
+                    <h4 className="font-semibold text-sm">Expert Teachers from Top Schools</h4>
+                    <p className="text-sm text-muted-foreground">Learn from qualified tutors with experience teaching CBC, 8-4-4, IGCSE, A-Level and IB curricula</p>
+                  </div>
+                </div>
+                <div className="flex gap-3 p-3 rounded-lg bg-muted/50">
+                  <CheckCircle2 className="h-5 w-5 text-primary flex-shrink-0 mt-0.5" />
+                  <div>
+                    <h4 className="font-semibold text-sm">Affordable Quality Education</h4>
+                    <p className="text-sm text-muted-foreground">From just KES 400 per session - quality revision doesn&apos;t have to break the bank</p>
+                  </div>
+                </div>
+              </div>
+              <div className="text-center pt-4 border-t">
+                <p className="text-sm text-muted-foreground italic">
+                  "Students who engage in structured revision during holidays show 30% better performance in the first term"
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+
           {/* How It Works */}
           <Card className="max-w-4xl mx-auto mb-12 bg-primary/5 border-primary/20">
             <CardHeader>
