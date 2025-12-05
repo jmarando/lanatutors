@@ -114,7 +114,7 @@ const TutorOnboardingGuide = () => {
     },
     {
       question: "How do I manage my availability?",
-      answer: "Use the 'Generate 4 Weeks Availability' feature to create hourly slots from 8 AM - 8 PM EAT. You can then block specific times or entire days. Green = available, Yellow = blocked, Blue = booked."
+      answer: "Use the 'Generate 4 Weeks Availability' feature to create hourly slots from 6 AM - 10 PM EAT. You can then block specific times or entire days. Green = available, Yellow = blocked, Blue = booked."
     },
     {
       question: "Can I connect my Google Calendar?",

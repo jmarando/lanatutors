@@ -182,7 +182,7 @@ const ForTutors = () => {
                 </div>
                 <div>
                   <div className="font-bold text-primary mb-1">Flexible Hours</div>
-                  <div className="text-muted-foreground">Set availability 8 AM - 8 PM EAT, manage your calendar</div>
+                  <div className="text-muted-foreground">Set availability 6 AM - 10 PM EAT, manage your calendar</div>
                 </div>
                 <div>
                   <div className="font-bold text-primary mb-1">Professional Standards</div>
