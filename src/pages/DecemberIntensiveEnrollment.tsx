@@ -155,13 +155,15 @@ const DecemberIntensiveEnrollment = () => {
       return;
     }
 
+    // Prevent double submission
+    if (loading) return;
     setLoading(true);
 
     try {
       const enrolledClassIds = cartItems.map((item) => item.id);
       const studentName = getStudentName();
 
-      // Create enrollment record
+      // Create enrollment record with PENDING status (will be updated after payment)
       const { data: enrollment, error: enrollmentError } = await supabase
         .from("intensive_enrollments")
         .insert({
@@ -170,13 +172,16 @@ const DecemberIntensiveEnrollment = () => {
           enrolled_class_ids: enrolledClassIds,
           total_subjects: cartItems.length,
           total_amount: totalAmount,
-          payment_status: paymentOption === 'deposit' ? 'deposit_paid' : 'pending',
+          payment_status: 'pending', // Always start as pending - updated by Pesapal callback
           student_profile_id: selectedStudent?.id || null,
         })
         .select()
         .single();
 
       if (enrollmentError) throw enrollmentError;
+
+      // Clear cart BEFORE redirecting to prevent duplicates if user returns
+      localStorage.removeItem("december_intensive_cart");
 
       // Initiate Pesapal payment with the selected amount
       const { data: paymentData, error: paymentError } = await supabase.functions.invoke(
@@ -198,10 +203,11 @@ const DecemberIntensiveEnrollment = () => {
         }
       );
 
-      if (paymentError) throw paymentError;
-
-      // Clear cart on successful payment initiation
-      localStorage.removeItem("december_intensive_cart");
+      if (paymentError) {
+        // Payment initiation failed - enrollment exists but no payment
+        // Don't restore cart as enrollment is in DB
+        throw paymentError;
+      }
 
       if (paymentData?.redirect_url) {
         window.location.href = paymentData.redirect_url;
@@ -212,9 +218,9 @@ const DecemberIntensiveEnrollment = () => {
     } catch (error) {
       console.error("Error processing enrollment:", error);
       toast.error("Failed to process enrollment. Please try again.");
-    } finally {
       setLoading(false);
     }
+    // Note: Don't setLoading(false) on success because we're redirecting
   };
 
   if (cartItems.length === 0) {
