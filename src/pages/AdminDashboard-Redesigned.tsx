@@ -23,6 +23,7 @@ import { AdminIntensivePrograms } from "@/components/admin/AdminIntensiveProgram
 import { AdminTutorProfileEdit } from "@/components/admin/AdminTutorProfileEdit";
 import { StudentList } from "@/components/admin/StudentList";
 import { BootcampEnrollments } from "@/components/admin/BootcampEnrollments";
+import { EmailComposer } from "@/components/admin/EmailComposer";
 import { Sparkles, UserCog } from "lucide-react";
 
 const AdminDashboard = () => {
@@ -1758,6 +1759,9 @@ The Lana Team`;
 
           {/* Bootcamp Enrollments Tab */}
           <TabsContent value="bootcamp-enrollments" className="space-y-4">
+            <div className="flex justify-end mb-4">
+              <EmailComposer />
+            </div>
             <BootcampEnrollments />
           </TabsContent>
 
