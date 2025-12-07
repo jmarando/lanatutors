@@ -9,9 +9,11 @@ const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
 
 interface AdminEmailRequest {
   to: string;
-  recipientName: string;
   subject: string;
-  message: string;
+  html?: string;
+  message?: string;
+  recipientName?: string;
+  replyTo?: string;
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -20,48 +22,62 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    const { to, recipientName, subject, message }: AdminEmailRequest = await req.json();
+    const { to, subject, html, message, recipientName, replyTo }: AdminEmailRequest = await req.json();
 
     console.log(`Sending admin email to ${to} with subject: ${subject}`);
 
-    // Convert plain text message to HTML with line breaks
-    const htmlMessage = message.replace(/\n/g, '<br>');
+    let emailHtml: string;
 
-    const emailHtml = `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <style>
-          body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
-          .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-          .header { background: linear-gradient(135deg, #1a472a 0%, #2d5a3d 100%); color: white; padding: 30px; text-align: center; border-radius: 8px 8px 0 0; }
-          .content { background: #ffffff; padding: 30px; border: 1px solid #e0e0e0; }
-          .footer { text-align: center; padding: 20px; color: #666; font-size: 14px; background: #f8f9fa; border-radius: 0 0 8px 8px; }
-        </style>
-      </head>
-      <body>
-        <div class="container">
-          <div class="header">
-            <h1 style="margin: 0; font-size: 24px;">Lana Tutors</h1>
-          </div>
-          <div class="content">
-            <p>Hi ${recipientName},</p>
-            <div style="margin: 20px 0;">
-              ${htmlMessage}
-            </div>
-            <p style="margin-top: 30px;">
-              Best regards,<br>
-              <strong>Lana Tutors Team</strong>
-            </p>
-          </div>
-          <div class="footer">
-            <p>© 2025 Lana Tutors. All rights reserved.</p>
-            <p>Reply to this email to respond directly.</p>
-          </div>
-        </div>
-      </body>
-      </html>
-    `;
+    // If custom HTML is provided, use it directly
+    if (html) {
+      emailHtml = html;
+    } else {
+      // Convert plain text message to HTML with line breaks
+      const htmlMessage = (message || '').replace(/\n/g, '<br>');
+
+      emailHtml = `
+        <!DOCTYPE html>
+        <html>
+        <head>
+          <meta charset="utf-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        </head>
+        <body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f5f5f5;">
+          <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f5f5f5; padding: 20px 0;">
+            <tr>
+              <td align="center">
+                <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                  <tr>
+                    <td style="background: linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%); padding: 24px; text-align: center;">
+                      <h1 style="color: #ffffff; margin: 0; font-size: 28px; font-weight: bold;">Lana Tutors</h1>
+                      <p style="color: #a3c9e8; margin: 8px 0 0 0; font-size: 14px;">Expert Online Tutoring</p>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="padding: 32px 24px;">
+                      ${recipientName ? `<p style="margin: 0 0 16px 0;">Hi ${recipientName},</p>` : ''}
+                      <div style="color: #333333; font-size: 15px; line-height: 1.6;">
+                        ${htmlMessage}
+                      </div>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td style="background-color: #f8f9fa; padding: 20px 24px; border-top: 1px solid #e9ecef;">
+                      <p style="margin: 0; color: #6c757d; font-size: 12px;">
+                        <strong>Lana Tutors</strong><br>
+                        📧 info@lanatutors.africa<br>
+                        🌐 <a href="https://lanatutors.africa" style="color: #2d5a87;">lanatutors.africa</a>
+                      </p>
+                    </td>
+                  </tr>
+                </table>
+              </td>
+            </tr>
+          </table>
+        </body>
+        </html>
+      `;
+    }
 
     const emailResponse = await fetch("https://api.resend.com/emails", {
       method: "POST",
@@ -72,7 +88,7 @@ const handler = async (req: Request): Promise<Response> => {
       body: JSON.stringify({
         from: "Lana Tutors <info@lanatutors.africa>",
         to: [to],
-        reply_to: "info@lanatutors.africa",
+        reply_to: replyTo || "info@lanatutors.africa",
         subject: subject,
         html: emailHtml,
       }),
