@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Copy, Users, Mail, Phone, BookOpen } from "lucide-react";
+import { Copy, Users, Mail, Phone, BookOpen, CreditCard, Loader2, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 
@@ -161,16 +161,68 @@ export function BootcampEnrollments() {
     }
   };
 
+  const [generatingLink, setGeneratingLink] = useState<string | null>(null);
+
   const getPaymentBadge = (status: string) => {
     switch (status) {
       case "completed":
         return <Badge className="bg-green-600">Paid</Badge>;
       case "pending":
         return <Badge variant="secondary">Pending</Badge>;
+      case "deposit_paid":
+        return <Badge className="bg-yellow-600">Deposit</Badge>;
       case "failed":
         return <Badge variant="destructive">Failed</Badge>;
       default:
         return <Badge variant="outline">{status}</Badge>;
+    }
+  };
+
+  const generateRecoveryLink = async (enrollment: EnrollmentWithDetails) => {
+    if (!enrollment.parent_email) {
+      toast.error("No email found for this enrollment");
+      return;
+    }
+
+    setGeneratingLink(enrollment.id);
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        toast.error("You must be logged in");
+        return;
+      }
+
+      const response = await supabase.functions.invoke('generate-recovery-payment-link', {
+        body: {
+          enrollmentId: enrollment.id,
+          amount: enrollment.total_amount,
+          email: enrollment.parent_email,
+          phoneNumber: enrollment.parent_profile?.phone_number || '',
+          description: `Recovery Payment - December Holiday Bootcamp (${enrollment.classes.map(c => c.subject).join(', ')})`,
+          appOrigin: window.location.origin,
+        },
+      });
+
+      if (response.error) {
+        throw new Error(response.error.message || 'Failed to generate link');
+      }
+
+      const { redirect_url } = response.data;
+      
+      // Copy to clipboard
+      await navigator.clipboard.writeText(redirect_url);
+      toast.success("Payment link copied! Send it to the parent.", {
+        description: redirect_url.substring(0, 50) + "...",
+        action: {
+          label: "Open",
+          onClick: () => window.open(redirect_url, '_blank'),
+        },
+      });
+    } catch (error: any) {
+      console.error("Error generating recovery link:", error);
+      toast.error(`Failed: ${error.message}`);
+    } finally {
+      setGeneratingLink(null);
     }
   };
 
@@ -283,7 +335,27 @@ export function BootcampEnrollments() {
                   KES {enrollment.total_amount.toLocaleString()}
                 </TableCell>
                 <TableCell>
-                  {getPaymentBadge(enrollment.payment_status)}
+                  <div className="flex items-center gap-2">
+                    {getPaymentBadge(enrollment.payment_status)}
+                    {(enrollment.payment_status === 'pending' || enrollment.payment_status === 'deposit_paid') && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => generateRecoveryLink(enrollment)}
+                        disabled={generatingLink === enrollment.id}
+                        className="h-7 text-xs"
+                      >
+                        {generatingLink === enrollment.id ? (
+                          <Loader2 className="h-3 w-3 animate-spin" />
+                        ) : (
+                          <>
+                            <CreditCard className="h-3 w-3 mr-1" />
+                            Recovery Link
+                          </>
+                        )}
+                      </Button>
+                    )}
+                  </div>
                 </TableCell>
                 <TableCell className="text-sm text-muted-foreground">
                   {format(new Date(enrollment.created_at), "MMM d, yyyy")}
