@@ -305,29 +305,12 @@ export const AdminIntensivePrograms = () => {
 
         const program = classWithProgram?.intensive_programs as { name: string; start_date: string; end_date: string } | null;
 
-        if (tutorProfile?.email && program) {
-          // Send assignment notification email
-          try {
-            await supabase.functions.invoke("send-intensive-tutor-assignment", {
-              body: {
-                tutorEmail: tutorProfile.email,
-                tutorName: tutor.full_name,
-                subject: cls.subject,
-                curriculum: cls.curriculum,
-                gradeLevels: cls.grade_levels,
-                timeSlot: cls.time_slot,
-                programName: program.name,
-                startDate: new Date(program.start_date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
-                endDate: new Date(program.end_date).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
-                meetingLink: classWithProgram?.meeting_link,
-              },
-            });
-            console.log("Tutor assignment email sent to:", tutorProfile.email);
-          } catch (emailError) {
-            console.error("Failed to send assignment email:", emailError);
-            // Don't fail the assignment if email fails
-          }
-        }
+        // Email notification disabled per user request
+        // if (tutorProfile?.email && program) {
+        //   try {
+        //     await supabase.functions.invoke("send-intensive-tutor-assignment", { ... });
+        //   } catch (emailError) { ... }
+        // }
       }
 
       toast.success("Tutor assigned successfully");
