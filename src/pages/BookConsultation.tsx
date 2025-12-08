@@ -15,7 +15,9 @@ import { CalendarIcon, Clock, CheckCircle, Users, GraduationCap, Target, Award, 
 import { validateAndNormalizePhone } from "@/utils/phoneValidation";
 import { SEO } from "@/components/SEO";
 import { getCurriculums, getLevelsForCurriculum, getSubjectsForCurriculumLevel } from "@/utils/curriculumData";
-import { startOfDay, addHours, format, parse, isAfter } from "date-fns";
+import { startOfDay, addHours, format, parse, isAfter, isBefore } from "date-fns";
+import { toZonedTime } from "date-fns-tz";
+import { EAT_TIMEZONE } from "@/utils/timezoneUtils";
 const CONSULTATION_BENEFITS = [{
   icon: Users,
   title: "Personalized Matching",
@@ -50,24 +52,40 @@ const BookConsultation = () => {
   const [loading, setLoading] = useState(false);
   const availableTimeSlots = ["09:00 AM", "10:00 AM", "11:00 AM", "12:00 PM", "02:00 PM", "03:00 PM", "04:00 PM", "05:00 PM", "06:00 PM"];
 
-  // Filter time slots based on selected date and current time
+  // Filter time slots based on selected date and current time in EAT timezone
   const filteredTimeSlots = useMemo(() => {
     if (!selectedDate) return availableTimeSlots;
-    const now = new Date();
-    const isToday = startOfDay(selectedDate).getTime() === startOfDay(now).getTime();
+    
+    // Get current time in EAT timezone
+    const nowUTC = new Date();
+    const nowEAT = toZonedTime(nowUTC, EAT_TIMEZONE);
+    const todayEAT = startOfDay(nowEAT);
+    const selectedDayStart = startOfDay(selectedDate);
+    
+    // Check if selected date is today in EAT
+    const isToday = selectedDayStart.getTime() === todayEAT.getTime();
+    
     if (!isToday) {
       // Future date - show all slots
       return availableTimeSlots;
     }
 
-    // Today - only show slots at least 1 hour from now
-    const oneHourFromNow = addHours(now, 1);
+    // Today - only show slots at least 1 hour from now (in EAT)
+    const oneHourFromNowEAT = addHours(nowEAT, 1);
     return availableTimeSlots.filter(timeSlot => {
       // Parse the time slot (e.g., "09:00 AM") into a Date object for today
       const slotTime = parse(timeSlot, "hh:mm a", selectedDate);
-      return isAfter(slotTime, oneHourFromNow);
+      return isAfter(slotTime, oneHourFromNowEAT);
     });
   }, [selectedDate, availableTimeSlots]);
+  
+  // Disable dates in the past (using EAT timezone)
+  const disablePastDates = (date: Date) => {
+    const nowUTC = new Date();
+    const nowEAT = toZonedTime(nowUTC, EAT_TIMEZONE);
+    const todayEAT = startOfDay(nowEAT);
+    return isBefore(startOfDay(date), todayEAT);
+  };
   const progress = step / 4 * 100;
   const validateStep1 = () => {
     if (!formData.parentName || !formData.studentName || !formData.phoneNumber || !formData.email) {
@@ -422,11 +440,9 @@ const BookConsultation = () => {
                     <div className="space-y-2">
                       <Label>Choose Date *</Label>
                       <Calendar mode="single" selected={selectedDate} onSelect={setSelectedDate} disabled={date => {
-                    const today = startOfDay(new Date());
-                    const checkDate = startOfDay(date);
-                    // Disable past dates (before today) and Sundays
-                    return checkDate < today || date.getDay() === 0;
-                  }} className="rounded-md border" />
+                    // Disable past dates (using EAT timezone) and Sundays
+                    return disablePastDates(date) || date.getDay() === 0;
+                  }} className="rounded-md border pointer-events-auto" />
                       <p className="text-xs text-muted-foreground">Consultations available Monday-Saturday</p>
                     </div>
                     <div className="space-y-2">
