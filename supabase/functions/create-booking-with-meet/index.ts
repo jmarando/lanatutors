@@ -124,11 +124,15 @@ serve(async (req) => {
       const startTime = new Date(slot.start_time);
       const endTime = new Date(slot.end_time);
 
+      // Fetch student email from auth.users via profiles join
       const { data: studentProfile } = await supabase
         .from("profiles")
         .select("full_name")
         .eq("id", booking.student_id)
         .maybeSingle();
+
+      // Get student email using the RPC function
+      const { data: studentEmail } = await supabase.rpc('get_user_email', { _user_id: booking.student_id });
 
       const { data: tutorProfile } = await supabase
         .from("tutor_profiles")
@@ -138,6 +142,19 @@ serve(async (req) => {
 
       const studentName = studentProfile?.full_name || "Student";
       const tutorEmail = tutorProfile?.email || "";
+
+      // Build attendees list with both tutor and student emails for auto-admission
+      const attendees = [];
+      if (tutorEmail) {
+        attendees.push({ email: tutorEmail });
+      }
+      if (studentEmail) {
+        attendees.push({ email: studentEmail });
+      }
+      // Always include the organizer
+      attendees.push({ email: "info@lanatutors.africa" });
+
+      console.log("Adding attendees to meeting:", attendees.map(a => a.email));
 
       const calendarEvent = {
         summary: `${booking.subject} - ${studentName}`,
@@ -150,10 +167,10 @@ serve(async (req) => {
           dateTime: endTime.toISOString(),
           timeZone: "Africa/Nairobi",
         },
-        attendees: [
-          ...(tutorEmail ? [{ email: tutorEmail }] : []),
-          { email: "info@lanatutors.africa" },
-        ],
+        attendees,
+        guestsCanModify: false,
+        guestsCanInviteOthers: false,
+        guestsCanSeeOtherGuests: true,
         conferenceData: {
           createRequest: {
             requestId: `booking-${bookingId}`,
