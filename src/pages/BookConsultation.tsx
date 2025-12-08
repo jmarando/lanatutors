@@ -80,11 +80,18 @@ const BookConsultation = () => {
   }, [selectedDate, availableTimeSlots]);
   
   // Disable dates in the past (using EAT timezone)
+  // The Calendar passes dates as midnight in local timezone, so we compare just the date parts
   const disablePastDates = (date: Date) => {
     const nowUTC = new Date();
     const nowEAT = toZonedTime(nowUTC, EAT_TIMEZONE);
-    const todayEAT = startOfDay(nowEAT);
-    return isBefore(startOfDay(date), todayEAT);
+    
+    // Get today's date in EAT as YYYY-MM-DD
+    const todayEATString = format(nowEAT, 'yyyy-MM-dd');
+    // Get the calendar date as YYYY-MM-DD (the date the user sees on screen)
+    const calendarDateString = format(date, 'yyyy-MM-dd');
+    
+    // Compare date strings to avoid timezone confusion
+    return calendarDateString < todayEATString;
   };
   const progress = step / 4 * 100;
   const validateStep1 = () => {
