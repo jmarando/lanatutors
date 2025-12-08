@@ -55,6 +55,7 @@ export const AdminIntensivePrograms = () => {
   const [assigningTutor, setAssigningTutor] = useState<string | null>(null);
   const [generatingLink, setGeneratingLink] = useState<string | null>(null);
   const [generatingAllLinks, setGeneratingAllLinks] = useState(false);
+  const [syncingToCalendar, setSyncingToCalendar] = useState(false);
   const [curriculumFilter, setCurriculumFilter] = useState<CurriculumFilter>("all");
   const [enrollmentFilter, setEnrollmentFilter] = useState<EnrollmentFilter>("all");
   const [gradeFilter, setGradeFilter] = useState<GradeFilter>("all");
@@ -414,6 +415,28 @@ export const AdminIntensivePrograms = () => {
     }
   };
 
+  // Sync all bootcamp classes to Google Calendar
+  const handleSyncToCalendar = async () => {
+    if (!confirm("This will create calendar events for all bootcamp classes across all 10 program days. Continue?")) {
+      return;
+    }
+    
+    setSyncingToCalendar(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("sync-bootcamp-to-calendar");
+      
+      if (error) throw error;
+      
+      toast.success(`Synced ${data.created} calendar events to info@lanatutors.africa`);
+      console.log("Calendar sync results:", data);
+    } catch (error) {
+      console.error("Failed to sync to calendar:", error);
+      toast.error("Failed to sync to calendar");
+    } finally {
+      setSyncingToCalendar(false);
+    }
+  };
+
   // Export classes to CSV
   const handleExportCSV = () => {
     const getSessionTopics = (topics: Json | null | undefined): { week1: string; week2: string } => {
@@ -655,7 +678,7 @@ export const AdminIntensivePrograms = () => {
             <CardTitle>December Holiday Bootcamp Management</CardTitle>
             <CardDescription>Assign tutors with smart qualification matching and monitor enrollment</CardDescription>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-wrap gap-2">
             <Button 
               onClick={handleExportCSV}
               variant="outline"
@@ -675,6 +698,20 @@ export const AdminIntensivePrograms = () => {
                 </>
               ) : (
                 `Generate All Links (${classes.filter(c => !c.meeting_link).length})`
+              )}
+            </Button>
+            <Button 
+              onClick={handleSyncToCalendar} 
+              disabled={syncingToCalendar}
+              variant="default"
+            >
+              {syncingToCalendar ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Syncing...
+                </>
+              ) : (
+                "Sync to Calendar"
               )}
             </Button>
           </div>
