@@ -802,7 +802,8 @@ Yehtu Tutors`
       const { data, error } = await supabase
         .from("consultation_bookings")
         .select("*")
-        .order("created_at", { ascending: false });
+        .order("consultation_date", { ascending: false })
+        .order("consultation_time", { ascending: false });
 
       if (error) throw error;
       setConsultationBookings(data || []);
