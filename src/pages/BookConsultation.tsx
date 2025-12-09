@@ -167,6 +167,9 @@ const BookConsultation = () => {
       const meetingLink = calendarData.meetingLink;
 
       // Step 2: Insert booking into database with meeting link
+      // Use format() to preserve the local date the user selected, avoiding timezone shift
+      const consultationDateStr = format(selectedDate!, 'yyyy-MM-dd');
+      
       const {
         error: dbError
       } = await supabase.from("consultation_bookings").insert({
@@ -178,7 +181,7 @@ const BookConsultation = () => {
         subjects_interest: formData.subjects,
         preferred_mode: "consultation",
         additional_notes: formData.additionalNotes,
-        consultation_date: selectedDate!.toISOString().split('T')[0],
+        consultation_date: consultationDateStr,
         consultation_time: selectedTime,
         status: "confirmed",
         meeting_link: meetingLink
@@ -191,7 +194,7 @@ const BookConsultation = () => {
           email: formData.email,
           parentName: formData.parentName,
           studentName: formData.studentName,
-          consultationDate: selectedDate!.toISOString().split('T')[0],
+          consultationDate: consultationDateStr,
           consultationTime: selectedTime,
           meetingLink
         }
@@ -199,7 +202,7 @@ const BookConsultation = () => {
       toast.success("Consultation booked! Check your email for details.");
 
       // Navigate to confirmation page with details
-      navigate(`/consultation-confirmed?parentName=${encodeURIComponent(formData.parentName)}&studentName=${encodeURIComponent(formData.studentName)}&date=${selectedDate!.toISOString().split('T')[0]}&time=${encodeURIComponent(selectedTime)}&email=${encodeURIComponent(formData.email)}`);
+      navigate(`/consultation-confirmed?parentName=${encodeURIComponent(formData.parentName)}&studentName=${encodeURIComponent(formData.studentName)}&date=${consultationDateStr}&time=${encodeURIComponent(selectedTime)}&email=${encodeURIComponent(formData.email)}`);
     } catch (error: any) {
       console.error("Error booking consultation:", error);
       toast.error(error.message || "Failed to book consultation");
