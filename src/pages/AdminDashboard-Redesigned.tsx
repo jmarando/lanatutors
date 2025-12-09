@@ -802,8 +802,7 @@ Yehtu Tutors`
       const { data, error } = await supabase
         .from("consultation_bookings")
         .select("*")
-        .order("consultation_date", { ascending: true })
-        .order("consultation_time", { ascending: true });
+        .order("created_at", { ascending: false });
 
       if (error) throw error;
       setConsultationBookings(data || []);
@@ -1817,6 +1816,52 @@ The Lana Team`;
                 </CardContent>
               </Card>
             </div>
+
+            {/* Today's Appointments Quick View */}
+            {(() => {
+              const today = new Date();
+              today.setHours(0, 0, 0, 0);
+              const todaysAppointments = consultationBookings.filter(booking => {
+                const consultationDate = new Date(booking.consultation_date);
+                consultationDate.setHours(0, 0, 0, 0);
+                return consultationDate.getTime() === today.getTime();
+              }).sort((a, b) => a.consultation_time.localeCompare(b.consultation_time));
+              
+              if (todaysAppointments.length === 0) return null;
+              
+              return (
+                <Card className="mb-6 border-green-500 border-2 bg-green-50 dark:bg-green-950/20">
+                  <CardHeader className="pb-2">
+                    <CardTitle className="text-lg flex items-center gap-2 text-green-700 dark:text-green-400">
+                      <CalendarIcon className="h-5 w-5" />
+                      Today's Appointments ({todaysAppointments.length})
+                    </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2">
+                      {todaysAppointments.map(booking => (
+                        <div key={booking.id} className="flex items-center justify-between p-3 bg-background rounded-lg border">
+                          <div className="flex items-center gap-4">
+                            <div className="font-bold text-lg text-green-600">{booking.consultation_time}</div>
+                            <div>
+                              <p className="font-medium">{booking.student_name}</p>
+                              <p className="text-sm text-muted-foreground">{booking.parent_name} • {booking.phone_number}</p>
+                            </div>
+                          </div>
+                          {booking.meeting_link && (
+                            <Button size="sm" className="bg-green-600 hover:bg-green-700" asChild>
+                              <a href={booking.meeting_link} target="_blank" rel="noopener noreferrer">
+                                <Video className="h-4 w-4 mr-1" /> Join
+                              </a>
+                            </Button>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })()}
 
             <div className="bg-muted/50 border rounded-lg p-4 mb-4">
               <h3 className="font-semibold mb-2">Consultation Conversion Journey</h3>
