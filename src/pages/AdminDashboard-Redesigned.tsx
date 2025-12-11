@@ -1103,23 +1103,114 @@ The Lana Team`;
 
       // Send reschedule confirmation email
       if (rescheduleBooking.email) {
+        const formattedDate = new Date(rescheduleDate).toLocaleDateString('en-GB', { 
+          weekday: 'long', 
+          day: 'numeric', 
+          month: 'long', 
+          year: 'numeric' 
+        });
+        
         await supabase.functions.invoke('send-admin-email', {
           body: {
             to: rescheduleBooking.email,
-            subject: `Consultation Rescheduled - Lana Tutors`,
+            subject: `Your Consultation Has Been Rescheduled - Lana Tutors`,
             html: `
-              <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-                <h2 style="color: #16a34a;">Consultation Rescheduled</h2>
-                <p>Dear ${rescheduleBooking.parent_name},</p>
-                <p>Your consultation for ${rescheduleBooking.student_name} has been rescheduled to:</p>
-                <div style="background: #f0fdf4; padding: 16px; border-radius: 8px; margin: 16px 0;">
-                  <p style="margin: 0;"><strong>New Date:</strong> ${new Date(rescheduleDate).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</p>
-                  <p style="margin: 8px 0 0 0;"><strong>New Time:</strong> ${rescheduleTime} (EAT)</p>
-                  ${rescheduleBooking.meeting_link ? `<p style="margin: 8px 0 0 0;"><strong>Meeting Link:</strong> <a href="${rescheduleBooking.meeting_link}">${rescheduleBooking.meeting_link}</a></p>` : ''}
-                </div>
-                <p>If you have any questions, please contact us at info@lanatutors.africa</p>
-                <p>Best regards,<br>Lana Tutors Team</p>
-              </div>
+              <!DOCTYPE html>
+              <html>
+              <head>
+                <meta charset="utf-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              </head>
+              <body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f5f5f5;">
+                <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f5f5f5; padding: 20px 0;">
+                  <tr>
+                    <td align="center">
+                      <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+                        <tr>
+                          <td style="background: linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%); padding: 32px; text-align: center;">
+                            <h1 style="color: #ffffff; margin: 0; font-size: 28px; font-weight: bold;">Lana Tutors</h1>
+                            <p style="color: #a3c9e8; margin: 8px 0 0 0; font-size: 14px;">Expert Online Tutoring</p>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td style="padding: 32px 24px;">
+                            <h2 style="color: #1e3a5f; margin: 0 0 20px 0; font-size: 22px;">Hi ${rescheduleBooking.parent_name},</h2>
+                            
+                            <p style="color: #333333; font-size: 15px; line-height: 1.6; margin: 0 0 20px 0;">
+                              We hope this message finds you well! We wanted to let you know that we've rescheduled your free consultation for <strong>${rescheduleBooking.student_name}</strong>. We're excited to connect with you and discuss how we can support your child's learning journey.
+                            </p>
+                            
+                            <table width="100%" cellpadding="0" cellspacing="0" style="background: linear-gradient(135deg, #f0f7ff 0%, #e8f4fd 100%); border-radius: 12px; margin: 24px 0; border-left: 4px solid #1e3a5f;">
+                              <tr>
+                                <td style="padding: 24px;">
+                                  <h3 style="color: #1e3a5f; margin: 0 0 16px 0; font-size: 16px; text-transform: uppercase; letter-spacing: 1px;">📅 New Appointment Details</h3>
+                                  <p style="margin: 0 0 8px 0; color: #333; font-size: 15px;"><strong>Date:</strong> ${formattedDate}</p>
+                                  <p style="margin: 0 0 8px 0; color: #333; font-size: 15px;"><strong>Time:</strong> ${rescheduleTime} (East Africa Time)</p>
+                                  <p style="margin: 0; color: #333; font-size: 15px;"><strong>Student:</strong> ${rescheduleBooking.student_name}</p>
+                                </td>
+                              </tr>
+                            </table>
+                            
+                            ${rescheduleBooking.meeting_link ? `
+                            <table width="100%" cellpadding="0" cellspacing="0" style="margin: 24px 0;">
+                              <tr>
+                                <td align="center">
+                                  <a href="${rescheduleBooking.meeting_link}" style="display: inline-block; background: linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%); color: #ffffff; text-decoration: none; padding: 16px 40px; border-radius: 8px; font-size: 16px; font-weight: bold; box-shadow: 0 4px 12px rgba(30, 58, 95, 0.3);">
+                                    🎥 Join Video Call
+                                  </a>
+                                </td>
+                              </tr>
+                              <tr>
+                                <td align="center" style="padding-top: 12px;">
+                                  <p style="margin: 0; color: #666; font-size: 13px;">
+                                    Or copy this link: <a href="${rescheduleBooking.meeting_link}" style="color: #2d5a87;">${rescheduleBooking.meeting_link}</a>
+                                  </p>
+                                </td>
+                              </tr>
+                            </table>
+                            ` : `
+                            <p style="color: #666; font-size: 14px; font-style: italic; margin: 16px 0;">
+                              You'll receive your meeting link shortly before the consultation.
+                            </p>
+                            `}
+                            
+                            <p style="color: #333333; font-size: 15px; line-height: 1.6; margin: 20px 0;">
+                              During this consultation, we'll discuss your child's academic needs and recommend the perfect tutor match. Please have any questions ready — we're here to help!
+                            </p>
+                            
+                            <p style="color: #333333; font-size: 15px; line-height: 1.6; margin: 20px 0 0 0;">
+                              If this new time doesn't work for you, please don't hesitate to reach out and we'll find another slot that suits you better.
+                            </p>
+                            
+                            <p style="color: #333333; font-size: 15px; line-height: 1.6; margin: 24px 0 0 0;">
+                              Warm regards,<br>
+                              <strong style="color: #1e3a5f;">The Lana Tutors Team</strong>
+                            </p>
+                          </td>
+                        </tr>
+                        <tr>
+                          <td style="background-color: #f8f9fa; padding: 20px 24px; border-top: 1px solid #e9ecef;">
+                            <table width="100%">
+                              <tr>
+                                <td>
+                                  <p style="margin: 0; color: #1e3a5f; font-size: 14px; font-weight: bold;">Lana Tutors</p>
+                                  <p style="margin: 4px 0 0 0; color: #6c757d; font-size: 12px;">
+                                    📧 <a href="mailto:info@lanatutors.africa" style="color: #2d5a87; text-decoration: none;">info@lanatutors.africa</a>
+                                  </p>
+                                  <p style="margin: 4px 0 0 0; color: #6c757d; font-size: 12px;">
+                                    🌐 <a href="https://lanatutors.africa" style="color: #2d5a87; text-decoration: none;">lanatutors.africa</a>
+                                  </p>
+                                </td>
+                              </tr>
+                            </table>
+                          </td>
+                        </tr>
+                      </table>
+                    </td>
+                  </tr>
+                </table>
+              </body>
+              </html>
             `
           }
         });
