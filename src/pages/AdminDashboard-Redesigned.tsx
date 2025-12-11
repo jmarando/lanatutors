@@ -59,6 +59,10 @@ const AdminDashboard = () => {
   });
   const [fixingPrices, setFixingPrices] = useState(false);
   const [priceStats, setPriceStats] = useState<{ total: number; needsFix: number } | null>(null);
+  const [rescheduleDialog, setRescheduleDialog] = useState(false);
+  const [rescheduleBooking, setRescheduleBooking] = useState<any>(null);
+  const [rescheduleDate, setRescheduleDate] = useState("");
+  const [rescheduleTime, setRescheduleTime] = useState("");
   const [processingTutorId, setProcessingTutorId] = useState<string | null>(null);
 
   // Message templates for customer journey
@@ -1076,6 +1080,59 @@ The Lana Team`;
       fetchConsultationBookings();
     } catch (error: any) {
       toast.error("Failed to update status: " + error.message);
+    }
+  };
+
+  const handleRescheduleConsultation = async () => {
+    if (!rescheduleBooking || !rescheduleDate || !rescheduleTime) {
+      toast.error("Please select date and time");
+      return;
+    }
+    
+    try {
+      const { error } = await supabase
+        .from("consultation_bookings")
+        .update({
+          consultation_date: rescheduleDate,
+          consultation_time: rescheduleTime,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", rescheduleBooking.id);
+
+      if (error) throw error;
+
+      // Send reschedule confirmation email
+      if (rescheduleBooking.email) {
+        await supabase.functions.invoke('send-admin-email', {
+          body: {
+            to: rescheduleBooking.email,
+            subject: `Consultation Rescheduled - Lana Tutors`,
+            html: `
+              <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                <h2 style="color: #16a34a;">Consultation Rescheduled</h2>
+                <p>Dear ${rescheduleBooking.parent_name},</p>
+                <p>Your consultation for ${rescheduleBooking.student_name} has been rescheduled to:</p>
+                <div style="background: #f0fdf4; padding: 16px; border-radius: 8px; margin: 16px 0;">
+                  <p style="margin: 0;"><strong>New Date:</strong> ${new Date(rescheduleDate).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}</p>
+                  <p style="margin: 8px 0 0 0;"><strong>New Time:</strong> ${rescheduleTime} (EAT)</p>
+                  ${rescheduleBooking.meeting_link ? `<p style="margin: 8px 0 0 0;"><strong>Meeting Link:</strong> <a href="${rescheduleBooking.meeting_link}">${rescheduleBooking.meeting_link}</a></p>` : ''}
+                </div>
+                <p>If you have any questions, please contact us at info@lanatutors.africa</p>
+                <p>Best regards,<br>Lana Tutors Team</p>
+              </div>
+            `
+          }
+        });
+      }
+
+      toast.success("Consultation rescheduled and notification sent!");
+      setRescheduleDialog(false);
+      setRescheduleBooking(null);
+      setRescheduleDate("");
+      setRescheduleTime("");
+      fetchConsultationBookings();
+    } catch (error: any) {
+      toast.error("Failed to reschedule: " + error.message);
     }
   };
 
@@ -2157,7 +2214,7 @@ The Lana Team`;
                         </div>
                       )}
 
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                      <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
                         <Button
                           onClick={() => openMessageDialog(booking, 'email')}
                           variant="default"
@@ -2174,6 +2231,20 @@ The Lana Team`;
                         >
                           <MessageCircle className="h-4 w-4 mr-2" />
                           Send WhatsApp
+                        </Button>
+
+                        <Button
+                          onClick={() => {
+                            setRescheduleBooking(booking);
+                            setRescheduleDate(booking.consultation_date);
+                            setRescheduleTime(booking.consultation_time);
+                            setRescheduleDialog(true);
+                          }}
+                          variant="secondary"
+                          className="w-full"
+                        >
+                          <CalendarIcon className="h-4 w-4 mr-2" />
+                          Reschedule
                         </Button>
                       </div>
 
@@ -2535,6 +2606,67 @@ The Lana Team`;
               <Button onClick={handleSendFollowUp} disabled={!followUpData.consultationOutcome || !followUpData.nextSteps}>
                 <Send className="h-4 w-4 mr-2" />
                 Send Follow-up Email
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Reschedule Consultation Dialog */}
+        <Dialog open={rescheduleDialog} onOpenChange={setRescheduleDialog}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Reschedule Consultation</DialogTitle>
+              <DialogDescription>
+                {rescheduleBooking && `Rescheduling consultation for ${rescheduleBooking.student_name}`}
+              </DialogDescription>
+            </DialogHeader>
+            
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label>New Date</Label>
+                <Input
+                  type="date"
+                  value={rescheduleDate}
+                  onChange={(e) => setRescheduleDate(e.target.value)}
+                  min={new Date().toISOString().split('T')[0]}
+                />
+              </div>
+              
+              <div className="space-y-2">
+                <Label>New Time (EAT)</Label>
+                <Select value={rescheduleTime} onValueChange={setRescheduleTime}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select time" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="02:00 PM">02:00 PM</SelectItem>
+                    <SelectItem value="02:30 PM">02:30 PM</SelectItem>
+                    <SelectItem value="03:00 PM">03:00 PM</SelectItem>
+                    <SelectItem value="03:30 PM">03:30 PM</SelectItem>
+                    <SelectItem value="04:00 PM">04:00 PM</SelectItem>
+                    <SelectItem value="04:30 PM">04:30 PM</SelectItem>
+                    <SelectItem value="05:00 PM">05:00 PM</SelectItem>
+                    <SelectItem value="05:30 PM">05:30 PM</SelectItem>
+                    <SelectItem value="06:00 PM">06:00 PM</SelectItem>
+                    <SelectItem value="06:30 PM">06:30 PM</SelectItem>
+                    <SelectItem value="07:00 PM">07:00 PM</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {rescheduleBooking && (
+                <div className="bg-muted p-3 rounded-md text-sm">
+                  <p><strong>Current:</strong> {formatConsultationDate(rescheduleBooking.consultation_date)} at {rescheduleBooking.consultation_time}</p>
+                  <p className="text-muted-foreground mt-1">A confirmation email will be sent to {rescheduleBooking.email}</p>
+                </div>
+              )}
+            </div>
+
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setRescheduleDialog(false)}>Cancel</Button>
+              <Button onClick={handleRescheduleConsultation}>
+                <CalendarIcon className="h-4 w-4 mr-2" />
+                Confirm Reschedule
               </Button>
             </DialogFooter>
           </DialogContent>
