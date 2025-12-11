@@ -119,3 +119,24 @@ verify_jwt = true
 
 [functions.sync-bootcamp-to-calendar]
 verify_jwt = true
+
+[functions.send-session-reminders]
+verify_jwt = false
+
+[functions.send-bootcamp-morning-reminder]
+verify_jwt = false
+
+[functions.send-payment-reminders]
+verify_jwt = false
+
+[functions.send-post-session-emails]
+verify_jwt = false
+
+[functions.send-reengagement-emails]
+verify_jwt = false
+
+[functions.send-tutor-communications]
+verify_jwt = false
+
+[functions.send-consultation-followups]
+verify_jwt = false
