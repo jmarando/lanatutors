@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -31,11 +31,20 @@ const CONSULTATION_BENEFITS = [{
   title: "Custom Learning Plan",
   description: "Get a tailored roadmap for success with subject recommendations, session frequency, and progress milestones"
 }];
+
+// 30-minute slots from 2pm to 7pm
+const ALL_TIME_SLOTS = [
+  "02:00 PM", "02:30 PM", "03:00 PM", "03:30 PM", 
+  "04:00 PM", "04:30 PM", "05:00 PM", "05:30 PM", 
+  "06:00 PM", "06:30 PM", "07:00 PM"
+];
+
 const BookConsultation = () => {
   const navigate = useNavigate();
   const [step, setStep] = useState(1);
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
   const [selectedTime, setSelectedTime] = useState("");
+  const [bookedSlots, setBookedSlots] = useState<string[]>([]);
   const [formData, setFormData] = useState({
     parentName: "",
     studentName: "",
@@ -50,11 +59,33 @@ const BookConsultation = () => {
   const availableLevels = formData.curriculum ? getLevelsForCurriculum(formData.curriculum) : [];
   const availableSubjects = formData.curriculum && formData.gradeLevel ? getSubjectsForCurriculumLevel(formData.curriculum, formData.gradeLevel) : [];
   const [loading, setLoading] = useState(false);
-  const availableTimeSlots = ["09:00 AM", "10:00 AM", "11:00 AM", "12:00 PM", "02:00 PM", "03:00 PM", "04:00 PM", "05:00 PM", "06:00 PM"];
 
-  // Filter time slots based on selected date and current time in EAT timezone
+  // Fetch booked slots when date changes
+  useEffect(() => {
+    const fetchBookedSlots = async () => {
+      if (!selectedDate) {
+        setBookedSlots([]);
+        return;
+      }
+      
+      const dateStr = format(selectedDate, 'yyyy-MM-dd');
+      const { data, error } = await supabase
+        .from("consultation_bookings")
+        .select("consultation_time")
+        .eq("consultation_date", dateStr)
+        .neq("status", "cancelled");
+      
+      if (!error && data) {
+        setBookedSlots(data.map(b => b.consultation_time));
+      }
+    };
+    
+    fetchBookedSlots();
+  }, [selectedDate]);
+
+  // Filter time slots based on selected date, current time, and already booked slots
   const filteredTimeSlots = useMemo(() => {
-    if (!selectedDate) return availableTimeSlots;
+    if (!selectedDate) return ALL_TIME_SLOTS;
     
     // Get current time in EAT timezone
     const nowUTC = new Date();
@@ -65,19 +96,22 @@ const BookConsultation = () => {
     // Check if selected date is today in EAT
     const isToday = selectedDayStart.getTime() === todayEAT.getTime();
     
-    if (!isToday) {
-      // Future date - show all slots
-      return availableTimeSlots;
+    let slots = ALL_TIME_SLOTS;
+    
+    if (isToday) {
+      // Today - only show slots at least 1 hour from now (in EAT)
+      const oneHourFromNowEAT = addHours(nowEAT, 1);
+      slots = slots.filter(timeSlot => {
+        const slotTime = parse(timeSlot, "hh:mm a", selectedDate);
+        return isAfter(slotTime, oneHourFromNowEAT);
+      });
     }
-
-    // Today - only show slots at least 1 hour from now (in EAT)
-    const oneHourFromNowEAT = addHours(nowEAT, 1);
-    return availableTimeSlots.filter(timeSlot => {
-      // Parse the time slot (e.g., "09:00 AM") into a Date object for today
-      const slotTime = parse(timeSlot, "hh:mm a", selectedDate);
-      return isAfter(slotTime, oneHourFromNowEAT);
-    });
-  }, [selectedDate, availableTimeSlots]);
+    
+    // Filter out already booked slots
+    slots = slots.filter(slot => !bookedSlots.includes(slot));
+    
+    return slots;
+  }, [selectedDate, bookedSlots]);
   
   // Disable dates in the past (using EAT timezone)
   // The Calendar passes dates as midnight in local timezone, so we compare just the date parts
