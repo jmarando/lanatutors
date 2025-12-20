@@ -74,12 +74,7 @@ export const AdminCreateLearningPlan = () => {
     }
   }, [studentName]);
 
-  // Auto-generate email body when plan details change
-  useEffect(() => {
-    if (selectedTutor && studentName && subjects.length > 0 && !notes) {
-      generateEmailBody();
-    }
-  }, [selectedTutor, studentName, subjects, curriculum, gradeLevel]);
+  // Remove auto-generate - user clicks button manually
 
   const fetchTutors = async () => {
     setTutorsLoading(true);
@@ -130,7 +125,10 @@ export const AdminCreateLearningPlan = () => {
   };
 
   const generateEmailBody = () => {
-    if (!selectedTutor || !studentName || subjects.length === 0) return;
+    if (!selectedTutor || !studentName) {
+      toast.error("Please select a tutor and enter student name first");
+      return;
+    }
     
     const subjectList = subjects
       .filter(s => s.name)
@@ -140,13 +138,36 @@ export const AdminCreateLearningPlan = () => {
     const curriculumInfo = curriculum ? ` following the ${curriculum} curriculum` : "";
     const gradeInfo = gradeLevel ? ` in ${gradeLevel}` : "";
     
+    // Format schedule
+    const scheduleText = sessionSchedule.filter(s => s.day && s.time).length > 0
+      ? `\n\nProposed Schedule:\n${sessionSchedule.filter(s => s.day && s.time).map(s => {
+          const [hours, minutes] = s.time.split(":");
+          const hour = parseInt(hours);
+          const ampm = hour >= 12 ? "PM" : "AM";
+          const hour12 = hour % 12 || 12;
+          return `• ${s.day} at ${hour12}:${minutes} ${ampm}`;
+        }).join("\n")}${startDate ? `\n\nStarting: ${new Date(startDate).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}` : ''}`
+      : "";
+    
+    // Payment info
+    const { totalPrice, depositAmount } = calculateTotals();
+    const paymentText = `
+
+Payment Options:
+• Full Payment: KES ${totalPrice.toLocaleString()}
+• 30% Deposit to Start: KES ${depositAmount.toLocaleString()} (Balance: KES ${(totalPrice - depositAmount).toLocaleString()})
+
+You can pay via M-Pesa, Card, or Bank Transfer:
+• NCBA Paybill: 880100
+• Account Number: 1006114657`;
+    
     const generatedBody = `Dear ${parentName || "Parent"},
 
 Thank you for your interest in our tutoring services. We are pleased to present a personalized learning plan for ${studentName}${gradeInfo}${curriculumInfo}.
 
-Based on our assessment, we recommend focusing on: ${subjectList || "the selected subjects"}.
+${subjectList ? `Based on our assessment, we recommend focusing on: ${subjectList}.` : ""}
 
-${selectedTutor.full_name} will be ${studentName}'s dedicated tutor. With their expertise and personalized approach, we are confident that ${studentName} will make excellent progress.
+${selectedTutor.full_name} will be ${studentName}'s dedicated tutor. With their expertise and personalized approach, we are confident that ${studentName} will make excellent progress.${scheduleText}${paymentText}
 
 We look forward to supporting ${studentName}'s academic journey.
 
@@ -154,6 +175,7 @@ Warm regards,
 Lana Tutors Team`;
 
     setNotes(generatedBody);
+    toast.success("Message generated!");
   };
 
   const filteredTutors = tutors.filter(t =>
@@ -497,29 +519,6 @@ Lana Tutors Team`;
               />
             </div>
 
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <Label htmlFor="notes">Personal Message to Parent</Label>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={generateEmailBody}
-                  disabled={!selectedTutor || !studentName}
-                >
-                  <Sparkles className="w-4 h-4 mr-1" />
-                  Generate
-                </Button>
-              </div>
-              <Textarea
-                id="notes"
-                value={notes}
-                onChange={(e) => setNotes(e.target.value)}
-                placeholder="Write a personal introduction..."
-                rows={8}
-              />
-            </div>
-
             {/* Subjects */}
             <div>
               <div className="flex items-center justify-between mb-3">
@@ -731,6 +730,41 @@ Lana Tutors Team`;
                 <span className="font-semibold text-primary">KES {totals.depositAmount.toLocaleString()}</span>
               </div>
             </RadioGroup>
+          </CardContent>
+        </Card>
+
+        {/* Step 5: Personal Message */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Sparkles className="h-5 w-5" />
+              5. Personal Message to Parent
+            </CardTitle>
+            <CardDescription>Add a personalized message that will be included in the email</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex justify-end">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={generateEmailBody}
+                disabled={!selectedTutor || !studentName}
+              >
+                <Sparkles className="w-4 h-4 mr-2" />
+                Generate Message
+              </Button>
+            </div>
+            <Textarea
+              id="notes"
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              placeholder="Write a personal introduction... Click 'Generate Message' after filling in all details above."
+              rows={12}
+            />
+            <p className="text-xs text-muted-foreground">
+              Tip: Fill in tutor, student, subjects, schedule and payment option first, then click "Generate Message" to auto-populate.
+            </p>
           </CardContent>
         </Card>
 
