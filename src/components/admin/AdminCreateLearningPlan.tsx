@@ -266,33 +266,53 @@ Lana Tutors Team`;
 
       if (planError) throw planError;
 
-      // Generate payment link
+      // Generate payment links - one for full payment, one for deposit
       setGeneratingPaymentLink(true);
-      let paymentLink = "";
+      let fullPaymentLink = "";
+      let depositPaymentLink = "";
       
       try {
-        const { data: paymentData, error: paymentError } = await supabase.functions.invoke(
-          "generate-learning-plan-payment-link",
-          {
+        // Generate both payment links in parallel
+        const [fullPaymentResult, depositPaymentResult] = await Promise.all([
+          supabase.functions.invoke("generate-learning-plan-payment-link", {
             body: {
               planId: plan.id,
-              amount: amountDue,
+              amount: totalPrice,
               parentEmail,
               parentPhone,
               studentName,
-              description: `${paymentOption === "deposit" ? "30% Deposit for " : ""}${title}`,
-              isDeposit: paymentOption === "deposit",
+              description: `Full Payment - ${title}`,
+              isDeposit: false,
             },
-          }
-        );
+          }),
+          supabase.functions.invoke("generate-learning-plan-payment-link", {
+            body: {
+              planId: plan.id,
+              amount: depositAmount,
+              parentEmail,
+              parentPhone,
+              studentName,
+              description: `30% Deposit - ${title}`,
+              isDeposit: true,
+            },
+          }),
+        ]);
 
-        if (paymentError) {
-          console.error("Payment link error:", paymentError);
-        } else if (paymentData?.paymentLink) {
-          paymentLink = paymentData.paymentLink;
+        if (fullPaymentResult.data?.paymentLink) {
+          fullPaymentLink = fullPaymentResult.data.paymentLink;
+        }
+        if (depositPaymentResult.data?.paymentLink) {
+          depositPaymentLink = depositPaymentResult.data.paymentLink;
+        }
+        
+        if (fullPaymentResult.error) {
+          console.error("Full payment link error:", fullPaymentResult.error);
+        }
+        if (depositPaymentResult.error) {
+          console.error("Deposit payment link error:", depositPaymentResult.error);
         }
       } catch (err) {
-        console.error("Error generating payment link:", err);
+        console.error("Error generating payment links:", err);
       }
       setGeneratingPaymentLink(false);
 
@@ -314,7 +334,8 @@ Lana Tutors Team`;
             rate: s.rate,
           })),
           depositAmount,
-          paymentLink,
+          fullPaymentLink,
+          depositPaymentLink,
           tutorName: selectedTutor.full_name,
           sessionSchedule: sessionSchedule.filter(s => s.day && s.time),
           startDate,

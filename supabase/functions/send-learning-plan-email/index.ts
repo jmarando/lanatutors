@@ -28,7 +28,8 @@ interface LearningPlanEmailRequest {
     rate: number;
   }>;
   depositAmount?: number;
-  paymentLink?: string;
+  fullPaymentLink?: string;
+  depositPaymentLink?: string;
   tutorName?: string;
   sessionSchedule?: SessionSchedule[];
   startDate?: string;
@@ -52,7 +53,8 @@ const handler = async (req: Request): Promise<Response> => {
       personalMessage,
       subjects,
       depositAmount,
-      paymentLink,
+      fullPaymentLink,
+      depositPaymentLink,
       tutorName,
       sessionSchedule,
       startDate,
@@ -249,7 +251,12 @@ const handler = async (req: Request): Promise<Response> => {
                           <td style="padding: 20px;">
                             <h4 style="margin: 0 0 10px 0; color: #166534; font-size: 16px;">Option 1: Full Payment</h4>
                             <p style="margin: 0 0 10px 0; color: #374151;">Pay the full amount upfront and get started immediately!</p>
-                            <p style="margin: 0; font-size: 24px; font-weight: bold; color: #166534;">KES ${totalPrice.toLocaleString()}</p>
+                            <p style="margin: 0 0 15px 0; font-size: 24px; font-weight: bold; color: #166534;">KES ${totalPrice.toLocaleString()}</p>
+                            ${fullPaymentLink ? `
+                              <a href="${fullPaymentLink}" style="display: inline-block; padding: 12px 24px; background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%); color: #ffffff; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 14px;">
+                                Pay Full Amount Now →
+                              </a>
+                            ` : ''}
                           </td>
                         </tr>
                       </table>
@@ -260,28 +267,29 @@ const handler = async (req: Request): Promise<Response> => {
                           <td style="padding: 20px;">
                             <h4 style="margin: 0 0 10px 0; color: #1d4ed8; font-size: 16px;">Option 2: 30% Deposit to Start</h4>
                             <p style="margin: 0 0 10px 0; color: #374151;">Pay 30% now to secure your spot and start lessons. Pay the balance before sessions complete.</p>
-                            <p style="margin: 0; font-size: 24px; font-weight: bold; color: #1d4ed8;">KES ${calculatedDeposit.toLocaleString()}</p>
-                            <p style="margin: 5px 0 0 0; color: #6b7280; font-size: 14px;">Balance: KES ${(totalPrice - calculatedDeposit).toLocaleString()}</p>
+                            <p style="margin: 0 0 5px 0; font-size: 24px; font-weight: bold; color: #1d4ed8;">KES ${calculatedDeposit.toLocaleString()}</p>
+                            <p style="margin: 0 0 15px 0; color: #6b7280; font-size: 14px;">Balance: KES ${(totalPrice - calculatedDeposit).toLocaleString()}</p>
+                            ${depositPaymentLink ? `
+                              <a href="${depositPaymentLink}" style="display: inline-block; padding: 12px 24px; background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%); color: #ffffff; text-decoration: none; border-radius: 6px; font-weight: 600; font-size: 14px;">
+                                Pay 30% Deposit Now →
+                              </a>
+                            ` : ''}
                           </td>
                         </tr>
                       </table>
 
-                      <!-- CTA Buttons -->
+                      <!-- Alternative: View Plan Online -->
+                      ${(!fullPaymentLink && !depositPaymentLink) ? `
                       <table role="presentation" style="width: 100%; margin: 30px 0;">
                         <tr>
                           <td align="center">
-                            ${paymentLink ? `
-                              <a href="${paymentLink}" style="display: inline-block; padding: 18px 48px; background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%); color: #ffffff; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 18px; box-shadow: 0 4px 6px rgba(34, 197, 94, 0.3); margin-bottom: 12px;">
-                                Pay Now via M-Pesa/Card
-                              </a>
-                            ` : `
-                              <a href="${planUrl}" style="display: inline-block; padding: 18px 48px; background: linear-gradient(135deg, #dc2626 0%, #ea580c 100%); color: #ffffff; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 18px; box-shadow: 0 4px 6px rgba(220, 38, 38, 0.3);">
-                                View Plan & Make Payment
-                              </a>
-                            `}
+                            <a href="${planUrl}" style="display: inline-block; padding: 18px 48px; background: linear-gradient(135deg, #dc2626 0%, #ea580c 100%); color: #ffffff; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 18px; box-shadow: 0 4px 6px rgba(220, 38, 38, 0.3);">
+                              View Plan Online
+                            </a>
                           </td>
                         </tr>
                       </table>
+                      ` : ''}
 
                       <!-- Bank Transfer Option -->
                       <table role="presentation" style="width: 100%; margin: 20px 0; background-color: #fefce8; border: 2px solid #eab308; border-radius: 8px;">
