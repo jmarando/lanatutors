@@ -177,6 +177,38 @@ const BookConsultation = () => {
   const handleSubmit = async () => {
     setLoading(true);
     try {
+      const consultationDateStr = format(selectedDate!, 'yyyy-MM-dd');
+      
+      // CRITICAL: Check if slot is still available before proceeding (prevents race conditions)
+      const { data: existingBooking, error: checkError } = await supabase
+        .from("consultation_bookings")
+        .select("id")
+        .eq("consultation_date", consultationDateStr)
+        .eq("consultation_time", selectedTime)
+        .neq("status", "cancelled")
+        .maybeSingle();
+      
+      if (checkError) {
+        console.error("Error checking slot availability:", checkError);
+        throw new Error("Failed to verify slot availability");
+      }
+      
+      if (existingBooking) {
+        toast.error("This time slot was just booked by someone else. Please select a different time.");
+        // Refresh booked slots
+        const { data: updatedBookings } = await supabase
+          .from("consultation_bookings")
+          .select("consultation_time")
+          .eq("consultation_date", consultationDateStr)
+          .neq("status", "cancelled");
+        if (updatedBookings) {
+          setBookedSlots(updatedBookings.map(b => b.consultation_time));
+        }
+        setSelectedTime("");
+        setLoading(false);
+        return;
+      }
+      
       // Step 1: Create Google Calendar event
       const {
         data: calendarData,
@@ -187,7 +219,7 @@ const BookConsultation = () => {
           studentName: formData.studentName,
           email: formData.email,
           phoneNumber: formData.phoneNumber,
-          consultationDate: selectedDate!.toISOString().split('T')[0],
+          consultationDate: consultationDateStr,
           consultationTime: selectedTime,
           subjects: formData.subjects,
           gradeLevel: `${formData.curriculum} - ${formData.gradeLevel}`,
@@ -201,9 +233,6 @@ const BookConsultation = () => {
       const meetingLink = calendarData.meetingLink;
 
       // Step 2: Insert booking into database with meeting link
-      // Use format() to preserve the local date the user selected, avoiding timezone shift
-      const consultationDateStr = format(selectedDate!, 'yyyy-MM-dd');
-      
       const {
         error: dbError
       } = await supabase.from("consultation_bookings").insert({
