@@ -186,12 +186,16 @@ export const AdminCreateLearningPlan = () => {
     const paymentText = `
 
 Payment Options:
-• Full Payment: KES ${totalPrice.toLocaleString()}
-• 30% Deposit to Start: KES ${depositAmount.toLocaleString()} (Balance: KES ${(totalPrice - depositAmount).toLocaleString()})
+• Full Payment: KES ${totalPrice.toLocaleString()} [M-Pesa/Card payment link will be included]
+• 30% Deposit to Start: KES ${depositAmount.toLocaleString()} [M-Pesa/Card payment link will be included]
+  (Balance: KES ${(totalPrice - depositAmount).toLocaleString()})
 
-You can pay via M-Pesa, Card, or Bank Transfer:
-• NCBA Paybill: 880100
-• Account Number: 1006114657`;
+Alternative Payment - Bank Transfer:
+• Bank: NCBA
+• Paybill: 880100
+• Account Number: 1006114657
+
+Note: Secure M-Pesa and Card payment links will be automatically generated and included in the email when you send this plan.`;
     
     const generatedBody = `Dear ${parentName || "Parent"},
 
