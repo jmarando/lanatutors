@@ -143,3 +143,9 @@ verify_jwt = false
 
 [functions.whatsapp-webhook]
 verify_jwt = false
+
+[functions.send-learning-plan-email]
+verify_jwt = false
+
+[functions.generate-learning-plan-payment-link]
+verify_jwt = false
