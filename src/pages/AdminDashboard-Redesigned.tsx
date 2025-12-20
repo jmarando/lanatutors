@@ -24,6 +24,7 @@ import { AdminTutorProfileEdit } from "@/components/admin/AdminTutorProfileEdit"
 import { StudentList } from "@/components/admin/StudentList";
 import { BootcampEnrollments } from "@/components/admin/BootcampEnrollments";
 import { EmailComposer } from "@/components/admin/EmailComposer";
+import { AdminCreateLearningPlan } from "@/components/admin/AdminCreateLearningPlan";
 import { Sparkles, UserCog } from "lucide-react";
 
 const AdminDashboard = () => {
@@ -1391,6 +1392,15 @@ The Lana Team`;
                   Bootcamp Students
                 </span>
               </TabsTrigger>
+              <TabsTrigger 
+                value="learning-plans"
+                className="data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:bg-transparent rounded-none bg-transparent px-4 py-3 border-b-2 border-transparent"
+              >
+                <span className="flex items-center gap-2">
+                  <FileText className="h-4 w-4" />
+                  Learning Plans
+                </span>
+              </TabsTrigger>
             </TabsList>
           </div>
 
@@ -1911,6 +1921,11 @@ The Lana Team`;
               <EmailComposer />
             </div>
             <BootcampEnrollments />
+          </TabsContent>
+
+          {/* Learning Plans Tab */}
+          <TabsContent value="learning-plans" className="space-y-4">
+            <AdminCreateLearningPlan />
           </TabsContent>
 
           <TabsContent value="consultations" className="space-y-4">
