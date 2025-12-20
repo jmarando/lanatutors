@@ -132,22 +132,54 @@ export const AdminCreateLearningPlan = () => {
     
     const subjectList = subjects
       .filter(s => s.name)
-      .map(s => `${s.name} (${s.sessions} sessions)`)
-      .join(", ");
+      .map(s => {
+        const sessionsPerWeek = s.sessionsPerWeek || 2;
+        const weeks = s.weeks || Math.ceil(s.sessions / sessionsPerWeek);
+        return `• ${s.name}: ${s.sessions} sessions (${sessionsPerWeek} lessons per week over ${weeks} weeks)`;
+      })
+      .join("\n");
     
     const curriculumInfo = curriculum ? ` following the ${curriculum} curriculum` : "";
     const gradeInfo = gradeLevel ? ` in ${gradeLevel}` : "";
     
-    // Format schedule
-    const scheduleText = sessionSchedule.filter(s => s.day && s.time).length > 0
-      ? `\n\nProposed Schedule:\n${sessionSchedule.filter(s => s.day && s.time).map(s => {
-          const [hours, minutes] = s.time.split(":");
-          const hour = parseInt(hours);
-          const ampm = hour >= 12 ? "PM" : "AM";
-          const hour12 = hour % 12 || 12;
-          return `• ${s.day} at ${hour12}:${minutes} ${ampm}`;
-        }).join("\n")}${startDate ? `\n\nStarting: ${new Date(startDate).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}` : ''}`
-      : "";
+    // Format schedule with better explanation
+    const scheduledDays = sessionSchedule.filter(s => s.day && s.time);
+    let scheduleText = "";
+    
+    if (scheduledDays.length > 0) {
+      const formatTime = (time: string) => {
+        const [hours, minutes] = time.split(":");
+        const hour = parseInt(hours);
+        const ampm = hour >= 12 ? "PM" : "AM";
+        const hour12 = hour % 12 || 12;
+        return `${hour12}:${minutes} ${ampm}`;
+      };
+      
+      // Check if all times are the same
+      const allSameTime = scheduledDays.every(s => s.time === scheduledDays[0].time);
+      const dayNames = scheduledDays.map(s => s.day);
+      
+      if (allSameTime && scheduledDays.length > 1) {
+        // Format like "Monday to Thursday at 9:30 AM"
+        const timeStr = formatTime(scheduledDays[0].time);
+        const daysStr = dayNames.length === 2 
+          ? `${dayNames[0]} and ${dayNames[1]}`
+          : `${dayNames.slice(0, -1).join(", ")} and ${dayNames[dayNames.length - 1]}`;
+        
+        scheduleText = `\n\nProposed Schedule:\n${scheduledDays.length} lessons per week - ${daysStr} at ${timeStr}`;
+      } else {
+        // Different times for different days
+        scheduleText = `\n\nProposed Schedule:\n${scheduledDays.map(s => `• ${s.day} at ${formatTime(s.time)}`).join("\n")}`;
+      }
+      
+      // Add duration info from subjects
+      const totalWeeks = subjects.length > 0 ? Math.max(...subjects.map(s => s.weeks || 4)) : 4;
+      scheduleText += `\n\nThis program runs for ${totalWeeks} weeks with ${scheduledDays.length} sessions per week.`;
+      
+      if (startDate) {
+        scheduleText += `\n\nStarting: ${new Date(startDate).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}`;
+      }
+    }
     
     // Payment info
     const { totalPrice, depositAmount } = calculateTotals();
@@ -165,7 +197,8 @@ You can pay via M-Pesa, Card, or Bank Transfer:
 
 Thank you for your interest in our tutoring services. We are pleased to present a personalized learning plan for ${studentName}${gradeInfo}${curriculumInfo}.
 
-${subjectList ? `Based on our assessment, we recommend focusing on: ${subjectList}.` : ""}
+Recommended Subjects:
+${subjectList || "To be confirmed"}
 
 ${selectedTutor.full_name} will be ${studentName}'s dedicated tutor. With their expertise and personalized approach, we are confident that ${studentName} will make excellent progress.${scheduleText}${paymentText}
 
