@@ -11,6 +11,11 @@ import { Loader2, Plus, Trash2, Send, FileText, Search, Sparkles, CreditCard } f
 import { toast } from "sonner";
 import { getCurriculums, getLevelsForCurriculum, getSubjectsForCurriculumLevel } from "@/utils/curriculumData";
 
+interface SessionSchedule {
+  day: string;
+  time: string;
+}
+
 interface Subject {
   name: string;
   sessions: number;
@@ -49,6 +54,8 @@ export const AdminCreateLearningPlan = () => {
   const [discount, setDiscount] = useState(0);
   const [validityDays, setValidityDays] = useState(90);
   const [notes, setNotes] = useState("");
+  const [sessionSchedule, setSessionSchedule] = useState<SessionSchedule[]>([]);
+  const [startDate, setStartDate] = useState("");
   
   // Payment option
   const [paymentOption, setPaymentOption] = useState<"full" | "deposit">("full");
@@ -284,10 +291,11 @@ Lana Tutors Team`;
             sessions: s.sessions,
             rate: s.rate,
           })),
-          paymentOption,
-          depositAmount: paymentOption === "deposit" ? depositAmount : null,
+          depositAmount,
           paymentLink,
           tutorName: selectedTutor.full_name,
+          sessionSchedule: sessionSchedule.filter(s => s.day && s.time),
+          startDate,
         },
       });
 
@@ -311,6 +319,8 @@ Lana Tutors Team`;
       setDiscount(0);
       setNotes("");
       setPaymentOption("full");
+      setSessionSchedule([]);
+      setStartDate("");
     } catch (error: any) {
       console.error("Error creating learning plan:", error);
       toast.error(error.message || "Failed to create learning plan");
@@ -596,6 +606,73 @@ Lana Tutors Team`;
                     No subjects added yet. Click "Add Subject" to get started.
                   </p>
                 )}
+              </div>
+            </div>
+
+            {/* Session Schedule */}
+            <div>
+              <div className="flex items-center justify-between mb-3">
+                <Label>Proposed Session Schedule (Optional)</Label>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setSessionSchedule([...sessionSchedule, { day: "", time: "" }])}
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  Add Time Slot
+                </Button>
+              </div>
+              <div className="space-y-2">
+                {sessionSchedule.map((schedule, index) => (
+                  <div key={index} className="flex gap-3 items-center">
+                    <Select
+                      value={schedule.day}
+                      onValueChange={(v) => {
+                        const updated = [...sessionSchedule];
+                        updated[index].day = v;
+                        setSessionSchedule(updated);
+                      }}
+                    >
+                      <SelectTrigger className="w-40">
+                        <SelectValue placeholder="Day" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"].map((d) => (
+                          <SelectItem key={d} value={d}>{d}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <Input
+                      type="time"
+                      value={schedule.time}
+                      onChange={(e) => {
+                        const updated = [...sessionSchedule];
+                        updated[index].time = e.target.value;
+                        setSessionSchedule(updated);
+                      }}
+                      className="w-32"
+                    />
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setSessionSchedule(sessionSchedule.filter((_, i) => i !== index))}
+                    >
+                      <Trash2 className="w-4 h-4 text-destructive" />
+                    </Button>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-3">
+                <Label htmlFor="startDate">Proposed Start Date</Label>
+                <Input
+                  id="startDate"
+                  type="date"
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className="w-48 mt-1"
+                />
               </div>
             </div>
 
