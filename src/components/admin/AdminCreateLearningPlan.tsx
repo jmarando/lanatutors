@@ -130,12 +130,14 @@ export const AdminCreateLearningPlan = () => {
       return;
     }
     
+    const ratePerSession = 1500; // KES per session
     const subjectList = subjects
       .filter(s => s.name)
       .map(s => {
-        const sessionsPerWeek = s.sessionsPerWeek || 2;
-        const weeks = s.weeks || Math.ceil(s.sessions / sessionsPerWeek);
-        return `• ${s.name}: ${s.sessions} sessions (${sessionsPerWeek} lessons per week over ${weeks} weeks)`;
+        const totalSessions = s.sessions;
+        const weeks = s.weeks || 4;
+        const subjectTotal = totalSessions * ratePerSession;
+        return `• ${s.name}: ${totalSessions} sessions (1 session per day over ${weeks} weeks) - KES ${ratePerSession.toLocaleString()}/session = KES ${subjectTotal.toLocaleString()}`;
       })
       .join("\n");
     
@@ -166,7 +168,7 @@ export const AdminCreateLearningPlan = () => {
           ? `${dayNames[0]} and ${dayNames[1]}`
           : `${dayNames.slice(0, -1).join(", ")} and ${dayNames[dayNames.length - 1]}`;
         
-        scheduleText = `\n\nProposed Schedule:\n${scheduledDays.length} lessons per week - ${daysStr} at ${timeStr}`;
+        scheduleText = `\n\nProposed Schedule:\n1 session per day - ${daysStr} at ${timeStr}`;
       } else {
         // Different times for different days
         scheduleText = `\n\nProposed Schedule:\n${scheduledDays.map(s => `• ${s.day} at ${formatTime(s.time)}`).join("\n")}`;
@@ -174,7 +176,7 @@ export const AdminCreateLearningPlan = () => {
       
       // Add duration info from subjects
       const totalWeeks = subjects.length > 0 ? Math.max(...subjects.map(s => s.weeks || 4)) : 4;
-      scheduleText += `\n\nThis program runs for ${totalWeeks} weeks with ${scheduledDays.length} sessions per week.`;
+      scheduleText += `\n\nProgram Duration: ${totalWeeks} weeks (${scheduledDays.length} days per week, 1 session per day)`;
       
       if (startDate) {
         scheduleText += `\n\nStarting: ${new Date(startDate).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}`;
