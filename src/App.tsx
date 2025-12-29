@@ -29,7 +29,7 @@ const UnifiedStudentDashboard = lazy(() => import("./pages/UnifiedStudentDashboa
 const TutorDashboard = lazy(() => import("./pages/TutorDashboard"));
 const AdminDashboardRedesigned = lazy(() => import("./pages/AdminDashboard-Redesigned"));
 const BookConsultation = lazy(() => import("./pages/BookConsultation"));
-const HolidayPackages = lazy(() => import("./pages/HolidayPackages"));
+
 const AdminHolidayPackages = lazy(() => import("./pages/AdminHolidayPackages"));
 const MultiTutorPackage = lazy(() => import("./pages/MultiTutorPackage"));
 const PayBalance = lazy(() => import("./pages/PayBalance"));
@@ -39,10 +39,6 @@ const LearningPlanView = lazy(() => import("./pages/LearningPlanView"));
 const RequestLearningPlan = lazy(() => import("./pages/RequestLearningPlan"));
 const GroupClassMarketplace = lazy(() => import("./pages/GroupClassMarketplace"));
 const GroupClassEnrollment = lazy(() => import("./pages/GroupClassEnrollment"));
-const DecemberIntensive = lazy(() => import("./pages/DecemberIntensive"));
-const DecemberIntensiveEnrollment = lazy(() => import("./pages/DecemberIntensiveEnrollment"));
-const DecemberIntensiveInvoice = lazy(() => import("./pages/DecemberIntensiveInvoice"));
-const DecemberIntensiveConfirmed = lazy(() => import("./pages/DecemberIntensiveConfirmed"));
 
 const NotFound = lazy(() => import("./pages/NotFound"));
 const TestEmail = lazy(() => import("./pages/TestEmail"));
@@ -118,7 +114,7 @@ const App = () => {
                 <Route path="/consultation-confirmed" element={<ConsultationConfirmed />} />
                 <Route path="/setup-central-calendar" element={<SetupCentralCalendar />} />
                 <Route path="/payment-callback" element={<PaymentCallback />} />
-                <Route path="/holiday-packages" element={<HolidayPackages />} />
+                
                 <Route path="/admin/holiday-packages" element={<AdminHolidayPackages />} />
                 <Route path="/multi-tutor-package" element={<MultiTutorPackage />} />
                 <Route path="/pay-balance" element={<PayBalance />} />
@@ -129,10 +125,6 @@ const App = () => {
               <Route path="/request-learning-plan" element={<RequestLearningPlan />} />
           <Route path="/group-classes" element={<GroupClassMarketplace />} />
           <Route path="/group-classes/:classId/enroll" element={<GroupClassEnrollment />} />
-          <Route path="/december-intensive" element={<DecemberIntensive />} />
-          <Route path="/december-intensive/enroll" element={<DecemberIntensiveEnrollment />} />
-          <Route path="/december-intensive/invoice" element={<DecemberIntensiveInvoice />} />
-          <Route path="/december-intensive/confirmed" element={<DecemberIntensiveConfirmed />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
