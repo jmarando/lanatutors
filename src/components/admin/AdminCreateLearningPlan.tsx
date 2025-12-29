@@ -610,17 +610,17 @@ Lana Tutors Team`;
                                 onValueChange={(v) => updateSubject(index, "tutorId", v)}
                               >
                                 <SelectTrigger className={!subject.tutorId ? 'border-primary' : ''}>
-                                  <SelectValue placeholder="Choose a tutor first" />
+                                  <SelectValue placeholder="Choose a tutor first">
+                                    {selectedTutor ? selectedTutor.full_name : "Choose a tutor first"}
+                                  </SelectValue>
                                 </SelectTrigger>
-                                <SelectContent>
+                                <SelectContent className="bg-background z-50">
                                   {filteredTutors.map((tutor) => (
-                                    <SelectItem key={tutor.id} value={tutor.id}>
-                                      <div className="flex flex-col">
-                                        <span className="font-medium">{tutor.full_name}</span>
-                                        <span className="text-xs text-muted-foreground">
-                                          {tutor.subjects.slice(0, 3).join(", ")}{tutor.subjects.length > 3 ? '...' : ''} • KES {tutor.hourly_rate?.toLocaleString()}/hr
-                                        </span>
-                                      </div>
+                                    <SelectItem key={tutor.id} value={tutor.id} className="py-2">
+                                      <span className="font-medium">{tutor.full_name}</span>
+                                      <span className="text-xs text-muted-foreground ml-2">
+                                        {tutor.subjects.slice(0, 2).join(", ")}{tutor.subjects.length > 2 ? '...' : ''} • KES {tutor.hourly_rate?.toLocaleString()}/hr
+                                      </span>
                                     </SelectItem>
                                   ))}
                                 </SelectContent>
