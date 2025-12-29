@@ -2,7 +2,6 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -26,7 +25,7 @@ import { BootcampEnrollments } from "@/components/admin/BootcampEnrollments";
 import { EmailComposer } from "@/components/admin/EmailComposer";
 import { AdminCreateLearningPlan } from "@/components/admin/AdminCreateLearningPlan";
 import { AdminLearningPlanRequests } from "@/components/admin/AdminLearningPlanRequests";
-import { Sparkles, UserCog, ClipboardList } from "lucide-react";
+import { AdminLayout } from "@/components/admin/AdminLayout";
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -66,16 +65,17 @@ const AdminDashboard = () => {
   const [rescheduleDate, setRescheduleDate] = useState("");
   const [rescheduleTime, setRescheduleTime] = useState("");
   const [processingTutorId, setProcessingTutorId] = useState<string | null>(null);
+  const [sendingEmail, setSendingEmail] = useState(false);
 
   // Message templates for customer journey
   const messageTemplates = {
     email: {
       confirmation: {
         title: "Consultation Confirmed",
-        subject: "Your Yehtu Tutors Consultation is Confirmed",
+        subject: "Your Lana Tutors Consultation is Confirmed",
         body: (booking: any) => `Dear ${booking.parent_name},
 
-Thank you for booking a consultation with Yehtu Tutors. We're pleased to confirm your appointment for ${booking.student_name}.
+Thank you for booking a consultation with Lana Tutors. We're pleased to confirm your appointment for ${booking.student_name}.
 
 Consultation Details:
 Date: ${formatConsultationDate(booking.consultation_date)}
@@ -88,7 +88,7 @@ We will send you the meeting link 24 hours before your scheduled consultation.
 We look forward to discussing ${booking.student_name}'s educational needs with you.
 
 Best regards,
-The Yehtu Tutors Team`
+The Lana Tutors Team`
       },
       reminder_24h: {
         title: "24-Hour Reminder",
@@ -107,10 +107,10 @@ To help us make the most of our time together, please consider:
 - Your learning goals for this academic year
 - Any questions you have about our tutoring programs
 
-If you need to reschedule, please contact us at info@yehtu.com.
+If you need to reschedule, please contact us at info@lanatutors.africa.
 
 Best regards,
-The Yehtu Tutors Team`
+The Lana Tutors Team`
       },
       reminder_1h: {
         title: "1-Hour Reminder",
@@ -125,11 +125,11 @@ Meeting Link: [Insert meeting link]
 We look forward to speaking with you shortly.
 
 Best regards,
-The Yehtu Tutors Team`
+The Lana Tutors Team`
       },
       post_consultation: {
         title: "Post-Consultation Summary",
-        subject: "Thank You - Next Steps for ${booking.student_name}",
+        subject: "Thank You - Next Steps for Your Child",
         body: (booking: any) => `Dear ${booking.parent_name},
 
 Thank you for taking the time to meet with us today. We appreciated learning about ${booking.student_name}'s educational journey and goals.
@@ -148,14 +148,14 @@ You can book your first tutoring session here: [Add booking link]
 
 Limited Time Offer: Book within 48 hours to receive 20% off your first session.
 
-If you have any questions or would like to discuss further, please don't hesitate to reply to this email or call us at [phone number].
+If you have any questions or would like to discuss further, please don't hesitate to reply to this email.
 
 Best regards,
-The Yehtu Tutors Team`
+The Lana Tutors Team`
       },
       follow_up_3days: {
         title: "3-Day Follow-up",
-        subject: "Following Up: Tutoring for ${booking.student_name}",
+        subject: "Following Up: Tutoring for Your Child",
         body: (booking: any) => `Dear ${booking.parent_name},
 
 I hope this email finds you well.
@@ -172,13 +172,13 @@ Please note: Your 20% discount expires in 24 hours.
 Would you like to proceed with booking a session? Simply reply to this email or give us a call.
 
 Best regards,
-The Yehtu Tutors Team`
+The Lana Tutors Team`
       }
     },
     whatsapp: {
       confirmation: {
         title: "Consultation Confirmed",
-        body: (booking: any) => `Yehtu Tutors - Consultation Confirmed
+        body: (booking: any) => `Lana Tutors - Consultation Confirmed
 
 Dear ${booking.parent_name},
 
@@ -191,7 +191,7 @@ Grade: ${booking.grade_level}
 We will send the meeting link 24 hours before your appointment.
 
 Best regards,
-Yehtu Tutors`
+Lana Tutors`
       },
       reminder_24h: {
         title: "24-Hour Reminder",
@@ -210,7 +210,7 @@ Please prepare:
 - Questions about our programs
 
 Best regards,
-Yehtu Tutors`
+Lana Tutors`
       },
       reminder_1h: {
         title: "1-Hour Reminder",
@@ -225,7 +225,7 @@ Link: [Insert link]
 
 See you soon.
 
-Yehtu Tutors`
+Lana Tutors`
       },
       post_consultation: {
         title: "Post-Consultation Follow-up",
@@ -246,7 +246,7 @@ Special Offer: 20% off if you book within 48 hours.
 Questions? Reply to this message or call us.
 
 Best regards,
-Yehtu Tutors`
+Lana Tutors`
       },
       follow_up_3days: {
         title: "3-Day Follow-up",
@@ -268,7 +268,7 @@ Reminder: 20% discount expires in 24 hours.
 Let us know how we can assist.
 
 Best regards,
-Yehtu Tutors`
+Lana Tutors`
       }
     }
   };
@@ -280,7 +280,6 @@ Yehtu Tutors`
   useEffect(() => {
     if (!isAdmin) return;
 
-    // Set up realtime subscription for new applications
     const channel = supabase
       .channel('tutor-applications-changes')
       .on(
@@ -290,7 +289,7 @@ Yehtu Tutors`
           schema: 'public',
           table: 'tutor_applications'
         },
-        (payload) => {
+        () => {
           fetchPendingApplications();
           fetchInterviewRecords();
         }
@@ -400,38 +399,32 @@ Yehtu Tutors`
       const startDate = new Date();
       startDate.setDate(startDate.getDate() - daysBack);
 
-      // Fetch consultations data
       const { data: consultations } = await supabase
         .from('consultation_bookings')
         .select('*')
         .gte('created_at', startDate.toISOString());
 
-      // Fetch bookings data
       const { data: bookings } = await supabase
         .from('bookings')
         .select('*')
         .gte('created_at', startDate.toISOString());
 
-      // Fetch payments data
       const { data: payments } = await supabase
         .from('payments')
         .select('*')
         .eq('status', 'completed')
         .gte('created_at', startDate.toISOString());
 
-      // Fetch tutor profiles
       const { data: tutors } = await supabase
         .from('tutor_profiles')
         .select('*')
         .gte('created_at', startDate.toISOString());
 
-      // Fetch all profiles (students)
       const { data: students } = await supabase
         .from('profiles')
         .select('*')
         .gte('created_at', startDate.toISOString());
 
-      // Total counts
       const { count: totalStudents } = await supabase
         .from('profiles')
         .select('*', { count: 'exact', head: true });
@@ -449,12 +442,10 @@ Yehtu Tutors`
         .from('bookings')
         .select('*', { count: 'exact', head: true });
 
-      // Calculate totals
       const totalRevenue = payments?.reduce((sum, p) => sum + Number(p.amount), 0) || 0;
       const convertedConsultations = consultations?.filter(c => c.converted_to_customer).length || 0;
       const conversionRate = consultations?.length ? (convertedConsultations / consultations.length) * 100 : 0;
 
-      // Group data by day for charts
       const groupByDay = (data: any[], dateField: string = 'created_at') => {
         const grouped: any = {};
         data?.forEach(item => {
@@ -469,7 +460,6 @@ Yehtu Tutors`
       const studentsTrend = groupByDay(students || []);
       const tutorsTrend = groupByDay(tutors || []);
 
-      // Revenue trend
       const revenueTrend = payments?.reduce((acc: any, p) => {
         const date = new Date(p.created_at).toLocaleDateString();
         const existing = acc.find((item: any) => item.date === date);
@@ -545,7 +535,6 @@ Yehtu Tutors`
     }
 
     if (tutorData) {
-      // Enrich with profile data
       const enriched = await Promise.all(
         tutorData.map(async (tutor) => {
           const { data: profile } = await supabase
@@ -577,7 +566,6 @@ Yehtu Tutors`
 
     if (error) {
       console.error("Error fetching pending reviews:", error);
-      // Fallback query
       const { data: reviewData } = await supabase
         .from("tutor_reviews")
         .select("*")
@@ -624,7 +612,6 @@ Yehtu Tutors`
           return;
         }
 
-        // Update application status
         const { error: updateError } = await supabase
           .from("tutor_applications")
           .update({ 
@@ -638,7 +625,6 @@ Yehtu Tutors`
 
         if (updateError) throw updateError;
 
-        // Send interview invitation email
         await supabase.functions.invoke('send-interview-invitation', {
           body: { 
             email: application.email,
@@ -680,7 +666,6 @@ Yehtu Tutors`
     passed: boolean,
     notes?: string
   ) => {
-    // Try finding in both arrays
     const application = pendingApplications.find(app => app.id === applicationId) || 
                        interviewRecords.find(app => app.id === applicationId);
     
@@ -694,7 +679,6 @@ Yehtu Tutors`
       if (passed) {
         console.log("Marking interview as passed for:", application.email);
         
-        // Call edge function to create account and send approval email
         const { data, error } = await supabase.functions.invoke('approve-tutor-interview', {
           body: { 
             applicationId: applicationId,
@@ -710,7 +694,6 @@ Yehtu Tutors`
         console.log("Approval successful:", data);
         toast.success("Account created! Profile setup invitation sent with temporary password.");
       } else {
-        // Mark as interview failed
         const { error: updateError } = await supabase
           .from("tutor_applications")
           .update({ 
@@ -748,11 +731,9 @@ Yehtu Tutors`
         return;
       }
 
-      // Send approval or rejection email
       if (tutor) {
         try {
           if (approved) {
-            // Send profile live notification email
             await supabase.functions.invoke("send-profile-live-email", {
               body: {
                 email: tutor.email,
@@ -761,7 +742,6 @@ Yehtu Tutors`
             });
             console.log("Profile live email sent to:", tutor.email);
           } else {
-            // Send rejection email
             await supabase.functions.invoke("send-tutor-rejection-email", {
               body: {
                 tutorName: tutor.profiles?.full_name || "Tutor",
@@ -773,7 +753,6 @@ Yehtu Tutors`
           }
         } catch (emailError) {
           console.error("Failed to send email:", emailError);
-          // Don't fail the whole operation if email fails
         }
       }
 
@@ -830,7 +809,6 @@ Yehtu Tutors`
 
       if (error) throw error;
 
-      // Fetch student and tutor profiles separately
       const bookingsWithProfiles = await Promise.all(
         (bookingsData || []).map(async (booking) => {
           const [studentRes, tutorRes] = await Promise.all([
@@ -937,8 +915,6 @@ The Lana Team`;
     }
   };
 
-  const [sendingEmail, setSendingEmail] = useState(false);
-
   const handleSendMessage = async () => {
     if (!selectedBooking || !customMessage) {
       toast.error("Please select a template or write a message");
@@ -950,7 +926,6 @@ The Lana Team`;
       window.open(`https://wa.me/${phoneNumber}?text=${encodeURIComponent(customMessage)}`, '_blank');
       toast.success("WhatsApp opened with message");
     } else {
-      // Send email via edge function
       if (!selectedBooking.email) {
         toast.error("No email address available for this contact");
         return;
@@ -1009,7 +984,6 @@ The Lana Team`;
     if (!selectedBooking) return;
     
     try {
-      // Send follow-up email
       const { error: emailError } = await supabase.functions.invoke("send-consultation-followup", {
         body: {
           email: selectedBooking.email,
@@ -1024,7 +998,6 @@ The Lana Team`;
 
       if (emailError) throw emailError;
 
-      // Update booking with follow-up details
       const { error: updateError } = await supabase
         .from("consultation_bookings")
         .update({
@@ -1103,117 +1076,23 @@ The Lana Team`;
 
       if (error) throw error;
 
-      // Send reschedule confirmation email
       if (rescheduleBooking.email) {
-        const formattedDate = new Date(rescheduleDate).toLocaleDateString('en-GB', { 
-          weekday: 'long', 
-          day: 'numeric', 
-          month: 'long', 
-          year: 'numeric' 
-        });
-        
-        await supabase.functions.invoke('send-admin-email', {
+        await supabase.functions.invoke("send-admin-email", {
           body: {
             to: rescheduleBooking.email,
-            subject: `Your Consultation Has Been Rescheduled - Lana Tutors`,
-            html: `
-              <!DOCTYPE html>
-              <html>
-              <head>
-                <meta charset="utf-8">
-                <meta name="viewport" content="width=device-width, initial-scale=1.0">
-              </head>
-              <body style="margin: 0; padding: 0; font-family: Arial, sans-serif; background-color: #f5f5f5;">
-                <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f5f5f5; padding: 20px 0;">
-                  <tr>
-                    <td align="center">
-                      <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
-                        <tr>
-                          <td style="background: linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%); padding: 32px; text-align: center;">
-                            <h1 style="color: #ffffff; margin: 0; font-size: 28px; font-weight: bold;">Lana Tutors</h1>
-                            <p style="color: #a3c9e8; margin: 8px 0 0 0; font-size: 14px;">Expert Online Tutoring</p>
-                          </td>
-                        </tr>
-                        <tr>
-                          <td style="padding: 32px 24px;">
-                            <h2 style="color: #1e3a5f; margin: 0 0 20px 0; font-size: 22px;">Hi ${rescheduleBooking.parent_name},</h2>
-                            
-                            <p style="color: #333333; font-size: 15px; line-height: 1.6; margin: 0 0 20px 0;">
-                              We hope this message finds you well! We wanted to let you know that we've rescheduled your free consultation for <strong>${rescheduleBooking.student_name}</strong>. We're excited to connect with you and discuss how we can support your child's learning journey.
-                            </p>
-                            
-                            <table width="100%" cellpadding="0" cellspacing="0" style="background: linear-gradient(135deg, #f0f7ff 0%, #e8f4fd 100%); border-radius: 12px; margin: 24px 0; border-left: 4px solid #1e3a5f;">
-                              <tr>
-                                <td style="padding: 24px;">
-                                  <h3 style="color: #1e3a5f; margin: 0 0 16px 0; font-size: 16px; text-transform: uppercase; letter-spacing: 1px;">📅 New Appointment Details</h3>
-                                  <p style="margin: 0 0 8px 0; color: #333; font-size: 15px;"><strong>Date:</strong> ${formattedDate}</p>
-                                  <p style="margin: 0 0 8px 0; color: #333; font-size: 15px;"><strong>Time:</strong> ${rescheduleTime} (East Africa Time)</p>
-                                  <p style="margin: 0; color: #333; font-size: 15px;"><strong>Student:</strong> ${rescheduleBooking.student_name}</p>
-                                </td>
-                              </tr>
-                            </table>
-                            
-                            ${rescheduleBooking.meeting_link ? `
-                            <table width="100%" cellpadding="0" cellspacing="0" style="margin: 24px 0;">
-                              <tr>
-                                <td align="center">
-                                  <a href="${rescheduleBooking.meeting_link}" style="display: inline-block; background: linear-gradient(135deg, #1e3a5f 0%, #2d5a87 100%); color: #ffffff; text-decoration: none; padding: 16px 40px; border-radius: 8px; font-size: 16px; font-weight: bold; box-shadow: 0 4px 12px rgba(30, 58, 95, 0.3);">
-                                    🎥 Join Video Call
-                                  </a>
-                                </td>
-                              </tr>
-                              <tr>
-                                <td align="center" style="padding-top: 12px;">
-                                  <p style="margin: 0; color: #666; font-size: 13px;">
-                                    Or copy this link: <a href="${rescheduleBooking.meeting_link}" style="color: #2d5a87;">${rescheduleBooking.meeting_link}</a>
-                                  </p>
-                                </td>
-                              </tr>
-                            </table>
-                            ` : `
-                            <p style="color: #666; font-size: 14px; font-style: italic; margin: 16px 0;">
-                              You'll receive your meeting link shortly before the consultation.
-                            </p>
-                            `}
-                            
-                            <p style="color: #333333; font-size: 15px; line-height: 1.6; margin: 20px 0;">
-                              During this consultation, we'll discuss your child's academic needs and recommend the perfect tutor match. Please have any questions ready — we're here to help!
-                            </p>
-                            
-                            <p style="color: #333333; font-size: 15px; line-height: 1.6; margin: 20px 0 0 0;">
-                              If this new time doesn't work for you, please don't hesitate to reach out and we'll find another slot that suits you better.
-                            </p>
-                            
-                            <p style="color: #333333; font-size: 15px; line-height: 1.6; margin: 24px 0 0 0;">
-                              Warm regards,<br>
-                              <strong style="color: #1e3a5f;">The Lana Tutors Team</strong>
-                            </p>
-                          </td>
-                        </tr>
-                        <tr>
-                          <td style="background-color: #f8f9fa; padding: 20px 24px; border-top: 1px solid #e9ecef;">
-                            <table width="100%">
-                              <tr>
-                                <td>
-                                  <p style="margin: 0; color: #1e3a5f; font-size: 14px; font-weight: bold;">Lana Tutors</p>
-                                  <p style="margin: 4px 0 0 0; color: #6c757d; font-size: 12px;">
-                                    📧 <a href="mailto:info@lanatutors.africa" style="color: #2d5a87; text-decoration: none;">info@lanatutors.africa</a>
-                                  </p>
-                                  <p style="margin: 4px 0 0 0; color: #6c757d; font-size: 12px;">
-                                    🌐 <a href="https://lanatutors.africa" style="color: #2d5a87; text-decoration: none;">lanatutors.africa</a>
-                                  </p>
-                                </td>
-                              </tr>
-                            </table>
-                          </td>
-                        </tr>
-                      </table>
-                    </td>
-                  </tr>
-                </table>
-              </body>
-              </html>
-            `
+            recipientName: rescheduleBooking.parent_name,
+            subject: "Lana Tutors - Consultation Rescheduled",
+            message: `Dear ${rescheduleBooking.parent_name},
+
+Your consultation for ${rescheduleBooking.student_name} has been rescheduled.
+
+New Date: ${new Date(rescheduleDate).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
+New Time: ${rescheduleTime}
+
+We look forward to speaking with you.
+
+Best regards,
+The Lana Tutors Team`
           }
         });
       }
@@ -1229,7 +1108,6 @@ The Lana Team`;
     }
   };
 
-  // Calculate conversion metrics
   const conversionStats = {
     total: consultationBookings.length,
     pending: consultationBookings.filter(b => b.follow_up_status === 'pending').length,
@@ -1248,1555 +1126,713 @@ The Lana Team`;
     return null;
   }
 
-  return (
-    <div className="min-h-screen bg-[image:var(--gradient-page)]">
-      <div className="max-w-7xl mx-auto px-6 py-12">
-        <div className="border-b pb-8 mb-8">
-          <h1 className="text-4xl font-bold tracking-tight mb-2">Dashboard</h1>
-          <p className="text-muted-foreground text-lg">Overview of your tutoring platform</p>
+  const sidebarCounts = {
+    pendingApplications: pendingApplications.length,
+    interviewRecords: interviewRecords.length,
+    pendingTutors: pendingTutors.length,
+    pendingReviews: pendingReviews.length,
+    consultationBookings: consultationBookings.length,
+    tutoringBookings: tutoringBookings.length,
+    unassignedIntensiveClasses,
+  };
+
+  // Render Dashboard Overview Content
+  const renderDashboardContent = () => (
+    <div className="space-y-8">
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+          <h2 className="text-3xl font-bold tracking-tight">Business Pulse</h2>
+          <p className="text-muted-foreground mt-1">Real-time insights and platform metrics</p>
         </div>
+        <Select value={timeRange} onValueChange={(value: any) => {
+          setTimeRange(value);
+          setTimeout(() => fetchDashboardMetrics(), 100);
+        }}>
+          <SelectTrigger className="w-[180px]">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="7days">Last 7 days</SelectItem>
+            <SelectItem value="30days">Last 30 days</SelectItem>
+            <SelectItem value="90days">Last 90 days</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-8">
-          <div className="border-b -mx-6 px-6">
-            <TabsList className="h-auto p-0 bg-transparent w-full justify-start gap-6 flex-wrap border-0">
-              <TabsTrigger 
-                value="dashboard"
-                className="data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:bg-transparent rounded-none bg-transparent px-4 py-3 border-b-2 border-transparent"
-              >
-                Overview
-              </TabsTrigger>
-              <TabsTrigger 
-                value="applications" 
-                className="data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:bg-transparent rounded-none bg-transparent px-4 py-3 border-b-2 border-transparent"
-              >
-                <span className="flex items-center gap-2">
-                  Applications
-                  {pendingApplications.length > 0 && (
-                    <Badge variant="destructive" className="rounded-full h-5 min-w-5 px-1.5">
-                      {pendingApplications.length}
-                    </Badge>
-                  )}
-                </span>
-              </TabsTrigger>
-              <TabsTrigger 
-                value="interviews"
-                className="data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:bg-transparent rounded-none bg-transparent px-4 py-3 border-b-2 border-transparent"
-              >
-                <span className="flex items-center gap-2">
-                  Interviews
-                  {interviewRecords.length > 0 && (
-                    <Badge className="rounded-full h-5 min-w-5 px-1.5">
-                      {interviewRecords.length}
-                    </Badge>
-                  )}
-                </span>
-              </TabsTrigger>
-              <TabsTrigger 
-                value="profiles"
-                className="data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:bg-transparent rounded-none bg-transparent px-4 py-3 border-b-2 border-transparent"
-              >
-                <span className="flex items-center gap-2">
-                  Profiles
-                  {pendingTutors.length > 0 && (
-                    <Badge variant="secondary" className="rounded-full h-5 min-w-5 px-1.5">
-                      {pendingTutors.length}
-                    </Badge>
-                  )}
-                </span>
-              </TabsTrigger>
-              <TabsTrigger 
-                value="reviews"
-                className="data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:bg-transparent rounded-none bg-transparent px-4 py-3 border-b-2 border-transparent"
-              >
-                Reviews
-              </TabsTrigger>
-              <TabsTrigger 
-                value="blog"
-                className="data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:bg-transparent rounded-none bg-transparent px-4 py-3 border-b-2 border-transparent"
-              >
-                Blog
-              </TabsTrigger>
-              <TabsTrigger 
-                value="consultations"
-                className="data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:bg-transparent rounded-none bg-transparent px-4 py-3 border-b-2 border-transparent"
-              >
-                <span className="flex items-center gap-2">
-                  Consultations
-                  {consultationBookings.length > 0 && (
-                    <Badge className="rounded-full h-5 min-w-5 px-1.5 bg-teal-600">
-                      {consultationBookings.length}
-                    </Badge>
-                  )}
-                </span>
-              </TabsTrigger>
-              <TabsTrigger 
-                value="bookings"
-                className="data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:bg-transparent rounded-none bg-transparent px-4 py-3 border-b-2 border-transparent"
-              >
-                <span className="flex items-center gap-2">
-                  <BookMarked className="h-4 w-4" />
-                  Tutoring Bookings
-                  {tutoringBookings.length > 0 && (
-                    <Badge className="rounded-full h-5 min-w-5 px-1.5 bg-indigo-600">
-                      {tutoringBookings.length}
-                    </Badge>
-                  )}
-                </span>
-              </TabsTrigger>
-              <TabsTrigger 
-                value="tutor-signups"
-                className="data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:bg-transparent rounded-none bg-transparent px-4 py-3 border-b-2 border-transparent"
-              >
-                <span className="flex items-center gap-2">
-                  <GraduationCap className="h-4 w-4" />
-                  Tutor Signups
-                </span>
-              </TabsTrigger>
-              <TabsTrigger 
-                value="december-bootcamp"
-                className="data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:bg-transparent rounded-none bg-transparent px-4 py-3 border-b-2 border-transparent"
-              >
-                <span className="flex items-center gap-2">
-                  <Sparkles className="h-4 w-4" />
-                  December Bootcamp
-                  {unassignedIntensiveClasses > 0 && (
-                    <Badge className="rounded-full h-5 min-w-5 px-1.5 bg-orange-600">
-                      {unassignedIntensiveClasses}
-                    </Badge>
-                  )}
-                </span>
-              </TabsTrigger>
-              <TabsTrigger 
-                value="edit-tutors"
-                className="data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:bg-transparent rounded-none bg-transparent px-4 py-3 border-b-2 border-transparent"
-              >
-                <span className="flex items-center gap-2">
-                  <UserCog className="h-4 w-4" />
-                  Edit Tutors
-                </span>
-              </TabsTrigger>
-              <TabsTrigger 
-                value="students"
-                className="data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:bg-transparent rounded-none bg-transparent px-4 py-3 border-b-2 border-transparent"
-              >
-                <span className="flex items-center gap-2">
-                  <Users className="h-4 w-4" />
-                  Students
-                </span>
-              </TabsTrigger>
-              <TabsTrigger 
-                value="bootcamp-enrollments"
-                className="data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:bg-transparent rounded-none bg-transparent px-4 py-3 border-b-2 border-transparent"
-              >
-                <span className="flex items-center gap-2">
-                  <Sparkles className="h-4 w-4" />
-                  Bootcamp Students
-                </span>
-              </TabsTrigger>
-              <TabsTrigger 
-                value="learning-plan-requests"
-                className="data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:bg-transparent rounded-none bg-transparent px-4 py-3 border-b-2 border-transparent"
-              >
-                <span className="flex items-center gap-2">
-                  <ClipboardList className="h-4 w-4" />
-                  Plan Requests
-                </span>
-              </TabsTrigger>
-              <TabsTrigger 
-                value="learning-plans"
-                className="data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:bg-transparent rounded-none bg-transparent px-4 py-3 border-b-2 border-transparent"
-              >
-                <span className="flex items-center gap-2">
-                  <FileText className="h-4 w-4" />
-                  Create Plans
-                </span>
-              </TabsTrigger>
-            </TabsList>
-          </div>
-
-          {/* Dashboard Tab */}
-          <TabsContent value="dashboard" className="space-y-8">
-            {/* Header Section */}
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-              <div>
-                <h2 className="text-3xl font-bold tracking-tight">Business Pulse</h2>
-                <p className="text-muted-foreground mt-1">Real-time insights and platform metrics</p>
-              </div>
-              <Select value={timeRange} onValueChange={(value: any) => {
-                setTimeRange(value);
-                setTimeout(() => fetchDashboardMetrics(), 100);
-              }}>
-                <SelectTrigger className="w-[180px]">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="7days">Last 7 days</SelectItem>
-                  <SelectItem value="30days">Last 30 days</SelectItem>
-                  <SelectItem value="90days">Last 90 days</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {dashboardMetrics ? (
-              <div className="space-y-8">
-                {/* Key Metrics Grid */}
-                <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-                  <Card className="overflow-hidden cursor-pointer hover:shadow-lg transition-shadow" onClick={() => setActiveTab('students')}>
-                    <CardHeader className="pb-3">
-                      <div className="flex items-center justify-between">
-                        <CardTitle className="text-sm font-medium text-muted-foreground">Total Students</CardTitle>
-                        <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                          <Users className="h-5 w-5 text-primary" />
-                        </div>
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-3xl font-bold tracking-tight">{dashboardMetrics.totalStudents || 0}</div>
-                      <div className="flex items-center gap-1 mt-2 text-sm text-emerald-600 dark:text-emerald-400">
-                        <ArrowUpRight className="h-4 w-4" />
-                        <span className="font-medium">{dashboardMetrics.newStudents} new</span>
-                        <span className="text-muted-foreground ml-1">this period</span>
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  <Card className="overflow-hidden cursor-pointer hover:shadow-lg transition-shadow" onClick={() => setActiveTab('tutors')}>
-                    <CardHeader className="pb-3">
-                      <div className="flex items-center justify-between">
-                        <CardTitle className="text-sm font-medium text-muted-foreground">Active Tutors</CardTitle>
-                        <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                          <GraduationCap className="h-5 w-5 text-primary" />
-                        </div>
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-3xl font-bold tracking-tight">{dashboardMetrics.totalTutors || 0}</div>
-                      <div className="flex items-center gap-1 mt-2 text-sm text-emerald-600 dark:text-emerald-400">
-                        <ArrowUpRight className="h-4 w-4" />
-                        <span className="font-medium">{dashboardMetrics.newTutors} new</span>
-                        <span className="text-muted-foreground ml-1">this period</span>
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  <Card className="overflow-hidden cursor-pointer hover:shadow-lg transition-shadow" onClick={() => setActiveTab('bookings')}>
-                    <CardHeader className="pb-3">
-                      <div className="flex items-center justify-between">
-                        <CardTitle className="text-sm font-medium text-muted-foreground">Total Revenue</CardTitle>
-                        <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                          <DollarSign className="h-5 w-5 text-primary" />
-                        </div>
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-3xl font-bold tracking-tight">KES {dashboardMetrics.totalRevenue?.toLocaleString() || 0}</div>
-                      <div className="mt-2 text-sm text-muted-foreground">
-                        <span className="font-medium">{dashboardMetrics.totalBookings || 0}</span> bookings completed
-                      </div>
-                    </CardContent>
-                  </Card>
-
-                  <Card className="overflow-hidden">
-                    <CardHeader className="pb-3">
-                      <div className="flex items-center justify-between">
-                        <CardTitle className="text-sm font-medium text-muted-foreground">Conversion Rate</CardTitle>
-                        <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                          <TrendingUp className="h-5 w-5 text-primary" />
-                        </div>
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-3xl font-bold tracking-tight">{dashboardMetrics.conversionRate?.toFixed(1) || 0}%</div>
-                      <div className="mt-2 text-sm text-muted-foreground">
-                        <span className="font-medium">{dashboardMetrics.convertedConsultations}/{dashboardMetrics.totalConsultations}</span> converted
-                      </div>
-                    </CardContent>
-                  </Card>
+      {dashboardMetrics && (
+        <div className="space-y-8">
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+            <Card className="overflow-hidden cursor-pointer hover:shadow-lg transition-shadow" onClick={() => setActiveTab('students')}>
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">Total Students</CardTitle>
+                  <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                    <Users className="h-5 w-5 text-primary" />
+                  </div>
                 </div>
-
-                {/* Pipeline Metrics */}
-                <div className="grid gap-4 md:grid-cols-3">
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="text-base flex items-center gap-2">
-                        <CalendarIcon className="h-5 w-5" />
-                        Consultations
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-3xl font-bold">{dashboardMetrics.newConsultations}</div>
-                      <p className="text-xs text-muted-foreground mt-2">Booked in period</p>
-                    </CardContent>
-                  </Card>
-
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="text-base flex items-center gap-2">
-                        <BookMarked className="h-5 w-5" />
-                        Sessions
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-3xl font-bold">{dashboardMetrics.newBookings}</div>
-                      <p className="text-xs text-muted-foreground mt-2">Completed in period</p>
-                    </CardContent>
-                  </Card>
-
-                  <Card>
-                    <CardHeader>
-                      <CardTitle className="text-base flex items-center gap-2">
-                        <Activity className="h-5 w-5" />
-                        Daily Average
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-3xl font-bold">
-                        {(timeRange === '7days' ? (dashboardMetrics.newBookings / 7) :
-                         timeRange === '30days' ? (dashboardMetrics.newBookings / 30) :
-                         (dashboardMetrics.newBookings / 90)).toFixed(1)}
-                      </div>
-                      <p className="text-xs text-muted-foreground mt-2">Sessions per day</p>
-                    </CardContent>
-                  </Card>
-                </div>
-
-                {/* Charts */}
-                <div className="grid gap-4 md:grid-cols-2">
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Revenue Trend</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <ResponsiveContainer width="100%" height={250}>
-                        <BarChart data={dashboardMetrics.revenueTrend || []}>
-                          <CartesianGrid strokeDasharray="3 3" />
-                          <XAxis dataKey="date" />
-                          <YAxis />
-                          <Tooltip />
-                          <Bar dataKey="amount" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
-                        </BarChart>
-                      </ResponsiveContainer>
-                    </CardContent>
-                  </Card>
-
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Conversion Funnel</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <ResponsiveContainer width="100%" height={250}>
-                        <BarChart data={[
-                          { name: 'Consultations', value: dashboardMetrics.newConsultations },
-                          { name: 'Converted', value: dashboardMetrics.convertedConsultations },
-                          { name: 'Sessions', value: dashboardMetrics.newBookings }
-                        ]}>
-                          <CartesianGrid strokeDasharray="3 3" />
-                          <XAxis dataKey="name" />
-                          <YAxis />
-                          <Tooltip />
-                          <Bar dataKey="value" fill="hsl(var(--primary))" />
-                        </BarChart>
-                      </ResponsiveContainer>
-                    </CardContent>
-                  </Card>
-
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Student Growth</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <ResponsiveContainer width="100%" height={250}>
-                        <LineChart data={dashboardMetrics.studentsTrend || []}>
-                          <CartesianGrid strokeDasharray="3 3" />
-                          <XAxis dataKey="date" />
-                          <YAxis />
-                          <Tooltip />
-                          <Line type="monotone" dataKey="count" stroke="hsl(var(--chart-1))" strokeWidth={2} />
-                        </LineChart>
-                      </ResponsiveContainer>
-                    </CardContent>
-                  </Card>
-
-                  <Card>
-                    <CardHeader>
-                      <CardTitle>Tutor Onboarding</CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <ResponsiveContainer width="100%" height={250}>
-                        <LineChart data={dashboardMetrics.tutorsTrend || []}>
-                          <CartesianGrid strokeDasharray="3 3" />
-                          <XAxis dataKey="date" />
-                          <YAxis />
-                          <Tooltip />
-                          <Line type="monotone" dataKey="count" stroke="hsl(var(--chart-2))" strokeWidth={2} />
-                        </LineChart>
-                      </ResponsiveContainer>
-                    </CardContent>
-                  </Card>
-                </div>
-              </div>
-            ) : (
-              <div className="text-center py-12">
-                <p className="text-muted-foreground">Loading dashboard metrics...</p>
-              </div>
-            )}
-          </TabsContent>
-
-          <TabsContent value="applications" className="space-y-4">
-            <div className="bg-muted/50 border rounded-lg p-4 mb-4">
-              <h3 className="font-semibold mb-2">Step 1: Initial Vetting</h3>
-              <p className="text-sm text-muted-foreground">
-                Review credentials and decide whether to invite for an expert conversation or reject.
-              </p>
-            </div>
-            {pendingApplications.length === 0 ? (
-              <Card>
-                <CardContent className="p-8 text-center text-muted-foreground">
-                  No pending initial applications
-                </CardContent>
-              </Card>
-            ) : (
-              pendingApplications.map((application) => (
-                <ApplicationReviewCard
-                  key={application.id}
-                  application={application}
-                  onReview={handleApplicationReview}
-                />
-              ))
-            )}
-          </TabsContent>
-
-          <TabsContent value="interviews" className="space-y-4">
-            <div className="bg-muted/50 border rounded-lg p-4 mb-4">
-              <h3 className="font-semibold mb-2">Step 2: Expert Conversations</h3>
-              <p className="text-sm text-muted-foreground">
-                View all interviews - scheduled, passed, and failed.
-              </p>
-            </div>
-            
-            {/* Filter buttons */}
-            <div className="flex gap-2 mb-4">
-              <Button
-                variant={interviewFilter === 'all' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setInterviewFilter('all')}
-              >
-                All ({interviewRecords.length})
-              </Button>
-              <Button
-                variant={interviewFilter === 'scheduled' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setInterviewFilter('scheduled')}
-              >
-                Scheduled ({interviewRecords.filter(a => a.status === 'interview_scheduled').length})
-              </Button>
-              <Button
-                variant={interviewFilter === 'passed' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setInterviewFilter('passed')}
-                className="bg-green-600 hover:bg-green-700 text-white"
-              >
-                Passed ({interviewRecords.filter(a => a.status === 'passed').length})
-              </Button>
-              <Button
-                variant={interviewFilter === 'failed' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setInterviewFilter('failed')}
-                className="bg-red-600 hover:bg-red-700 text-white"
-              >
-                Failed ({interviewRecords.filter(a => a.status === 'failed').length})
-              </Button>
-            </div>
-
-            {interviewRecords.filter(a => 
-              interviewFilter === 'all' || a.status === (interviewFilter === 'scheduled' ? 'interview_scheduled' : interviewFilter)
-            ).length === 0 ? (
-              <Card>
-                <CardContent className="p-8 text-center text-muted-foreground">
-                  No {interviewFilter === 'all' ? '' : interviewFilter} interviews
-                </CardContent>
-              </Card>
-            ) : (
-              interviewRecords
-                .filter(a => interviewFilter === 'all' || a.status === (interviewFilter === 'scheduled' ? 'interview_scheduled' : interviewFilter))
-                .map((application) => (
-                  <InterviewCard
-                    key={application.id}
-                    application={application}
-                    onResult={handleInterviewResult}
-                  />
-                ))
-            )}
-          </TabsContent>
-
-          <TabsContent value="profiles" className="space-y-4">
-            <div className="bg-muted/50 border rounded-lg p-4 mb-4">
-              <h3 className="font-semibold mb-2">Step 3: Profile Verification</h3>
-              <p className="text-sm text-muted-foreground">
-                Review completed tutor profiles and approve or reject for final activation.
-              </p>
-            </div>
-            {pendingTutors.length === 0 ? (
-              <Card>
-                <CardContent className="p-8 text-center text-muted-foreground">
-                  No pending tutor applications
-                </CardContent>
-              </Card>
-            ) : (
-              pendingTutors.map((tutor) => (
-                <Card key={tutor.id}>
-                  <CardHeader>
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-center gap-4">
-                        <Avatar className="w-16 h-16">
-                          <AvatarFallback>
-                            {tutor.profiles?.full_name?.split(' ').map((n: string) => n[0]).join('') || "T"}
-                          </AvatarFallback>
-                        </Avatar>
-                        <div>
-                          <CardTitle>{tutor.profiles?.full_name || "Unknown"}</CardTitle>
-                          <p className="text-sm text-muted-foreground">{tutor.profiles?.phone_number}</p>
-                        </div>
-                      </div>
-                      <div className="flex gap-2">
-                        <Button
-                          onClick={() => handleTutorApproval(tutor.id, true)}
-                          className="bg-green-600 hover:bg-green-700"
-                          disabled={processingTutorId === tutor.id}
-                        >
-                          <CheckCircle className="w-4 h-4 mr-2" />
-                          {processingTutorId === tutor.id ? "Processing..." : "Approve"}
-                        </Button>
-                        <Button
-                          onClick={() => handleTutorApproval(tutor.id, false)}
-                          variant="destructive"
-                          disabled={processingTutorId === tutor.id}
-                        >
-                          <XCircle className="w-4 h-4 mr-2" />
-                          {processingTutorId === tutor.id ? "Processing..." : "Reject"}
-                        </Button>
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="space-y-6">
-                    {/* Contact Information */}
-                    <div>
-                      <h4 className="font-semibold mb-3 text-base">Contact Information</h4>
-                      <div className="grid md:grid-cols-2 gap-4">
-                        <div>
-                          <p className="text-sm font-medium text-muted-foreground">Email</p>
-                          <p className="text-sm">{tutor.email || "Not provided"}</p>
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-muted-foreground">Phone</p>
-                          <p className="text-sm">{tutor.profiles?.phone_number || "Not provided"}</p>
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-muted-foreground">Gender</p>
-                          <p className="text-sm capitalize">{tutor.gender || "Not specified"}</p>
-                        </div>
-                      </div>
-                    </div>
-
-                    <Separator />
-
-                    {/* Teaching Details */}
-                    <div>
-                      <h4 className="font-semibold mb-3 text-base">Teaching Information</h4>
-                      <div className="grid md:grid-cols-2 gap-4">
-                        <div>
-                          <p className="text-sm font-medium text-muted-foreground">Subjects</p>
-                          <p className="text-sm">{tutor.subjects?.join(", ") || "None"}</p>
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-muted-foreground">Curriculum</p>
-                          <p className="text-sm">{tutor.curriculum?.join(", ") || "None"}</p>
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-muted-foreground">Teaching Levels</p>
-                          <p className="text-sm">{tutor.teaching_levels?.join(", ") || "None"}</p>
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-muted-foreground">Teaching Mode</p>
-                          <p className="text-sm capitalize">{tutor.teaching_mode?.join(", ") || "None"}</p>
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-muted-foreground">Teaching Locations</p>
-                          <p className="text-sm">{tutor.teaching_location || "Not specified"}</p>
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-muted-foreground">Current Institution</p>
-                          <p className="text-sm">{tutor.current_institution || "Not specified"}</p>
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-muted-foreground">Experience</p>
-                          <p className="text-sm">{tutor.experience_years} years</p>
-                        </div>
-                        <div>
-                          <p className="text-sm font-medium text-muted-foreground">Hourly Rate</p>
-                          <p className="text-sm">KES {tutor.hourly_rate?.toLocaleString()}</p>
-                        </div>
-                      </div>
-                    </div>
-
-                    <Separator />
-
-                    {/* Qualifications */}
-                    <div>
-                      <h4 className="font-semibold mb-3 text-base">Qualifications</h4>
-                      <ul className="text-sm space-y-1 list-disc list-inside">
-                        {tutor.qualifications?.map((qual: string, idx: number) => (
-                          <li key={idx}>{qual}</li>
-                        )) || <li className="text-muted-foreground">None provided</li>}
-                      </ul>
-                    </div>
-
-                    {/* Education History */}
-                    {tutor.graduation_year && (
-                      <>
-                        <Separator />
-                        <div>
-                          <h4 className="font-semibold mb-3 text-base">Education</h4>
-                          <p className="text-sm">Graduation Year: {tutor.graduation_year}</p>
-                        </div>
-                      </>
-                    )}
-
-                    {/* Teaching Experience */}
-                    {tutor.teaching_experience && Array.isArray(tutor.teaching_experience) && tutor.teaching_experience.length > 0 && (
-                      <>
-                        <Separator />
-                        <div>
-                          <h4 className="font-semibold mb-3 text-base">Teaching Experience</h4>
-                          <div className="space-y-3">
-                            {tutor.teaching_experience.map((exp: any, idx: number) => (
-                              <div key={idx} className="bg-muted/30 rounded-lg p-3">
-                                <p className="text-sm font-medium">{exp.institution}</p>
-                                <p className="text-sm text-muted-foreground">{exp.role} • {exp.years} years</p>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      </>
-                    )}
-
-                    <Separator />
-
-                    {/* Bio */}
-                    <div>
-                      <h4 className="font-semibold mb-3 text-base">Bio</h4>
-                      <p className="text-sm text-muted-foreground whitespace-pre-wrap">{tutor.bio || "No bio provided"}</p>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))
-            )}
-          </TabsContent>
-
-          <TabsContent value="reviews" className="space-y-4">
-            {pendingReviews.length === 0 ? (
-              <Card>
-                <CardContent className="p-8 text-center text-muted-foreground">
-                  No pending reviews
-                </CardContent>
-              </Card>
-            ) : (
-              pendingReviews.map((review) => (
-                <ReviewModerationCard
-                  key={review.id}
-                  review={review}
-                  onModerate={handleReviewModeration}
-                />
-              ))
-            )}
-          </TabsContent>
-
-          <TabsContent value="blog" className="space-y-4">
-            <BlogManagement />
-          </TabsContent>
-
-
-          <TabsContent value="edit-tutors" className="space-y-4">
-            <AdminTutorProfileEdit />
-          </TabsContent>
-
-          {/* Students Tab */}
-          <TabsContent value="students" className="space-y-4">
-            <StudentList />
-          </TabsContent>
-
-          {/* Bootcamp Enrollments Tab */}
-          <TabsContent value="bootcamp-enrollments" className="space-y-4">
-            <div className="flex justify-end mb-4">
-              <EmailComposer />
-            </div>
-            <BootcampEnrollments />
-          </TabsContent>
-
-          {/* Learning Plan Requests Tab */}
-          <TabsContent value="learning-plan-requests" className="space-y-4">
-            <AdminLearningPlanRequests />
-          </TabsContent>
-
-          {/* Learning Plans Tab */}
-          <TabsContent value="learning-plans" className="space-y-4">
-            <AdminCreateLearningPlan />
-          </TabsContent>
-
-          <TabsContent value="consultations" className="space-y-4">
-            {/* Conversion Metrics Dashboard */}
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-              <Card>
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-muted-foreground">Total Consultations</p>
-                      <p className="text-3xl font-bold">{conversionStats.total}</p>
-                    </div>
-                    <Users className="h-10 w-10 text-muted-foreground" />
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-muted-foreground">Follow-ups Sent</p>
-                      <p className="text-3xl font-bold">{conversionStats.followUpSent}</p>
-                    </div>
-                    <Send className="h-10 w-10 text-blue-500" />
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-muted-foreground">Converted</p>
-                      <p className="text-3xl font-bold text-green-600">{conversionStats.converted}</p>
-                    </div>
-                    <DollarSign className="h-10 w-10 text-green-600" />
-                  </div>
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardContent className="p-6">
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <p className="text-sm text-muted-foreground">Conversion Rate</p>
-                      <p className="text-3xl font-bold text-accent">{conversionStats.conversionRate}%</p>
-                    </div>
-                    <TrendingUp className="h-10 w-10 text-accent" />
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-
-            {/* Today's Appointments Quick View */}
-            {(() => {
-              const today = new Date();
-              today.setHours(0, 0, 0, 0);
-              const todaysAppointments = consultationBookings.filter(booking => {
-                const consultationDate = new Date(booking.consultation_date);
-                consultationDate.setHours(0, 0, 0, 0);
-                return consultationDate.getTime() === today.getTime();
-              }).sort((a, b) => a.consultation_time.localeCompare(b.consultation_time));
-              
-              if (todaysAppointments.length === 0) return null;
-              
-              return (
-                <Card className="mb-6 border-green-500 border-2 bg-green-50 dark:bg-green-950/20">
-                  <CardHeader className="pb-2">
-                    <CardTitle className="text-lg flex items-center gap-2 text-green-700 dark:text-green-400">
-                      <CalendarIcon className="h-5 w-5" />
-                      Today's Appointments ({todaysAppointments.length})
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-2">
-                      {todaysAppointments.map(booking => (
-                        <div key={booking.id} className="flex items-center justify-between p-3 bg-background rounded-lg border">
-                          <div className="flex items-center gap-4">
-                            <div className="font-bold text-lg text-green-600">{booking.consultation_time}</div>
-                            <div>
-                              <p className="font-medium">{booking.student_name}</p>
-                              <p className="text-sm text-muted-foreground">{booking.parent_name} • {booking.phone_number}</p>
-                            </div>
-                          </div>
-                          {booking.meeting_link && (
-                            <Button size="sm" className="bg-green-600 hover:bg-green-700" asChild>
-                              <a href={booking.meeting_link} target="_blank" rel="noopener noreferrer">
-                                <Video className="h-4 w-4 mr-1" /> Join
-                              </a>
-                            </Button>
-                          )}
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              );
-            })()}
-
-            <div className="bg-muted/50 border rounded-lg p-4 mb-4">
-              <h3 className="font-semibold mb-2">Consultation Conversion Journey</h3>
-              <p className="text-sm text-muted-foreground">
-                Track consultations, send follow-up emails with booking links, and convert parents into paying customers.
-              </p>
-            </div>
-            {consultationBookings.length === 0 ? (
-              <Card>
-                <CardContent className="p-8 text-center text-muted-foreground">
-                  No consultation bookings yet.
-                </CardContent>
-              </Card>
-            ) : (
-              consultationBookings.map((booking) => {
-                // Calculate if consultation is past, today, or upcoming
-                const consultationDate = new Date(booking.consultation_date);
-                const today = new Date();
-                today.setHours(0, 0, 0, 0);
-                consultationDate.setHours(0, 0, 0, 0);
-                
-                const isPast = consultationDate < today;
-                const isToday = consultationDate.getTime() === today.getTime();
-                const isUpcoming = consultationDate > today;
-                
-                // Determine card border color based on timing
-                let borderClass = "";
-                if (isPast) borderClass = "border-l-4 border-l-muted-foreground/30";
-                else if (isToday) borderClass = "border-l-4 border-l-green-500";
-                else if (isUpcoming) borderClass = "border-l-4 border-l-blue-500";
-                
-                return (
-                  <Card key={booking.id} className={`hover:shadow-lg transition-shadow ${borderClass}`}>
-                    <CardHeader>
-                      <div className="flex items-start justify-between">
-                        <div className="flex-1">
-                          <CardTitle className="text-2xl flex items-center gap-2">
-                            <User className="h-5 w-5" />
-                            {booking.student_name}
-                            {isToday && <Badge className="bg-green-500 ml-2">Today</Badge>}
-                            {isPast && <Badge variant="outline" className="ml-2 opacity-60">Past</Badge>}
-                          </CardTitle>
-                          <p className="text-muted-foreground mt-1">
-                            Parent: {booking.parent_name}
-                          </p>
-                        </div>
-                        <div className="flex flex-col gap-2 items-end">
-                          <Badge className={
-                            booking.status === 'confirmed' ? 'bg-green-500' :
-                            booking.status === 'pending' ? 'bg-yellow-500' :
-                            booking.status === 'cancelled' ? 'bg-red-500' :
-                            booking.status === 'completed' ? 'bg-blue-500' : 'bg-gray-500'
-                          }>
-                            {booking.status}
-                          </Badge>
-                        <Badge variant={
-                          booking.follow_up_status === 'converted' ? 'default' :
-                          booking.follow_up_status === 'follow_up_sent' ? 'secondary' :
-                          booking.follow_up_status === 'needs_callback' ? 'destructive' : 'outline'
-                        } className={
-                          booking.follow_up_status === 'converted' ? 'bg-green-600' :
-                          booking.follow_up_status === 'follow_up_sent' ? 'bg-blue-600' :
-                          booking.follow_up_status === 'needs_callback' ? 'bg-orange-600' : ''
-                        }>
-                          {booking.follow_up_status === 'pending' ? '⏳ Pending' :
-                           booking.follow_up_status === 'follow_up_sent' ? '📧 Follow-up Sent' :
-                           booking.follow_up_status === 'needs_callback' ? '📞 Needs Callback' :
-                           booking.follow_up_status === 'converted' ? '✅ Converted' :
-                           booking.follow_up_status === 'not_interested' ? '❌ Not Interested' : booking.follow_up_status}
-                        </Badge>
-                        {booking.converted_to_customer && (
-                          <Badge className="bg-green-600">
-                            💰 Customer
-                          </Badge>
-                        )}
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    {/* Contact & Consultation Details */}
-                    <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3 pb-4 border-b">
-                      <div className="flex items-center gap-2 text-sm">
-                        <CalendarIcon className="h-4 w-4 text-muted-foreground shrink-0" />
-                        <div className="min-w-0">
-                          <div className="text-xs text-muted-foreground">Date</div>
-                          <div className="font-medium truncate">{formatConsultationDate(booking.consultation_date)}</div>
-                        </div>
-                      </div>
-                      
-                      <div className="flex items-center gap-2 text-sm">
-                        <Clock className="h-4 w-4 text-muted-foreground shrink-0" />
-                        <div className="min-w-0">
-                          <div className="text-xs text-muted-foreground">Time</div>
-                          <div className="font-medium">{booking.consultation_time}</div>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-2 text-sm">
-                        <Mail className="h-4 w-4 text-muted-foreground shrink-0" />
-                        <div className="min-w-0">
-                          <div className="text-xs text-muted-foreground">Email</div>
-                          <a href={`mailto:${booking.email}`} className="text-primary hover:underline truncate block font-medium">
-                            {booking.email}
-                          </a>
-                        </div>
-                      </div>
-
-                      <div className="flex items-center gap-2 text-sm">
-                        <Phone className="h-4 w-4 text-muted-foreground shrink-0" />
-                        <div className="min-w-0">
-                          <div className="text-xs text-muted-foreground">Phone</div>
-                          <a href={`tel:${booking.phone_number}`} className="text-primary hover:underline font-medium">
-                            {booking.phone_number}
-                          </a>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Academic Details */}
-                    <div className="grid sm:grid-cols-3 gap-4">
-                      <div>
-                        <div className="flex items-center gap-2 text-sm mb-2">
-                          <BookOpen className="h-4 w-4 text-muted-foreground" />
-                          <span className="text-xs text-muted-foreground">Grade</span>
-                        </div>
-                        <Badge variant="outline">{booking.grade_level}</Badge>
-                      </div>
-
-                      <div className="sm:col-span-2">
-                        <div className="flex items-center gap-2 text-sm mb-2">
-                          <FileText className="h-4 w-4 text-muted-foreground" />
-                          <span className="text-xs text-muted-foreground">Subjects</span>
-                        </div>
-                        <div className="flex flex-wrap gap-1">
-                          {booking.subjects_interest.map((subject: string, idx: number) => (
-                            <Badge key={idx} variant="outline" className="text-xs">
-                              {subject}
-                            </Badge>
-                          ))}
-                        </div>
-                      </div>
-                    </div>
-
-                    <div>
-                      <div className="flex items-center gap-2 text-sm mb-2">
-                        <Video className="h-4 w-4 text-muted-foreground" />
-                        <span className="text-xs text-muted-foreground">Mode</span>
-                      </div>
-                      <Badge variant="secondary">{booking.preferred_mode}</Badge>
-                    </div>
-
-                    <div className="pt-4 border-t space-y-4">
-                      {/* Meeting Link Section */}
-                      {booking.meeting_link ? (
-                        <div className="bg-green-50 dark:bg-green-950/20 p-3 rounded-md border border-green-200 dark:border-green-800 space-y-3">
-                          <div className="flex items-center gap-2">
-                            <Video className="h-4 w-4 text-green-600" />
-                            <p className="text-sm font-medium text-green-900 dark:text-green-100">Meeting Link Available</p>
-                          </div>
-                          <div className="flex gap-2">
-                            <Input 
-                              value={booking.meeting_link} 
-                              readOnly 
-                              className="font-mono text-xs bg-white dark:bg-green-950/40"
-                            />
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => {
-                                navigator.clipboard.writeText(booking.meeting_link);
-                                toast.success("Link copied to clipboard!");
-                              }}
-                              className="shrink-0"
-                            >
-                              <ExternalLink className="h-4 w-4" />
-                            </Button>
-                          </div>
-                          <Button
-                            onClick={() => handleJoinCall(booking)}
-                            className="w-full bg-green-600 hover:bg-green-700 text-white font-semibold"
-                          >
-                            <Video className="h-4 w-4 mr-2" />
-                            Join Consultation Call
-                          </Button>
-                        </div>
-                      ) : (
-                        <div className="bg-amber-50 dark:bg-amber-950/20 p-3 rounded-md border border-amber-200 dark:border-amber-800 overflow-hidden">
-                          <div className="flex items-center gap-2 mb-2">
-                            <AlertCircle className="h-4 w-4 text-amber-600" />
-                            <p className="text-sm font-medium text-amber-900 dark:text-amber-100">No Meeting Link Set</p>
-                          </div>
-                          <p className="text-xs text-amber-700 dark:text-amber-300 mb-2">
-                            Create a Google Meet link automatically from the connected calendar.
-                          </p>
-                          <div className="flex gap-2">
-                            <Button
-                              onClick={async () => {
-                                try {
-                                  toast.loading("Generating meeting link...");
-
-                                  const { data: calendarData, error: calendarError } = await supabase.functions.invoke("create-consultation-calendar-event", {
-                                    body: {
-                                      parentName: booking.parent_name,
-                                      studentName: booking.student_name,
-                                      email: booking.email,
-                                      phoneNumber: booking.phone_number,
-                                      consultationDate: booking.consultation_date,
-                                      consultationTime: booking.consultation_time,
-                                      subjects: booking.subjects_interest,
-                                      gradeLevel: booking.grade_level,
-                                      notes: booking.additional_notes,
-                                    },
-                                  });
-
-                                  if (calendarError) throw calendarError;
-
-                                  // Save meeting link
-                                  await supabase
-                                    .from('consultation_bookings')
-                                    .update({ meeting_link: calendarData.meetingLink })
-                                    .eq('id', booking.id);
-
-                                  // Auto-send email confirmation with link
-                                  if (booking.email) {
-                                    await supabase.functions.invoke('send-consultation-booking-confirmation', {
-                                      body: {
-                                        email: booking.email,
-                                        parentName: booking.parent_name,
-                                        studentName: booking.student_name,
-                                        consultationDate: booking.consultation_date,
-                                        consultationTime: booking.consultation_time,
-                                        meetingLink: calendarData.meetingLink,
-                                      },
-                                    });
-                                  }
-
-                                  // Auto-send WhatsApp confirmation with link
-                                  await supabase.functions.invoke('send-consultation-whatsapp', {
-                                    body: {
-                                      phoneNumber: booking.phone_number,
-                                      parentName: booking.parent_name,
-                                      studentName: booking.student_name,
-                                      consultationDate: booking.consultation_date,
-                                      consultationTime: booking.consultation_time,
-                                      meetingLink: calendarData.meetingLink,
-                                    },
-                                  });
-
-                                  toast.success("Meeting link generated and confirmations sent!");
-                                  fetchConsultationBookings();
-                                } catch (err: any) {
-                                  console.error('Error generating meeting link:', err);
-                                  toast.error(err.message || "Failed to generate meeting link");
-                                }
-                              }}
-                              className="flex-1"
-                            >
-                              <Video className="h-4 w-4 mr-2" />
-                              Generate & Send Link
-                            </Button>
-                            <Button
-                              variant="outline"
-                              onClick={() => {
-                                const meetLink = prompt("Or enter manually:");
-                                if (meetLink) {
-                                  supabase
-                                    .from('consultation_bookings')
-                                    .update({ meeting_link: meetLink })
-                                    .eq('id', booking.id)
-                                    .then(() => {
-                                      toast.success("Meeting link added!");
-                                      fetchConsultationBookings();
-                                    });
-                                }
-                              }}
-                            >
-                              Manual
-                            </Button>
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Conversion Tracking Actions */}
-                      {booking.consultation_outcome && (
-                        <div className="bg-muted p-3 rounded-md">
-                          <p className="text-sm font-medium mb-1">Consultation Outcome:</p>
-                          <p className="text-sm text-muted-foreground">{booking.consultation_outcome}</p>
-                          {booking.follow_up_sent_at && (
-                            <p className="text-xs text-muted-foreground mt-2">
-                              Follow-up sent: {formatFullDateTime(booking.follow_up_sent_at)}
-                            </p>
-                          )}
-                        </div>
-                      )}
-
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-                        <Button
-                          onClick={() => openMessageDialog(booking, 'email')}
-                          variant="default"
-                          className="w-full"
-                        >
-                          <Mail className="h-4 w-4 mr-2" />
-                          Send Email
-                        </Button>
-
-                        <Button
-                          onClick={() => openMessageDialog(booking, 'whatsapp')}
-                          variant="outline"
-                          className="w-full"
-                        >
-                          <MessageCircle className="h-4 w-4 mr-2" />
-                          Send WhatsApp
-                        </Button>
-
-                        <Button
-                          onClick={() => {
-                            setRescheduleBooking(booking);
-                            setRescheduleDate(booking.consultation_date);
-                            setRescheduleTime(booking.consultation_time);
-                            setRescheduleDialog(true);
-                          }}
-                          variant="secondary"
-                          className="w-full"
-                        >
-                          <CalendarIcon className="h-4 w-4 mr-2" />
-                          Reschedule
-                        </Button>
-                      </div>
-
-                      {!booking.converted_to_customer && (
-                        <div className="flex gap-2">
-                          <Select
-                            value={booking.follow_up_status}
-                            onValueChange={(value) => handleUpdateFollowUpStatus(booking.id, value)}
-                          >
-                            <SelectTrigger className="flex-1">
-                              <SelectValue placeholder="Update status" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              <SelectItem value="pending">⏳ Pending</SelectItem>
-                              <SelectItem value="follow_up_sent">📧 Follow-up Sent</SelectItem>
-                              <SelectItem value="needs_callback">📞 Needs Callback</SelectItem>
-                              <SelectItem value="not_interested">❌ Not Interested</SelectItem>
-                            </SelectContent>
-                          </Select>
-
-                          <Button
-                            onClick={() => handleMarkAsConverted(booking.id)}
-                            className="bg-green-600 hover:bg-green-700"
-                          >
-                            <CheckCircle className="h-4 w-4 mr-2" />
-                            Mark as Converted
-                          </Button>
-                        </div>
-                      )}
-
-                      {booking.next_action && (
-                        <div className="bg-amber-50 dark:bg-amber-950/20 p-3 rounded-md border border-amber-200 dark:border-amber-800">
-                          <p className="text-sm font-medium mb-1">Next Action:</p>
-                          <p className="text-sm text-muted-foreground">{booking.next_action}</p>
-                          {booking.next_action_date && (
-                            <p className="text-xs text-muted-foreground mt-1">
-                              Due: {formatConsultationDate(booking.next_action_date)}
-                            </p>
-                          )}
-                        </div>
-                      )}
-
-                      <div className="flex items-start justify-between mb-2">
-                        <span className="font-medium text-sm flex items-center gap-2">
-                          <FileText className="h-4 w-4" />
-                          Admin Notes
-                        </span>
-                        {editingNote !== booking.id && (
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            onClick={() => handleEditNote(booking.id, booking.additional_notes || "")}
-                          >
-                            <Edit className="h-4 w-4 mr-1" />
-                            Edit
-                          </Button>
-                        )}
-                      </div>
-                      
-                      {editingNote === booking.id ? (
-                        <div className="space-y-2">
-                          <Textarea
-                            value={noteContent}
-                            onChange={(e) => setNoteContent(e.target.value)}
-                            placeholder="Add notes about this consultation..."
-                            className="min-h-[100px]"
-                          />
-                          <div className="flex gap-2">
-                            <Button size="sm" onClick={() => handleSaveNote(booking.id)}>
-                              <Save className="h-4 w-4 mr-1" />
-                              Save
-                            </Button>
-                            <Button size="sm" variant="outline" onClick={handleCancelEdit}>
-                              <X className="h-4 w-4 mr-1" />
-                              Cancel
-                            </Button>
-                          </div>
-                        </div>
-                      ) : (
-                        <p className="text-sm text-muted-foreground bg-muted p-3 rounded-md">
-                          {booking.additional_notes || "No notes added yet."}
-                        </p>
-                      )}
-                    </div>
-
-                    <div className="text-xs text-muted-foreground pt-2 border-t">
-                      Booked on: {formatFullDateTime(booking.created_at)}
-                    </div>
-                  </CardContent>
-                </Card>
-              );
-            })
-            )}
-      </TabsContent>
-
-      {/* Tutoring Bookings Tab */}
-      <TabsContent value="bookings" className="space-y-4">
-        <div className="flex justify-between items-center mb-4">
-          <div>
-            <h2 className="text-2xl font-bold">Tutoring Session Bookings</h2>
-            <p className="text-muted-foreground">All tutoring sessions booked through the platform</p>
-          </div>
-        </div>
-
-        {tutoringBookings.length === 0 ? (
-          <Card>
-            <CardContent className="p-12 text-center">
-              <BookMarked className="w-16 h-16 mx-auto mb-4 text-muted-foreground" />
-              <p className="text-muted-foreground">No tutoring bookings yet</p>
-            </CardContent>
-          </Card>
-        ) : (
-          tutoringBookings.map((booking) => (
-            <Card key={booking.id}>
-              <CardContent className="p-6">
-                <div className="space-y-4">
-                  {/* Header */}
-                  <div className="flex justify-between items-start">
-                    <div>
-                      <h3 className="font-bold text-lg">{booking.subject}</h3>
-                      <div className="flex gap-2 mt-2">
-                        <Badge variant={
-                          booking.status === 'confirmed' ? 'default' :
-                          booking.status === 'pending' ? 'secondary' :
-                          booking.status === 'cancelled' ? 'destructive' :
-                          'outline'
-                        }>
-                          {booking.status}
-                        </Badge>
-                        <Badge variant="outline">{booking.class_type}</Badge>
-                        <Badge className="bg-green-600">
-                          KES {Number(booking.amount).toFixed(0)}
-                        </Badge>
-                      </div>
-                    </div>
-                    <div className="text-right text-sm text-muted-foreground">
-                      <p>Booked: {formatFullDateTime(booking.created_at)}</p>
-                    </div>
-                  </div>
-
-                  {/* Details Grid */}
-                  <div className="grid md:grid-cols-2 gap-4 p-4 bg-muted/30 rounded-lg">
-                    <div>
-                      <p className="text-sm text-muted-foreground mb-1">Student</p>
-                      <p className="font-medium">{booking.profiles?.full_name || 'Unknown'}</p>
-                      {booking.profiles?.phone_number && (
-                        <p className="text-sm text-muted-foreground">{booking.profiles.phone_number}</p>
-                      )}
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground mb-1">Tutor</p>
-                      <p className="font-medium">
-                        {booking.tutor_profiles?.profiles?.full_name || 'Unknown'}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground mb-1">Session Time</p>
-                      <p className="font-medium">
-                        {booking.tutor_availability ? 
-                          formatFullDateTime(booking.tutor_availability.start_time) : 
-                          'Time not set'}
-                      </p>
-                      {booking.tutor_availability && (
-                        <p className="text-sm text-muted-foreground">
-                          Duration: {Math.round((new Date(booking.tutor_availability.end_time).getTime() - new Date(booking.tutor_availability.start_time).getTime()) / 60000)} mins
-                        </p>
-                      )}
-                    </div>
-                    <div>
-                      <p className="text-sm text-muted-foreground mb-1">Payment Details</p>
-                      <p className="text-sm">
-                        <span className="text-green-600">✓ Deposit: KES {Number(booking.deposit_paid).toFixed(0)}</span>
-                      </p>
-                      {booking.balance_due > 0 && (
-                        <p className="text-sm text-orange-600">
-                          Balance Due: KES {Number(booking.balance_due).toFixed(0)}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Meeting Link */}
-                  {booking.meeting_link && (
-                    <div className="p-3 bg-primary/5 border border-primary/20 rounded-lg">
-                      <p className="text-sm font-medium mb-1">Meeting Link</p>
-                      <a 
-                        href={booking.meeting_link} 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="text-sm text-primary hover:underline break-all"
-                      >
-                        {booking.meeting_link}
-                      </a>
-                    </div>
-                  )}
-
-                  {/* Notes */}
-                  {booking.notes && (
-                    <div className="p-3 bg-muted/50 rounded-lg">
-                      <p className="text-sm font-medium mb-1">Session Notes</p>
-                      <p className="text-sm text-muted-foreground">{booking.notes}</p>
-                    </div>
-                  )}
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold tracking-tight">{dashboardMetrics.totalStudents || 0}</div>
+                <div className="flex items-center gap-1 mt-2 text-sm text-emerald-600 dark:text-emerald-400">
+                  <ArrowUpRight className="h-4 w-4" />
+                  <span className="font-medium">{dashboardMetrics.newStudents} new</span>
+                  <span className="text-muted-foreground ml-1">this period</span>
                 </div>
               </CardContent>
             </Card>
-          ))
-        )}
-      </TabsContent>
 
-      {/* Tutor Signups Tab */}
-                <TabsContent value="tutor-signups">
-                  <TutorSignupList />
-                </TabsContent>
+            <Card className="overflow-hidden cursor-pointer hover:shadow-lg transition-shadow" onClick={() => setActiveTab('edit-tutors')}>
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">Active Tutors</CardTitle>
+                  <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                    <GraduationCap className="h-5 w-5 text-primary" />
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold tracking-tight">{dashboardMetrics.totalTutors || 0}</div>
+                <div className="flex items-center gap-1 mt-2 text-sm text-emerald-600 dark:text-emerald-400">
+                  <ArrowUpRight className="h-4 w-4" />
+                  <span className="font-medium">{dashboardMetrics.newTutors} new</span>
+                  <span className="text-muted-foreground ml-1">this period</span>
+                </div>
+              </CardContent>
+            </Card>
 
+            <Card className="overflow-hidden cursor-pointer hover:shadow-lg transition-shadow" onClick={() => setActiveTab('bookings')}>
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">Total Revenue</CardTitle>
+                  <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                    <DollarSign className="h-5 w-5 text-primary" />
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold tracking-tight">KES {dashboardMetrics.totalRevenue?.toLocaleString() || 0}</div>
+                <div className="mt-2 text-sm text-muted-foreground">
+                  <span className="font-medium">{dashboardMetrics.totalBookings || 0}</span> bookings completed
+                </div>
+              </CardContent>
+            </Card>
 
-                <TabsContent value="december-bootcamp">
-                  <AdminIntensivePrograms />
-                </TabsContent>
-    </Tabs>
-
-    {/* Message Template Dialog */}
-    <Dialog open={messageDialog} onOpenChange={setMessageDialog}>
-      <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle>
-            {messageType === 'email' ? '📧 Send Email' : '💬 Send WhatsApp Message'}
-          </DialogTitle>
-          <DialogDescription>
-            Select a template or write a custom message for {selectedBooking?.parent_name}
-          </DialogDescription>
-        </DialogHeader>
-
-        <div className="space-y-4">
-          <div>
-            <Label>Select Message Template</Label>
-            <Select value={selectedTemplate} onValueChange={handleTemplateSelect}>
-              <SelectTrigger>
-                <SelectValue placeholder="Choose a template..." />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="confirmation">
-                  ✅ Consultation Confirmed
-                </SelectItem>
-                <SelectItem value="reminder_24h">
-                  📅 24-Hour Reminder
-                </SelectItem>
-                <SelectItem value="reminder_1h">
-                  ⏰ 1-Hour Reminder
-                </SelectItem>
-                <SelectItem value="post_consultation">
-                  📝 Post-Consultation Summary
-                </SelectItem>
-                <SelectItem value="follow_up_3days">
-                  🔔 3-Day Follow-up
-                </SelectItem>
-              </SelectContent>
-            </Select>
+            <Card className="overflow-hidden">
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">Conversion Rate</CardTitle>
+                  <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
+                    <TrendingUp className="h-5 w-5 text-primary" />
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold tracking-tight">{dashboardMetrics.conversionRate?.toFixed(1) || 0}%</div>
+                <div className="mt-2 text-sm text-muted-foreground">
+                  <span className="font-medium">{dashboardMetrics.convertedConsultations}/{dashboardMetrics.totalConsultations}</span> converted
+                </div>
+              </CardContent>
+            </Card>
           </div>
 
-          <div>
-            <Label>Message Content</Label>
-            <Textarea
-              value={customMessage}
-              onChange={(e) => setCustomMessage(e.target.value)}
-              placeholder={messageType === 'email' ? 
-                "Type your email message here or select a template above..." :
-                "Type your WhatsApp message here or select a template above..."}
-              className="min-h-[300px] font-mono text-sm"
-            />
-            <p className="text-xs text-muted-foreground mt-1">
-              {customMessage.length} characters
-            </p>
+          <div className="grid gap-4 md:grid-cols-3">
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base flex items-center gap-2">
+                  <CalendarIcon className="h-5 w-5" />
+                  Consultations
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold">{dashboardMetrics.newConsultations}</div>
+                <p className="text-xs text-muted-foreground mt-2">Booked in period</p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base flex items-center gap-2">
+                  <BookMarked className="h-5 w-5" />
+                  Sessions
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold">{dashboardMetrics.newBookings}</div>
+                <p className="text-xs text-muted-foreground mt-2">Completed in period</p>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Activity className="h-5 w-5" />
+                  Revenue Trend
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="h-[100px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={dashboardMetrics.revenueTrend?.slice(-7) || []}>
+                      <Bar dataKey="amount" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </CardContent>
+            </Card>
           </div>
         </div>
-
-        <DialogFooter>
-          <Button variant="outline" onClick={() => setMessageDialog(false)}>
-            Cancel
-          </Button>
-          <Button onClick={handleSendMessage} disabled={!customMessage || sendingEmail}>
-            <Send className="h-4 w-4 mr-2" />
-            {messageType === 'email' ? (sendingEmail ? 'Sending...' : 'Send Email') : 'Open WhatsApp'}
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-
-    {/* Follow-up Dialog */}
-    <Dialog open={followUpDialog} onOpenChange={setFollowUpDialog}>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Send Follow-up Email</DialogTitle>
-              <DialogDescription>
-                Send a personalized follow-up email to {selectedBooking?.parent_name} with consultation summary and booking links.
-              </DialogDescription>
-            </DialogHeader>
-            
-            <div className="space-y-4 py-4">
-              <div>
-                <Label>Consultation Outcome *</Label>
-                <Textarea
-                  value={followUpData.consultationOutcome}
-                  onChange={(e) => setFollowUpData({...followUpData, consultationOutcome: e.target.value})}
-                  placeholder="Summarize what was discussed during the consultation..."
-                  rows={3}
-                />
-              </div>
-
-              <div>
-                <Label>Recommended Subjects (comma-separated)</Label>
-                <Input
-                  value={followUpData.recommendedSubjects.join(', ')}
-                  onChange={(e) => setFollowUpData({...followUpData, recommendedSubjects: e.target.value.split(',').map(s => s.trim()).filter(Boolean)})}
-                  placeholder="Mathematics, English, Science"
-                />
-              </div>
-
-              <div>
-                <Label>Recommended Tutors (comma-separated names)</Label>
-                <Input
-                  value={followUpData.recommendedTutors.join(', ')}
-                  onChange={(e) => setFollowUpData({...followUpData, recommendedTutors: e.target.value.split(',').map(s => s.trim()).filter(Boolean)})}
-                  placeholder="John Doe, Jane Smith"
-                />
-              </div>
-
-              <div>
-                <Label>Next Steps *</Label>
-                <Textarea
-                  value={followUpData.nextSteps}
-                  onChange={(e) => setFollowUpData({...followUpData, nextSteps: e.target.value})}
-                  placeholder="Browse our tutors and book your first session..."
-                  rows={2}
-                />
-              </div>
-
-              <div>
-                <Label>Next Action (Internal Tracking)</Label>
-                <Input
-                  value={followUpData.nextAction}
-                  onChange={(e) => setFollowUpData({...followUpData, nextAction: e.target.value})}
-                  placeholder="Call parent, send package pricing, etc."
-                />
-              </div>
-
-              <div>
-                <Label>Next Action Date</Label>
-                <Input
-                  type="date"
-                  value={followUpData.nextActionDate}
-                  onChange={(e) => setFollowUpData({...followUpData, nextActionDate: e.target.value})}
-                />
-              </div>
-            </div>
-
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setFollowUpDialog(false)}>Cancel</Button>
-              <Button onClick={handleSendFollowUp} disabled={!followUpData.consultationOutcome || !followUpData.nextSteps}>
-                <Send className="h-4 w-4 mr-2" />
-                Send Follow-up Email
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-
-        {/* Reschedule Consultation Dialog */}
-        <Dialog open={rescheduleDialog} onOpenChange={setRescheduleDialog}>
-          <DialogContent className="max-w-md">
-            <DialogHeader>
-              <DialogTitle>Reschedule Consultation</DialogTitle>
-              <DialogDescription>
-                {rescheduleBooking && `Rescheduling consultation for ${rescheduleBooking.student_name}`}
-              </DialogDescription>
-            </DialogHeader>
-            
-            <div className="space-y-4 py-4">
-              <div className="space-y-2">
-                <Label>New Date</Label>
-                <Input
-                  type="date"
-                  value={rescheduleDate}
-                  onChange={(e) => setRescheduleDate(e.target.value)}
-                  min={new Date().toISOString().split('T')[0]}
-                />
-              </div>
-              
-              <div className="space-y-2">
-                <Label>New Time (EAT)</Label>
-                <Select value={rescheduleTime} onValueChange={setRescheduleTime}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select time" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="02:00 PM">02:00 PM</SelectItem>
-                    <SelectItem value="02:30 PM">02:30 PM</SelectItem>
-                    <SelectItem value="03:00 PM">03:00 PM</SelectItem>
-                    <SelectItem value="03:30 PM">03:30 PM</SelectItem>
-                    <SelectItem value="04:00 PM">04:00 PM</SelectItem>
-                    <SelectItem value="04:30 PM">04:30 PM</SelectItem>
-                    <SelectItem value="05:00 PM">05:00 PM</SelectItem>
-                    <SelectItem value="05:30 PM">05:30 PM</SelectItem>
-                    <SelectItem value="06:00 PM">06:00 PM</SelectItem>
-                    <SelectItem value="06:30 PM">06:30 PM</SelectItem>
-                    <SelectItem value="07:00 PM">07:00 PM</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {rescheduleBooking && (
-                <div className="bg-muted p-3 rounded-md text-sm">
-                  <p><strong>Current:</strong> {formatConsultationDate(rescheduleBooking.consultation_date)} at {rescheduleBooking.consultation_time}</p>
-                  <p className="text-muted-foreground mt-1">A confirmation email will be sent to {rescheduleBooking.email}</p>
-                </div>
-              )}
-            </div>
-
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setRescheduleDialog(false)}>Cancel</Button>
-              <Button onClick={handleRescheduleConsultation}>
-                <CalendarIcon className="h-4 w-4 mr-2" />
-                Confirm Reschedule
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
-      </div>
+      )}
     </div>
+  );
+
+  // Render Applications Content
+  const renderApplicationsContent = () => (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-bold">Pending Applications</h2>
+        <Badge variant="destructive">{pendingApplications.length} pending</Badge>
+      </div>
+      {pendingApplications.length === 0 ? (
+        <Card>
+          <CardContent className="p-8 text-center text-muted-foreground">
+            No pending applications
+          </CardContent>
+        </Card>
+      ) : (
+        pendingApplications.map((application) => (
+          <ApplicationReviewCard
+            key={application.id}
+            application={application}
+            onReview={handleApplicationReview}
+          />
+        ))
+      )}
+    </div>
+  );
+
+  // Render Interviews Content
+  const renderInterviewsContent = () => {
+    const filteredInterviews = interviewRecords.filter(interview => {
+      if (interviewFilter === 'all') return true;
+      if (interviewFilter === 'scheduled') return interview.status === 'interview_scheduled';
+      if (interviewFilter === 'passed') return interview.status === 'interview_passed';
+      if (interviewFilter === 'failed') return interview.status === 'interview_failed';
+      return true;
+    });
+
+    return (
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h2 className="text-2xl font-bold">Interview Records</h2>
+          <Select value={interviewFilter} onValueChange={(v: any) => setInterviewFilter(v)}>
+            <SelectTrigger className="w-[180px]">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Interviews</SelectItem>
+              <SelectItem value="scheduled">Scheduled</SelectItem>
+              <SelectItem value="passed">Passed</SelectItem>
+              <SelectItem value="failed">Failed</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        {filteredInterviews.length === 0 ? (
+          <Card>
+            <CardContent className="p-8 text-center text-muted-foreground">
+              No interview records found
+            </CardContent>
+          </Card>
+        ) : (
+          filteredInterviews.map((interview) => (
+            <InterviewCard
+              key={interview.id}
+              application={interview}
+              onResult={handleInterviewResult}
+            />
+          ))
+        )}
+      </div>
+    );
+  };
+
+  // Render Profiles Content
+  const renderProfilesContent = () => (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h2 className="text-2xl font-bold">Pending Profile Approvals</h2>
+        <Badge variant="secondary">{pendingTutors.length} pending</Badge>
+      </div>
+      {pendingTutors.length === 0 ? (
+        <Card>
+          <CardContent className="p-8 text-center text-muted-foreground">
+            No pending tutor profiles
+          </CardContent>
+        </Card>
+      ) : (
+        pendingTutors.map((tutor) => (
+          <Card key={tutor.id}>
+            <CardHeader>
+              <div className="flex items-start justify-between">
+                <div>
+                  <CardTitle>{tutor.profiles?.full_name}</CardTitle>
+                  <p className="text-sm text-muted-foreground">{tutor.email}</p>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid md:grid-cols-2 gap-4">
+                <div>
+                  <p className="font-semibold text-sm">Subjects</p>
+                  <p className="text-sm text-muted-foreground">{tutor.subjects?.join(", ") || "None"}</p>
+                </div>
+                <div>
+                  <p className="font-semibold text-sm">Experience</p>
+                  <p className="text-sm text-muted-foreground">{tutor.experience_years} years</p>
+                </div>
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  onClick={() => handleTutorApproval(tutor.id, true)}
+                  disabled={processingTutorId === tutor.id}
+                  className="bg-green-600 hover:bg-green-700"
+                >
+                  <CheckCircle className="w-4 h-4 mr-2" />
+                  {processingTutorId === tutor.id ? "Processing..." : "Approve"}
+                </Button>
+                <Button
+                  onClick={() => handleTutorApproval(tutor.id, false)}
+                  disabled={processingTutorId === tutor.id}
+                  variant="destructive"
+                >
+                  <XCircle className="w-4 h-4 mr-2" />
+                  Reject
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        ))
+      )}
+    </div>
+  );
+
+  // Render Reviews Content
+  const renderReviewsContent = () => (
+    <div className="space-y-4">
+      <h2 className="text-2xl font-bold">Review Moderation</h2>
+      {pendingReviews.length === 0 ? (
+        <Card>
+          <CardContent className="p-8 text-center text-muted-foreground">
+            No pending reviews
+          </CardContent>
+        </Card>
+      ) : (
+        pendingReviews.map((review) => (
+          <ReviewModerationCard
+            key={review.id}
+            review={review}
+            onModerate={handleReviewModeration}
+          />
+        ))
+      )}
+    </div>
+  );
+
+  // Render Consultations Content
+  const renderConsultationsContent = () => (
+    <div className="space-y-4">
+      <h2 className="text-2xl font-bold">Consultations</h2>
+      
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Total</p>
+                <p className="text-3xl font-bold">{conversionStats.total}</p>
+              </div>
+              <Users className="h-10 w-10 text-muted-foreground" />
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Follow-ups Sent</p>
+                <p className="text-3xl font-bold">{conversionStats.followUpSent}</p>
+              </div>
+              <Send className="h-10 w-10 text-blue-500" />
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Converted</p>
+                <p className="text-3xl font-bold text-green-600">{conversionStats.converted}</p>
+              </div>
+              <DollarSign className="h-10 w-10 text-green-600" />
+            </div>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-muted-foreground">Conversion Rate</p>
+                <p className="text-3xl font-bold text-accent">{conversionStats.conversionRate}%</p>
+              </div>
+              <TrendingUp className="h-10 w-10 text-accent" />
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      {consultationBookings.length === 0 ? (
+        <Card>
+          <CardContent className="p-8 text-center text-muted-foreground">
+            No consultation bookings yet.
+          </CardContent>
+        </Card>
+      ) : (
+        consultationBookings.map((booking) => (
+          <Card key={booking.id} className="hover:shadow-lg transition-shadow">
+            <CardHeader>
+              <div className="flex items-start justify-between">
+                <div>
+                  <CardTitle className="text-xl flex items-center gap-2">
+                    <User className="h-5 w-5" />
+                    {booking.student_name}
+                  </CardTitle>
+                  <p className="text-muted-foreground mt-1">
+                    Parent: {booking.parent_name}
+                  </p>
+                </div>
+                <div className="flex flex-col gap-2 items-end">
+                  <Badge className={
+                    booking.status === 'confirmed' ? 'bg-green-500' :
+                    booking.status === 'pending' ? 'bg-yellow-500' :
+                    booking.status === 'cancelled' ? 'bg-red-500' : 'bg-gray-500'
+                  }>
+                    {booking.status}
+                  </Badge>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                <div className="flex items-center gap-2 text-sm">
+                  <CalendarIcon className="h-4 w-4 text-muted-foreground" />
+                  <div>
+                    <div className="text-xs text-muted-foreground">Date</div>
+                    <div className="font-medium">{formatConsultationDate(booking.consultation_date)}</div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 text-sm">
+                  <Clock className="h-4 w-4 text-muted-foreground" />
+                  <div>
+                    <div className="text-xs text-muted-foreground">Time</div>
+                    <div className="font-medium">{booking.consultation_time}</div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 text-sm">
+                  <Mail className="h-4 w-4 text-muted-foreground" />
+                  <div>
+                    <div className="text-xs text-muted-foreground">Email</div>
+                    <a href={`mailto:${booking.email}`} className="text-primary hover:underline font-medium">
+                      {booking.email}
+                    </a>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 text-sm">
+                  <Phone className="h-4 w-4 text-muted-foreground" />
+                  <div>
+                    <div className="text-xs text-muted-foreground">Phone</div>
+                    <div className="font-medium">{booking.phone_number}</div>
+                  </div>
+                </div>
+              </div>
+              <div className="flex gap-2 flex-wrap">
+                <Button size="sm" variant="outline" onClick={() => openMessageDialog(booking, 'email')}>
+                  <Mail className="h-4 w-4 mr-1" /> Email
+                </Button>
+                <Button size="sm" variant="outline" onClick={() => handleWhatsAppMessage(booking)}>
+                  <MessageCircle className="h-4 w-4 mr-1" /> WhatsApp
+                </Button>
+                <Button size="sm" variant="outline" onClick={() => openFollowUpDialog(booking)}>
+                  <Send className="h-4 w-4 mr-1" /> Follow-up
+                </Button>
+                {!booking.converted_to_customer && (
+                  <Button size="sm" className="bg-green-600 hover:bg-green-700" onClick={() => handleMarkAsConverted(booking.id)}>
+                    <CheckCircle className="h-4 w-4 mr-1" /> Mark Converted
+                  </Button>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        ))
+      )}
+    </div>
+  );
+
+  // Render Bookings Content
+  const renderBookingsContent = () => (
+    <div className="space-y-4">
+      <h2 className="text-2xl font-bold">Tutoring Sessions</h2>
+      {tutoringBookings.length === 0 ? (
+        <Card>
+          <CardContent className="p-8 text-center text-muted-foreground">
+            No tutoring bookings yet.
+          </CardContent>
+        </Card>
+      ) : (
+        tutoringBookings.map((booking) => (
+          <Card key={booking.id} className="hover:shadow-lg transition-shadow">
+            <CardHeader>
+              <div className="flex items-start justify-between">
+                <div>
+                  <CardTitle className="text-xl">{booking.subject}</CardTitle>
+                  <p className="text-sm text-muted-foreground">
+                    Student: {booking.profiles?.full_name || 'Unknown'}
+                  </p>
+                </div>
+                <Badge className={
+                  booking.status === 'confirmed' ? 'bg-green-500' :
+                  booking.status === 'pending' ? 'bg-yellow-500' :
+                  booking.status === 'completed' ? 'bg-blue-500' : 'bg-gray-500'
+                }>
+                  {booking.status}
+                </Badge>
+              </div>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                <div className="flex items-center gap-2 text-sm">
+                  <CalendarIcon className="h-4 w-4 text-muted-foreground" />
+                  <div>
+                    <div className="text-xs text-muted-foreground">Date</div>
+                    <div className="font-medium">
+                      {booking.tutor_availability?.start_time 
+                        ? new Date(booking.tutor_availability.start_time).toLocaleDateString() 
+                        : 'N/A'}
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 text-sm">
+                  <DollarSign className="h-4 w-4 text-muted-foreground" />
+                  <div>
+                    <div className="text-xs text-muted-foreground">Amount</div>
+                    <div className="font-medium">KES {booking.amount?.toLocaleString()}</div>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ))
+      )}
+    </div>
+  );
+
+  // Render content based on active tab
+  const renderContent = () => {
+    switch (activeTab) {
+      case 'dashboard':
+        return renderDashboardContent();
+      case 'applications':
+        return renderApplicationsContent();
+      case 'interviews':
+        return renderInterviewsContent();
+      case 'profiles':
+        return renderProfilesContent();
+      case 'reviews':
+        return renderReviewsContent();
+      case 'blog':
+        return <BlogManagement />;
+      case 'edit-tutors':
+        return <AdminTutorProfileEdit />;
+      case 'students':
+        return <StudentList />;
+      case 'bootcamp-enrollments':
+        return (
+          <div className="space-y-4">
+            <div className="flex justify-end">
+              <EmailComposer />
+            </div>
+            <BootcampEnrollments />
+          </div>
+        );
+      case 'learning-plan-requests':
+        return <AdminLearningPlanRequests />;
+      case 'learning-plans':
+        return <AdminCreateLearningPlan />;
+      case 'consultations':
+        return renderConsultationsContent();
+      case 'bookings':
+        return renderBookingsContent();
+      case 'tutor-signups':
+        return <TutorSignupList />;
+      case 'december-bootcamp':
+        return <AdminIntensivePrograms />;
+      default:
+        return renderDashboardContent();
+    }
+  };
+
+  return (
+    <>
+      <AdminLayout
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        counts={sidebarCounts}
+      >
+        {renderContent()}
+      </AdminLayout>
+
+      {/* Message Template Dialog */}
+      <Dialog open={messageDialog} onOpenChange={setMessageDialog}>
+        <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              {messageType === 'email' ? '📧 Send Email' : '💬 Send WhatsApp Message'}
+            </DialogTitle>
+            <DialogDescription>
+              Select a template or write a custom message for {selectedBooking?.parent_name}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4">
+            <div>
+              <Label>Select Message Template</Label>
+              <Select value={selectedTemplate} onValueChange={handleTemplateSelect}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Choose a template..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="confirmation">✅ Consultation Confirmed</SelectItem>
+                  <SelectItem value="reminder_24h">📅 24-Hour Reminder</SelectItem>
+                  <SelectItem value="reminder_1h">⏰ 1-Hour Reminder</SelectItem>
+                  <SelectItem value="post_consultation">📝 Post-Consultation Summary</SelectItem>
+                  <SelectItem value="follow_up_3days">🔔 3-Day Follow-up</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Message Content</Label>
+              <Textarea
+                value={customMessage}
+                onChange={(e) => setCustomMessage(e.target.value)}
+                placeholder="Type your message here or select a template above..."
+                className="min-h-[300px] font-mono text-sm"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setMessageDialog(false)}>Cancel</Button>
+            <Button onClick={handleSendMessage} disabled={!customMessage || sendingEmail}>
+              <Send className="h-4 w-4 mr-2" />
+              {messageType === 'email' ? (sendingEmail ? 'Sending...' : 'Send Email') : 'Open WhatsApp'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Follow-up Dialog */}
+      <Dialog open={followUpDialog} onOpenChange={setFollowUpDialog}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Send Follow-up Email</DialogTitle>
+            <DialogDescription>
+              Send a personalized follow-up email to {selectedBooking?.parent_name}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div>
+              <Label>Consultation Outcome *</Label>
+              <Textarea
+                value={followUpData.consultationOutcome}
+                onChange={(e) => setFollowUpData({...followUpData, consultationOutcome: e.target.value})}
+                placeholder="Summarize what was discussed..."
+                rows={3}
+              />
+            </div>
+            <div>
+              <Label>Recommended Subjects</Label>
+              <Input
+                value={followUpData.recommendedSubjects.join(', ')}
+                onChange={(e) => setFollowUpData({...followUpData, recommendedSubjects: e.target.value.split(',').map(s => s.trim()).filter(Boolean)})}
+                placeholder="Mathematics, English, Science"
+              />
+            </div>
+            <div>
+              <Label>Next Steps *</Label>
+              <Textarea
+                value={followUpData.nextSteps}
+                onChange={(e) => setFollowUpData({...followUpData, nextSteps: e.target.value})}
+                placeholder="Browse our tutors and book your first session..."
+                rows={2}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setFollowUpDialog(false)}>Cancel</Button>
+            <Button onClick={handleSendFollowUp} disabled={!followUpData.consultationOutcome || !followUpData.nextSteps}>
+              <Send className="h-4 w-4 mr-2" />
+              Send Follow-up Email
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Reschedule Dialog */}
+      <Dialog open={rescheduleDialog} onOpenChange={setRescheduleDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Reschedule Consultation</DialogTitle>
+            <DialogDescription>
+              {rescheduleBooking && `Rescheduling consultation for ${rescheduleBooking.student_name}`}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>New Date</Label>
+              <Input
+                type="date"
+                value={rescheduleDate}
+                onChange={(e) => setRescheduleDate(e.target.value)}
+                min={new Date().toISOString().split('T')[0]}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>New Time (EAT)</Label>
+              <Select value={rescheduleTime} onValueChange={setRescheduleTime}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select time" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="02:00 PM">02:00 PM</SelectItem>
+                  <SelectItem value="03:00 PM">03:00 PM</SelectItem>
+                  <SelectItem value="04:00 PM">04:00 PM</SelectItem>
+                  <SelectItem value="05:00 PM">05:00 PM</SelectItem>
+                  <SelectItem value="06:00 PM">06:00 PM</SelectItem>
+                  <SelectItem value="07:00 PM">07:00 PM</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setRescheduleDialog(false)}>Cancel</Button>
+            <Button onClick={handleRescheduleConsultation}>
+              <CalendarIcon className="h-4 w-4 mr-2" />
+              Confirm Reschedule
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 };
 
+// Helper Components
 const ApplicationReviewCard = ({ application, onReview }: any) => {
   const [notes, setNotes] = useState("");
   const [selectedDate, setSelectedDate] = useState<Date | undefined>();
@@ -2818,7 +1854,6 @@ const ApplicationReviewCard = ({ application, onReview }: any) => {
 
     setGeneratingMeet(true);
     try {
-      // Convert selected date and time to ISO format
       const [time, period] = selectedTime.split(' ');
       let [hours, minutes] = time.split(':').map(Number);
       
@@ -2869,7 +1904,6 @@ const ApplicationReviewCard = ({ application, onReview }: any) => {
       if (data) {
         const blobUrl = URL.createObjectURL(data);
         const newWin = window.open(blobUrl, '_blank');
-        // If popup blocked, fallback to forced download
         if (!newWin) {
           const a = document.createElement('a');
           a.href = blobUrl;
@@ -2878,7 +1912,6 @@ const ApplicationReviewCard = ({ application, onReview }: any) => {
           a.click();
           a.remove();
         }
-        // Revoke after some time to free memory
         setTimeout(() => URL.revokeObjectURL(blobUrl), 60000);
       }
     } catch (error: any) {
@@ -2936,20 +1969,15 @@ const ApplicationReviewCard = ({ application, onReview }: any) => {
 
         <div className="space-y-4 border-t pt-4">
           <h4 className="font-semibold text-sm">Schedule Interview</h4>
-          
           <div className="space-y-4">
             <div className="space-y-2">
               <Label>Select Interview Date *</Label>
               <Input
                 type="date"
                 value={selectedDate ? selectedDate.toISOString().split("T")[0] : ""}
-                onChange={(e) => {
-                  const value = e.target.value;
-                  setSelectedDate(value ? new Date(value) : null);
-                }}
+                onChange={(e) => setSelectedDate(e.target.value ? new Date(e.target.value) : undefined)}
               />
             </div>
-
             <div className="space-y-2">
               <Label>Select Time *</Label>
               <Select value={selectedTime} onValueChange={setSelectedTime}>
@@ -2958,19 +1986,15 @@ const ApplicationReviewCard = ({ application, onReview }: any) => {
                 </SelectTrigger>
                 <SelectContent>
                   {availableTimeSlots.map((time) => (
-                    <SelectItem key={time} value={time}>
-                      {time}
-                    </SelectItem>
+                    <SelectItem key={time} value={time}>{time}</SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
-
             <div className="space-y-2">
-              <Label htmlFor={`meet-link-${application.id}`}>Google Meet Link *</Label>
+              <Label>Google Meet Link *</Label>
               <div className="flex gap-2">
                 <Input
-                  id={`meet-link-${application.id}`}
                   type="url"
                   placeholder="https://meet.google.com/xxx-xxxx-xxx"
                   value={meetLink}
@@ -2986,15 +2010,12 @@ const ApplicationReviewCard = ({ application, onReview }: any) => {
                   {generatingMeet ? "Generating..." : "Generate Link"}
                 </Button>
               </div>
-              <p className="text-xs text-muted-foreground">
-                Click "Generate Link" to automatically create a Google Meet from info@lanatutors.africa
-              </p>
             </div>
           </div>
         </div>
 
         <Textarea
-          placeholder="Admin notes (optional - for internal use only)"
+          placeholder="Admin notes (optional)"
           value={notes}
           onChange={(e) => setNotes(e.target.value)}
           rows={2}
@@ -3007,7 +2028,6 @@ const ApplicationReviewCard = ({ application, onReview }: any) => {
                 toast.error("Please fill in all required fields");
                 return;
               }
-              // Convert to datetime string format
               const [time, period] = selectedTime.split(' ');
               let [hours, minutes] = time.split(':').map(Number);
               if (period === 'PM' && hours !== 12) hours += 12;
@@ -3023,12 +2043,9 @@ const ApplicationReviewCard = ({ application, onReview }: any) => {
             disabled={!selectedDate || !selectedTime || !meetLink}
           >
             <CheckCircle className="w-4 h-4 mr-2" />
-            Schedule Interview & Send Invitation
+            Schedule Interview
           </Button>
-          <Button
-            onClick={() => onReview(application.id, "reject", notes)}
-            variant="destructive"
-          >
+          <Button onClick={() => onReview(application.id, "reject", notes)} variant="destructive">
             <XCircle className="w-4 h-4 mr-2" />
             Reject
           </Button>
@@ -3041,7 +2058,7 @@ const ApplicationReviewCard = ({ application, onReview }: any) => {
 const InterviewCard = ({ application, onResult }: any) => {
   const [notes, setNotes] = useState(application.interview_notes || "");
   const isPending = application.status === 'interview_scheduled';
-  const isPassed = application.status === 'passed';
+  const isPassed = application.status === 'passed' || application.status === 'interview_passed';
   const isFailed = application.status === 'failed' || application.status === 'interview_failed';
 
   return (
@@ -3051,23 +2068,14 @@ const InterviewCard = ({ application, onResult }: any) => {
           <div>
             <div className="flex items-center gap-2">
               <CardTitle className="text-xl">{application.full_name}</CardTitle>
-              {isPassed && (
-                <Badge className="bg-green-600">Passed</Badge>
-              )}
-              {isFailed && (
-                <Badge className="bg-red-600">Failed</Badge>
-              )}
-              {isPending && (
-                <Badge className="bg-blue-600">Scheduled</Badge>
-              )}
+              {isPassed && <Badge className="bg-green-600">Passed</Badge>}
+              {isFailed && <Badge className="bg-red-600">Failed</Badge>}
+              {isPending && <Badge className="bg-blue-600">Scheduled</Badge>}
             </div>
             <p className="text-sm text-muted-foreground">{application.email}</p>
-            <p className="text-sm text-muted-foreground">{application.phone_number}</p>
-            <div className="flex gap-2 mt-2">
-              <Badge variant="secondary">
-                Interview: {formatFullDateTime(application.interview_scheduled_at)}
-              </Badge>
-            </div>
+            <Badge variant="secondary" className="mt-2">
+              Interview: {formatFullDateTime(application.interview_scheduled_at)}
+            </Badge>
           </div>
         </div>
       </CardHeader>
@@ -3081,54 +2089,31 @@ const InterviewCard = ({ application, onResult }: any) => {
             <p className="font-semibold text-sm">Experience</p>
             <p className="text-sm text-muted-foreground">{application.years_of_experience} years</p>
           </div>
-          <div className="col-span-2">
-            <p className="font-semibold text-sm">Google Meet Link</p>
-            <a 
-              href={application.interview_meet_link} 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="text-sm text-primary hover:underline"
-            >
-              {application.interview_meet_link}
-            </a>
-          </div>
         </div>
 
-        {application.admin_notes && (
-          <div className="bg-muted/50 p-3 rounded">
-            <p className="font-semibold text-sm mb-1">Initial Notes</p>
-            <p className="text-sm text-muted-foreground">{application.admin_notes}</p>
-          </div>
-        )}
-
-        {(isPassed || isFailed) && application.interview_notes && (
-          <div className={`p-3 rounded ${isPassed ? 'bg-green-50' : 'bg-red-50'}`}>
-            <p className="font-semibold text-sm mb-1">Interview Outcome Notes</p>
-            <p className="text-sm text-muted-foreground">{application.interview_notes}</p>
+        {application.interview_meet_link && (
+          <div>
+            <p className="font-semibold text-sm">Google Meet Link</p>
+            <a href={application.interview_meet_link} target="_blank" rel="noopener noreferrer" className="text-sm text-primary hover:underline">
+              {application.interview_meet_link}
+            </a>
           </div>
         )}
 
         {isPending && (
           <>
             <Textarea
-              placeholder="Interview notes - record your observations and decision rationale..."
+              placeholder="Interview notes..."
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
               rows={3}
             />
-
-            <div className="flex gap-2 mt-4">
-              <Button
-                onClick={() => onResult(application.id, true, notes)}
-                className="bg-green-600 hover:bg-green-700"
-              >
+            <div className="flex gap-2">
+              <Button onClick={() => onResult(application.id, true, notes)} className="bg-green-600 hover:bg-green-700">
                 <CheckCircle className="w-4 h-4 mr-2" />
-                Passed - Send Profile Setup Invite
+                Passed - Send Profile Setup
               </Button>
-              <Button
-                onClick={() => onResult(application.id, false, notes)}
-                variant="destructive"
-              >
+              <Button onClick={() => onResult(application.id, false, notes)} variant="destructive">
                 <XCircle className="w-4 h-4 mr-2" />
                 Failed
               </Button>
@@ -3153,9 +2138,7 @@ const ReviewModerationCard = ({ review, onModerate }: any) => {
                 <Star
                   key={i}
                   className={`w-5 h-5 ${
-                    i < review.rating
-                      ? "fill-yellow-400 text-yellow-400"
-                      : "text-gray-300"
+                    i < review.rating ? "fill-yellow-400 text-yellow-400" : "text-gray-300"
                   }`}
                 />
               ))}
@@ -3178,17 +2161,11 @@ const ReviewModerationCard = ({ review, onModerate }: any) => {
         />
 
         <div className="flex gap-2">
-          <Button
-            onClick={() => onModerate(review.id, true, notes)}
-            className="bg-green-600 hover:bg-green-700"
-          >
+          <Button onClick={() => onModerate(review.id, true, notes)} className="bg-green-600 hover:bg-green-700">
             <CheckCircle className="w-4 h-4 mr-2" />
             Approve
           </Button>
-          <Button
-            onClick={() => onModerate(review.id, false, notes)}
-            variant="destructive"
-          >
+          <Button onClick={() => onModerate(review.id, false, notes)} variant="destructive">
             <XCircle className="w-4 h-4 mr-2" />
             Reject
           </Button>
