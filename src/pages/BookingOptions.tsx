@@ -1,25 +1,25 @@
 import { Link } from "react-router-dom";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Users, User, Package, FileText, Calendar, GraduationCap } from "lucide-react";
+import { User, Package, FileText, Calendar, GraduationCap } from "lucide-react";
 import { SEO } from "@/components/SEO";
 
 const BookingOptions = () => {
   const bookingOptions = [
     {
-      icon: Users,
-      title: "December Holiday Bootcamp",
-      description: "Join our 2-week intensive holiday program with expert tutors",
-      price: "From KES 400 per session",
+      icon: User,
+      title: "Individual Tutor Sessions",
+      description: "Book personalized 1-on-1 sessions with verified tutors",
+      price: "From KES 1,000/hr",
       features: [
-        "December 8-19, 2025",
-        "75-minute daily sessions",
-        "Maximum 15 students per class",
-        "All curricula supported"
+        "Choose your preferred tutor",
+        "Flexible scheduling",
+        "Online or in-person",
+        "Single or recurring sessions"
       ],
-      link: "/december-intensive",
-      badge: "Limited Spots",
-      badgeVariant: "destructive" as const
+      link: "/tutors",
+      badge: "Most Popular",
+      badgeVariant: "default" as const
     },
     {
       icon: User,
@@ -102,9 +102,7 @@ const BookingOptions = () => {
                   {option.badge && (
                     <div className="absolute top-4 right-4">
                       <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                        option.badgeVariant === 'destructive' 
-                          ? 'bg-destructive text-destructive-foreground' 
-                          : option.badgeVariant === 'secondary'
+                        option.badgeVariant === 'secondary'
                           ? 'bg-secondary text-secondary-foreground'
                           : 'bg-primary text-primary-foreground'
                       }`}>
