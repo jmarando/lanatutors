@@ -7,7 +7,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Loader2, Plus, Trash2, Send, FileText, Search, Sparkles, CreditCard } from "lucide-react";
+import { Loader2, Plus, Trash2, Send, FileText, Search, Sparkles, CreditCard, Users } from "lucide-react";
 import { toast } from "sonner";
 import { getCurriculums, getLevelsForCurriculum, getSubjectsForCurriculumLevel } from "@/utils/curriculumData";
 
@@ -22,6 +22,7 @@ interface Subject {
   rate: number;
   sessionsPerWeek: number;
   weeks: number;
+  tutorId: string; // Each subject can have its own tutor
 }
 
 interface Tutor {
@@ -37,7 +38,6 @@ export const AdminCreateLearningPlan = () => {
   const [generatingPaymentLink, setGeneratingPaymentLink] = useState(false);
   const [tutors, setTutors] = useState<Tutor[]>([]);
   const [tutorsLoading, setTutorsLoading] = useState(true);
-  const [selectedTutor, setSelectedTutor] = useState<Tutor | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
 
   // Parent/Student Info
@@ -74,12 +74,9 @@ export const AdminCreateLearningPlan = () => {
     }
   }, [studentName]);
 
-  // Remove auto-generate - user clicks button manually
-
   const fetchTutors = async () => {
     setTutorsLoading(true);
     try {
-      // First get tutor profiles
       const { data: tutorProfiles, error: tutorError } = await supabase
         .from("tutor_profiles")
         .select("id, user_id, subjects, hourly_rate")
@@ -96,7 +93,6 @@ export const AdminCreateLearningPlan = () => {
         return;
       }
 
-      // Get user IDs and fetch profiles
       const userIds = tutorProfiles.map(t => t.user_id);
       const { data: profiles, error: profilesError } = await supabase
         .from("profiles")
@@ -107,7 +103,6 @@ export const AdminCreateLearningPlan = () => {
         console.error("Error fetching profiles:", profilesError);
       }
 
-      // Map profiles to tutors
       const profileMap = new Map(profiles?.map(p => [p.id, p.full_name]) || []);
       
       setTutors(tutorProfiles.map((t) => ({
@@ -124,27 +119,34 @@ export const AdminCreateLearningPlan = () => {
     }
   };
 
+  // Get unique tutors assigned to subjects
+  const getAssignedTutors = () => {
+    const tutorIds = [...new Set(subjects.filter(s => s.tutorId).map(s => s.tutorId))];
+    return tutors.filter(t => tutorIds.includes(t.id));
+  };
+
   const generateEmailBody = () => {
-    if (!selectedTutor || !studentName) {
-      toast.error("Please select a tutor and enter student name first");
+    const assignedTutors = getAssignedTutors();
+    if (assignedTutors.length === 0 || !studentName) {
+      toast.error("Please add subjects with tutors and enter student name first");
       return;
     }
     
-    const ratePerSession = 1500; // KES per session
+    const ratePerSession = 1500;
     const subjectList = subjects
-      .filter(s => s.name)
+      .filter(s => s.name && s.tutorId)
       .map(s => {
+        const tutor = tutors.find(t => t.id === s.tutorId);
         const totalSessions = s.sessions;
         const weeks = s.weeks || 4;
-        const subjectTotal = totalSessions * ratePerSession;
-        return `• ${s.name}: ${totalSessions} sessions (1 session per day over ${weeks} weeks) - KES ${ratePerSession.toLocaleString()}/session = KES ${subjectTotal.toLocaleString()}`;
+        const subjectTotal = totalSessions * s.rate;
+        return `• ${s.name} with ${tutor?.full_name || 'TBD'}: ${totalSessions} sessions (${s.sessionsPerWeek} session/week over ${weeks} weeks) - KES ${s.rate.toLocaleString()}/session = KES ${subjectTotal.toLocaleString()}`;
       })
       .join("\n");
     
     const curriculumInfo = curriculum ? ` following the ${curriculum} curriculum` : "";
     const gradeInfo = gradeLevel ? ` in ${gradeLevel}` : "";
     
-    // Format schedule with better explanation
     const scheduledDays = sessionSchedule.filter(s => s.day && s.time);
     let scheduleText = "";
     
@@ -157,33 +159,28 @@ export const AdminCreateLearningPlan = () => {
         return `${hour12}:${minutes} ${ampm}`;
       };
       
-      // Check if all times are the same
       const allSameTime = scheduledDays.every(s => s.time === scheduledDays[0].time);
       const dayNames = scheduledDays.map(s => s.day);
       
       if (allSameTime && scheduledDays.length > 1) {
-        // Format like "Monday to Thursday at 9:30 AM"
         const timeStr = formatTime(scheduledDays[0].time);
         const daysStr = dayNames.length === 2 
           ? `${dayNames[0]} and ${dayNames[1]}`
           : `${dayNames.slice(0, -1).join(", ")} and ${dayNames[dayNames.length - 1]}`;
         
-        scheduleText = `\n\nProposed Schedule:\n1 session per day - ${daysStr} at ${timeStr}`;
+        scheduleText = `\n\nProposed Schedule:\n${daysStr} at ${timeStr}`;
       } else {
-        // Different times for different days
         scheduleText = `\n\nProposed Schedule:\n${scheduledDays.map(s => `• ${s.day} at ${formatTime(s.time)}`).join("\n")}`;
       }
       
-      // Add duration info from subjects
       const totalWeeks = subjects.length > 0 ? Math.max(...subjects.map(s => s.weeks || 4)) : 4;
-      scheduleText += `\n\nProgram Duration: ${totalWeeks} weeks (${scheduledDays.length} days per week, 1 session per day)`;
+      scheduleText += `\n\nProgram Duration: ${totalWeeks} weeks`;
       
       if (startDate) {
         scheduleText += `\n\nStarting: ${new Date(startDate).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}`;
       }
     }
     
-    // Payment info
     const { totalPrice, depositAmount } = calculateTotals();
     const paymentText = `
 
@@ -199,6 +196,11 @@ Alternative Payment - Bank Transfer:
 
 Note: Secure M-Pesa and Card payment links will be automatically generated and included in the email when you send this plan.`;
     
+    const tutorNames = assignedTutors.map(t => t.full_name).join(" and ");
+    const tutorIntro = assignedTutors.length === 1 
+      ? `${tutorNames} will be ${studentName}'s dedicated tutor.`
+      : `${tutorNames} will be ${studentName}'s dedicated tutors for their respective subjects.`;
+
     const generatedBody = `Dear ${parentName || "Parent"},
 
 Thank you for your interest in our tutoring services. We are pleased to present a personalized learning plan for ${studentName}${gradeInfo}${curriculumInfo}.
@@ -206,7 +208,7 @@ Thank you for your interest in our tutoring services. We are pleased to present 
 Recommended Subjects:
 ${subjectList || "To be confirmed"}
 
-${selectedTutor.full_name} will be ${studentName}'s dedicated tutor. With their expertise and personalized approach, we are confident that ${studentName} will make excellent progress.${scheduleText}${paymentText}
+${tutorIntro} With their expertise and personalized approach, we are confident that ${studentName} will make excellent progress.${scheduleText}${paymentText}
 
 We look forward to supporting ${studentName}'s academic journey.
 
@@ -223,8 +225,7 @@ Lana Tutors Team`;
   );
 
   const addSubject = () => {
-    const rate = selectedTutor?.hourly_rate || 1500;
-    setSubjects([...subjects, { name: "", sessions: 8, rate, sessionsPerWeek: 2, weeks: 4 }]);
+    setSubjects([...subjects, { name: "", sessions: 8, rate: 1500, sessionsPerWeek: 2, weeks: 4, tutorId: "" }]);
   };
 
   const removeSubject = (index: number) => {
@@ -234,6 +235,14 @@ Lana Tutors Team`;
   const updateSubject = (index: number, field: keyof Subject, value: any) => {
     const updated = [...subjects];
     updated[index] = { ...updated[index], [field]: value };
+
+    // If tutor changed, update the rate to that tutor's rate
+    if (field === "tutorId") {
+      const tutor = tutors.find(t => t.id === value);
+      if (tutor) {
+        updated[index].rate = tutor.hourly_rate || 1500;
+      }
+    }
 
     if (field === "sessionsPerWeek" || field === "weeks") {
       const sessionsPerWeek = field === "sessionsPerWeek" ? value : updated[index].sessionsPerWeek;
@@ -256,8 +265,9 @@ Lana Tutors Team`;
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!selectedTutor) {
-      toast.error("Please select a tutor");
+    const assignedTutors = getAssignedTutors();
+    if (assignedTutors.length === 0) {
+      toast.error("Please add at least one subject with a tutor assigned");
       return;
     }
 
@@ -271,8 +281,8 @@ Lana Tutors Team`;
       return;
     }
 
-    if (subjects.some(s => !s.name || s.sessions < 1 || s.rate < 1)) {
-      toast.error("Please fill in all subject details");
+    if (subjects.some(s => !s.name || !s.tutorId || s.sessions < 1 || s.rate < 1)) {
+      toast.error("Please fill in all subject details including tutor assignment");
       return;
     }
 
@@ -281,23 +291,31 @@ Lana Tutors Team`;
       const { totalSessions, totalPrice, depositAmount } = calculateTotals();
       const amountDue = paymentOption === "deposit" ? depositAmount : totalPrice;
 
+      // Use the first tutor as the primary for the learning plan record
+      const primaryTutorId = assignedTutors[0].id;
+
       // Create learning plan
       const { data: plan, error: planError } = await supabase
         .from("learning_plans")
         .insert({
-          tutor_id: selectedTutor.id,
+          tutor_id: primaryTutorId,
           title,
-          subjects: subjects.map(s => ({
-            name: s.name,
-            sessions: s.sessions,
-            rate: s.rate,
-            total: s.sessions * s.rate,
-          })),
+          subjects: subjects.map(s => {
+            const tutor = tutors.find(t => t.id === s.tutorId);
+            return {
+              name: s.name,
+              sessions: s.sessions,
+              rate: s.rate,
+              total: s.sessions * s.rate,
+              tutorId: s.tutorId,
+              tutorName: tutor?.full_name || "Unknown",
+            };
+          }),
           total_sessions: totalSessions,
           total_price: totalPrice,
           discount_applied: discount,
           validity_days: validityDays,
-          notes: `Curriculum: ${curriculum} | Grade: ${gradeLevel} | Payment Option: ${paymentOption}\n\n${notes}`,
+          notes: `Curriculum: ${curriculum} | Grade: ${gradeLevel} | Payment Option: ${paymentOption} | Tutors: ${assignedTutors.map(t => t.full_name).join(", ")}\n\n${notes}`,
           status: "proposed",
         })
         .select()
@@ -305,13 +323,12 @@ Lana Tutors Team`;
 
       if (planError) throw planError;
 
-      // Generate payment links - one for full payment, one for deposit
+      // Generate payment links
       setGeneratingPaymentLink(true);
       let fullPaymentLink = "";
       let depositPaymentLink = "";
       
       try {
-        // Generate both payment links in parallel
         const [fullPaymentResult, depositPaymentResult] = await Promise.all([
           supabase.functions.invoke("generate-learning-plan-payment-link", {
             body: {
@@ -343,19 +360,13 @@ Lana Tutors Team`;
         if (depositPaymentResult.data?.paymentLink) {
           depositPaymentLink = depositPaymentResult.data.paymentLink;
         }
-        
-        if (fullPaymentResult.error) {
-          console.error("Full payment link error:", fullPaymentResult.error);
-        }
-        if (depositPaymentResult.error) {
-          console.error("Deposit payment link error:", depositPaymentResult.error);
-        }
       } catch (err) {
         console.error("Error generating payment links:", err);
       }
       setGeneratingPaymentLink(false);
 
       // Send email to parent
+      const tutorNames = assignedTutors.map(t => t.full_name).join(", ");
       const { error: emailError } = await supabase.functions.invoke("send-learning-plan-email", {
         body: {
           planId: plan.id,
@@ -367,15 +378,19 @@ Lana Tutors Team`;
           totalPrice,
           validityDays,
           personalMessage: notes,
-          subjects: subjects.map(s => ({
-            name: s.name,
-            sessions: s.sessions,
-            rate: s.rate,
-          })),
+          subjects: subjects.map(s => {
+            const tutor = tutors.find(t => t.id === s.tutorId);
+            return {
+              name: s.name,
+              sessions: s.sessions,
+              rate: s.rate,
+              tutorName: tutor?.full_name,
+            };
+          }),
           depositAmount,
           fullPaymentLink,
           depositPaymentLink,
-          tutorName: selectedTutor.full_name,
+          tutorName: tutorNames,
           sessionSchedule: sessionSchedule.filter(s => s.day && s.time),
           startDate,
         },
@@ -389,7 +404,6 @@ Lana Tutors Team`;
       }
 
       // Reset form
-      setSelectedTutor(null);
       setParentName("");
       setParentEmail("");
       setParentPhone("");
@@ -413,6 +427,7 @@ Lana Tutors Team`;
   };
 
   const totals = calculateTotals();
+  const assignedTutors = getAssignedTutors();
 
   return (
     <div className="space-y-6">
@@ -420,71 +435,15 @@ Lana Tutors Team`;
         <FileText className="h-6 w-6 text-primary" />
         <div>
           <h2 className="text-2xl font-bold">Create Learning Plan</h2>
-          <p className="text-muted-foreground">Send a customized learning plan proposal to parents</p>
+          <p className="text-muted-foreground">Send a customized learning plan proposal to parents with multiple tutors & subjects</p>
         </div>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Step 1: Select Tutor */}
+        {/* Step 1: Parent/Student Info */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">1. Select Tutor</CardTitle>
-            <CardDescription>Choose which tutor will deliver this learning plan</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Search tutors by name or subject..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-            {tutorsLoading ? (
-              <div className="flex items-center justify-center py-8">
-                <Loader2 className="w-6 h-6 animate-spin text-primary" />
-                <span className="ml-2 text-muted-foreground">Loading tutors...</span>
-              </div>
-            ) : filteredTutors.length === 0 ? (
-              <p className="text-center py-8 text-muted-foreground">
-                {tutors.length === 0 ? "No verified tutors found" : "No tutors match your search"}
-              </p>
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 max-h-60 overflow-y-auto">
-                {filteredTutors.map((tutor) => (
-                  <Card
-                    key={tutor.id}
-                    className={`cursor-pointer transition-all hover:shadow-md ${
-                      selectedTutor?.id === tutor.id ? "border-primary bg-primary/5" : ""
-                    }`}
-                    onClick={() => {
-                      setSelectedTutor(tutor);
-                      setSubjects(subjects.map(s => ({ ...s, rate: tutor.hourly_rate || 1500 })));
-                    }}
-                  >
-                    <CardContent className="p-3">
-                      <p className="font-medium">{tutor.full_name}</p>
-                      <p className="text-xs text-muted-foreground truncate">
-                        {tutor.subjects.slice(0, 3).join(", ")}
-                        {tutor.subjects.length > 3 && "..."}
-                      </p>
-                      <p className="text-xs text-primary mt-1">KES {tutor.hourly_rate?.toLocaleString()}/hr</p>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            )}
-            {selectedTutor && (
-              <p className="text-sm text-green-600">✓ Selected: {selectedTutor.full_name}</p>
-            )}
-          </CardContent>
-        </Card>
-
-        {/* Step 2: Parent/Student Info */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="text-lg">2. Parent & Student Details</CardTitle>
+            <CardTitle className="text-lg">1. Parent & Student Details</CardTitle>
             <CardDescription>Enter the parent and student information</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
@@ -561,11 +520,14 @@ Lana Tutors Team`;
           </CardContent>
         </Card>
 
-        {/* Step 3: Plan Details */}
+        {/* Step 2: Subjects with Tutor Assignment */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">3. Learning Plan Details</CardTitle>
-            <CardDescription>Configure the subjects, sessions, and pricing</CardDescription>
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Users className="h-5 w-5" />
+              2. Subjects & Tutor Assignments
+            </CardTitle>
+            <CardDescription>Add subjects and assign a tutor to each one. You can have different tutors for different subjects.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
@@ -579,7 +541,18 @@ Lana Tutors Team`;
               />
             </div>
 
-            {/* Subjects */}
+            {/* Tutor Search */}
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input
+                placeholder="Search tutors by name or subject..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10"
+              />
+            </div>
+
+            {/* Subjects List */}
             <div>
               <div className="flex items-center justify-between mb-3">
                 <Label>Subjects & Sessions</Label>
@@ -590,11 +563,43 @@ Lana Tutors Team`;
               </div>
               <div className="space-y-3">
                 {subjects.map((subject, index) => (
-                  <Card key={index}>
+                  <Card key={index} className="border-l-4 border-l-primary/50">
                     <CardContent className="p-4">
-                      <div className="grid grid-cols-1 md:grid-cols-6 gap-3">
-                        <div className="md:col-span-2">
-                          <Label className="text-xs">Subject</Label>
+                      <div className="grid grid-cols-1 lg:grid-cols-7 gap-3">
+                        {/* Tutor Selection */}
+                        <div className="lg:col-span-2">
+                          <Label className="text-xs">Tutor *</Label>
+                          {tutorsLoading ? (
+                            <div className="h-10 flex items-center">
+                              <Loader2 className="w-4 h-4 animate-spin" />
+                            </div>
+                          ) : (
+                            <Select
+                              value={subject.tutorId}
+                              onValueChange={(v) => updateSubject(index, "tutorId", v)}
+                            >
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select tutor" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {filteredTutors.map((tutor) => (
+                                  <SelectItem key={tutor.id} value={tutor.id}>
+                                    <div className="flex flex-col">
+                                      <span>{tutor.full_name}</span>
+                                      <span className="text-xs text-muted-foreground">
+                                        KES {tutor.hourly_rate?.toLocaleString()}/hr
+                                      </span>
+                                    </div>
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          )}
+                        </div>
+
+                        {/* Subject Selection */}
+                        <div className="lg:col-span-2">
+                          <Label className="text-xs">Subject *</Label>
                           <Select
                             value={subject.name}
                             onValueChange={(v) => updateSubject(index, "name", v)}
@@ -606,7 +611,8 @@ Lana Tutors Team`;
                               {availableSubjects.map((s) => (
                                 <SelectItem key={s} value={s}>{s}</SelectItem>
                               ))}
-                              {selectedTutor?.subjects.map((s) => (
+                              {/* Also show tutor's subjects if assigned */}
+                              {subject.tutorId && tutors.find(t => t.id === subject.tutorId)?.subjects.map((s) => (
                                 !availableSubjects.includes(s) && (
                                   <SelectItem key={s} value={s}>{s}</SelectItem>
                                 )
@@ -614,6 +620,7 @@ Lana Tutors Team`;
                             </SelectContent>
                           </Select>
                         </div>
+
                         <div>
                           <Label className="text-xs">Sessions/Week</Label>
                           <Input
@@ -633,16 +640,16 @@ Lana Tutors Team`;
                             onChange={(e) => updateSubject(index, "weeks", parseInt(e.target.value) || 4)}
                           />
                         </div>
-                        <div>
-                          <Label className="text-xs">Rate/Session</Label>
-                          <Input
-                            type="number"
-                            min="1"
-                            value={subject.rate}
-                            onChange={(e) => updateSubject(index, "rate", parseInt(e.target.value) || 1500)}
-                          />
-                        </div>
-                        <div className="flex items-end">
+                        <div className="flex items-end gap-2">
+                          <div className="flex-1">
+                            <Label className="text-xs">Rate/Session</Label>
+                            <Input
+                              type="number"
+                              min="1"
+                              value={subject.rate}
+                              onChange={(e) => updateSubject(index, "rate", parseInt(e.target.value) || 1500)}
+                            />
+                          </div>
                           <Button
                             type="button"
                             variant="ghost"
@@ -656,6 +663,11 @@ Lana Tutors Team`;
                       <p className="text-xs text-muted-foreground mt-2">
                         {subject.sessionsPerWeek} × {subject.weeks} weeks = {subject.sessions} sessions | 
                         Subtotal: <strong>KES {(subject.sessions * subject.rate).toLocaleString()}</strong>
+                        {subject.tutorId && tutors.find(t => t.id === subject.tutorId) && (
+                          <span className="text-primary ml-2">
+                            → {tutors.find(t => t.id === subject.tutorId)?.full_name}
+                          </span>
+                        )}
                       </p>
                     </CardContent>
                   </Card>
@@ -668,75 +680,95 @@ Lana Tutors Team`;
               </div>
             </div>
 
-            {/* Session Schedule */}
-            <div>
-              <div className="flex items-center justify-between mb-3">
-                <Label>Proposed Session Schedule (Optional)</Label>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => setSessionSchedule([...sessionSchedule, { day: "", time: "" }])}
-                >
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Time Slot
-                </Button>
+            {/* Assigned Tutors Summary */}
+            {assignedTutors.length > 0 && (
+              <div className="bg-muted/50 p-3 rounded-lg">
+                <p className="text-sm font-medium mb-1">Assigned Tutors ({assignedTutors.length})</p>
+                <div className="flex flex-wrap gap-2">
+                  {assignedTutors.map(tutor => (
+                    <span key={tutor.id} className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-full">
+                      {tutor.full_name}
+                    </span>
+                  ))}
+                </div>
               </div>
-              <div className="space-y-2">
-                {sessionSchedule.map((schedule, index) => (
-                  <div key={index} className="flex gap-3 items-center">
-                    <Select
-                      value={schedule.day}
-                      onValueChange={(v) => {
-                        const updated = [...sessionSchedule];
-                        updated[index].day = v;
-                        setSessionSchedule(updated);
-                      }}
-                    >
-                      <SelectTrigger className="w-40">
-                        <SelectValue placeholder="Day" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        {["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"].map((d) => (
-                          <SelectItem key={d} value={d}>{d}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                    <Input
-                      type="time"
-                      value={schedule.time}
-                      onChange={(e) => {
-                        const updated = [...sessionSchedule];
-                        updated[index].time = e.target.value;
-                        setSessionSchedule(updated);
-                      }}
-                      className="w-32"
-                    />
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => setSessionSchedule(sessionSchedule.filter((_, i) => i !== index))}
-                    >
-                      <Trash2 className="w-4 h-4 text-destructive" />
-                    </Button>
-                  </div>
-                ))}
-              </div>
-              <div className="mt-3">
-                <Label htmlFor="startDate">Proposed Start Date</Label>
-                <Input
-                  id="startDate"
-                  type="date"
-                  value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
-                  className="w-48 mt-1"
-                />
-              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Step 3: Schedule */}
+        <Card>
+          <CardHeader>
+            <CardTitle className="text-lg">3. Session Schedule (Optional)</CardTitle>
+            <CardDescription>Propose specific days and times for sessions</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="flex items-center justify-between mb-3">
+              <Label>Proposed Session Schedule</Label>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setSessionSchedule([...sessionSchedule, { day: "", time: "" }])}
+              >
+                <Plus className="w-4 h-4 mr-2" />
+                Add Time Slot
+              </Button>
+            </div>
+            <div className="space-y-2">
+              {sessionSchedule.map((schedule, index) => (
+                <div key={index} className="flex gap-3 items-center">
+                  <Select
+                    value={schedule.day}
+                    onValueChange={(v) => {
+                      const updated = [...sessionSchedule];
+                      updated[index].day = v;
+                      setSessionSchedule(updated);
+                    }}
+                  >
+                    <SelectTrigger className="w-40">
+                      <SelectValue placeholder="Day" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"].map((d) => (
+                        <SelectItem key={d} value={d}>{d}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Input
+                    type="time"
+                    value={schedule.time}
+                    onChange={(e) => {
+                      const updated = [...sessionSchedule];
+                      updated[index].time = e.target.value;
+                      setSessionSchedule(updated);
+                    }}
+                    className="w-32"
+                  />
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setSessionSchedule(sessionSchedule.filter((_, i) => i !== index))}
+                  >
+                    <Trash2 className="w-4 h-4 text-destructive" />
+                  </Button>
+                </div>
+              ))}
+            </div>
+            <div className="mt-3">
+              <Label htmlFor="startDate">Proposed Start Date</Label>
+              <Input
+                id="startDate"
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+                className="w-48 mt-1"
+              />
             </div>
 
             {/* Pricing */}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-4 pt-4 border-t">
               <div>
                 <Label htmlFor="discount">Discount (%)</Label>
                 <Input
@@ -809,7 +841,7 @@ Lana Tutors Team`;
                 variant="outline"
                 size="sm"
                 onClick={generateEmailBody}
-                disabled={!selectedTutor || !studentName}
+                disabled={assignedTutors.length === 0 || !studentName}
               >
                 <Sparkles className="w-4 h-4 mr-2" />
                 Generate Message
@@ -823,7 +855,7 @@ Lana Tutors Team`;
               rows={12}
             />
             <p className="text-xs text-muted-foreground">
-              Tip: Fill in tutor, student, subjects, schedule and payment option first, then click "Generate Message" to auto-populate.
+              Tip: Fill in subjects with tutors, schedule and payment option first, then click "Generate Message" to auto-populate.
             </p>
           </CardContent>
         </Card>
@@ -835,6 +867,10 @@ Lana Tutors Team`;
               <div className="flex justify-between text-sm">
                 <span>Total Sessions:</span>
                 <span className="font-semibold">{totals.totalSessions}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span>Tutors Assigned:</span>
+                <span className="font-semibold">{assignedTutors.length}</span>
               </div>
               <div className="flex justify-between text-sm">
                 <span>Subtotal:</span>
