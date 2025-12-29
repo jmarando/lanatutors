@@ -527,7 +527,9 @@ Lana Tutors Team`;
               <Users className="h-5 w-5" />
               2. Subjects & Tutor Assignments
             </CardTitle>
-            <CardDescription>Add subjects and assign a tutor to each one. You can have different tutors for different subjects.</CardDescription>
+            <CardDescription>
+              Build the learning plan by adding subjects. For each subject, select a tutor who will teach it.
+            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div>
@@ -545,137 +547,183 @@ Lana Tutors Team`;
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search tutors by name or subject..."
+                placeholder="Filter tutors by name or subject..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="pl-10"
               />
             </div>
 
+            {/* How it works hint */}
+            <div className="bg-primary/5 border border-primary/20 rounded-lg p-4">
+              <p className="text-sm font-medium text-primary mb-2">How it works:</p>
+              <ol className="text-sm text-muted-foreground space-y-1 list-decimal list-inside">
+                <li>Click <strong>"Add Subject"</strong> to add a subject to the plan</li>
+                <li>Select a <strong>tutor</strong> who will teach that subject</li>
+                <li>Choose the <strong>subject</strong> from the tutor's specializations or curriculum</li>
+                <li>Set the <strong>sessions per week</strong> and <strong>duration</strong></li>
+                <li>Repeat for each subject the student needs</li>
+              </ol>
+            </div>
+
             {/* Subjects List */}
             <div>
               <div className="flex items-center justify-between mb-3">
-                <Label>Subjects & Sessions</Label>
-                <Button type="button" variant="outline" size="sm" onClick={addSubject}>
+                <div>
+                  <Label className="text-base">Subjects & Sessions</Label>
+                  <p className="text-xs text-muted-foreground">Each row = 1 subject with its assigned tutor</p>
+                </div>
+                <Button type="button" variant="default" size="sm" onClick={addSubject}>
                   <Plus className="w-4 h-4 mr-2" />
                   Add Subject
                 </Button>
               </div>
               <div className="space-y-3">
-                {subjects.map((subject, index) => (
-                  <Card key={index} className="border-l-4 border-l-primary/50">
-                    <CardContent className="p-4">
-                      <div className="grid grid-cols-1 lg:grid-cols-7 gap-3">
-                        {/* Tutor Selection */}
-                        <div className="lg:col-span-2">
-                          <Label className="text-xs">Tutor *</Label>
-                          {tutorsLoading ? (
-                            <div className="h-10 flex items-center">
-                              <Loader2 className="w-4 h-4 animate-spin" />
-                            </div>
-                          ) : (
+                {subjects.map((subject, index) => {
+                  const selectedTutor = tutors.find(t => t.id === subject.tutorId);
+                  const tutorSubjects = selectedTutor?.subjects || [];
+                  
+                  return (
+                    <Card key={index} className={`border-l-4 ${subject.tutorId ? 'border-l-primary bg-primary/5' : 'border-l-muted-foreground/30'}`}>
+                      <CardContent className="p-4">
+                        <div className="flex items-center gap-2 mb-3">
+                          <span className="bg-primary text-primary-foreground text-xs font-bold px-2 py-0.5 rounded-full">
+                            {index + 1}
+                          </span>
+                          <span className="text-sm font-medium">
+                            {subject.name && subject.tutorId 
+                              ? `${subject.name} with ${selectedTutor?.full_name}`
+                              : 'New Subject Assignment'}
+                          </span>
+                        </div>
+                        <div className="grid grid-cols-1 lg:grid-cols-7 gap-3">
+                          {/* Step A: Tutor Selection */}
+                          <div className="lg:col-span-2">
+                            <Label className="text-xs font-semibold text-primary">Step 1: Select Tutor *</Label>
+                            {tutorsLoading ? (
+                              <div className="h-10 flex items-center">
+                                <Loader2 className="w-4 h-4 animate-spin" />
+                              </div>
+                            ) : (
+                              <Select
+                                value={subject.tutorId}
+                                onValueChange={(v) => updateSubject(index, "tutorId", v)}
+                              >
+                                <SelectTrigger className={!subject.tutorId ? 'border-primary' : ''}>
+                                  <SelectValue placeholder="Choose a tutor first" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                  {filteredTutors.map((tutor) => (
+                                    <SelectItem key={tutor.id} value={tutor.id}>
+                                      <div className="flex flex-col">
+                                        <span className="font-medium">{tutor.full_name}</span>
+                                        <span className="text-xs text-muted-foreground">
+                                          {tutor.subjects.slice(0, 3).join(", ")}{tutor.subjects.length > 3 ? '...' : ''} • KES {tutor.hourly_rate?.toLocaleString()}/hr
+                                        </span>
+                                      </div>
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                            )}
+                          </div>
+
+                          {/* Step B: Subject Selection */}
+                          <div className="lg:col-span-2">
+                            <Label className="text-xs font-semibold text-primary">Step 2: Select Subject *</Label>
                             <Select
-                              value={subject.tutorId}
-                              onValueChange={(v) => updateSubject(index, "tutorId", v)}
+                              value={subject.name}
+                              onValueChange={(v) => updateSubject(index, "name", v)}
+                              disabled={!subject.tutorId}
                             >
-                              <SelectTrigger>
-                                <SelectValue placeholder="Select tutor" />
+                              <SelectTrigger className={subject.tutorId && !subject.name ? 'border-primary' : ''}>
+                                <SelectValue placeholder={subject.tutorId ? "Now pick a subject" : "Select tutor first"} />
                               </SelectTrigger>
                               <SelectContent>
-                                {filteredTutors.map((tutor) => (
-                                  <SelectItem key={tutor.id} value={tutor.id}>
-                                    <div className="flex flex-col">
-                                      <span>{tutor.full_name}</span>
-                                      <span className="text-xs text-muted-foreground">
-                                        KES {tutor.hourly_rate?.toLocaleString()}/hr
-                                      </span>
-                                    </div>
-                                  </SelectItem>
-                                ))}
+                                {/* Show tutor's subjects first if assigned */}
+                                {tutorSubjects.length > 0 && (
+                                  <>
+                                    <SelectItem value="_header_tutor" disabled className="font-semibold text-xs opacity-70">
+                                      {selectedTutor?.full_name}'s subjects:
+                                    </SelectItem>
+                                    {tutorSubjects.map((s) => (
+                                      <SelectItem key={`tutor-${s}`} value={s}>{s}</SelectItem>
+                                    ))}
+                                  </>
+                                )}
+                                {/* Then curriculum subjects */}
+                                {availableSubjects.length > 0 && (
+                                  <>
+                                    <SelectItem value="_header_curriculum" disabled className="font-semibold text-xs opacity-70 mt-2">
+                                      Curriculum subjects:
+                                    </SelectItem>
+                                    {availableSubjects.filter(s => !tutorSubjects.includes(s)).map((s) => (
+                                      <SelectItem key={`curr-${s}`} value={s}>{s}</SelectItem>
+                                    ))}
+                                  </>
+                                )}
                               </SelectContent>
                             </Select>
-                          )}
-                        </div>
+                          </div>
 
-                        {/* Subject Selection */}
-                        <div className="lg:col-span-2">
-                          <Label className="text-xs">Subject *</Label>
-                          <Select
-                            value={subject.name}
-                            onValueChange={(v) => updateSubject(index, "name", v)}
-                          >
-                            <SelectTrigger>
-                              <SelectValue placeholder="Select subject" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {availableSubjects.map((s) => (
-                                <SelectItem key={s} value={s}>{s}</SelectItem>
-                              ))}
-                              {/* Also show tutor's subjects if assigned */}
-                              {subject.tutorId && tutors.find(t => t.id === subject.tutorId)?.subjects.map((s) => (
-                                !availableSubjects.includes(s) && (
-                                  <SelectItem key={s} value={s}>{s}</SelectItem>
-                                )
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-
-                        <div>
-                          <Label className="text-xs">Sessions/Week</Label>
-                          <Input
-                            type="number"
-                            min="1"
-                            max="7"
-                            value={subject.sessionsPerWeek}
-                            onChange={(e) => updateSubject(index, "sessionsPerWeek", parseInt(e.target.value) || 2)}
-                          />
-                        </div>
-                        <div>
-                          <Label className="text-xs">Weeks</Label>
-                          <Input
-                            type="number"
-                            min="1"
-                            value={subject.weeks}
-                            onChange={(e) => updateSubject(index, "weeks", parseInt(e.target.value) || 4)}
-                          />
-                        </div>
-                        <div className="flex items-end gap-2">
-                          <div className="flex-1">
-                            <Label className="text-xs">Rate/Session</Label>
+                          <div>
+                            <Label className="text-xs">Sessions/Week</Label>
                             <Input
                               type="number"
                               min="1"
-                              value={subject.rate}
-                              onChange={(e) => updateSubject(index, "rate", parseInt(e.target.value) || 1500)}
+                              max="7"
+                              value={subject.sessionsPerWeek}
+                              onChange={(e) => updateSubject(index, "sessionsPerWeek", parseInt(e.target.value) || 2)}
                             />
                           </div>
-                          <Button
-                            type="button"
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => removeSubject(index)}
-                          >
-                            <Trash2 className="w-4 h-4 text-destructive" />
-                          </Button>
+                          <div>
+                            <Label className="text-xs">Weeks</Label>
+                            <Input
+                              type="number"
+                              min="1"
+                              value={subject.weeks}
+                              onChange={(e) => updateSubject(index, "weeks", parseInt(e.target.value) || 4)}
+                            />
+                          </div>
+                          <div className="flex items-end gap-2">
+                            <div className="flex-1">
+                              <Label className="text-xs">Rate/Session</Label>
+                              <Input
+                                type="number"
+                                min="1"
+                                value={subject.rate}
+                                onChange={(e) => updateSubject(index, "rate", parseInt(e.target.value) || 1500)}
+                              />
+                            </div>
+                            <Button
+                              type="button"
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => removeSubject(index)}
+                            >
+                              <Trash2 className="w-4 h-4 text-destructive" />
+                            </Button>
+                          </div>
                         </div>
-                      </div>
-                      <p className="text-xs text-muted-foreground mt-2">
-                        {subject.sessionsPerWeek} × {subject.weeks} weeks = {subject.sessions} sessions | 
-                        Subtotal: <strong>KES {(subject.sessions * subject.rate).toLocaleString()}</strong>
-                        {subject.tutorId && tutors.find(t => t.id === subject.tutorId) && (
-                          <span className="text-primary ml-2">
-                            → {tutors.find(t => t.id === subject.tutorId)?.full_name}
-                          </span>
-                        )}
-                      </p>
-                    </CardContent>
-                  </Card>
-                ))}
+                        <p className="text-xs text-muted-foreground mt-2">
+                          {subject.sessionsPerWeek} × {subject.weeks} weeks = <strong>{subject.sessions} sessions</strong> | 
+                          Subtotal: <strong>KES {(subject.sessions * subject.rate).toLocaleString()}</strong>
+                        </p>
+                      </CardContent>
+                    </Card>
+                  );
+                })}
                 {subjects.length === 0 && (
-                  <p className="text-sm text-muted-foreground text-center py-4">
-                    No subjects added yet. Click "Add Subject" to get started.
-                  </p>
+                  <div className="border-2 border-dashed border-muted-foreground/30 rounded-lg p-8 text-center">
+                    <Users className="w-10 h-10 mx-auto text-muted-foreground/50 mb-3" />
+                    <p className="text-sm text-muted-foreground mb-3">
+                      No subjects added yet. Each subject can have its own dedicated tutor.
+                    </p>
+                    <Button type="button" variant="outline" onClick={addSubject}>
+                      <Plus className="w-4 h-4 mr-2" />
+                      Add First Subject
+                    </Button>
+                  </div>
                 )}
               </div>
             </div>
