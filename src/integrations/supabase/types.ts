@@ -394,6 +394,90 @@ export type Database = {
         }
         Relationships: []
       }
+      general_learning_plan_requests: {
+        Row: {
+          account_type: string | null
+          admin_notes: string | null
+          assigned_tutor_id: string | null
+          available_time_per_week: string | null
+          challenges: string | null
+          created_at: string | null
+          curriculum: string | null
+          desired_duration_weeks: number | null
+          grade_level: string
+          id: string
+          last_exam_performance: string | null
+          parent_email: string
+          parent_id: string | null
+          parent_name: string
+          parent_phone: string | null
+          preferred_sessions: number | null
+          status: string | null
+          student_name: string
+          subjects: string[]
+          updated_at: string | null
+        }
+        Insert: {
+          account_type?: string | null
+          admin_notes?: string | null
+          assigned_tutor_id?: string | null
+          available_time_per_week?: string | null
+          challenges?: string | null
+          created_at?: string | null
+          curriculum?: string | null
+          desired_duration_weeks?: number | null
+          grade_level: string
+          id?: string
+          last_exam_performance?: string | null
+          parent_email: string
+          parent_id?: string | null
+          parent_name: string
+          parent_phone?: string | null
+          preferred_sessions?: number | null
+          status?: string | null
+          student_name: string
+          subjects: string[]
+          updated_at?: string | null
+        }
+        Update: {
+          account_type?: string | null
+          admin_notes?: string | null
+          assigned_tutor_id?: string | null
+          available_time_per_week?: string | null
+          challenges?: string | null
+          created_at?: string | null
+          curriculum?: string | null
+          desired_duration_weeks?: number | null
+          grade_level?: string
+          id?: string
+          last_exam_performance?: string | null
+          parent_email?: string
+          parent_id?: string | null
+          parent_name?: string
+          parent_phone?: string | null
+          preferred_sessions?: number | null
+          status?: string | null
+          student_name?: string
+          subjects?: string[]
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "general_learning_plan_requests_assigned_tutor_id_fkey"
+            columns: ["assigned_tutor_id"]
+            isOneToOne: false
+            referencedRelation: "tutor_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "general_learning_plan_requests_assigned_tutor_id_fkey"
+            columns: ["assigned_tutor_id"]
+            isOneToOne: false
+            referencedRelation: "tutor_profiles_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       group_class_attendance: {
         Row: {
           attended: boolean | null

@@ -25,7 +25,8 @@ import { StudentList } from "@/components/admin/StudentList";
 import { BootcampEnrollments } from "@/components/admin/BootcampEnrollments";
 import { EmailComposer } from "@/components/admin/EmailComposer";
 import { AdminCreateLearningPlan } from "@/components/admin/AdminCreateLearningPlan";
-import { Sparkles, UserCog } from "lucide-react";
+import { AdminLearningPlanRequests } from "@/components/admin/AdminLearningPlanRequests";
+import { Sparkles, UserCog, ClipboardList } from "lucide-react";
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -1393,12 +1394,21 @@ The Lana Team`;
                 </span>
               </TabsTrigger>
               <TabsTrigger 
+                value="learning-plan-requests"
+                className="data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:bg-transparent rounded-none bg-transparent px-4 py-3 border-b-2 border-transparent"
+              >
+                <span className="flex items-center gap-2">
+                  <ClipboardList className="h-4 w-4" />
+                  Plan Requests
+                </span>
+              </TabsTrigger>
+              <TabsTrigger 
                 value="learning-plans"
                 className="data-[state=active]:border-b-2 data-[state=active]:border-primary data-[state=active]:bg-transparent rounded-none bg-transparent px-4 py-3 border-b-2 border-transparent"
               >
                 <span className="flex items-center gap-2">
                   <FileText className="h-4 w-4" />
-                  Learning Plans
+                  Create Plans
                 </span>
               </TabsTrigger>
             </TabsList>
@@ -1921,6 +1931,11 @@ The Lana Team`;
               <EmailComposer />
             </div>
             <BootcampEnrollments />
+          </TabsContent>
+
+          {/* Learning Plan Requests Tab */}
+          <TabsContent value="learning-plan-requests" className="space-y-4">
+            <AdminLearningPlanRequests />
           </TabsContent>
 
           {/* Learning Plans Tab */}

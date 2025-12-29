@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { Resend } from "https://esm.sh/resend@2.0.0";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 import { checkRateLimit, getRateLimitIdentifier } from "../_shared/rate-limiter.ts";
 
 const resend = new Resend(Deno.env.get("RESEND_API_KEY"));
@@ -11,6 +12,7 @@ const corsHeaders = {
 };
 
 interface GeneralLearningPlanInquiryRequest {
+  parentId?: string;
   parentName: string;
   parentEmail: string;
   parentPhone?: string;
@@ -23,6 +25,7 @@ interface GeneralLearningPlanInquiryRequest {
   preferredSessions?: number;
   desiredDurationWeeks?: number;
   availableTimePerWeek?: string;
+  accountType?: string;
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -44,6 +47,7 @@ const handler = async (req: Request): Promise<Response> => {
 
   try {
     const {
+      parentId,
       parentName,
       parentEmail,
       parentPhone,
@@ -56,9 +60,44 @@ const handler = async (req: Request): Promise<Response> => {
       preferredSessions,
       desiredDurationWeeks,
       availableTimePerWeek,
+      accountType,
     }: GeneralLearningPlanInquiryRequest = await req.json();
 
     console.log("Sending general learning plan inquiry to LANA team");
+
+    // Save to database
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
+
+    const { data: savedRequest, error: dbError } = await supabaseAdmin
+      .from("general_learning_plan_requests")
+      .insert({
+        parent_id: parentId || null,
+        parent_name: parentName,
+        parent_email: parentEmail,
+        parent_phone: parentPhone || null,
+        student_name: studentName,
+        grade_level: gradeLevel,
+        curriculum: curriculum || null,
+        subjects: subjects,
+        last_exam_performance: lastExamPerformance || null,
+        challenges: challenges || null,
+        preferred_sessions: preferredSessions || null,
+        desired_duration_weeks: desiredDurationWeeks || null,
+        available_time_per_week: availableTimePerWeek || null,
+        account_type: accountType || 'parent',
+        status: 'pending',
+      })
+      .select()
+      .single();
+
+    if (dbError) {
+      console.error("Database error:", dbError);
+      // Continue with email even if DB fails
+    } else {
+      console.log("Request saved to database:", savedRequest?.id);
+    }
 
     // Email to LANA admin team
     const adminEmailHtml = `

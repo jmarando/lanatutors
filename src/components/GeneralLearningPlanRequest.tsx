@@ -126,9 +126,13 @@ export const GeneralLearningPlanRequest = ({
     setLoading(true);
 
     try {
+      // Get current user id
+      const { data: { user } } = await supabase.auth.getUser();
+
       // Send email notification to LANA admin team
       const { error: emailError } = await supabase.functions.invoke("send-general-learning-plan-inquiry", {
         body: {
+          parentId: user?.id || null,
           parentName: formData.parentName,
           parentEmail: formData.parentEmail,
           parentPhone: formData.parentPhone,
@@ -141,7 +145,7 @@ export const GeneralLearningPlanRequest = ({
           preferredSessions: formData.preferredSessions,
           desiredDurationWeeks: formData.desiredDurationWeeks,
           availableTimePerWeek: formData.availableTimePerWeek,
-          accountType: accountType, // Include account type for admin reference
+          accountType: accountType,
         },
       });
 
