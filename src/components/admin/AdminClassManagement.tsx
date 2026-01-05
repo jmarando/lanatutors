@@ -55,6 +55,7 @@ import {
 } from "lucide-react";
 import { format, addDays, startOfDay, endOfDay, isToday, isTomorrow } from "date-fns";
 import { EmailComposer } from "./EmailComposer";
+import { ManualBookingDialog } from "./ManualBookingDialog";
 
 interface Booking {
   id: string;
@@ -109,6 +110,7 @@ export function AdminClassManagement() {
   const [emailRecipient, setEmailRecipient] = useState<'student' | 'tutor' | 'both'>('student');
   const [emailSubject, setEmailSubject] = useState('');
   const [emailBody, setEmailBody] = useState('');
+  const [manualBookingOpen, setManualBookingOpen] = useState(false);
 
   useEffect(() => {
     fetchBookings();
@@ -430,10 +432,16 @@ export function AdminClassManagement() {
           <h2 className="text-2xl font-bold">Class Management</h2>
           <p className="text-muted-foreground">Manage 1-on-1 tutoring sessions</p>
         </div>
-        <Button onClick={fetchBookings} variant="outline" size="sm">
-          <RefreshCw className="h-4 w-4 mr-2" />
-          Refresh
-        </Button>
+        <div className="flex gap-2">
+          <Button onClick={() => setManualBookingOpen(true)} size="sm">
+            <Calendar className="h-4 w-4 mr-2" />
+            Add Booking
+          </Button>
+          <Button onClick={fetchBookings} variant="outline" size="sm">
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Refresh
+          </Button>
+        </div>
       </div>
 
       {/* Filters */}
@@ -792,6 +800,13 @@ export function AdminClassManagement() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Manual Booking Dialog */}
+      <ManualBookingDialog
+        open={manualBookingOpen}
+        onClose={() => setManualBookingOpen(false)}
+        onSuccess={fetchBookings}
+      />
     </div>
   );
 }

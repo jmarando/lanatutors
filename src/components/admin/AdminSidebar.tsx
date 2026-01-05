@@ -106,8 +106,8 @@ export function AdminSidebar({ activeTab, onTabChange, counts }: AdminSidebarPro
           badgeClass: "bg-teal-600"
         },
         { 
-          id: "students", 
-          label: "Students", 
+          id: "student-hub", 
+          label: "Student Hub", 
           icon: Users 
         },
         { 
