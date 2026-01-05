@@ -26,6 +26,7 @@ import { EmailComposer } from "@/components/admin/EmailComposer";
 import { AdminCreateLearningPlan } from "@/components/admin/AdminCreateLearningPlan";
 import { AdminLearningPlanRequests } from "@/components/admin/AdminLearningPlanRequests";
 import { AdminLayout } from "@/components/admin/AdminLayout";
+import { AdminClassManagement } from "@/components/admin/AdminClassManagement";
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -1762,6 +1763,8 @@ The Lana Tutors Team`
         return <AdminCreateLearningPlan />;
       case 'consultations':
         return renderConsultationsContent();
+      case 'class-management':
+        return <AdminClassManagement />;
       case 'bookings':
         return renderBookingsContent();
       case 'tutor-signups':
