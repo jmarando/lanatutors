@@ -32,15 +32,17 @@ interface StudentWithParent {
   id: string;
   full_name: string;
   age: number | null;
-  curriculum: string;
-  grade_level: string;
+  curriculum: string | null;
+  grade_level: string | null;
   email: string | null;
   created_at: string;
-  parent_id: string;
+  parent_id: string | null;
   parent_name: string | null;
   parent_phone: string | null;
   parent_email: string | null;
   subjects_of_interest: string[] | null;
+  source: 'child' | 'direct'; // child = added by parent, direct = signed up themselves
+  phone_number: string | null;
 }
 
 interface SummaryStats {
@@ -74,9 +76,14 @@ export function AdminStudentHub() {
       const oneWeekAgo = new Date();
       oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
 
-      const [studentsCount, newStudents, packages, bookings] = await Promise.all([
+      const [childrenCount, directStudentsCount, newChildren, newDirect, packages, bookings] = await Promise.all([
         supabase.from("students").select("*", { count: "exact", head: true }),
+        supabase.from("profiles").select("*", { count: "exact", head: true })
+          .eq("account_type", "student"),
         supabase.from("students").select("*", { count: "exact", head: true })
+          .gte("created_at", oneWeekAgo.toISOString()),
+        supabase.from("profiles").select("*", { count: "exact", head: true })
+          .eq("account_type", "student")
           .gte("created_at", oneWeekAgo.toISOString()),
         supabase.from("package_purchases").select("*", { count: "exact", head: true })
           .gt("sessions_remaining", 0),
@@ -86,8 +93,8 @@ export function AdminStudentHub() {
       ]);
 
       setStats({
-        totalStudents: studentsCount.count || 0,
-        newThisWeek: newStudents.count || 0,
+        totalStudents: (childrenCount.count || 0) + (directStudentsCount.count || 0),
+        newThisWeek: (newChildren.count || 0) + (newDirect.count || 0),
         activePackages: packages.count || 0,
         upcomingClasses: bookings.count || 0,
       });
@@ -99,15 +106,26 @@ export function AdminStudentHub() {
   const fetchStudents = async () => {
     setLoading(true);
     try {
-      const { data: studentsData, error: studentsError } = await supabase
+      // Fetch children from students table (added by parents)
+      const { data: childrenData, error: childrenError } = await supabase
         .from("students")
         .select("*")
         .order("created_at", { ascending: false });
 
-      if (studentsError) throw studentsError;
+      if (childrenError) throw childrenError;
 
-      const enrichedStudents = await Promise.all(
-        (studentsData || []).map(async (student) => {
+      // Fetch direct student signups from profiles table
+      const { data: directStudentsData, error: directError } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("account_type", "student")
+        .order("created_at", { ascending: false });
+
+      if (directError) throw directError;
+
+      // Enrich children with parent info
+      const enrichedChildren = await Promise.all(
+        (childrenData || []).map(async (student) => {
           let parentName = null;
           let parentPhone = null;
           let parentEmail = null;
@@ -131,15 +149,56 @@ export function AdminStudentHub() {
           }
 
           return {
-            ...student,
+            id: student.id,
+            full_name: student.full_name,
+            age: student.age,
+            curriculum: student.curriculum,
+            grade_level: student.grade_level,
+            email: student.email,
+            created_at: student.created_at,
+            parent_id: student.parent_id,
             parent_name: parentName,
             parent_phone: parentPhone,
             parent_email: parentEmail,
-          } as StudentWithParent;
+            subjects_of_interest: student.subjects_of_interest,
+            source: 'child' as const,
+            phone_number: null,
+          };
         })
       );
 
-      setStudents(enrichedStudents);
+      // Enrich direct students with their own email
+      const enrichedDirect = await Promise.all(
+        (directStudentsData || []).map(async (profile) => {
+          const { data: emailData } = await supabase.rpc('get_user_email', {
+            _user_id: profile.id
+          });
+
+          return {
+            id: profile.id,
+            full_name: profile.full_name || "Unknown",
+            age: profile.age,
+            curriculum: profile.curriculum,
+            grade_level: profile.grade_level,
+            email: emailData,
+            created_at: profile.created_at,
+            parent_id: null,
+            parent_name: null,
+            parent_phone: null,
+            parent_email: null,
+            subjects_of_interest: profile.subjects_struggling,
+            source: 'direct' as const,
+            phone_number: profile.phone_number,
+          };
+        })
+      );
+
+      // Combine and sort by created_at
+      const allStudents = [...enrichedChildren, ...enrichedDirect].sort(
+        (a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      );
+
+      setStudents(allStudents);
     } catch (error: any) {
       console.error("Error fetching students:", error);
       toast.error("Failed to load students");
@@ -153,10 +212,12 @@ export function AdminStudentHub() {
       student.full_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       student.parent_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       student.parent_email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      student.parent_phone?.includes(searchQuery);
+      student.parent_phone?.includes(searchQuery) ||
+      student.email?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      student.phone_number?.includes(searchQuery);
     
-    const matchesCurriculum = curriculumFilter === "all" || student.curriculum === curriculumFilter;
-    const matchesGrade = gradeFilter === "all" || student.grade_level === gradeFilter;
+    const matchesCurriculum = curriculumFilter === "all" || !student.curriculum || student.curriculum === curriculumFilter;
+    const matchesGrade = gradeFilter === "all" || !student.grade_level || student.grade_level === gradeFilter;
 
     return matchesSearch && matchesCurriculum && matchesGrade;
   });
@@ -350,8 +411,8 @@ export function AdminStudentHub() {
               <TableHeader>
                 <TableRow>
                   <TableHead>Student</TableHead>
-                  <TableHead>Parent</TableHead>
-                  <TableHead>Contact</TableHead>
+                  <TableHead>Type</TableHead>
+                  <TableHead>Parent / Contact</TableHead>
                   <TableHead>Curriculum</TableHead>
                   <TableHead>Grade</TableHead>
                   <TableHead>Registered</TableHead>
@@ -359,80 +420,94 @@ export function AdminStudentHub() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredStudents.map((student) => (
-                  <TableRow 
-                    key={student.id} 
-                    className="cursor-pointer hover:bg-muted/50"
-                    onClick={() => setSelectedParentId(student.parent_id)}
-                  >
-                    <TableCell className="font-medium">
-                      <div>
-                        <p>{student.full_name}</p>
-                        {student.age && (
-                          <p className="text-xs text-muted-foreground">{student.age} years old</p>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell>{student.parent_name || "—"}</TableCell>
-                    <TableCell>
-                      <div className="space-y-1">
-                        {student.parent_email && (
-                          <p className="text-sm truncate max-w-[180px]">{student.parent_email}</p>
-                        )}
-                        {student.parent_phone && (
-                          <p className="text-sm text-muted-foreground">{student.parent_phone}</p>
-                        )}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      {student.curriculum ? (
-                        <Badge variant="outline">{student.curriculum}</Badge>
-                      ) : "—"}
-                    </TableCell>
-                    <TableCell>
-                      {student.grade_level ? (
-                        <Badge variant="secondary">{student.grade_level}</Badge>
-                      ) : "—"}
-                    </TableCell>
-                    <TableCell className="text-sm text-muted-foreground">
-                      {format(new Date(student.created_at), "MMM d, yyyy")}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
-                        {student.parent_phone && (
+                {filteredStudents.map((student) => {
+                  const contactPhone = student.source === 'direct' ? student.phone_number : student.parent_phone;
+                  const contactEmail = student.source === 'direct' ? student.email : student.parent_email;
+                  const contactName = student.source === 'direct' ? student.full_name : (student.parent_name || "Parent");
+                  
+                  return (
+                    <TableRow 
+                      key={`${student.source}-${student.id}`} 
+                      className="cursor-pointer hover:bg-muted/50"
+                      onClick={() => student.source === 'child' ? setSelectedParentId(student.parent_id) : setSelectedParentId(student.id)}
+                    >
+                      <TableCell className="font-medium">
+                        <div>
+                          <p>{student.full_name}</p>
+                          {student.age && (
+                            <p className="text-xs text-muted-foreground">{student.age} years old</p>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge variant={student.source === 'direct' ? 'default' : 'outline'} className="text-xs">
+                          {student.source === 'direct' ? 'Direct Signup' : 'Child'}
+                        </Badge>
+                      </TableCell>
+                      <TableCell>
+                        <div className="space-y-1">
+                          {student.source === 'child' && student.parent_name && (
+                            <p className="text-sm font-medium">{student.parent_name}</p>
+                          )}
+                          {contactEmail && (
+                            <p className="text-sm truncate max-w-[180px]">{contactEmail}</p>
+                          )}
+                          {contactPhone && (
+                            <p className="text-sm text-muted-foreground">{contactPhone}</p>
+                          )}
+                          {!contactEmail && !contactPhone && "—"}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        {student.curriculum ? (
+                          <Badge variant="outline">{student.curriculum}</Badge>
+                        ) : "—"}
+                      </TableCell>
+                      <TableCell>
+                        {student.grade_level ? (
+                          <Badge variant="secondary">{student.grade_level}</Badge>
+                        ) : "—"}
+                      </TableCell>
+                      <TableCell className="text-sm text-muted-foreground">
+                        {format(new Date(student.created_at), "MMM d, yyyy")}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
+                          {contactPhone && (
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="h-8 w-8"
+                              onClick={() => openWhatsApp(contactPhone, contactName)}
+                            >
+                              <MessageCircle className="h-4 w-4 text-green-600" />
+                            </Button>
+                          )}
+                          {contactEmail && (
+                            <Button
+                              size="icon"
+                              variant="ghost"
+                              className="h-8 w-8"
+                              asChild
+                            >
+                              <a href={`mailto:${contactEmail}`}>
+                                <Mail className="h-4 w-4 text-blue-600" />
+                              </a>
+                            </Button>
+                          )}
                           <Button
                             size="icon"
                             variant="ghost"
                             className="h-8 w-8"
-                            onClick={() => openWhatsApp(student.parent_phone!, student.parent_name || "Parent")}
+                            onClick={() => student.source === 'child' ? setSelectedParentId(student.parent_id) : setSelectedParentId(student.id)}
                           >
-                            <MessageCircle className="h-4 w-4 text-green-600" />
+                            <ChevronRight className="h-4 w-4" />
                           </Button>
-                        )}
-                        {student.parent_email && (
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            className="h-8 w-8"
-                            asChild
-                          >
-                            <a href={`mailto:${student.parent_email}`}>
-                              <Mail className="h-4 w-4 text-blue-600" />
-                            </a>
-                          </Button>
-                        )}
-                        <Button
-                          size="icon"
-                          variant="ghost"
-                          className="h-8 w-8"
-                          onClick={() => setSelectedParentId(student.parent_id)}
-                        >
-                          <ChevronRight className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
               </TableBody>
             </Table>
           )}
