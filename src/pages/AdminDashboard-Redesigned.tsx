@@ -1543,143 +1543,264 @@ The Lana Tutors Team`
   );
 
   // Render Consultations Content
-  const renderConsultationsContent = () => (
-    <div className="space-y-4">
-      <h2 className="text-2xl font-bold">Consultations</h2>
-      
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Total</p>
-                <p className="text-3xl font-bold">{conversionStats.total}</p>
-              </div>
-              <Users className="h-10 w-10 text-muted-foreground" />
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Follow-ups Sent</p>
-                <p className="text-3xl font-bold">{conversionStats.followUpSent}</p>
-              </div>
-              <Send className="h-10 w-10 text-blue-500" />
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Converted</p>
-                <p className="text-3xl font-bold text-green-600">{conversionStats.converted}</p>
-              </div>
-              <DollarSign className="h-10 w-10 text-green-600" />
-            </div>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-muted-foreground">Conversion Rate</p>
-                <p className="text-3xl font-bold text-accent">{conversionStats.conversionRate}%</p>
-              </div>
-              <TrendingUp className="h-10 w-10 text-accent" />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+  const renderConsultationsContent = () => {
+    const now = new Date();
+    const tomorrow = new Date(now);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    const weekEnd = new Date(now);
+    weekEnd.setDate(weekEnd.getDate() + 7);
 
-      {consultationBookings.length === 0 ? (
-        <Card>
-          <CardContent className="p-8 text-center text-muted-foreground">
-            No consultation bookings yet.
-          </CardContent>
-        </Card>
-      ) : (
-        consultationBookings.map((booking) => (
-          <Card key={booking.id} className="hover:shadow-lg transition-shadow">
-            <CardHeader>
-              <div className="flex items-start justify-between">
+    const tomorrowStr = tomorrow.toISOString().split('T')[0];
+    const tomorrowConsultations = consultationBookings.filter(b => 
+      b.consultation_date === tomorrowStr && b.status !== 'cancelled'
+    );
+
+    const thisWeekConsultations = consultationBookings.filter(b => {
+      const bookingDate = new Date(b.consultation_date);
+      return bookingDate >= now && bookingDate <= weekEnd && b.status !== 'cancelled';
+    });
+
+    const pendingFollowUps = consultationBookings.filter(b => 
+      !b.follow_up_sent_at && b.status === 'confirmed' && new Date(b.consultation_date) < now
+    );
+
+    return (
+      <div className="space-y-4">
+        <h2 className="text-2xl font-bold">Consultations</h2>
+        
+        {/* Upcoming Summary Cards */}
+        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
+          <Card className="border-orange-200 bg-orange-50 dark:bg-orange-950/20">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-orange-500/20 rounded-lg">
+                  <CalendarIcon className="h-5 w-5 text-orange-600" />
+                </div>
                 <div>
-                  <CardTitle className="text-xl flex items-center gap-2">
-                    <User className="h-5 w-5" />
-                    {booking.student_name}
-                  </CardTitle>
-                  <p className="text-muted-foreground mt-1">
-                    Parent: {booking.parent_name}
-                  </p>
+                  <p className="text-2xl font-bold text-orange-600">{tomorrowConsultations.length}</p>
+                  <p className="text-xs text-muted-foreground">Tomorrow</p>
                 </div>
-                <div className="flex flex-col gap-2 items-end">
-                  <Badge className={
-                    booking.status === 'confirmed' ? 'bg-green-500' :
-                    booking.status === 'pending' ? 'bg-yellow-500' :
-                    booking.status === 'cancelled' ? 'bg-red-500' : 'bg-gray-500'
-                  }>
-                    {booking.status}
-                  </Badge>
-                </div>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-4">
-              <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
-                <div className="flex items-center gap-2 text-sm">
-                  <CalendarIcon className="h-4 w-4 text-muted-foreground" />
-                  <div>
-                    <div className="text-xs text-muted-foreground">Date</div>
-                    <div className="font-medium">{formatConsultationDate(booking.consultation_date)}</div>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2 text-sm">
-                  <Clock className="h-4 w-4 text-muted-foreground" />
-                  <div>
-                    <div className="text-xs text-muted-foreground">Time</div>
-                    <div className="font-medium">{booking.consultation_time}</div>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2 text-sm">
-                  <Mail className="h-4 w-4 text-muted-foreground" />
-                  <div>
-                    <div className="text-xs text-muted-foreground">Email</div>
-                    <a href={`mailto:${booking.email}`} className="text-primary hover:underline font-medium">
-                      {booking.email}
-                    </a>
-                  </div>
-                </div>
-                <div className="flex items-center gap-2 text-sm">
-                  <Phone className="h-4 w-4 text-muted-foreground" />
-                  <div>
-                    <div className="text-xs text-muted-foreground">Phone</div>
-                    <div className="font-medium">{booking.phone_number}</div>
-                  </div>
-                </div>
-              </div>
-              <div className="flex gap-2 flex-wrap">
-                <Button size="sm" variant="outline" onClick={() => openMessageDialog(booking, 'email')}>
-                  <Mail className="h-4 w-4 mr-1" /> Email
-                </Button>
-                <Button size="sm" variant="outline" onClick={() => handleWhatsAppMessage(booking)}>
-                  <MessageCircle className="h-4 w-4 mr-1" /> WhatsApp
-                </Button>
-                <Button size="sm" variant="outline" onClick={() => openFollowUpDialog(booking)}>
-                  <Send className="h-4 w-4 mr-1" /> Follow-up
-                </Button>
-                {!booking.converted_to_customer && (
-                  <Button size="sm" className="bg-green-600 hover:bg-green-700" onClick={() => handleMarkAsConverted(booking.id)}>
-                    <CheckCircle className="h-4 w-4 mr-1" /> Mark Converted
-                  </Button>
-                )}
               </div>
             </CardContent>
           </Card>
-        ))
-      )}
-    </div>
-  );
+          <Card className="border-blue-200 bg-blue-50 dark:bg-blue-950/20">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-blue-500/20 rounded-lg">
+                  <CalendarIcon className="h-5 w-5 text-blue-600" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-blue-600">{thisWeekConsultations.length}</p>
+                  <p className="text-xs text-muted-foreground">This Week</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-primary/10 rounded-lg">
+                  <Users className="h-5 w-5 text-primary" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold">{conversionStats.total}</p>
+                  <p className="text-xs text-muted-foreground">Total</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-green-500/10 rounded-lg">
+                  <CheckCircle className="h-5 w-5 text-green-600" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-green-600">{conversionStats.converted}</p>
+                  <p className="text-xs text-muted-foreground">Converted</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+          <Card className="border-yellow-200 bg-yellow-50 dark:bg-yellow-950/20">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-yellow-500/20 rounded-lg">
+                  <Send className="h-5 w-5 text-yellow-600" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-yellow-600">{pendingFollowUps.length}</p>
+                  <p className="text-xs text-muted-foreground">Need Follow-up</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {consultationBookings.length === 0 ? (
+          <Card>
+            <CardContent className="p-8 text-center text-muted-foreground">
+              No consultation bookings yet.
+            </CardContent>
+          </Card>
+        ) : (
+          consultationBookings.map((booking) => (
+            <Card key={booking.id} className="hover:shadow-lg transition-shadow">
+              <CardHeader>
+                <div className="flex items-start justify-between">
+                  <div>
+                    <CardTitle className="text-xl flex items-center gap-2">
+                      <User className="h-5 w-5" />
+                      {booking.student_name}
+                    </CardTitle>
+                    <p className="text-muted-foreground mt-1">
+                      Parent: {booking.parent_name}
+                    </p>
+                  </div>
+                  <div className="flex flex-col gap-2 items-end">
+                    <Badge className={
+                      booking.status === 'confirmed' ? 'bg-green-500' :
+                      booking.status === 'pending' ? 'bg-yellow-500' :
+                      booking.status === 'cancelled' ? 'bg-red-500' : 'bg-gray-500'
+                    }>
+                      {booking.status}
+                    </Badge>
+                    {booking.converted_to_customer && (
+                      <Badge className="bg-emerald-600">Converted</Badge>
+                    )}
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {/* Date, Time, Contact Row */}
+                <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
+                  <div className="flex items-center gap-2 text-sm">
+                    <CalendarIcon className="h-4 w-4 text-muted-foreground" />
+                    <div>
+                      <div className="text-xs text-muted-foreground">Date</div>
+                      <div className="font-medium">{formatConsultationDate(booking.consultation_date)}</div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm">
+                    <Clock className="h-4 w-4 text-muted-foreground" />
+                    <div>
+                      <div className="text-xs text-muted-foreground">Time</div>
+                      <div className="font-medium">{booking.consultation_time}</div>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm">
+                    <Mail className="h-4 w-4 text-muted-foreground" />
+                    <div>
+                      <div className="text-xs text-muted-foreground">Email</div>
+                      <a href={`mailto:${booking.email}`} className="text-primary hover:underline font-medium text-sm truncate block max-w-[180px]">
+                        {booking.email}
+                      </a>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2 text-sm">
+                    <Phone className="h-4 w-4 text-muted-foreground" />
+                    <div>
+                      <div className="text-xs text-muted-foreground">Phone</div>
+                      <div className="font-medium">{booking.phone_number}</div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Student Info Row */}
+                <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3 pt-2 border-t">
+                  <div className="flex items-start gap-2 text-sm">
+                    <GraduationCap className="h-4 w-4 text-muted-foreground mt-0.5" />
+                    <div>
+                      <div className="text-xs text-muted-foreground">Grade Level</div>
+                      <div className="font-medium">{booking.grade_level}</div>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-2 text-sm">
+                    <BookOpen className="h-4 w-4 text-muted-foreground mt-0.5" />
+                    <div>
+                      <div className="text-xs text-muted-foreground">Subjects of Interest</div>
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        {booking.subjects_interest?.map((subject: string, idx: number) => (
+                          <Badge key={idx} variant="secondary" className="text-xs">
+                            {subject}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-2 text-sm">
+                    <Video className="h-4 w-4 text-muted-foreground mt-0.5" />
+                    <div>
+                      <div className="text-xs text-muted-foreground">Preferred Mode</div>
+                      <div className="font-medium capitalize">{booking.preferred_mode}</div>
+                    </div>
+                  </div>
+                  {booking.meeting_link && (
+                    <div className="flex items-start gap-2 text-sm">
+                      <ExternalLink className="h-4 w-4 text-muted-foreground mt-0.5" />
+                      <div>
+                        <div className="text-xs text-muted-foreground">Meeting Link</div>
+                        <a href={booking.meeting_link} target="_blank" rel="noopener noreferrer" className="text-primary hover:underline font-medium text-sm">
+                          Join Meeting
+                        </a>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Additional Notes */}
+                {booking.additional_notes && (
+                  <div className="pt-2 border-t">
+                    <div className="text-xs text-muted-foreground mb-1">Additional Notes from Parent</div>
+                    <p className="text-sm bg-muted/50 p-3 rounded-lg">{booking.additional_notes}</p>
+                  </div>
+                )}
+
+                {/* Follow-up Status */}
+                {(booking.consultation_outcome || booking.next_action) && (
+                  <div className="pt-2 border-t grid sm:grid-cols-2 gap-3">
+                    {booking.consultation_outcome && (
+                      <div>
+                        <div className="text-xs text-muted-foreground mb-1">Consultation Outcome</div>
+                        <p className="text-sm">{booking.consultation_outcome}</p>
+                      </div>
+                    )}
+                    {booking.next_action && (
+                      <div>
+                        <div className="text-xs text-muted-foreground mb-1">Next Action</div>
+                        <p className="text-sm">{booking.next_action}</p>
+                        {booking.next_action_date && (
+                          <p className="text-xs text-muted-foreground mt-1">Due: {new Date(booking.next_action_date).toLocaleDateString()}</p>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Action Buttons */}
+                <div className="flex gap-2 flex-wrap pt-2 border-t">
+                  <Button size="sm" variant="outline" onClick={() => openMessageDialog(booking, 'email')}>
+                    <Mail className="h-4 w-4 mr-1" /> Email
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => handleWhatsAppMessage(booking)}>
+                    <MessageCircle className="h-4 w-4 mr-1" /> WhatsApp
+                  </Button>
+                  <Button size="sm" variant="outline" onClick={() => openFollowUpDialog(booking)}>
+                    <Send className="h-4 w-4 mr-1" /> Follow-up
+                  </Button>
+                  {!booking.converted_to_customer && (
+                    <Button size="sm" className="bg-green-600 hover:bg-green-700" onClick={() => handleMarkAsConverted(booking.id)}>
+                      <CheckCircle className="h-4 w-4 mr-1" /> Mark Converted
+                    </Button>
+                  )}
+                </div>
+              </CardContent>
+            </Card>
+          ))
+        )}
+      </div>
+    );
+  };
 
   // Render Bookings Content
   const renderBookingsContent = () => (
