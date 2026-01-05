@@ -120,9 +120,8 @@ export function AdminClassManagement() {
       let query = supabase
         .from("bookings")
         .select(`
-          id, subject, status, meeting_link, notes, amount, created_at,
+          id, subject, status, meeting_link, notes, amount, created_at, student_id,
           tutor_availability!inner(start_time, end_time),
-          profiles:student_id(id, full_name, phone_number),
           tutor_profiles:tutor_id(id, email, user_id)
         `)
         .order("tutor_availability(start_time)", { ascending: true });
@@ -157,22 +156,43 @@ export function AdminClassManagement() {
 
       if (error) throw error;
 
-      // Fetch tutor names
-      const bookingsWithTutorNames = await Promise.all(
+      // Fetch student and tutor names separately
+      const bookingsWithNames = await Promise.all(
         (data || []).map(async (booking: any) => {
-          if (booking.tutor_profiles?.user_id) {
+          let studentInfo = null;
+          let tutorName = 'Unknown';
+
+          // Fetch student info from profiles using student_id
+          if (booking.student_id) {
             const { data: profile } = await supabase
+              .from("profiles")
+              .select("id, full_name, phone_number")
+              .eq("id", booking.student_id)
+              .single();
+            if (profile) {
+              studentInfo = profile;
+            }
+          }
+
+          // Fetch tutor name from profiles using tutor's user_id
+          if (booking.tutor_profiles?.user_id) {
+            const { data: tutorProfile } = await supabase
               .from("profiles")
               .select("full_name")
               .eq("id", booking.tutor_profiles.user_id)
               .single();
-            return { ...booking, tutor_name: profile?.full_name || 'Unknown' };
+            tutorName = tutorProfile?.full_name || 'Unknown';
           }
-          return { ...booking, tutor_name: 'Unknown' };
+
+          return { 
+            ...booking, 
+            profiles: studentInfo,
+            tutor_name: tutorName 
+          };
         })
       );
 
-      setBookings(bookingsWithTutorNames);
+      setBookings(bookingsWithNames);
     } catch (error: any) {
       console.error("Error fetching bookings:", error);
       toast.error("Failed to load bookings");
