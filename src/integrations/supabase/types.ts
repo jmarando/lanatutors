@@ -66,6 +66,7 @@ export type Database = {
           availability_slot_id: string
           balance_due: number | null
           booking_group_id: string | null
+          booking_source: string | null
           class_type: string | null
           classroom_id: string | null
           classroom_link: string | null
@@ -91,6 +92,7 @@ export type Database = {
           availability_slot_id: string
           balance_due?: number | null
           booking_group_id?: string | null
+          booking_source?: string | null
           class_type?: string | null
           classroom_id?: string | null
           classroom_link?: string | null
@@ -116,6 +118,7 @@ export type Database = {
           availability_slot_id?: string
           balance_due?: number | null
           booking_group_id?: string | null
+          booking_source?: string | null
           class_type?: string | null
           classroom_id?: string | null
           classroom_link?: string | null
@@ -185,6 +188,121 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      communication_logs: {
+        Row: {
+          channel: string
+          content: string | null
+          created_at: string | null
+          direction: string | null
+          id: string
+          metadata: Json | null
+          parent_id: string | null
+          related_booking_id: string | null
+          related_consultation_id: string | null
+          sent_by: string | null
+          status: string | null
+          student_id: string | null
+          subject: string | null
+          tutor_id: string | null
+        }
+        Insert: {
+          channel: string
+          content?: string | null
+          created_at?: string | null
+          direction?: string | null
+          id?: string
+          metadata?: Json | null
+          parent_id?: string | null
+          related_booking_id?: string | null
+          related_consultation_id?: string | null
+          sent_by?: string | null
+          status?: string | null
+          student_id?: string | null
+          subject?: string | null
+          tutor_id?: string | null
+        }
+        Update: {
+          channel?: string
+          content?: string | null
+          created_at?: string | null
+          direction?: string | null
+          id?: string
+          metadata?: Json | null
+          parent_id?: string | null
+          related_booking_id?: string | null
+          related_consultation_id?: string | null
+          sent_by?: string | null
+          status?: string | null
+          student_id?: string | null
+          subject?: string | null
+          tutor_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "communication_logs_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "communication_logs_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "public_tutor_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "communication_logs_related_booking_id_fkey"
+            columns: ["related_booking_id"]
+            isOneToOne: false
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "communication_logs_related_consultation_id_fkey"
+            columns: ["related_consultation_id"]
+            isOneToOne: false
+            referencedRelation: "consultation_bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "communication_logs_sent_by_fkey"
+            columns: ["sent_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "communication_logs_sent_by_fkey"
+            columns: ["sent_by"]
+            isOneToOne: false
+            referencedRelation: "public_tutor_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "communication_logs_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "communication_logs_tutor_id_fkey"
+            columns: ["tutor_id"]
+            isOneToOne: false
+            referencedRelation: "tutor_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "communication_logs_tutor_id_fkey"
+            columns: ["tutor_id"]
+            isOneToOne: false
+            referencedRelation: "tutor_profiles_public"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       consultation_bookings: {
         Row: {

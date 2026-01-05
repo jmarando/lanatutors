@@ -20,7 +20,8 @@ import { TutorSignupList } from "@/components/admin/TutorSignupList";
 import { TutorEmailList } from "@/components/admin/TutorEmailList";
 import { AdminIntensivePrograms } from "@/components/admin/AdminIntensivePrograms";
 import { AdminTutorProfileEdit } from "@/components/admin/AdminTutorProfileEdit";
-import { StudentList } from "@/components/admin/StudentList";
+import { AdminStudentHub } from "@/components/admin/AdminStudentHub";
+import { DailyOperationsCard } from "@/components/admin/DailyOperationsCard";
 import { BootcampEnrollments } from "@/components/admin/BootcampEnrollments";
 import { EmailComposer } from "@/components/admin/EmailComposer";
 import { AdminCreateLearningPlan } from "@/components/admin/AdminCreateLearningPlan";
@@ -1164,7 +1165,7 @@ The Lana Tutors Team`
       {dashboardMetrics && (
         <div className="space-y-8">
           <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
-            <Card className="overflow-hidden cursor-pointer hover:shadow-lg transition-shadow" onClick={() => setActiveTab('students')}>
+            <Card className="overflow-hidden cursor-pointer hover:shadow-lg transition-shadow" onClick={() => setActiveTab('student-hub')}>
               <CardHeader className="pb-3">
                 <div className="flex items-center justify-between">
                   <CardTitle className="text-sm font-medium text-muted-foreground">Total Students</CardTitle>
@@ -1237,7 +1238,10 @@ The Lana Tutors Team`
             </Card>
           </div>
 
-          <div className="grid gap-4 md:grid-cols-3">
+          {/* Daily Operations + Quick Stats Row */}
+          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+            <DailyOperationsCard />
+            
             <Card>
               <CardHeader>
                 <CardTitle className="text-base flex items-center gap-2">
@@ -1263,25 +1267,30 @@ The Lana Tutors Team`
                 <p className="text-xs text-muted-foreground mt-2">Completed in period</p>
               </CardContent>
             </Card>
-
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-base flex items-center gap-2">
-                  <Activity className="h-5 w-5" />
-                  Revenue Trend
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="h-[100px]">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={dashboardMetrics.revenueTrend?.slice(-7) || []}>
-                      <Bar dataKey="amount" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              </CardContent>
-            </Card>
           </div>
+
+          {/* Revenue Chart */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-base flex items-center gap-2">
+                <Activity className="h-5 w-5" />
+                Revenue Trend
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="h-[150px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={dashboardMetrics.revenueTrend?.slice(-14) || []}>
+                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                    <XAxis dataKey="date" tick={{ fontSize: 10 }} />
+                    <YAxis tick={{ fontSize: 10 }} />
+                    <Tooltip />
+                    <Bar dataKey="amount" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       )}
     </div>
@@ -1747,8 +1756,8 @@ The Lana Tutors Team`
         return <BlogManagement />;
       case 'edit-tutors':
         return <AdminTutorProfileEdit />;
-      case 'students':
-        return <StudentList />;
+      case 'student-hub':
+        return <AdminStudentHub />;
       case 'bootcamp-enrollments':
         return (
           <div className="space-y-4">
