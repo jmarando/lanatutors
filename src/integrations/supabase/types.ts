@@ -307,6 +307,7 @@ export type Database = {
       consultation_bookings: {
         Row: {
           additional_notes: string | null
+          admin_notes: string | null
           consultation_date: string
           consultation_outcome: string | null
           consultation_time: string
@@ -333,6 +334,7 @@ export type Database = {
         }
         Insert: {
           additional_notes?: string | null
+          admin_notes?: string | null
           consultation_date: string
           consultation_outcome?: string | null
           consultation_time: string
@@ -359,6 +361,7 @@ export type Database = {
         }
         Update: {
           additional_notes?: string | null
+          admin_notes?: string | null
           consultation_date?: string
           consultation_outcome?: string | null
           consultation_time?: string

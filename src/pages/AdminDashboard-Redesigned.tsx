@@ -70,209 +70,304 @@ const AdminDashboard = () => {
   const [rescheduleTime, setRescheduleTime] = useState("");
   const [processingTutorId, setProcessingTutorId] = useState<string | null>(null);
   const [sendingEmail, setSendingEmail] = useState(false);
+  const [editingAdminNotes, setEditingAdminNotes] = useState<string | null>(null);
+  const [adminNotesContent, setAdminNotesContent] = useState("");
 
-  // Message templates for customer journey
+  // Message templates for customer journey - Enhanced and professional
   const messageTemplates = {
     email: {
       confirmation: {
         title: "Consultation Confirmed",
-        subject: "Your Lana Tutors Consultation is Confirmed",
+        subject: "✅ Lana Tutors: Your Consultation is Confirmed",
         body: (booking: any) => `Dear ${booking.parent_name},
 
-Thank you for booking a consultation with Lana Tutors. We're pleased to confirm your appointment for ${booking.student_name}.
+Thank you for choosing Lana Tutors! We're excited to confirm your upcoming consultation for ${booking.student_name}.
 
-Consultation Details:
+📅 CONSULTATION DETAILS
+━━━━━━━━━━━━━━━━━━━━━━
 Date: ${formatConsultationDate(booking.consultation_date)}
-Time: ${booking.consultation_time}
+Time: ${booking.consultation_time} (East Africa Time)
 Grade Level: ${booking.grade_level}
-Subjects of Interest: ${booking.subjects_interest.join(', ')}
+Subjects: ${booking.subjects_interest.join(', ')}
+Mode: ${booking.preferred_mode}
 
-We will send you the meeting link 24 hours before your scheduled consultation.
+📝 WHAT TO EXPECT
+━━━━━━━━━━━━━━━━━━━━━━
+During our 15-20 minute consultation, we'll:
+• Understand ${booking.student_name}'s current academic situation
+• Discuss specific learning goals and challenges
+• Recommend the best tutoring approach for your child
+• Answer any questions about our programs and pricing
 
-We look forward to discussing ${booking.student_name}'s educational needs with you.
+💡 TO PREPARE
+━━━━━━━━━━━━━━━━━━━━━━
+• Have ${booking.student_name}'s recent test scores or report cards handy
+• Note down specific topics or concepts they're struggling with
+• Think about your preferred schedule for tutoring sessions
 
-Best regards,
-The Lana Tutors Team`
+We'll send you the Google Meet link 24 hours before your consultation.
+
+Need to reschedule? Simply reply to this email or WhatsApp us at +254 700 000 000.
+
+We look forward to helping ${booking.student_name} excel!
+
+Warm regards,
+The Lana Tutors Team
+🌐 www.lanatutors.africa`
       },
       reminder_24h: {
         title: "24-Hour Reminder",
-        subject: "Reminder: Your Consultation is Tomorrow",
+        subject: "⏰ Reminder: Your Consultation is Tomorrow!",
         body: (booking: any) => `Dear ${booking.parent_name},
 
-This is a reminder that your consultation for ${booking.student_name} is scheduled for tomorrow.
+This is a friendly reminder that your consultation for ${booking.student_name} is scheduled for TOMORROW!
 
-Consultation Details:
+📅 CONSULTATION DETAILS
+━━━━━━━━━━━━━━━━━━━━━━
 Date: ${new Date(booking.consultation_date).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
-Time: ${booking.consultation_time}
-Meeting Link: [Insert meeting link]
+Time: ${booking.consultation_time} (East Africa Time)
+📹 Meeting Link: ${booking.meeting_link || '[Will be shared shortly]'}
 
-To help us make the most of our time together, please consider:
-- Specific academic challenges ${booking.student_name} is currently facing
-- Your learning goals for this academic year
-- Any questions you have about our tutoring programs
+📝 QUICK PREP CHECKLIST
+━━━━━━━━━━━━━━━━━━━━━━
+✓ Current academic challenges ${booking.student_name} is facing
+✓ Learning goals for this term/year
+✓ Any specific questions about our tutoring programs
+✓ Quiet space with stable internet for the video call
 
-If you need to reschedule, please contact us at info@lanatutors.africa.
+💡 PRO TIP: Having ${booking.student_name}'s recent schoolwork nearby can help us better understand their needs.
+
+Can't make it? Please let us know ASAP so we can reschedule. Just reply to this email or call +254 700 000 000.
+
+See you tomorrow!
 
 Best regards,
 The Lana Tutors Team`
       },
       reminder_1h: {
         title: "1-Hour Reminder",
-        subject: "Your Consultation Starts in 1 Hour",
+        subject: "🔔 Starting Soon: Your Consultation in 1 Hour",
         body: (booking: any) => `Dear ${booking.parent_name},
 
-Your consultation for ${booking.student_name} begins in one hour.
+Your consultation for ${booking.student_name} starts in ONE HOUR!
 
-Time: ${booking.consultation_time}
-Meeting Link: [Insert meeting link]
+⏰ Time: ${booking.consultation_time} (East Africa Time)
+📹 Join here: ${booking.meeting_link || '[Meeting link]'}
 
-We look forward to speaking with you shortly.
+Quick reminders:
+• Find a quiet spot with good internet
+• Have ${booking.student_name}'s schoolwork nearby if possible
+• We'll keep it brief and focused (15-20 minutes)
 
-Best regards,
+See you very soon!
+
 The Lana Tutors Team`
       },
       post_consultation: {
         title: "Post-Consultation Summary",
-        subject: "Thank You - Next Steps for Your Child",
+        subject: "🎓 Thank You! Here's Your Personalized Learning Plan for ${booking.student_name}",
         body: (booking: any) => `Dear ${booking.parent_name},
 
-Thank you for taking the time to meet with us today. We appreciated learning about ${booking.student_name}'s educational journey and goals.
+Thank you for taking the time to meet with us today! It was a pleasure learning about ${booking.student_name}'s academic journey.
 
-Key Discussion Points:
+📋 CONSULTATION SUMMARY
+━━━━━━━━━━━━━━━━━━━━━━
+Student: ${booking.student_name}
+Grade: ${booking.grade_level}
+Subjects Discussed: ${booking.subjects_interest.join(', ')}
+
+🎯 KEY DISCUSSION POINTS
+━━━━━━━━━━━━━━━━━━━━━━
 [Add summary of main topics discussed]
+[Add specific challenges identified]
+[Add learning style observations]
 
-Recommended Next Steps:
-[Add personalized recommendations based on the consultation]
+📚 OUR RECOMMENDATIONS
+━━━━━━━━━━━━━━━━━━━━━━
+Based on our discussion, here's what we recommend for ${booking.student_name}:
 
-Suggested Tutors and Subjects:
-[Add recommended tutors and subject areas]
+1. Subject Focus: [Subject priorities]
+2. Session Frequency: [Recommended sessions per week]
+3. Suggested Tutor(s): [Tutor names and specialties]
 
-Ready to Get Started?
-You can book your first tutoring session here: [Add booking link]
+💰 PRICING & PACKAGES
+━━━━━━━━━━━━━━━━━━━━━━
+[Insert relevant package details]
 
-Limited Time Offer: Book within 48 hours to receive 20% off your first session.
+🎁 SPECIAL OFFER - VALID 48 HOURS
+━━━━━━━━━━━━━━━━━━━━━━
+Book your first tutoring package within 48 hours and receive:
+✨ 20% OFF your first month
+✨ FREE learning assessment
+✨ Flexible rescheduling
 
-If you have any questions or would like to discuss further, please don't hesitate to reply to this email.
+👉 READY TO GET STARTED?
+Reply to this email or click here: [Booking link]
 
-Best regards,
+Questions? We're here to help! Just reply to this email or WhatsApp us.
+
+Looking forward to being part of ${booking.student_name}'s success story!
+
+Warm regards,
 The Lana Tutors Team`
       },
       follow_up_3days: {
         title: "3-Day Follow-up",
-        subject: "Following Up: Tutoring for Your Child",
+        subject: "Quick Check-in: Ready to Start ${booking.student_name}'s Tutoring Journey?",
         body: (booking: any) => `Dear ${booking.parent_name},
 
-I hope this email finds you well.
+I hope this finds you well! I wanted to follow up on our recent consultation about ${booking.student_name}'s academic support needs.
 
-I wanted to follow up regarding ${booking.student_name}'s tutoring needs. We have experienced tutors available who specialize in ${booking.subjects_interest.join(' and ')}.
+I understand choosing the right tutoring can be a big decision. I wanted to share that we have excellent tutors ready to help with ${booking.subjects_interest.join(' and ')} - the subjects we discussed.
 
-We can help you with:
-- Scheduling a trial tutoring session
-- Answering any questions about our programs
-- Providing more information about our recommended tutors
+🎯 WHAT'S INCLUDED
+━━━━━━━━━━━━━━━━━━━━━━
+✓ Personalized 1-on-1 attention
+✓ Flexible scheduling to fit your routine
+✓ Progress reports after each session
+✓ Direct communication with your tutor
+✓ Google Classroom for resources & homework
 
-Please note: Your 20% discount expires in 24 hours.
+⏳ REMINDER: Your 20% welcome discount expires tomorrow!
 
-Would you like to proceed with booking a session? Simply reply to this email or give us a call.
+I'd love to help you get started. Would any of these work for you?
 
-Best regards,
+Option A: Schedule a trial session this week
+Option B: Book a 4-session starter pack
+Option C: Set up a quick call to discuss further
+
+Simply reply with A, B, or C, and I'll take care of the rest!
+
+Here to help,
+[Admin Name]
+Lana Tutors Team
+
+P.S. Many parents find that starting sooner helps children build momentum before exams. Let's make this term ${booking.student_name}'s best yet!`
+      },
+      nurture_7days: {
+        title: "7-Day Nurture",
+        subject: "Still thinking about tutoring for ${booking.student_name}?",
+        body: (booking: any) => `Dear ${booking.parent_name},
+
+I hope you're having a great week! I wanted to reach out one more time about tutoring support for ${booking.student_name}.
+
+I understand timing is everything, and there's no pressure. However, I wanted to share a quick success story that reminded me of your consultation:
+
+📖 SUCCESS STORY
+━━━━━━━━━━━━━━━━━━━━━━
+"When Sarah joined Lana Tutors, she was struggling with Maths. After just 8 sessions, her confidence improved dramatically and she moved from a C to a B+. The personalized attention made all the difference."
+- Mary K., Parent
+
+🤔 COMMON QUESTIONS WE GET
+━━━━━━━━━━━━━━━━━━━━━━
+Q: What if my child doesn't click with the tutor?
+A: We offer free tutor matching - if it's not a fit, we'll find someone better!
+
+Q: How do I know if it's working?
+A: You'll receive progress updates after every session, plus monthly reports.
+
+Q: Can we pause if needed?
+A: Absolutely - our packages are flexible to your schedule.
+
+If you have any questions or concerns holding you back, I'd love to address them. Just reply to this email.
+
+Wishing ${booking.student_name} a productive school term!
+
+Warm regards,
 The Lana Tutors Team`
       }
     },
     whatsapp: {
       confirmation: {
         title: "Consultation Confirmed",
-        body: (booking: any) => `Lana Tutors - Consultation Confirmed
+        body: (booking: any) => `✅ *Lana Tutors - Consultation Confirmed*
 
 Dear ${booking.parent_name},
 
-Your consultation for ${booking.student_name} has been confirmed.
+Your consultation for *${booking.student_name}* is confirmed! 🎉
 
-Date: ${new Date(booking.consultation_date).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
-Time: ${booking.consultation_time}
-Grade: ${booking.grade_level}
+📅 *Date:* ${new Date(booking.consultation_date).toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
+⏰ *Time:* ${booking.consultation_time}
+📚 *Grade:* ${booking.grade_level}
+📖 *Subjects:* ${booking.subjects_interest.join(', ')}
 
-We will send the meeting link 24 hours before your appointment.
+We'll send the Google Meet link 24 hours before.
 
-Best regards,
-Lana Tutors`
+_Need to reschedule? Just reply to this message._
+
+See you soon! 👋
+*Lana Tutors*`
       },
       reminder_24h: {
         title: "24-Hour Reminder",
-        body: (booking: any) => `Reminder: Consultation Tomorrow
+        body: (booking: any) => `⏰ *Reminder: Consultation Tomorrow!*
 
 Dear ${booking.parent_name},
 
-Your consultation for ${booking.student_name} is tomorrow.
+Your consultation for *${booking.student_name}* is *TOMORROW*!
 
-Time: ${booking.consultation_time}
-Meeting Link: [Insert link]
+⏰ *Time:* ${booking.consultation_time}
+📹 *Link:* ${booking.meeting_link || '[Coming soon]'}
 
-Please prepare:
-- Current academic challenges
-- Learning goals
-- Questions about our programs
+📝 *Quick prep:*
+• Current challenges
+• Learning goals
+• Your questions
 
-Best regards,
-Lana Tutors`
+_Can't make it? Reply now to reschedule._
+
+See you tomorrow! 🌟
+*Lana Tutors*`
       },
       reminder_1h: {
         title: "1-Hour Reminder",
-        body: (booking: any) => `Consultation Starting Soon
+        body: (booking: any) => `🔔 *Starting in 1 Hour!*
 
-Dear ${booking.parent_name},
+Hi ${booking.parent_name}!
 
-Your consultation for ${booking.student_name} begins in 1 hour.
+Your consultation for ${booking.student_name} starts soon.
 
-Time: ${booking.consultation_time}
-Link: [Insert link]
+⏰ ${booking.consultation_time}
+📹 ${booking.meeting_link || '[Join link]'}
 
-See you soon.
-
-Lana Tutors`
+See you shortly! 👋
+*Lana Tutors*`
       },
       post_consultation: {
         title: "Post-Consultation Follow-up",
-        body: (booking: any) => `Thank You for Meeting With Us
+        body: (booking: any) => `🙏 *Thank You, ${booking.parent_name}!*
 
-Dear ${booking.parent_name},
+It was great meeting you today to discuss ${booking.student_name}'s learning journey.
 
-Thank you for discussing ${booking.student_name}'s educational needs with us today.
+📋 *What's Next:*
+• Review our tutor recommendations (sent via email)
+• Book your first session
+• Get *20% OFF* - valid 48 hours!
 
-Summary: [Add key points]
-Recommendations: [Add next steps]
-Suggested Tutors: [Add recommendations]
+👉 Ready to start? Reply "BOOK" and we'll help you schedule.
 
-Book your first session: [Add link]
+Questions? Just message us!
 
-Special Offer: 20% off if you book within 48 hours.
-
-Questions? Reply to this message or call us.
-
-Best regards,
-Lana Tutors`
+*Lana Tutors* 📚`
       },
       follow_up_3days: {
         title: "3-Day Follow-up",
-        body: (booking: any) => `Following Up on ${booking.student_name}'s Tutoring
+        body: (booking: any) => `Hi ${booking.parent_name}! 👋
 
-Dear ${booking.parent_name},
+Just checking in about tutoring for ${booking.student_name}.
 
-I wanted to follow up regarding tutoring for ${booking.student_name}.
+We have great tutors ready for *${booking.subjects_interest.join(' & ')}*! ✨
 
-We have qualified tutors ready to help with ${booking.subjects_interest.join(' and ')}.
+⏳ Your *20% discount* expires tomorrow!
 
-Can we help you with:
-- Scheduling a trial session
-- Answering questions
-- More tutor information
+Quick options:
+A - Schedule trial session
+B - Ask a question
+C - See tutor profiles
 
-Reminder: 20% discount expires in 24 hours.
+Reply with A, B, or C!
 
-Let us know how we can assist.
-
-Best regards,
-Lana Tutors`
+*Lana Tutors*`
       }
     }
   };
@@ -1043,6 +1138,23 @@ The Lana Team`;
       fetchConsultationBookings();
     } catch (error: any) {
       toast.error("Failed to update status: " + error.message);
+    }
+  };
+
+  const handleSaveAdminNotes = async (bookingId: string, notes: string) => {
+    try {
+      const { error } = await supabase
+        .from("consultation_bookings")
+        .update({ admin_notes: notes })
+        .eq("id", bookingId);
+
+      if (error) throw error;
+
+      toast.success("Notes saved!");
+      setEditingAdminNotes(null);
+      fetchConsultationBookings();
+    } catch (error: any) {
+      toast.error("Failed to save notes: " + error.message);
     }
   };
 
@@ -1820,13 +1932,68 @@ The Lana Tutors Team`
                   )}
                 </div>
 
-                {/* Additional Notes */}
+                {/* Additional Notes from Parent */}
                 {booking.additional_notes && (
                   <div className="pt-2 border-t">
                     <div className="text-xs text-muted-foreground mb-1">Additional Notes from Parent</div>
                     <p className="text-sm bg-muted/50 p-3 rounded-lg">{booking.additional_notes}</p>
                   </div>
                 )}
+
+                {/* Admin Notes Section */}
+                <div className="pt-2 border-t">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="text-xs text-muted-foreground flex items-center gap-1">
+                      <FileText className="h-3 w-3" />
+                      Admin Notes
+                    </div>
+                    {editingAdminNotes !== booking.id && (
+                      <Button 
+                        size="sm" 
+                        variant="ghost" 
+                        className="h-6 text-xs"
+                        onClick={() => {
+                          setEditingAdminNotes(booking.id);
+                          setAdminNotesContent(booking.admin_notes || '');
+                        }}
+                      >
+                        <Edit className="h-3 w-3 mr-1" />
+                        {booking.admin_notes ? 'Edit' : 'Add Note'}
+                      </Button>
+                    )}
+                  </div>
+                  {editingAdminNotes === booking.id ? (
+                    <div className="space-y-2">
+                      <Textarea
+                        placeholder="Add internal notes about this consultation (e.g., parent concerns, follow-up items, special requirements)..."
+                        value={adminNotesContent}
+                        onChange={(e) => setAdminNotesContent(e.target.value)}
+                        className="text-sm min-h-[80px]"
+                      />
+                      <div className="flex gap-2">
+                        <Button 
+                          size="sm" 
+                          onClick={() => handleSaveAdminNotes(booking.id, adminNotesContent)}
+                        >
+                          <Save className="h-3 w-3 mr-1" /> Save
+                        </Button>
+                        <Button 
+                          size="sm" 
+                          variant="outline"
+                          onClick={() => setEditingAdminNotes(null)}
+                        >
+                          <X className="h-3 w-3 mr-1" /> Cancel
+                        </Button>
+                      </div>
+                    </div>
+                  ) : booking.admin_notes ? (
+                    <p className="text-sm bg-yellow-50 dark:bg-yellow-950/20 p-3 rounded-lg border border-yellow-200 dark:border-yellow-900">
+                      {booking.admin_notes}
+                    </p>
+                  ) : (
+                    <p className="text-xs text-muted-foreground italic">No admin notes yet</p>
+                  )}
+                </div>
 
                 {/* Follow-up Status */}
                 {(booking.consultation_outcome || booking.next_action) && (
@@ -1860,10 +2027,19 @@ The Lana Tutors Team`
                   <Button size="sm" variant="outline" onClick={() => openFollowUpDialog(booking)}>
                     <Send className="h-4 w-4 mr-1" /> Follow-up
                   </Button>
-                  {!booking.converted_to_customer && (
-                    <Button size="sm" className="bg-green-600 hover:bg-green-700" onClick={() => handleMarkAsConverted(booking.id)}>
+                  {!booking.converted_to_customer ? (
+                    <Button 
+                      size="sm" 
+                      className="bg-green-600 hover:bg-green-700" 
+                      onClick={() => handleMarkAsConverted(booking.id)}
+                      title="Mark this parent as converted to a paying customer"
+                    >
                       <CheckCircle className="h-4 w-4 mr-1" /> Mark Converted
                     </Button>
+                  ) : (
+                    <Badge className="bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400">
+                      <CheckCircle className="h-3 w-3 mr-1" /> Converted to Customer
+                    </Badge>
                   )}
                 </div>
               </CardContent>
