@@ -120,9 +120,8 @@ export function AdminClassManagement() {
       let query = supabase
         .from("bookings")
         .select(`
-          id, subject, status, meeting_link, notes, amount, created_at, student_id,
-          tutor_availability!inner(start_time, end_time),
-          tutor_profiles:tutor_id(id, email, user_id)
+          id, subject, status, meeting_link, notes, amount, created_at, student_id, tutor_id,
+          tutor_availability!inner(start_time, end_time)
         `)
         .order("tutor_availability(start_time)", { ascending: true });
 
@@ -161,6 +160,8 @@ export function AdminClassManagement() {
         (data || []).map(async (booking: any) => {
           let studentInfo = null;
           let tutorName = 'Unknown';
+          let tutorEmail = '';
+          let tutorUserId = '';
 
           // Fetch student info from profiles using student_id
           if (booking.student_id) {
@@ -168,25 +169,38 @@ export function AdminClassManagement() {
               .from("profiles")
               .select("id, full_name, phone_number")
               .eq("id", booking.student_id)
-              .single();
+              .maybeSingle();
             if (profile) {
               studentInfo = profile;
             }
           }
 
-          // Fetch tutor name from profiles using tutor's user_id
-          if (booking.tutor_profiles?.user_id) {
+          // Fetch tutor info from tutor_profiles using tutor_id
+          if (booking.tutor_id) {
             const { data: tutorProfile } = await supabase
-              .from("profiles")
-              .select("full_name")
-              .eq("id", booking.tutor_profiles.user_id)
-              .single();
-            tutorName = tutorProfile?.full_name || 'Unknown';
+              .from("tutor_profiles")
+              .select("id, email, user_id")
+              .eq("id", booking.tutor_id)
+              .maybeSingle();
+            
+            if (tutorProfile) {
+              tutorEmail = tutorProfile.email || '';
+              tutorUserId = tutorProfile.user_id;
+              
+              // Now fetch tutor name from profiles
+              const { data: profile } = await supabase
+                .from("profiles")
+                .select("full_name")
+                .eq("id", tutorProfile.user_id)
+                .maybeSingle();
+              tutorName = profile?.full_name || 'Unknown';
+            }
           }
 
           return { 
             ...booking, 
             profiles: studentInfo,
+            tutor_profiles: { id: booking.tutor_id, email: tutorEmail, user_id: tutorUserId },
             tutor_name: tutorName 
           };
         })
