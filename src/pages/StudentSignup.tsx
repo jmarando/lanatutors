@@ -194,6 +194,7 @@ const StudentSignup = () => {
           name: formData.fullName,
           accountType: accountType,
           childName: accountType === 'parent' ? formData.childName : undefined,
+          userId: authData.user.id, // Pass userId for communication logging
         }
       }).then(({ error }) => {
         if (error) console.error('Welcome email error:', error);

@@ -1,6 +1,9 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
+const SUPABASE_URL = Deno.env.get("SUPABASE_URL");
+const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -12,6 +15,7 @@ interface WelcomeEmailRequest {
   name: string;
   accountType: 'parent' | 'student';
   childName?: string;
+  userId?: string; // Add userId to log communication
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -20,7 +24,7 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    const { email, name, accountType, childName }: WelcomeEmailRequest = await req.json();
+    const { email, name, accountType, childName, userId }: WelcomeEmailRequest = await req.json();
 
     console.log(`Sending welcome email to ${email} for ${accountType} account`);
 
@@ -162,6 +166,32 @@ const handler = async (req: Request): Promise<Response> => {
     }
 
     console.log("Welcome email sent successfully:", responseData);
+
+    // Log communication to database
+    if (userId && SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY) {
+      try {
+        const supabase = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+        
+        await supabase.from("communication_logs").insert({
+          parent_id: userId,
+          channel: "email",
+          direction: "outbound",
+          subject: `Welcome to Lana Tutors, ${name}! 🎉`,
+          content: `Welcome email sent to ${email}. Account type: ${accountType}.`,
+          status: "sent",
+          metadata: { 
+            email_type: "welcome",
+            account_type: accountType,
+            resend_id: responseData.id 
+          },
+        });
+        
+        console.log("Communication logged successfully");
+      } catch (logError) {
+        console.error("Failed to log communication:", logError);
+        // Don't fail the request if logging fails
+      }
+    }
 
     return new Response(JSON.stringify({ success: true, data: responseData }), {
       status: 200,
