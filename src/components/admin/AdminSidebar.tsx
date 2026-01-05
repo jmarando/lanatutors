@@ -11,7 +11,8 @@ import {
   ClipboardList,
   MessageSquare,
   Edit,
-  UserPlus
+  UserPlus,
+  CalendarClock
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -119,8 +120,13 @@ export function AdminSidebar({ activeTab, onTabChange, counts }: AdminSidebarPro
       label: "Tutoring",
       items: [
         { 
+          id: "class-management", 
+          label: "Class Management", 
+          icon: CalendarClock,
+        },
+        { 
           id: "bookings", 
-          label: "Sessions", 
+          label: "All Sessions", 
           icon: BookMarked, 
           badge: counts.tutoringBookings,
           badgeVariant: "default" as const,
