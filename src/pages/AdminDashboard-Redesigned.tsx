@@ -1374,23 +1374,117 @@ The Lana Tutors Team`
             <CardHeader>
               <div className="flex items-start justify-between">
                 <div>
-                  <CardTitle>{tutor.profiles?.full_name}</CardTitle>
-                  <p className="text-sm text-muted-foreground">{tutor.email}</p>
+                  <CardTitle className="text-lg">{tutor.profiles?.full_name || "No name"}</CardTitle>
+                  <div className="flex flex-wrap gap-2 text-sm text-muted-foreground mt-1">
+                    {tutor.email && <span>{tutor.email}</span>}
+                    {tutor.profiles?.phone_number && (
+                      <>
+                        <span>•</span>
+                        <span>{tutor.profiles.phone_number}</span>
+                      </>
+                    )}
+                  </div>
                 </div>
+                {tutor.gender && (
+                  <Badge variant="outline" className="capitalize">{tutor.gender}</Badge>
+                )}
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid md:grid-cols-2 gap-4">
+              {/* Bio */}
+              {tutor.bio && (
+                <div>
+                  <p className="font-semibold text-sm mb-1">Bio</p>
+                  <p className="text-sm text-muted-foreground line-clamp-3">{tutor.bio}</p>
+                </div>
+              )}
+
+              <div className="grid md:grid-cols-3 gap-4">
                 <div>
                   <p className="font-semibold text-sm">Subjects</p>
                   <p className="text-sm text-muted-foreground">{tutor.subjects?.join(", ") || "None"}</p>
                 </div>
                 <div>
                   <p className="font-semibold text-sm">Experience</p>
-                  <p className="text-sm text-muted-foreground">{tutor.experience_years} years</p>
+                  <p className="text-sm text-muted-foreground">{tutor.experience_years || 0} years</p>
+                </div>
+                <div>
+                  <p className="font-semibold text-sm">Hourly Rate</p>
+                  <p className="text-sm text-muted-foreground">
+                    {tutor.hourly_rate ? `KES ${tutor.hourly_rate.toLocaleString()}` : "Not set"}
+                  </p>
                 </div>
               </div>
-              <div className="flex gap-2">
+
+              <div className="grid md:grid-cols-3 gap-4">
+                <div>
+                  <p className="font-semibold text-sm">Curriculum</p>
+                  <p className="text-sm text-muted-foreground">{tutor.curriculum?.join(", ") || "Not specified"}</p>
+                </div>
+                <div>
+                  <p className="font-semibold text-sm">Teaching Levels</p>
+                  <p className="text-sm text-muted-foreground">{tutor.teaching_levels?.join(", ") || "Not specified"}</p>
+                </div>
+                <div>
+                  <p className="font-semibold text-sm">Teaching Mode</p>
+                  <p className="text-sm text-muted-foreground capitalize">{tutor.teaching_mode?.join(", ") || "Not specified"}</p>
+                </div>
+              </div>
+
+              <div className="grid md:grid-cols-2 gap-4">
+                <div>
+                  <p className="font-semibold text-sm">Current Institution</p>
+                  <p className="text-sm text-muted-foreground">
+                    {tutor.current_institution || "Not specified"}
+                    {tutor.institution_years && ` (${tutor.institution_years} years)`}
+                  </p>
+                </div>
+                <div>
+                  <p className="font-semibold text-sm">Teaching Location</p>
+                  <p className="text-sm text-muted-foreground">{tutor.teaching_location || "Not specified"}</p>
+                </div>
+              </div>
+
+              {/* Qualifications */}
+              {tutor.qualifications && tutor.qualifications.length > 0 && (
+                <div>
+                  <p className="font-semibold text-sm mb-1">Qualifications</p>
+                  <div className="flex flex-wrap gap-1">
+                    {tutor.qualifications.map((qual: string, i: number) => (
+                      <Badge key={i} variant="secondary" className="text-xs">{qual}</Badge>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Education */}
+              {tutor.education && Array.isArray(tutor.education) && tutor.education.length > 0 && (
+                <div>
+                  <p className="font-semibold text-sm mb-1">Education</p>
+                  <div className="space-y-1">
+                    {tutor.education.slice(0, 2).map((edu: any, i: number) => (
+                      <p key={i} className="text-sm text-muted-foreground">
+                        {edu.degree || edu.qualification} - {edu.institution} {edu.year && `(${edu.year})`}
+                      </p>
+                    ))}
+                    {tutor.education.length > 2 && (
+                      <p className="text-xs text-muted-foreground">+{tutor.education.length - 2} more</p>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Tags */}
+              <div className="flex flex-wrap gap-2">
+                {tutor.diaspora_friendly && (
+                  <Badge variant="outline" className="text-xs bg-blue-50 text-blue-700 border-blue-200">Diaspora Friendly</Badge>
+                )}
+                {tutor.display_institution && (
+                  <Badge variant="outline" className="text-xs">Shows Institution</Badge>
+                )}
+              </div>
+
+              <div className="flex gap-2 pt-2 border-t">
                 <Button
                   onClick={() => handleTutorApproval(tutor.id, true)}
                   disabled={processingTutorId === tutor.id}
