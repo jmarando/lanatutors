@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -1636,6 +1637,77 @@ The Lana Tutors Team`
             </CardContent>
           </Card>
         </div>
+
+        {/* Upcoming Consultations Table */}
+        {thisWeekConsultations.length > 0 && (
+          <Card className="mb-6">
+            <CardHeader className="pb-3">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <CalendarIcon className="h-5 w-5 text-primary" />
+                Upcoming This Week ({thisWeekConsultations.length})
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-0">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Date</TableHead>
+                    <TableHead>Time</TableHead>
+                    <TableHead>Student</TableHead>
+                    <TableHead>Parent</TableHead>
+                    <TableHead>Contact</TableHead>
+                    <TableHead>Subjects</TableHead>
+                    <TableHead>Status</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {thisWeekConsultations
+                    .sort((a, b) => new Date(a.consultation_date).getTime() - new Date(b.consultation_date).getTime())
+                    .map((booking) => {
+                      const isTomorrow = booking.consultation_date === tomorrowStr;
+                      return (
+                        <TableRow key={booking.id} className={isTomorrow ? "bg-orange-50 dark:bg-orange-950/20" : ""}>
+                          <TableCell className="font-medium">
+                            <div className="flex items-center gap-2">
+                              {isTomorrow && <Badge variant="outline" className="border-orange-500 text-orange-600 text-xs">Tomorrow</Badge>}
+                              {formatConsultationDate(booking.consultation_date)}
+                            </div>
+                          </TableCell>
+                          <TableCell>{booking.consultation_time}</TableCell>
+                          <TableCell>{booking.student_name}</TableCell>
+                          <TableCell>{booking.parent_name}</TableCell>
+                          <TableCell>
+                            <div className="flex flex-col gap-1">
+                              <a href={`tel:${booking.phone_number}`} className="text-xs text-primary hover:underline">{booking.phone_number}</a>
+                              {booking.email && <a href={`mailto:${booking.email}`} className="text-xs text-muted-foreground hover:underline truncate max-w-[150px]">{booking.email}</a>}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex flex-wrap gap-1">
+                              {booking.subjects_interest?.slice(0, 2).map((subject: string) => (
+                                <Badge key={subject} variant="secondary" className="text-xs">{subject}</Badge>
+                              ))}
+                              {booking.subjects_interest?.length > 2 && (
+                                <Badge variant="outline" className="text-xs">+{booking.subjects_interest.length - 2}</Badge>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge className={
+                              booking.status === 'confirmed' ? 'bg-green-500' :
+                              booking.status === 'pending' ? 'bg-yellow-500' : 'bg-gray-500'
+                            }>
+                              {booking.status}
+                            </Badge>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                </TableBody>
+              </Table>
+            </CardContent>
+          </Card>
+        )}
 
         {consultationBookings.length === 0 ? (
           <Card>
