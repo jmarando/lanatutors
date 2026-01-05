@@ -27,6 +27,7 @@ import { AdminCreateLearningPlan } from "@/components/admin/AdminCreateLearningP
 import { AdminLearningPlanRequests } from "@/components/admin/AdminLearningPlanRequests";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { AdminClassManagement } from "@/components/admin/AdminClassManagement";
+import { AdminReports } from "@/components/admin/AdminReports";
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -1771,6 +1772,8 @@ The Lana Tutors Team`
         return <TutorSignupList />;
       case 'december-bootcamp':
         return <AdminIntensivePrograms />;
+      case 'reports':
+        return <AdminReports />;
       default:
         return renderDashboardContent();
     }

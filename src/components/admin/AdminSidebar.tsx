@@ -12,7 +12,8 @@ import {
   MessageSquare,
   Edit,
   UserPlus,
-  CalendarClock
+  CalendarClock,
+  BarChart3
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -170,6 +171,16 @@ export function AdminSidebar({ activeTab, onTabChange, counts }: AdminSidebarPro
           label: "Review Moderation", 
           icon: Star, 
           badge: counts.pendingReviews 
+        },
+      ],
+    },
+    {
+      label: "Analytics",
+      items: [
+        { 
+          id: "reports", 
+          label: "Reports", 
+          icon: BarChart3 
         },
       ],
     },
