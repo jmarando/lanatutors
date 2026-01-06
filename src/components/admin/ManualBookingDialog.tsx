@@ -33,8 +33,11 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Card, CardContent } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
-import { Check, ChevronsUpDown, Plus } from "lucide-react";
+import { Check, ChevronsUpDown, Plus, UserPlus, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface ManualBookingDialogProps {
@@ -64,6 +67,14 @@ interface Tutor {
   hourly_rate: number | null;
 }
 
+const GRADE_LEVELS = [
+  "Grade 1", "Grade 2", "Grade 3", "Grade 4", "Grade 5", "Grade 6",
+  "Grade 7", "Grade 8", "Grade 9", "Form 1", "Form 2", "Form 3", "Form 4",
+  "Year 7", "Year 8", "Year 9", "Year 10", "Year 11", "Year 12", "Year 13"
+];
+
+const CURRICULA = ["CBC", "8-4-4", "IGCSE", "IB", "American", "British"];
+
 export function ManualBookingDialog({ open, onClose, onSuccess }: ManualBookingDialogProps) {
   const [parents, setParents] = useState<Parent[]>([]);
   const [students, setStudents] = useState<Student[]>([]);
@@ -71,9 +82,25 @@ export function ManualBookingDialog({ open, onClose, onSuccess }: ManualBookingD
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
-  // Form state
+  // Mode: existing or new parent
+  const [parentMode, setParentMode] = useState<"existing" | "new">("existing");
+
+  // Form state - existing parent
   const [selectedParentId, setSelectedParentId] = useState<string>("");
   const [selectedStudentId, setSelectedStudentId] = useState<string>("");
+  
+  // Form state - new parent
+  const [newParentName, setNewParentName] = useState("");
+  const [newParentEmail, setNewParentEmail] = useState("");
+  const [newParentPhone, setNewParentPhone] = useState("");
+  
+  // Form state - new student
+  const [newStudentName, setNewStudentName] = useState("");
+  const [newStudentGrade, setNewStudentGrade] = useState("");
+  const [newStudentCurriculum, setNewStudentCurriculum] = useState("");
+  const [addNewStudent, setAddNewStudent] = useState(false);
+
+  // Booking details
   const [selectedTutorId, setSelectedTutorId] = useState<string>("");
   const [date, setDate] = useState("");
   const [time, setTime] = useState("");
@@ -81,7 +108,6 @@ export function ManualBookingDialog({ open, onClose, onSuccess }: ManualBookingD
   const [subject, setSubject] = useState("");
   const [amount, setAmount] = useState("");
   const [paymentStatus, setPaymentStatus] = useState("pending");
-  const [paymentMethod, setPaymentMethod] = useState("");
   const [notes, setNotes] = useState("");
   const [sendConfirmation, setSendConfirmation] = useState(true);
   const [notifyTutor, setNotifyTutor] = useState(true);
@@ -97,7 +123,6 @@ export function ManualBookingDialog({ open, onClose, onSuccess }: ManualBookingD
   }, [open]);
 
   useEffect(() => {
-    // Filter students when parent changes
     if (selectedParentId) {
       fetchStudentsForParent(selectedParentId);
     } else {
@@ -107,7 +132,6 @@ export function ManualBookingDialog({ open, onClose, onSuccess }: ManualBookingD
   }, [selectedParentId]);
 
   useEffect(() => {
-    // Auto-fill amount from tutor rate
     const selectedTutor = tutors.find(t => t.id === selectedTutorId);
     if (selectedTutor?.hourly_rate && !amount) {
       setAmount(selectedTutor.hourly_rate.toString());
@@ -117,7 +141,6 @@ export function ManualBookingDialog({ open, onClose, onSuccess }: ManualBookingD
   const fetchData = async () => {
     setLoading(true);
     try {
-      // Fetch parents
       const { data: profilesData } = await supabase
         .from("profiles")
         .select("id, full_name, phone_number")
@@ -126,13 +149,11 @@ export function ManualBookingDialog({ open, onClose, onSuccess }: ManualBookingD
 
       setParents(profilesData || []);
 
-      // Fetch tutors
       const { data: tutorData } = await supabase
         .from("tutor_profiles")
         .select("id, user_id, subjects, hourly_rate")
         .eq("verified", true);
 
-      // Enrich with names
       const enrichedTutors = await Promise.all(
         (tutorData || []).map(async (tutor) => {
           const { data: profile } = await supabase
@@ -165,14 +186,107 @@ export function ManualBookingDialog({ open, onClose, onSuccess }: ManualBookingD
     setStudents(data || []);
   };
 
+  const createNewParent = async (): Promise<string | null> => {
+    // Generate a temporary password for the new user
+    const tempPassword = `Temp${Math.random().toString(36).slice(2, 10)}!`;
+    
+    // Create auth user
+    const { data: authData, error: authError } = await supabase.auth.admin.createUser({
+      email: newParentEmail,
+      password: tempPassword,
+      email_confirm: true,
+      user_metadata: { full_name: newParentName }
+    });
+
+    if (authError) {
+      // Try alternative: just create profile for manual entry
+      const newId = crypto.randomUUID();
+      const { error: profileError } = await supabase
+        .from("profiles")
+        .insert({
+          id: newId,
+          full_name: newParentName,
+          phone_number: newParentPhone,
+          account_type: "parent",
+        });
+
+      if (profileError) throw profileError;
+      return newId;
+    }
+
+    // Create profile
+    const { error: profileError } = await supabase
+      .from("profiles")
+      .insert({
+        id: authData.user.id,
+        full_name: newParentName,
+        phone_number: newParentPhone,
+        account_type: "parent",
+      });
+
+    if (profileError) throw profileError;
+    return authData.user.id;
+  };
+
+  const createNewStudent = async (parentId: string): Promise<string | null> => {
+    const { data, error } = await supabase
+      .from("students")
+      .insert({
+        parent_id: parentId,
+        full_name: newStudentName,
+        grade_level: newStudentGrade,
+        curriculum: newStudentCurriculum,
+      })
+      .select()
+      .single();
+
+    if (error) throw error;
+    return data.id;
+  };
+
   const handleSubmit = async () => {
-    if (!selectedParentId || !selectedTutorId || !date || !time || !subject) {
-      toast.error("Please fill in all required fields");
+    // Validation
+    if (parentMode === "new") {
+      if (!newParentName || !newParentPhone) {
+        toast.error("Please fill in parent name and phone");
+        return;
+      }
+      if (!newStudentName || !newStudentGrade || !newStudentCurriculum) {
+        toast.error("Please fill in student details");
+        return;
+      }
+    } else {
+      if (!selectedParentId) {
+        toast.error("Please select a parent");
+        return;
+      }
+    }
+
+    if (!selectedTutorId || !date || !time || !subject) {
+      toast.error("Please fill in all booking details");
       return;
     }
 
     setSubmitting(true);
     try {
+      let parentId = selectedParentId;
+      let studentProfileId = selectedStudentId || null;
+
+      // Create new parent if needed
+      if (parentMode === "new") {
+        const newParentId = await createNewParent();
+        if (!newParentId) throw new Error("Failed to create parent");
+        parentId = newParentId;
+
+        // Create student for new parent
+        const newStudentId = await createNewStudent(parentId);
+        studentProfileId = newStudentId;
+      } else if (addNewStudent && newStudentName && newStudentGrade) {
+        // Add new student to existing parent
+        const newStudentId = await createNewStudent(parentId);
+        studentProfileId = newStudentId;
+      }
+
       const startTime = new Date(`${date}T${time}`);
       const endTime = new Date(startTime.getTime() + parseInt(duration) * 60 * 1000);
 
@@ -195,7 +309,7 @@ export function ManualBookingDialog({ open, onClose, onSuccess }: ManualBookingD
       const { error: bookingError } = await supabase
         .from("bookings")
         .insert({
-          student_id: selectedParentId,
+          student_id: parentId,
           tutor_id: selectedTutorId,
           availability_slot_id: slot.id,
           subject,
@@ -203,30 +317,15 @@ export function ManualBookingDialog({ open, onClose, onSuccess }: ManualBookingD
           status: "confirmed",
           payment_option: paymentStatus === "paid" ? "full" : "pending",
           notes: `[OFFLINE BOOKING] ${notes}`.trim(),
-          student_profile_id: selectedStudentId || null,
+          student_profile_id: studentProfileId,
           booking_source: "manual",
         });
 
       if (bookingError) throw bookingError;
 
-      // Send notifications if enabled
-      if (sendConfirmation) {
-        // Get parent email and send confirmation
-        const { data: emailData } = await supabase.rpc('get_user_email', {
-          _user_id: selectedParentId
-        });
-
-        if (emailData) {
-          await supabase.functions.invoke('send-booking-email', {
-            body: {
-              bookingId: slot.id,
-              recipientEmail: emailData,
-            },
-          });
-        }
-      }
-
-      toast.success("Booking created successfully");
+      toast.success(parentMode === "new" 
+        ? "Parent, student and booking created successfully!" 
+        : "Booking created successfully!");
       handleClose();
       onSuccess();
     } catch (error: any) {
@@ -238,8 +337,16 @@ export function ManualBookingDialog({ open, onClose, onSuccess }: ManualBookingD
   };
 
   const handleClose = () => {
+    setParentMode("existing");
     setSelectedParentId("");
     setSelectedStudentId("");
+    setNewParentName("");
+    setNewParentEmail("");
+    setNewParentPhone("");
+    setNewStudentName("");
+    setNewStudentGrade("");
+    setNewStudentCurriculum("");
+    setAddNewStudent(false);
     setSelectedTutorId("");
     setDate("");
     setTime("");
@@ -247,7 +354,6 @@ export function ManualBookingDialog({ open, onClose, onSuccess }: ManualBookingD
     setSubject("");
     setAmount("");
     setPaymentStatus("pending");
-    setPaymentMethod("");
     setNotes("");
     setSendConfirmation(true);
     setNotifyTutor(true);
@@ -259,259 +365,397 @@ export function ManualBookingDialog({ open, onClose, onSuccess }: ManualBookingD
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-lg max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Create Manual Booking</DialogTitle>
           <DialogDescription>
-            Book a session for a client who called or messaged in.
+            Add a booking for a client who contacted you outside the system.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 py-4">
-          {/* Parent Selection */}
-          <div className="space-y-2">
-            <Label>Parent / Client *</Label>
-            <Popover open={parentOpen} onOpenChange={setParentOpen}>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  role="combobox"
-                  aria-expanded={parentOpen}
-                  className="w-full justify-between"
-                >
-                  {selectedParent
-                    ? `${selectedParent.full_name} ${selectedParent.phone_number ? `(${selectedParent.phone_number})` : ''}`
-                    : "Select parent..."}
-                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-full p-0" align="start">
-                <Command>
-                  <CommandInput placeholder="Search by name or phone..." />
-                  <CommandList>
-                    <CommandEmpty>No parent found.</CommandEmpty>
-                    <CommandGroup>
-                      {parents.map((parent) => (
-                        <CommandItem
-                          key={parent.id}
-                          value={`${parent.full_name} ${parent.phone_number || ''}`}
-                          onSelect={() => {
-                            setSelectedParentId(parent.id);
-                            setParentOpen(false);
-                          }}
-                        >
-                          <Check
-                            className={cn(
-                              "mr-2 h-4 w-4",
-                              selectedParentId === parent.id ? "opacity-100" : "opacity-0"
-                            )}
+        <div className="space-y-6 py-4">
+          {/* Parent/Student Section */}
+          <div className="space-y-4">
+            <div className="flex items-center gap-2">
+              <Users className="h-5 w-5 text-primary" />
+              <h3 className="font-semibold">Parent & Student</h3>
+            </div>
+
+            <Tabs value={parentMode} onValueChange={(v) => setParentMode(v as "existing" | "new")}>
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="existing">Existing Parent</TabsTrigger>
+                <TabsTrigger value="new">
+                  <UserPlus className="h-4 w-4 mr-2" />
+                  New Parent
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="existing" className="space-y-4 mt-4">
+                {/* Existing Parent Selection */}
+                <div className="space-y-2">
+                  <Label>Select Parent *</Label>
+                  <Popover open={parentOpen} onOpenChange={setParentOpen}>
+                    <PopoverTrigger asChild>
+                      <Button
+                        variant="outline"
+                        role="combobox"
+                        aria-expanded={parentOpen}
+                        className="w-full justify-between"
+                      >
+                        {selectedParent
+                          ? `${selectedParent.full_name} ${selectedParent.phone_number ? `(${selectedParent.phone_number})` : ''}`
+                          : "Search parents..."}
+                        <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-full p-0" align="start">
+                      <Command>
+                        <CommandInput placeholder="Search by name or phone..." />
+                        <CommandList>
+                          <CommandEmpty>No parent found. Try "New Parent" tab.</CommandEmpty>
+                          <CommandGroup>
+                            {parents.map((parent) => (
+                              <CommandItem
+                                key={parent.id}
+                                value={`${parent.full_name} ${parent.phone_number || ''}`}
+                                onSelect={() => {
+                                  setSelectedParentId(parent.id);
+                                  setParentOpen(false);
+                                }}
+                              >
+                                <Check
+                                  className={cn(
+                                    "mr-2 h-4 w-4",
+                                    selectedParentId === parent.id ? "opacity-100" : "opacity-0"
+                                  )}
+                                />
+                                <div>
+                                  <p>{parent.full_name}</p>
+                                  {parent.phone_number && (
+                                    <p className="text-xs text-muted-foreground">{parent.phone_number}</p>
+                                  )}
+                                </div>
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+                </div>
+
+                {/* Existing Students */}
+                {students.length > 0 && (
+                  <div className="space-y-2">
+                    <Label>Select Child</Label>
+                    <Select value={selectedStudentId} onValueChange={setSelectedStudentId}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select child..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {students.map((student) => (
+                          <SelectItem key={student.id} value={student.id}>
+                            {student.full_name}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+                )}
+
+                {/* Add New Student to Existing Parent */}
+                {selectedParentId && (
+                  <div className="space-y-3">
+                    <div className="flex items-center space-x-2">
+                      <Checkbox
+                        id="addNewStudent"
+                        checked={addNewStudent}
+                        onCheckedChange={(checked) => setAddNewStudent(checked as boolean)}
+                      />
+                      <Label htmlFor="addNewStudent" className="text-sm font-normal">
+                        Add new child to this parent
+                      </Label>
+                    </div>
+
+                    {addNewStudent && (
+                      <Card>
+                        <CardContent className="pt-4 space-y-3">
+                          <Input
+                            placeholder="Child's name *"
+                            value={newStudentName}
+                            onChange={(e) => setNewStudentName(e.target.value)}
                           />
-                          <div>
-                            <p>{parent.full_name}</p>
-                            {parent.phone_number && (
-                              <p className="text-xs text-muted-foreground">{parent.phone_number}</p>
-                            )}
+                          <div className="grid grid-cols-2 gap-3">
+                            <Select value={newStudentGrade} onValueChange={setNewStudentGrade}>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Grade level *" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {GRADE_LEVELS.map((grade) => (
+                                  <SelectItem key={grade} value={grade}>{grade}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <Select value={newStudentCurriculum} onValueChange={setNewStudentCurriculum}>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Curriculum *" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {CURRICULA.map((c) => (
+                                  <SelectItem key={c} value={c}>{c}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
                           </div>
-                        </CommandItem>
-                      ))}
-                    </CommandGroup>
-                  </CommandList>
-                </Command>
-              </PopoverContent>
-            </Popover>
+                        </CardContent>
+                      </Card>
+                    )}
+                  </div>
+                )}
+              </TabsContent>
+
+              <TabsContent value="new" className="space-y-4 mt-4">
+                {/* New Parent Details */}
+                <Card>
+                  <CardContent className="pt-4 space-y-3">
+                    <p className="text-sm font-medium text-muted-foreground">Parent Details</p>
+                    <Input
+                      placeholder="Parent's full name *"
+                      value={newParentName}
+                      onChange={(e) => setNewParentName(e.target.value)}
+                    />
+                    <div className="grid grid-cols-2 gap-3">
+                      <Input
+                        placeholder="Phone number *"
+                        value={newParentPhone}
+                        onChange={(e) => setNewParentPhone(e.target.value)}
+                      />
+                      <Input
+                        type="email"
+                        placeholder="Email (optional)"
+                        value={newParentEmail}
+                        onChange={(e) => setNewParentEmail(e.target.value)}
+                      />
+                    </div>
+                  </CardContent>
+                </Card>
+
+                {/* New Student Details */}
+                <Card>
+                  <CardContent className="pt-4 space-y-3">
+                    <p className="text-sm font-medium text-muted-foreground">Student Details</p>
+                    <Input
+                      placeholder="Student's full name *"
+                      value={newStudentName}
+                      onChange={(e) => setNewStudentName(e.target.value)}
+                    />
+                    <div className="grid grid-cols-2 gap-3">
+                      <Select value={newStudentGrade} onValueChange={setNewStudentGrade}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Grade level *" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {GRADE_LEVELS.map((grade) => (
+                            <SelectItem key={grade} value={grade}>{grade}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <Select value={newStudentCurriculum} onValueChange={setNewStudentCurriculum}>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Curriculum *" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {CURRICULA.map((c) => (
+                            <SelectItem key={c} value={c}>{c}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </CardContent>
+                </Card>
+              </TabsContent>
+            </Tabs>
           </div>
 
-          {/* Student Selection (optional) */}
-          {students.length > 0 && (
+          <Separator />
+
+          {/* Booking Details */}
+          <div className="space-y-4">
+            <h3 className="font-semibold">Booking Details</h3>
+
+            {/* Tutor Selection */}
             <div className="space-y-2">
-              <Label>Student (Optional)</Label>
-              <Select value={selectedStudentId} onValueChange={setSelectedStudentId}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select child..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {students.map((student) => (
-                    <SelectItem key={student.id} value={student.id}>
-                      {student.full_name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Label>Tutor *</Label>
+              <Popover open={tutorOpen} onOpenChange={setTutorOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={tutorOpen}
+                    className="w-full justify-between"
+                  >
+                    {selectedTutor
+                      ? selectedTutor.full_name
+                      : "Select tutor..."}
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-full p-0" align="start">
+                  <Command>
+                    <CommandInput placeholder="Search by name or subject..." />
+                    <CommandList>
+                      <CommandEmpty>No tutor found.</CommandEmpty>
+                      <CommandGroup>
+                        {tutors.map((tutor) => (
+                          <CommandItem
+                            key={tutor.id}
+                            value={`${tutor.full_name} ${tutor.subjects.join(' ')}`}
+                            onSelect={() => {
+                              setSelectedTutorId(tutor.id);
+                              setTutorOpen(false);
+                            }}
+                          >
+                            <Check
+                              className={cn(
+                                "mr-2 h-4 w-4",
+                                selectedTutorId === tutor.id ? "opacity-100" : "opacity-0"
+                              )}
+                            />
+                            <div>
+                              <p>{tutor.full_name}</p>
+                              <p className="text-xs text-muted-foreground">
+                                {tutor.subjects.slice(0, 3).join(", ")}
+                              </p>
+                            </div>
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
             </div>
-          )}
 
-          {/* Tutor Selection */}
-          <div className="space-y-2">
-            <Label>Tutor *</Label>
-            <Popover open={tutorOpen} onOpenChange={setTutorOpen}>
-              <PopoverTrigger asChild>
-                <Button
-                  variant="outline"
-                  role="combobox"
-                  aria-expanded={tutorOpen}
-                  className="w-full justify-between"
-                >
-                  {selectedTutor
-                    ? selectedTutor.full_name
-                    : "Select tutor..."}
-                  <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                </Button>
-              </PopoverTrigger>
-              <PopoverContent className="w-full p-0" align="start">
-                <Command>
-                  <CommandInput placeholder="Search by name or subject..." />
-                  <CommandList>
-                    <CommandEmpty>No tutor found.</CommandEmpty>
-                    <CommandGroup>
-                      {tutors.map((tutor) => (
-                        <CommandItem
-                          key={tutor.id}
-                          value={`${tutor.full_name} ${tutor.subjects.join(' ')}`}
-                          onSelect={() => {
-                            setSelectedTutorId(tutor.id);
-                            setTutorOpen(false);
-                          }}
-                        >
-                          <Check
-                            className={cn(
-                              "mr-2 h-4 w-4",
-                              selectedTutorId === tutor.id ? "opacity-100" : "opacity-0"
-                            )}
-                          />
-                          <div>
-                            <p>{tutor.full_name}</p>
-                            <p className="text-xs text-muted-foreground">
-                              {tutor.subjects.slice(0, 3).join(", ")}
-                            </p>
-                          </div>
-                        </CommandItem>
-                      ))}
-                    </CommandGroup>
-                  </CommandList>
-                </Command>
-              </PopoverContent>
-            </Popover>
-          </div>
+            {/* Session Details */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="date">Date *</Label>
+                <Input
+                  id="date"
+                  type="date"
+                  value={date}
+                  onChange={(e) => setDate(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="time">Time *</Label>
+                <Input
+                  id="time"
+                  type="time"
+                  value={time}
+                  onChange={(e) => setTime(e.target.value)}
+                />
+              </div>
+            </div>
 
-          {/* Session Details */}
-          <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Duration</Label>
+                <Select value={duration} onValueChange={setDuration}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="30">30 minutes</SelectItem>
+                    <SelectItem value="45">45 minutes</SelectItem>
+                    <SelectItem value="60">1 hour</SelectItem>
+                    <SelectItem value="90">1.5 hours</SelectItem>
+                    <SelectItem value="120">2 hours</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Subject *</Label>
+                <Select value={subject} onValueChange={setSubject}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select subject" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {selectedTutor?.subjects.map((subj) => (
+                      <SelectItem key={subj} value={subj}>
+                        {subj}
+                      </SelectItem>
+                    )) || (
+                      <SelectItem value="" disabled>
+                        Select a tutor first
+                      </SelectItem>
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {/* Payment Info */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="amount">Amount (KES)</Label>
+                <Input
+                  id="amount"
+                  type="number"
+                  placeholder="0"
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Payment Status</Label>
+                <Select value={paymentStatus} onValueChange={setPaymentStatus}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="paid">Paid</SelectItem>
+                    <SelectItem value="pending">Pending</SelectItem>
+                    <SelectItem value="deposit">Deposit Paid</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            {/* Notes */}
             <div className="space-y-2">
-              <Label htmlFor="date">Date *</Label>
-              <Input
-                id="date"
-                type="date"
-                value={date}
-                onChange={(e) => setDate(e.target.value)}
+              <Label htmlFor="notes">Notes</Label>
+              <Textarea
+                id="notes"
+                placeholder="How they heard about us, special requirements, etc..."
+                value={notes}
+                onChange={(e) => setNotes(e.target.value)}
+                rows={2}
               />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="time">Time *</Label>
-              <Input
-                id="time"
-                type="time"
-                value={time}
-                onChange={(e) => setTime(e.target.value)}
-              />
-            </div>
-          </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>Duration</Label>
-              <Select value={duration} onValueChange={setDuration}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="30">30 minutes</SelectItem>
-                  <SelectItem value="45">45 minutes</SelectItem>
-                  <SelectItem value="60">1 hour</SelectItem>
-                  <SelectItem value="90">1.5 hours</SelectItem>
-                  <SelectItem value="120">2 hours</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>Subject *</Label>
-              <Select value={subject} onValueChange={setSubject}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select subject" />
-                </SelectTrigger>
-                <SelectContent>
-                  {selectedTutor?.subjects.map((subj) => (
-                    <SelectItem key={subj} value={subj}>
-                      {subj}
-                    </SelectItem>
-                  )) || (
-                    <SelectItem value="" disabled>
-                      Select a tutor first
-                    </SelectItem>
-                  )}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          {/* Payment Info */}
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="amount">Amount (KES)</Label>
-              <Input
-                id="amount"
-                type="number"
-                placeholder="0"
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Payment Status</Label>
-              <Select value={paymentStatus} onValueChange={setPaymentStatus}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="paid">Paid</SelectItem>
-                  <SelectItem value="pending">Pending</SelectItem>
-                  <SelectItem value="deposit">Deposit Paid</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-
-          {/* Notes */}
-          <div className="space-y-2">
-            <Label htmlFor="notes">Notes</Label>
-            <Textarea
-              id="notes"
-              placeholder="Any additional notes about this booking..."
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              rows={3}
-            />
-          </div>
-
-          {/* Notification Options */}
-          <div className="space-y-3 pt-2">
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="sendConfirmation"
-                checked={sendConfirmation}
-                onCheckedChange={(checked) => setSendConfirmation(checked as boolean)}
-              />
-              <Label htmlFor="sendConfirmation" className="text-sm font-normal">
-                Send confirmation email to parent
-              </Label>
-            </div>
-            <div className="flex items-center space-x-2">
-              <Checkbox
-                id="notifyTutor"
-                checked={notifyTutor}
-                onCheckedChange={(checked) => setNotifyTutor(checked as boolean)}
-              />
-              <Label htmlFor="notifyTutor" className="text-sm font-normal">
-                Notify tutor about this session
-              </Label>
+            {/* Notification Options */}
+            <div className="flex gap-6 pt-2">
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="sendConfirmation"
+                  checked={sendConfirmation}
+                  onCheckedChange={(checked) => setSendConfirmation(checked as boolean)}
+                />
+                <Label htmlFor="sendConfirmation" className="text-sm font-normal">
+                  Email parent
+                </Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="notifyTutor"
+                  checked={notifyTutor}
+                  onCheckedChange={(checked) => setNotifyTutor(checked as boolean)}
+                />
+                <Label htmlFor="notifyTutor" className="text-sm font-normal">
+                  Notify tutor
+                </Label>
+              </div>
             </div>
           </div>
         </div>
@@ -522,7 +766,7 @@ export function ManualBookingDialog({ open, onClose, onSuccess }: ManualBookingD
           </Button>
           <Button onClick={handleSubmit} disabled={submitting}>
             <Plus className="h-4 w-4 mr-2" />
-            {submitting ? "Creating..." : "Create Booking"}
+            {submitting ? "Creating..." : parentMode === "new" ? "Create Parent & Booking" : "Create Booking"}
           </Button>
         </DialogFooter>
       </DialogContent>
