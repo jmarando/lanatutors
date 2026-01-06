@@ -2598,9 +2598,27 @@ const ApplicationReviewCard = ({ application, onReview }: any) => {
 
 const InterviewCard = ({ application, onResult }: any) => {
   const [notes, setNotes] = useState(application.interview_notes || "");
+  const [saving, setSaving] = useState(false);
   const isPending = application.status === 'interview_scheduled';
   const isPassed = application.status === 'passed' || application.status === 'interview_passed';
   const isFailed = application.status === 'failed' || application.status === 'interview_failed';
+
+  const handleSaveNotes = async () => {
+    setSaving(true);
+    try {
+      const { error } = await supabase
+        .from("tutor_applications")
+        .update({ interview_notes: notes })
+        .eq("id", application.id);
+      
+      if (error) throw error;
+      toast.success("Notes saved!");
+    } catch (error: any) {
+      toast.error("Failed to save notes: " + error.message);
+    } finally {
+      setSaving(false);
+    }
+  };
 
   return (
     <Card>
@@ -2641,25 +2659,37 @@ const InterviewCard = ({ application, onResult }: any) => {
           </div>
         )}
 
+        {/* Notes section - always visible */}
+        <div className="space-y-2">
+          <p className="font-semibold text-sm">Interview Notes</p>
+          <Textarea
+            placeholder="Interview notes..."
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            rows={3}
+          />
+          <Button 
+            onClick={handleSaveNotes} 
+            variant="outline" 
+            size="sm"
+            disabled={saving}
+          >
+            <Save className="w-4 h-4 mr-2" />
+            {saving ? "Saving..." : "Save Notes"}
+          </Button>
+        </div>
+
         {isPending && (
-          <>
-            <Textarea
-              placeholder="Interview notes..."
-              value={notes}
-              onChange={(e) => setNotes(e.target.value)}
-              rows={3}
-            />
-            <div className="flex gap-2">
-              <Button onClick={() => onResult(application.id, true, notes)} className="bg-green-600 hover:bg-green-700">
-                <CheckCircle className="w-4 h-4 mr-2" />
-                Passed - Send Profile Setup
-              </Button>
-              <Button onClick={() => onResult(application.id, false, notes)} variant="destructive">
-                <XCircle className="w-4 h-4 mr-2" />
-                Failed
-              </Button>
-            </div>
-          </>
+          <div className="flex gap-2 pt-2 border-t">
+            <Button onClick={() => onResult(application.id, true, notes)} className="bg-green-600 hover:bg-green-700">
+              <CheckCircle className="w-4 h-4 mr-2" />
+              Passed - Send Profile Setup
+            </Button>
+            <Button onClick={() => onResult(application.id, false, notes)} variant="destructive">
+              <XCircle className="w-4 h-4 mr-2" />
+              Failed
+            </Button>
+          </div>
         )}
       </CardContent>
     </Card>
