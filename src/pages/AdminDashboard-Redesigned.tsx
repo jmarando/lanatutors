@@ -70,8 +70,9 @@ const AdminDashboard = () => {
   const [rescheduleTime, setRescheduleTime] = useState("");
   const [processingTutorId, setProcessingTutorId] = useState<string | null>(null);
   const [sendingEmail, setSendingEmail] = useState(false);
-  const [editingAdminNotes, setEditingAdminNotes] = useState<string | null>(null);
-  const [adminNotesContent, setAdminNotesContent] = useState("");
+  const [addingNoteToBooking, setAddingNoteToBooking] = useState<string | null>(null);
+  const [newNoteContent, setNewNoteContent] = useState("");
+  const [consultationNotes, setConsultationNotes] = useState<Record<string, any[]>>({});
 
   // Message templates for customer journey - Enhanced and professional
   const messageTemplates = {
@@ -1141,20 +1142,37 @@ The Lana Team`;
     }
   };
 
-  const handleSaveAdminNotes = async (bookingId: string, notes: string) => {
+  const fetchConsultationNotes = async (consultationId: string) => {
+    const { data, error } = await supabase
+      .from("consultation_notes")
+      .select("*")
+      .eq("consultation_id", consultationId)
+      .order("created_at", { ascending: false });
+    
+    if (!error && data) {
+      setConsultationNotes(prev => ({ ...prev, [consultationId]: data }));
+    }
+  };
+
+  const handleAddNote = async (bookingId: string, note: string) => {
+    if (!note.trim()) {
+      toast.error("Please enter a note");
+      return;
+    }
     try {
+      const { data: { user } } = await supabase.auth.getUser();
       const { error } = await supabase
-        .from("consultation_bookings")
-        .update({ admin_notes: notes })
-        .eq("id", bookingId);
+        .from("consultation_notes")
+        .insert({ consultation_id: bookingId, note: note.trim(), created_by: user?.id });
 
       if (error) throw error;
 
-      toast.success("Notes saved!");
-      setEditingAdminNotes(null);
-      fetchConsultationBookings();
+      toast.success("Note added!");
+      setAddingNoteToBooking(null);
+      setNewNoteContent("");
+      fetchConsultationNotes(bookingId);
     } catch (error: any) {
-      toast.error("Failed to save notes: " + error.message);
+      toast.error("Failed to add note: " + error.message);
     }
   };
 
@@ -1940,58 +1958,103 @@ The Lana Tutors Team`
                   </div>
                 )}
 
-                {/* Admin Notes Section */}
+                {/* Admin Notes Section - Multiple Notes */}
                 <div className="pt-2 border-t">
                   <div className="flex items-center justify-between mb-2">
                     <div className="text-xs text-muted-foreground flex items-center gap-1">
                       <FileText className="h-3 w-3" />
-                      Admin Notes
+                      Admin Notes ({consultationNotes[booking.id]?.length || 0})
                     </div>
-                    {editingAdminNotes !== booking.id && (
+                    {addingNoteToBooking !== booking.id && (
                       <Button 
                         size="sm" 
                         variant="ghost" 
                         className="h-6 text-xs"
                         onClick={() => {
-                          setEditingAdminNotes(booking.id);
-                          setAdminNotesContent(booking.admin_notes || '');
+                          setAddingNoteToBooking(booking.id);
+                          setNewNoteContent('');
+                          if (!consultationNotes[booking.id]) {
+                            fetchConsultationNotes(booking.id);
+                          }
                         }}
                       >
                         <Edit className="h-3 w-3 mr-1" />
-                        {booking.admin_notes ? 'Edit' : 'Add Note'}
+                        Add Note
                       </Button>
                     )}
                   </div>
-                  {editingAdminNotes === booking.id ? (
-                    <div className="space-y-2">
+                  
+                  {/* Add Note Form */}
+                  {addingNoteToBooking === booking.id && (
+                    <div className="space-y-2 mb-3">
                       <Textarea
                         placeholder="Add internal notes about this consultation (e.g., parent concerns, follow-up items, special requirements)..."
-                        value={adminNotesContent}
-                        onChange={(e) => setAdminNotesContent(e.target.value)}
+                        value={newNoteContent}
+                        onChange={(e) => setNewNoteContent(e.target.value)}
                         className="text-sm min-h-[80px]"
+                        autoFocus
                       />
                       <div className="flex gap-2">
                         <Button 
                           size="sm" 
-                          onClick={() => handleSaveAdminNotes(booking.id, adminNotesContent)}
+                          onClick={() => handleAddNote(booking.id, newNoteContent)}
                         >
-                          <Save className="h-3 w-3 mr-1" /> Save
+                          <Save className="h-3 w-3 mr-1" /> Save Note
                         </Button>
                         <Button 
                           size="sm" 
                           variant="outline"
-                          onClick={() => setEditingAdminNotes(null)}
+                          onClick={() => {
+                            setAddingNoteToBooking(null);
+                            setNewNoteContent('');
+                          }}
                         >
                           <X className="h-3 w-3 mr-1" /> Cancel
                         </Button>
                       </div>
                     </div>
-                  ) : booking.admin_notes ? (
-                    <p className="text-sm bg-yellow-50 dark:bg-yellow-950/20 p-3 rounded-lg border border-yellow-200 dark:border-yellow-900">
-                      {booking.admin_notes}
-                    </p>
+                  )}
+
+                  {/* Display Notes List */}
+                  {consultationNotes[booking.id]?.length > 0 ? (
+                    <div className="space-y-2 max-h-[200px] overflow-y-auto">
+                      {consultationNotes[booking.id].map((note: any) => (
+                        <div 
+                          key={note.id} 
+                          className="text-sm bg-yellow-50 dark:bg-yellow-950/20 p-3 rounded-lg border border-yellow-200 dark:border-yellow-900"
+                        >
+                          <p>{note.note}</p>
+                          <p className="text-xs text-muted-foreground mt-1">
+                            {new Date(note.created_at).toLocaleDateString('en-US', { 
+                              month: 'short', 
+                              day: 'numeric', 
+                              year: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit'
+                            })}
+                          </p>
+                        </div>
+                      ))}
+                    </div>
+                  ) : !consultationNotes[booking.id] ? (
+                    <Button 
+                      variant="link" 
+                      size="sm" 
+                      className="text-xs p-0 h-auto"
+                      onClick={() => fetchConsultationNotes(booking.id)}
+                    >
+                      Load notes
+                    </Button>
                   ) : (
                     <p className="text-xs text-muted-foreground italic">No admin notes yet</p>
+                  )}
+
+                  {/* Legacy note display if exists */}
+                  {booking.admin_notes && !consultationNotes[booking.id]?.length && (
+                    <div className="mt-2 text-sm bg-muted/50 p-3 rounded-lg border">
+                      <p className="text-xs text-muted-foreground mb-1">Legacy Note:</p>
+                      <p>{booking.admin_notes}</p>
+                    </div>
                   )}
                 </div>
 
