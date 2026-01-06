@@ -89,7 +89,7 @@ export function AdminSidebar({ activeTab, onTabChange, counts }: AdminSidebarPro
         },
         { 
           id: "tutor-signups", 
-          label: "Signup Forms", 
+          label: "Tutor Signup", 
           icon: GraduationCap 
         },
       ],
