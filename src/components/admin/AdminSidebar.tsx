@@ -187,8 +187,8 @@ export function AdminSidebar({ activeTab, onTabChange, counts }: AdminSidebarPro
   ];
 
   return (
-    <Sidebar collapsible="icon" className="border-r">
-      <SidebarHeader className="border-b px-4 py-4">
+    <Sidebar collapsible="icon" className="border-r bg-background">
+      <SidebarHeader className="border-b px-4 py-4 bg-background">
         <div className="flex items-center gap-2">
           <div className="h-8 w-8 rounded-lg bg-primary flex items-center justify-center">
             <span className="text-primary-foreground font-bold text-sm">L</span>
@@ -202,7 +202,7 @@ export function AdminSidebar({ activeTab, onTabChange, counts }: AdminSidebarPro
         </div>
       </SidebarHeader>
       
-      <SidebarContent className="px-2 py-2">
+      <SidebarContent className="px-2 py-2 bg-background">
         {menuGroups.map((group) => (
           <SidebarGroup key={group.label}>
             <SidebarGroupLabel className="text-xs uppercase tracking-wide text-muted-foreground px-2">
@@ -241,7 +241,7 @@ export function AdminSidebar({ activeTab, onTabChange, counts }: AdminSidebarPro
         ))}
       </SidebarContent>
       
-      <SidebarFooter className="border-t px-4 py-3">
+      <SidebarFooter className="border-t px-4 py-3 bg-background">
         {!isCollapsed && (
           <p className="text-xs text-muted-foreground">
             © 2024 Lana Tutors
