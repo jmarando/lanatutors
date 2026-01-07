@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -13,9 +13,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { 
-  Phone, 
   Mail, 
-  Copy, 
   Users, 
   Search, 
   MessageCircle, 
@@ -27,6 +25,7 @@ import {
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { AdminParentDetail } from "./AdminParentDetail";
+import { ManualBookingDialog } from "./ManualBookingDialog";
 
 interface StudentWithParent {
   id: string;
@@ -59,6 +58,7 @@ export function AdminStudentHub() {
   const [curriculumFilter, setCurriculumFilter] = useState<string>("all");
   const [gradeFilter, setGradeFilter] = useState<string>("all");
   const [selectedParentId, setSelectedParentId] = useState<string | null>(null);
+  const [showAddDialog, setShowAddDialog] = useState(false);
   const [stats, setStats] = useState<SummaryStats>({
     totalStudents: 0,
     newThisWeek: 0,
@@ -237,34 +237,6 @@ export function AdminStudentHub() {
     window.open(`https://wa.me/${formattedPhone}?text=${message}`, '_blank');
   };
 
-  const copyAllEmails = () => {
-    const emails = filteredStudents
-      .map(s => s.parent_email || s.email)
-      .filter(Boolean)
-      .join(", ");
-    
-    if (emails) {
-      navigator.clipboard.writeText(emails);
-      toast.success(`Copied ${filteredStudents.filter(s => s.parent_email || s.email).length} emails`);
-    } else {
-      toast.error("No emails found");
-    }
-  };
-
-  const copyAllPhones = () => {
-    const phones = filteredStudents
-      .map(s => s.parent_phone)
-      .filter(Boolean)
-      .join(", ");
-    
-    if (phones) {
-      navigator.clipboard.writeText(phones);
-      toast.success(`Copied ${filteredStudents.filter(s => s.parent_phone).length} phone numbers`);
-    } else {
-      toast.error("No phone numbers found");
-    }
-  };
-
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -273,10 +245,16 @@ export function AdminStudentHub() {
           <h2 className="text-2xl font-bold">Student Hub</h2>
           <p className="text-muted-foreground">Manage parents and students</p>
         </div>
-        <Button onClick={fetchStudents} variant="outline" size="sm">
-          <RefreshCw className="h-4 w-4 mr-2" />
-          Refresh
-        </Button>
+        <div className="flex gap-2">
+          <Button onClick={() => setShowAddDialog(true)} size="sm">
+            <UserPlus className="h-4 w-4 mr-2" />
+            Add Student / Parent
+          </Button>
+          <Button onClick={fetchStudents} variant="outline" size="sm">
+            <RefreshCw className="h-4 w-4 mr-2" />
+            Refresh
+          </Button>
+        </div>
       </div>
 
       {/* Summary Cards */}
@@ -311,7 +289,7 @@ export function AdminStudentHub() {
           <CardContent className="p-4">
             <div className="flex items-center gap-3">
               <div className="p-2 bg-blue-500/10 rounded-lg">
-                <Copy className="h-5 w-5 text-blue-500" />
+                <Users className="h-5 w-5 text-blue-500" />
               </div>
               <div>
                 <p className="text-2xl font-bold">{stats.activePackages}</p>
@@ -379,22 +357,10 @@ export function AdminStudentHub() {
         </CardContent>
       </Card>
 
-      {/* Bulk Actions */}
-      <div className="flex items-center justify-between">
-        <p className="text-sm text-muted-foreground">
-          Showing {filteredStudents.length} student{filteredStudents.length !== 1 ? 's' : ''}
-        </p>
-        <div className="flex gap-2">
-          <Button onClick={copyAllEmails} size="sm" variant="outline">
-            <Mail className="h-4 w-4 mr-2" />
-            Copy Emails
-          </Button>
-          <Button onClick={copyAllPhones} size="sm" variant="outline">
-            <Phone className="h-4 w-4 mr-2" />
-            Copy Phones
-          </Button>
-        </div>
-      </div>
+      {/* Count */}
+      <p className="text-sm text-muted-foreground">
+        Showing {filteredStudents.length} student{filteredStudents.length !== 1 ? 's' : ''}
+      </p>
 
       {/* Students Table */}
       <Card>
@@ -518,6 +484,16 @@ export function AdminStudentHub() {
       <AdminParentDetail
         parentId={selectedParentId}
         onClose={() => setSelectedParentId(null)}
+      />
+
+      {/* Add Student/Parent Dialog */}
+      <ManualBookingDialog
+        open={showAddDialog}
+        onClose={() => setShowAddDialog(false)}
+        onSuccess={() => {
+          fetchStudents();
+          fetchStats();
+        }}
       />
     </div>
   );
