@@ -111,6 +111,7 @@ export function ManualBookingDialog({ open, onClose, onSuccess }: ManualBookingD
   const [notes, setNotes] = useState("");
   const [sendConfirmation, setSendConfirmation] = useState(true);
   const [notifyTutor, setNotifyTutor] = useState(true);
+  const [addToCalendar, setAddToCalendar] = useState(true);
 
   // Combobox state
   const [parentOpen, setParentOpen] = useState(false);
@@ -306,7 +307,7 @@ export function ManualBookingDialog({ open, onClose, onSuccess }: ManualBookingD
       if (slotError) throw slotError;
 
       // Create booking
-      const { error: bookingError } = await supabase
+      const { data: bookingData, error: bookingError } = await supabase
         .from("bookings")
         .insert({
           student_id: parentId,
@@ -319,9 +320,35 @@ export function ManualBookingDialog({ open, onClose, onSuccess }: ManualBookingD
           notes: `[OFFLINE BOOKING] ${notes}`.trim(),
           student_profile_id: studentProfileId,
           booking_source: "manual",
-        });
+        })
+        .select()
+        .single();
 
       if (bookingError) throw bookingError;
+
+      // Add to central calendar if enabled
+      if (addToCalendar) {
+        try {
+          const studentName = studentProfileId 
+            ? (parentMode === "new" ? newStudentName : students.find(s => s.id === studentProfileId)?.full_name || "Student")
+            : (parentMode === "new" ? newStudentName : "Student");
+          const tutorName = tutors.find(t => t.id === selectedTutorId)?.full_name || "Tutor";
+
+          await supabase.functions.invoke("sync-to-central-calendar", {
+            body: {
+              bookingId: bookingData.id,
+              summary: `${subject} - ${studentName}`,
+              description: `Tutoring session\nStudent: ${studentName}\nTutor: ${tutorName}\nSubject: ${subject}\n${notes ? `Notes: ${notes}` : ""}`,
+              startTime: startTime.toISOString(),
+              endTime: endTime.toISOString(),
+            },
+          });
+        } catch (calError) {
+          console.error("Calendar sync error:", calError);
+          // Don't fail the booking if calendar sync fails
+          toast.warning("Booking created but calendar sync failed");
+        }
+      }
 
       toast.success(parentMode === "new" 
         ? "Parent, student and booking created successfully!" 
@@ -737,7 +764,7 @@ export function ManualBookingDialog({ open, onClose, onSuccess }: ManualBookingD
             </div>
 
             {/* Notification Options */}
-            <div className="flex gap-6 pt-2">
+            <div className="flex flex-wrap gap-6 pt-2">
               <div className="flex items-center space-x-2">
                 <Checkbox
                   id="sendConfirmation"
@@ -756,6 +783,16 @@ export function ManualBookingDialog({ open, onClose, onSuccess }: ManualBookingD
                 />
                 <Label htmlFor="notifyTutor" className="text-sm font-normal">
                   Notify tutor
+                </Label>
+              </div>
+              <div className="flex items-center space-x-2">
+                <Checkbox
+                  id="addToCalendar"
+                  checked={addToCalendar}
+                  onCheckedChange={(checked) => setAddToCalendar(checked as boolean)}
+                />
+                <Label htmlFor="addToCalendar" className="text-sm font-normal">
+                  Add to Lana Calendar
                 </Label>
               </div>
             </div>
