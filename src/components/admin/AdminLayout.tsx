@@ -26,14 +26,14 @@ export function AdminLayout({ children, activeTab, onTabChange, counts }: AdminL
           onTabChange={onTabChange} 
           counts={counts} 
         />
-        <main className="flex-1 overflow-auto bg-background">
-          <header className="sticky top-0 z-10 flex h-14 items-center gap-4 border-b bg-background px-4 md:px-6">
+        <main className="flex-1 overflow-auto bg-white dark:bg-background relative z-0">
+          <header className="sticky top-0 z-10 flex h-14 items-center gap-4 border-b bg-white dark:bg-background px-4 md:px-6">
             <SidebarTrigger className="-ml-2" />
             <div className="flex-1">
               <h1 className="text-lg font-semibold text-foreground">Admin Dashboard</h1>
             </div>
           </header>
-          <div className="p-4 md:p-6 bg-background">
+          <div className="p-4 md:p-6 bg-white dark:bg-background min-h-full">
             {children}
           </div>
         </main>
