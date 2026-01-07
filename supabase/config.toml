@@ -149,3 +149,6 @@ verify_jwt = false
 
 [functions.generate-learning-plan-payment-link]
 verify_jwt = false
+
+[functions.sync-to-central-calendar]
+verify_jwt = false
