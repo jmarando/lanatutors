@@ -681,14 +681,16 @@ export function ManualBookingDialog({ open, onClose, onSuccess }: ManualBookingD
                     <SelectValue placeholder="Select subject" />
                   </SelectTrigger>
                   <SelectContent>
-                    {selectedTutor?.subjects.map((subj) => (
-                      <SelectItem key={subj} value={subj}>
-                        {subj}
-                      </SelectItem>
-                    )) || (
-                      <SelectItem value="" disabled>
+                    {selectedTutor?.subjects && selectedTutor.subjects.length > 0 ? (
+                      selectedTutor.subjects.map((subj) => (
+                        <SelectItem key={subj} value={subj}>
+                          {subj}
+                        </SelectItem>
+                      ))
+                    ) : (
+                      <div className="px-2 py-1.5 text-sm text-muted-foreground">
                         Select a tutor first
-                      </SelectItem>
+                      </div>
                     )}
                   </SelectContent>
                 </Select>
