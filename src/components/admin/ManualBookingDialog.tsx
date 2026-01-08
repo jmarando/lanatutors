@@ -535,18 +535,23 @@ export function ManualBookingDialog({ open, onClose, onSuccess }: ManualBookingD
                       value={newParentName}
                       onChange={(e) => setNewParentName(e.target.value)}
                     />
-                    <div className="grid grid-cols-2 gap-3">
-                      <Input
-                        placeholder="Phone number *"
-                        value={newParentPhone}
-                        onChange={(e) => setNewParentPhone(e.target.value)}
-                      />
+                    <Input
+                      placeholder="Phone number *"
+                      value={newParentPhone}
+                      onChange={(e) => setNewParentPhone(e.target.value)}
+                    />
+                    <div className="space-y-1">
                       <Input
                         type="email"
-                        placeholder="Email (optional)"
+                        placeholder="Email address"
                         value={newParentEmail}
                         onChange={(e) => setNewParentEmail(e.target.value)}
                       />
+                      <p className="text-xs text-muted-foreground">
+                        {newParentEmail 
+                          ? "✓ Welcome email with login credentials will be sent" 
+                          : "Add email to send login credentials automatically"}
+                      </p>
                     </div>
                   </CardContent>
                 </Card>

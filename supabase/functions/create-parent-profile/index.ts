@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
+import { Resend } from "https://esm.sh/resend@2.0.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -10,6 +11,7 @@ interface CreateParentRequest {
   fullName: string;
   phoneNumber: string;
   email?: string;
+  sendWelcomeEmail?: boolean;
 }
 
 serve(async (req) => {
@@ -70,12 +72,13 @@ serve(async (req) => {
     console.log(`Admin ${user.email} creating parent profile`);
 
     const parentData: CreateParentRequest = await req.json();
+    const hasRealEmail = parentData.email && !parentData.email.includes('@lana-placeholder.local');
 
     // Generate email if not provided (use phone as placeholder)
     const email = parentData.email || `parent_${parentData.phoneNumber.replace(/\D/g, '')}@lana-placeholder.local`;
 
     // Create auth user with temporary password
-    const tempPassword = `Temp${Math.random().toString(36).slice(2, 10)}!1Aa`;
+    const tempPassword = `Lana${Math.random().toString(36).slice(2, 8)}!2025`;
     
     const { data: authUser, error: authError } = await supabaseAdmin.auth.admin.createUser({
       email: email,
@@ -127,14 +130,62 @@ serve(async (req) => {
       // Don't fail the whole operation for role assignment
     }
 
+    // Send welcome email if real email provided
+    let emailSent = false;
+    if (hasRealEmail && parentData.sendWelcomeEmail !== false) {
+      try {
+        const resendApiKey = Deno.env.get("RESEND_API_KEY");
+        if (resendApiKey) {
+          const resend = new Resend(resendApiKey);
+          const loginUrl = `${Deno.env.get("SUPABASE_URL")?.replace('.supabase.co', '.lovable.app') || 'https://lanatutors.com'}/login`;
+          
+          await resend.emails.send({
+            from: "Lana Tutors <hello@lanatutors.com>",
+            to: [email],
+            subject: "Welcome to Lana Tutors - Your Account is Ready!",
+            html: `
+              <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                <h1 style="color: #2563eb;">Welcome to Lana Tutors!</h1>
+                <p>Dear ${parentData.fullName},</p>
+                <p>Your parent account has been created. You can now access the Lana Tutors portal to manage your child's tutoring sessions.</p>
+                
+                <div style="background: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                  <p style="margin: 0 0 10px 0;"><strong>Your Login Details:</strong></p>
+                  <p style="margin: 5px 0;">Email: <strong>${email}</strong></p>
+                  <p style="margin: 5px 0;">Temporary Password: <strong>${tempPassword}</strong></p>
+                </div>
+                
+                <p><strong>Important:</strong> For security, you'll be asked to change your password when you first log in.</p>
+                
+                <a href="${loginUrl}" style="display: inline-block; background: #2563eb; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; margin: 16px 0;">
+                  Log In to Your Account
+                </a>
+                
+                <p>If you have any questions, please don't hesitate to reach out to us.</p>
+                <p>Best regards,<br>The Lana Tutors Team</p>
+              </div>
+            `,
+          });
+          emailSent = true;
+          console.log(`Welcome email sent to ${email}`);
+        }
+      } catch (emailError) {
+        console.error("Failed to send welcome email:", emailError);
+        // Don't fail the operation if email fails
+      }
+    }
+
     console.log(`Successfully created parent ${parentData.fullName} with id ${userId}`);
 
     return new Response(
       JSON.stringify({
         success: true,
         userId,
-        email: parentData.email ? email : undefined,
-        message: "Parent profile created successfully",
+        email: hasRealEmail ? email : undefined,
+        emailSent,
+        message: hasRealEmail && emailSent 
+          ? "Parent account created and welcome email sent!" 
+          : "Parent profile created successfully",
       }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
