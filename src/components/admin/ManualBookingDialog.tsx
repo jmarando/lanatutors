@@ -67,11 +67,14 @@ interface Tutor {
   hourly_rate: number | null;
 }
 
-const GRADE_LEVELS = [
-  "Grade 1", "Grade 2", "Grade 3", "Grade 4", "Grade 5", "Grade 6",
-  "Grade 7", "Grade 8", "Grade 9", "Form 1", "Form 2", "Form 3", "Form 4",
-  "Year 7", "Year 8", "Year 9", "Year 10", "Year 11", "Year 12", "Year 13"
-];
+const GRADES_BY_CURRICULUM: Record<string, string[]> = {
+  "CBC": ["Grade 1", "Grade 2", "Grade 3", "Grade 4", "Grade 5", "Grade 6", "Grade 7", "Grade 8", "Grade 9"],
+  "8-4-4": ["Form 1", "Form 2", "Form 3", "Form 4"],
+  "IGCSE": ["Year 7", "Year 8", "Year 9", "Year 10", "Year 11"],
+  "IB": ["Grade 9", "Grade 10", "Grade 11", "Grade 12"],
+  "American": ["Grade 1", "Grade 2", "Grade 3", "Grade 4", "Grade 5", "Grade 6", "Grade 7", "Grade 8", "Grade 9", "Grade 10", "Grade 11", "Grade 12"],
+  "British": ["Year 7", "Year 8", "Year 9", "Year 10", "Year 11", "Year 12", "Year 13"],
+};
 
 const CURRICULA = ["CBC", "8-4-4", "IGCSE", "IB", "American", "British"];
 
@@ -497,23 +500,23 @@ export function ManualBookingDialog({ open, onClose, onSuccess }: ManualBookingD
                             onChange={(e) => setNewStudentName(e.target.value)}
                           />
                           <div className="grid grid-cols-2 gap-3">
-                            <Select value={newStudentGrade} onValueChange={setNewStudentGrade}>
-                              <SelectTrigger>
-                                <SelectValue placeholder="Grade level *" />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {GRADE_LEVELS.map((grade) => (
-                                  <SelectItem key={grade} value={grade}>{grade}</SelectItem>
-                                ))}
-                              </SelectContent>
-                            </Select>
-                            <Select value={newStudentCurriculum} onValueChange={setNewStudentCurriculum}>
+                            <Select value={newStudentCurriculum} onValueChange={(v) => { setNewStudentCurriculum(v); setNewStudentGrade(""); }}>
                               <SelectTrigger>
                                 <SelectValue placeholder="Curriculum *" />
                               </SelectTrigger>
                               <SelectContent>
                                 {CURRICULA.map((c) => (
                                   <SelectItem key={c} value={c}>{c}</SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                            <Select value={newStudentGrade} onValueChange={setNewStudentGrade} disabled={!newStudentCurriculum}>
+                              <SelectTrigger>
+                                <SelectValue placeholder={newStudentCurriculum ? "Grade level *" : "Select curriculum first"} />
+                              </SelectTrigger>
+                              <SelectContent>
+                                {(GRADES_BY_CURRICULUM[newStudentCurriculum] || []).map((grade) => (
+                                  <SelectItem key={grade} value={grade}>{grade}</SelectItem>
                                 ))}
                               </SelectContent>
                             </Select>
@@ -566,23 +569,23 @@ export function ManualBookingDialog({ open, onClose, onSuccess }: ManualBookingD
                       onChange={(e) => setNewStudentName(e.target.value)}
                     />
                     <div className="grid grid-cols-2 gap-3">
-                      <Select value={newStudentGrade} onValueChange={setNewStudentGrade}>
-                        <SelectTrigger>
-                          <SelectValue placeholder="Grade level *" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {GRADE_LEVELS.map((grade) => (
-                            <SelectItem key={grade} value={grade}>{grade}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                      <Select value={newStudentCurriculum} onValueChange={setNewStudentCurriculum}>
+                      <Select value={newStudentCurriculum} onValueChange={(v) => { setNewStudentCurriculum(v); setNewStudentGrade(""); }}>
                         <SelectTrigger>
                           <SelectValue placeholder="Curriculum *" />
                         </SelectTrigger>
                         <SelectContent>
                           {CURRICULA.map((c) => (
                             <SelectItem key={c} value={c}>{c}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <Select value={newStudentGrade} onValueChange={setNewStudentGrade} disabled={!newStudentCurriculum}>
+                        <SelectTrigger>
+                          <SelectValue placeholder={newStudentCurriculum ? "Grade level *" : "Select curriculum first"} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {(GRADES_BY_CURRICULUM[newStudentCurriculum] || []).map((grade) => (
+                            <SelectItem key={grade} value={grade}>{grade}</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
