@@ -188,45 +188,29 @@ export function ManualBookingDialog({ open, onClose, onSuccess }: ManualBookingD
   };
 
   const createNewParent = async (): Promise<string | null> => {
-    // Generate a temporary password for the new user
-    const tempPassword = `Temp${Math.random().toString(36).slice(2, 10)}!`;
-    
-    // Create auth user
-    const { data: authData, error: authError } = await supabase.auth.admin.createUser({
-      email: newParentEmail,
-      password: tempPassword,
-      email_confirm: true,
-      user_metadata: { full_name: newParentName }
+    // Use edge function to create parent with proper auth user
+    const { data, error } = await supabase.functions.invoke("create-parent-profile", {
+      body: {
+        fullName: newParentName,
+        phoneNumber: newParentPhone,
+        email: newParentEmail || undefined,
+      },
     });
 
-    if (authError) {
-      // Try alternative: just create profile for manual entry
-      const newId = crypto.randomUUID();
-      const { error: profileError } = await supabase
-        .from("profiles")
-        .insert({
-          id: newId,
-          full_name: newParentName,
-          phone_number: newParentPhone,
-          account_type: "parent",
-        });
-
-      if (profileError) throw profileError;
-      return newId;
+    if (error) {
+      console.error("Edge function error:", error);
+      throw new Error(error.message || "Failed to create parent profile");
     }
 
-    // Create profile
-    const { error: profileError } = await supabase
-      .from("profiles")
-      .insert({
-        id: authData.user.id,
-        full_name: newParentName,
-        phone_number: newParentPhone,
-        account_type: "parent",
-      });
+    if (data?.error) {
+      throw new Error(data.error);
+    }
 
-    if (profileError) throw profileError;
-    return authData.user.id;
+    if (!data?.userId) {
+      throw new Error("No user ID returned from server");
+    }
+
+    return data.userId;
   };
 
   const createNewStudent = async (parentId: string): Promise<string | null> => {
