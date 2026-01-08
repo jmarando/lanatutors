@@ -22,21 +22,6 @@ const BookingOptions = () => {
       badgeVariant: "default" as const
     },
     {
-      icon: User,
-      title: "Individual Tutor Sessions",
-      description: "Book personalized 1-on-1 sessions with verified tutors",
-      price: "From KES 1,000/hr",
-      features: [
-        "Choose your preferred tutor",
-        "Flexible scheduling",
-        "Online or in-person",
-        "Single or recurring sessions"
-      ],
-      link: "/tutors",
-      badge: "Most Popular",
-      badgeVariant: "default" as const
-    },
-    {
       icon: Package,
       title: "Custom Package Builder",
       description: "Create multi-session bundles with one or more tutors",
