@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { sendWhatsAppMessage } from "../_shared/whatsapp.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -48,44 +49,38 @@ Looking forward to having you on our team!
 _Lana Tutors Team_
     `.trim();
 
-    // Format phone number for WhatsApp (remove + and spaces)
-    const formattedPhone = phoneNumber.replace(/[\s+]/g, '');
-    
-    // Using WhatsApp Business API or similar service
-    // Note: This is a placeholder - actual implementation would require WhatsApp Business API credentials
-    console.log(`Would send WhatsApp to ${formattedPhone}:`, message);
+    const result = await sendWhatsAppMessage(phoneNumber, message);
 
-    // For now, we'll log the message. In production, integrate with WhatsApp Business API
-    // Example with a WhatsApp service provider:
-    /*
-    const whatsappResponse = await fetch("https://api.whatsapp.provider.com/send", {
-      method: "POST",
-      headers: {
-        "Authorization": `Bearer ${Deno.env.get("WHATSAPP_API_KEY")}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        to: formattedPhone,
-        message: message,
-      }),
-    });
-    */
+    if (!result.success) {
+      console.error("Failed to send tutor application WhatsApp:", result.error);
+      return new Response(
+        JSON.stringify({ 
+          success: false, 
+          error: result.error 
+        }),
+        {
+          status: 500,
+          headers: { "Content-Type": "application/json", ...corsHeaders },
+        }
+      );
+    }
 
     return new Response(
       JSON.stringify({ 
         success: true, 
-        message: "WhatsApp notification logged (integration pending)",
-        phone: formattedPhone 
+        messageId: result.messageId,
+        phone: phoneNumber 
       }),
       {
         status: 200,
         headers: { "Content-Type": "application/json", ...corsHeaders },
       }
     );
-  } catch (error: any) {
-    console.error("Error sending WhatsApp:", error);
+  } catch (error: unknown) {
+    console.error("Error sending tutor application WhatsApp:", error);
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
     return new Response(
-      JSON.stringify({ error: error.message }),
+      JSON.stringify({ error: errorMessage }),
       {
         status: 500,
         headers: { "Content-Type": "application/json", ...corsHeaders },

@@ -251,7 +251,7 @@ const BookConsultation = () => {
       });
       if (dbError) throw dbError;
 
-      // Step 3: Send confirmation email
+      // Step 3: Send confirmation email and WhatsApp
       await supabase.functions.invoke("send-consultation-booking-confirmation", {
         body: {
           email: formData.email,
@@ -259,10 +259,11 @@ const BookConsultation = () => {
           studentName: formData.studentName,
           consultationDate: consultationDateStr,
           consultationTime: selectedTime,
-          meetingLink
+          meetingLink,
+          phoneNumber: formData.phoneNumber
         }
       });
-      toast.success("Consultation booked! Check your email for details.");
+      toast.success("Consultation booked! Check your email and WhatsApp for details.");
 
       // Navigate to confirmation page with details
       navigate(`/consultation-confirmed?parentName=${encodeURIComponent(formData.parentName)}&studentName=${encodeURIComponent(formData.studentName)}&date=${consultationDateStr}&time=${encodeURIComponent(selectedTime)}&email=${encodeURIComponent(formData.email)}`);

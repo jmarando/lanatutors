@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { checkRateLimit, getRateLimitIdentifier } from "../_shared/rate-limiter.ts";
+import { sendWhatsAppMessage } from "../_shared/whatsapp.ts";
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
 
@@ -15,6 +16,7 @@ interface BookingConfirmationRequest {
   consultationDate: string;
   consultationTime: string;
   meetingLink: string;
+  phoneNumber?: string;
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -35,7 +37,7 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
-    const { email, parentName, studentName, consultationDate, consultationTime, meetingLink }: BookingConfirmationRequest = await req.json();
+    const { email, parentName, studentName, consultationDate, consultationTime, meetingLink, phoneNumber }: BookingConfirmationRequest = await req.json();
 
     const formattedDate = new Date(consultationDate).toLocaleDateString('en-US', { 
       weekday: 'long', 
@@ -236,7 +238,46 @@ const handler = async (req: Request): Promise<Response> => {
 
     console.log("Booking confirmation email sent successfully:", emailData);
 
-    return new Response(JSON.stringify(emailData), {
+    // Also send WhatsApp confirmation if phone number is provided
+    let whatsAppResult = null;
+    if (phoneNumber) {
+      const whatsAppMessage = `
+🎓 *Lana Tutors - Consultation Confirmed!*
+
+Hi ${parentName},
+
+Your free consultation for *${studentName}* is confirmed! ✅
+
+📅 *Date:* ${formattedDate}
+⏰ *Time:* ${consultationTime}
+⏱️ *Duration:* 30 minutes
+
+🔗 *Join here:*
+${meetingLink}
+
+🔔 *Reminders:*
+We'll send you reminders 1 day before and 1 hour before your consultation.
+
+Need to reschedule? Contact us at info@lanatutors.africa
+
+Looking forward to meeting you!
+
+_Lana Tutors Team_
+      `.trim();
+
+      whatsAppResult = await sendWhatsAppMessage(phoneNumber, whatsAppMessage);
+      
+      if (whatsAppResult.success) {
+        console.log("WhatsApp confirmation sent successfully:", whatsAppResult.messageId);
+      } else {
+        console.error("WhatsApp confirmation failed:", whatsAppResult.error);
+      }
+    }
+
+    return new Response(JSON.stringify({ 
+      ...emailData, 
+      whatsApp: whatsAppResult 
+    }), {
       status: 200,
       headers: {
         "Content-Type": "application/json",
