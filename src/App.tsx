@@ -130,7 +130,7 @@ const App = () => {
                 <Route path="*" element={<NotFound />} />
               </Routes>
               </Suspense>
-              <WhatsAppChatButton phoneNumber="254700000000" />
+              <WhatsAppChatButton />
             </BrowserRouter>
           </TooltipProvider>
         </AuthProvider>
