@@ -7,6 +7,7 @@ import { lazy, Suspense, useMemo } from "react";
 import Navigation from "./components/Navigation";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import WhatsAppChatButton from "./components/WhatsAppChatButton";
 
 // Lazy load pages for code splitting
 const Home = lazy(() => import("./pages/Home"));
@@ -129,6 +130,7 @@ const App = () => {
                 <Route path="*" element={<NotFound />} />
               </Routes>
               </Suspense>
+              <WhatsAppChatButton phoneNumber="254700000000" />
             </BrowserRouter>
           </TooltipProvider>
         </AuthProvider>
