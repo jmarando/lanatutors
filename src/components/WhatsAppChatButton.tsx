@@ -1,6 +1,6 @@
 import { MessageCircle } from "lucide-react";
 
-const WHATSAPP_NUMBER = "254700000000"; // Replace with your actual WhatsApp number
+const WHATSAPP_NUMBER = "254117512316";
 const DEFAULT_MESSAGE = "Hi Lana Tutors! I'd like to learn more about your tutoring services.";
 
 interface WhatsAppChatButtonProps {
