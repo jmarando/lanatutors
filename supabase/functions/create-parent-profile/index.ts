@@ -80,6 +80,9 @@ serve(async (req) => {
     // Create auth user with temporary password
     const tempPassword = `Lana${Math.random().toString(36).slice(2, 8)}!2025`;
     
+    let userId: string;
+    let isExistingUser = false;
+    
     const { data: authUser, error: authError } = await supabaseAdmin.auth.admin.createUser({
       email: email,
       password: tempPassword,
@@ -90,40 +93,70 @@ serve(async (req) => {
     });
 
     if (authError) {
-      console.error("Auth user creation error:", authError);
-      return new Response(
-        JSON.stringify({ error: authError.message }),
-        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      // Check if user already exists
+      if (authError.code === 'email_exists') {
+        console.log(`User with email ${email} already exists, looking up existing user`);
+        
+        // Find the existing user by email
+        const { data: existingUsers, error: listError } = await supabaseAdmin.auth.admin.listUsers();
+        
+        if (listError) {
+          console.error("Error listing users:", listError);
+          return new Response(
+            JSON.stringify({ error: "Failed to lookup existing user" }),
+            { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+        
+        const existingUser = existingUsers.users.find(u => u.email === email);
+        if (!existingUser) {
+          return new Response(
+            JSON.stringify({ error: "User exists but could not be found" }),
+            { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+          );
+        }
+        
+        userId = existingUser.id;
+        isExistingUser = true;
+        console.log(`Found existing user with id ${userId}`);
+      } else {
+        console.error("Auth user creation error:", authError);
+        return new Response(
+          JSON.stringify({ error: authError.message }),
+          { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+    } else {
+      userId = authUser.user.id;
     }
 
-    const userId = authUser.user.id;
-
-    // Create profile with parent account type
+    // Create or update profile with parent account type
     const { error: profileError } = await supabaseAdmin
       .from("profiles")
-      .insert({
+      .upsert({
         id: userId,
         full_name: parentData.fullName,
         phone_number: parentData.phoneNumber,
         account_type: "parent",
-        must_reset_password: true,
-      });
+        must_reset_password: !isExistingUser, // Only require reset for new users
+      }, { onConflict: 'id' });
 
     if (profileError) {
       console.error("Profile creation error:", profileError);
-      // Clean up auth user if profile creation fails
-      await supabaseAdmin.auth.admin.deleteUser(userId);
+      // Only clean up auth user if it was newly created and profile creation fails
+      if (!isExistingUser) {
+        await supabaseAdmin.auth.admin.deleteUser(userId);
+      }
       throw profileError;
     }
 
-    // Assign student role (parents use student role for access)
+    // Assign student role (parents use student role for access) - use upsert to handle existing users
     const { error: roleError } = await supabaseAdmin
       .from("user_roles")
-      .insert({
+      .upsert({
         user_id: userId,
         role: "student",
-      });
+      }, { onConflict: 'user_id,role', ignoreDuplicates: true });
 
     if (roleError) {
       console.error("Role assignment error:", roleError);
