@@ -73,6 +73,7 @@ const AdminDashboard = () => {
   const [addingNoteToBooking, setAddingNoteToBooking] = useState<string | null>(null);
   const [newNoteContent, setNewNoteContent] = useState("");
   const [consultationNotes, setConsultationNotes] = useState<Record<string, any[]>>({});
+  const [expandedQuickView, setExpandedQuickView] = useState<'today' | 'tomorrow' | 'week' | null>(null);
 
   // Message templates for customer journey - Enhanced and professional
   const messageTemplates = {
@@ -1676,17 +1677,22 @@ The Lana Tutors Team`
 
   // Render Consultations Content
   const renderConsultationsContent = () => {
+    // Use local date formatting to avoid timezone issues
     const now = new Date();
-    const today = new Date(now);
-    today.setHours(0, 0, 0, 0);
-    const tomorrow = new Date(today);
+    const formatLocalDate = (date: Date) => {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    };
+    
+    const todayStr = formatLocalDate(now);
+    const tomorrow = new Date(now);
     tomorrow.setDate(tomorrow.getDate() + 1);
-    const weekEnd = new Date(today);
+    const tomorrowStr = formatLocalDate(tomorrow);
+    
+    const weekEnd = new Date(now);
     weekEnd.setDate(weekEnd.getDate() + 7);
-    weekEnd.setHours(23, 59, 59, 999);
-
-    const todayStr = today.toISOString().split('T')[0];
-    const tomorrowStr = tomorrow.toISOString().split('T')[0];
     
     const todayConsultations = consultationBookings.filter(b => 
       b.consultation_date === todayStr && b.status !== 'cancelled'
@@ -1697,22 +1703,68 @@ The Lana Tutors Team`
     );
 
     const thisWeekConsultations = consultationBookings.filter(b => {
-      const bookingDate = new Date(b.consultation_date);
-      bookingDate.setHours(12, 0, 0, 0); // Set to noon to avoid timezone issues
-      return bookingDate >= today && bookingDate <= weekEnd && b.status !== 'cancelled';
+      const bookingDateStr = b.consultation_date;
+      return bookingDateStr >= todayStr && bookingDateStr <= formatLocalDate(weekEnd) && b.status !== 'cancelled';
     });
 
     const pendingFollowUps = consultationBookings.filter(b => 
-      !b.follow_up_sent_at && b.status === 'confirmed' && new Date(b.consultation_date) < today
+      !b.follow_up_sent_at && b.status === 'confirmed' && b.consultation_date < todayStr
+    );
+
+    const renderQuickViewList = (consultations: typeof consultationBookings, title: string) => (
+      <div className="mt-3 space-y-2 border-t pt-3">
+        <p className="text-xs font-medium text-muted-foreground mb-2">{title}</p>
+        {consultations.length === 0 ? (
+          <p className="text-xs text-muted-foreground italic">No consultations</p>
+        ) : (
+          consultations
+            .sort((a, b) => a.consultation_time.localeCompare(b.consultation_time))
+            .map((booking) => (
+              <div key={booking.id} className="flex items-center justify-between text-xs bg-background/50 rounded p-2">
+                <div className="flex items-center gap-2">
+                  <Clock className="h-3 w-3 text-muted-foreground" />
+                  <span className="font-medium">{booking.consultation_time}</span>
+                  <span className="text-muted-foreground">-</span>
+                  <span>{booking.student_name}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <a 
+                    href={`https://wa.me/${booking.phone_number?.replace(/\D/g, '')}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="p-1 hover:bg-green-100 rounded"
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                    <MessageCircle className="h-3 w-3 text-green-600" />
+                  </a>
+                  {booking.meeting_link && (
+                    <a 
+                      href={booking.meeting_link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="p-1 hover:bg-blue-100 rounded"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <Video className="h-3 w-3 text-blue-600" />
+                    </a>
+                  )}
+                </div>
+              </div>
+            ))
+        )}
+      </div>
     );
 
     return (
       <div className="space-y-4">
         <h2 className="text-2xl font-bold">Consultations</h2>
         
-        {/* Upcoming Summary Cards */}
+        {/* Upcoming Summary Cards - Clickable */}
         <div className="grid grid-cols-2 md:grid-cols-6 gap-4 mb-6">
-          <Card className="border-red-200 bg-red-50 dark:bg-red-950/20">
+          <Card 
+            className={`border-red-200 bg-red-50 dark:bg-red-950/20 cursor-pointer transition-all hover:shadow-md ${expandedQuickView === 'today' ? 'ring-2 ring-red-500' : ''}`}
+            onClick={() => setExpandedQuickView(expandedQuickView === 'today' ? null : 'today')}
+          >
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-red-500/20 rounded-lg">
@@ -1723,9 +1775,13 @@ The Lana Tutors Team`
                   <p className="text-xs text-muted-foreground">Today</p>
                 </div>
               </div>
+              {expandedQuickView === 'today' && renderQuickViewList(todayConsultations, "Today's Consultations")}
             </CardContent>
           </Card>
-          <Card className="border-orange-200 bg-orange-50 dark:bg-orange-950/20">
+          <Card 
+            className={`border-orange-200 bg-orange-50 dark:bg-orange-950/20 cursor-pointer transition-all hover:shadow-md ${expandedQuickView === 'tomorrow' ? 'ring-2 ring-orange-500' : ''}`}
+            onClick={() => setExpandedQuickView(expandedQuickView === 'tomorrow' ? null : 'tomorrow')}
+          >
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-orange-500/20 rounded-lg">
@@ -1736,9 +1792,13 @@ The Lana Tutors Team`
                   <p className="text-xs text-muted-foreground">Tomorrow</p>
                 </div>
               </div>
+              {expandedQuickView === 'tomorrow' && renderQuickViewList(tomorrowConsultations, "Tomorrow's Consultations")}
             </CardContent>
           </Card>
-          <Card className="border-blue-200 bg-blue-50 dark:bg-blue-950/20">
+          <Card 
+            className={`border-blue-200 bg-blue-50 dark:bg-blue-950/20 cursor-pointer transition-all hover:shadow-md ${expandedQuickView === 'week' ? 'ring-2 ring-blue-500' : ''}`}
+            onClick={() => setExpandedQuickView(expandedQuickView === 'week' ? null : 'week')}
+          >
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
                 <div className="p-2 bg-blue-500/20 rounded-lg">
@@ -1749,6 +1809,7 @@ The Lana Tutors Team`
                   <p className="text-xs text-muted-foreground">This Week</p>
                 </div>
               </div>
+              {expandedQuickView === 'week' && renderQuickViewList(thisWeekConsultations, "This Week's Consultations")}
             </CardContent>
           </Card>
           <Card>
