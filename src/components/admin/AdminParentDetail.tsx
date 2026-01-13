@@ -134,11 +134,22 @@ export function AdminParentDetail({ parentId, onClose }: AdminParentDetailProps)
         (bookingsData || []).map(async (booking: any) => {
           let tutorName = "Unknown";
           if (booking.tutor_id) {
-            const { data: tutorProfile } = await supabase
+            // First try to find by tutor_profiles.id
+            let { data: tutorProfile } = await supabase
               .from("tutor_profiles")
               .select("user_id")
               .eq("id", booking.tutor_id)
               .single();
+            
+            // If not found, try by user_id (some bookings store user_id instead of tutor_profile.id)
+            if (!tutorProfile) {
+              const { data: profileByUserId } = await supabase
+                .from("tutor_profiles")
+                .select("user_id")
+                .eq("user_id", booking.tutor_id)
+                .single();
+              tutorProfile = profileByUserId;
+            }
             
             if (tutorProfile) {
               const { data: profile } = await supabase
@@ -147,6 +158,16 @@ export function AdminParentDetail({ parentId, onClose }: AdminParentDetailProps)
                 .eq("id", tutorProfile.user_id)
                 .single();
               tutorName = profile?.full_name || "Unknown";
+            } else {
+              // Fallback: check if tutor_id is directly a user_id in profiles
+              const { data: directProfile } = await supabase
+                .from("profiles")
+                .select("full_name")
+                .eq("id", booking.tutor_id)
+                .single();
+              if (directProfile?.full_name) {
+                tutorName = directProfile.full_name;
+              }
             }
           }
           return {
@@ -173,11 +194,22 @@ export function AdminParentDetail({ parentId, onClose }: AdminParentDetailProps)
         (packagesData || []).map(async (pkg: any) => {
           let tutorName = "Unknown";
           if (pkg.tutor_id) {
-            const { data: tutorProfile } = await supabase
+            // First try to find by tutor_profiles.id
+            let { data: tutorProfile } = await supabase
               .from("tutor_profiles")
               .select("user_id")
               .eq("id", pkg.tutor_id)
               .single();
+            
+            // If not found, try by user_id
+            if (!tutorProfile) {
+              const { data: profileByUserId } = await supabase
+                .from("tutor_profiles")
+                .select("user_id")
+                .eq("user_id", pkg.tutor_id)
+                .single();
+              tutorProfile = profileByUserId;
+            }
             
             if (tutorProfile) {
               const { data: profile } = await supabase
@@ -186,6 +218,16 @@ export function AdminParentDetail({ parentId, onClose }: AdminParentDetailProps)
                 .eq("id", tutorProfile.user_id)
                 .single();
               tutorName = profile?.full_name || "Unknown";
+            } else {
+              // Fallback: check if tutor_id is directly a user_id in profiles
+              const { data: directProfile } = await supabase
+                .from("profiles")
+                .select("full_name")
+                .eq("id", pkg.tutor_id)
+                .single();
+              if (directProfile?.full_name) {
+                tutorName = directProfile.full_name;
+              }
             }
           }
           return {
