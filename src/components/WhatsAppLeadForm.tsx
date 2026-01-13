@@ -3,8 +3,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { CheckCircle2, MessageCircle, Loader2 } from "lucide-react";
+import { CheckCircle2, MessageCircle, Loader2, X } from "lucide-react";
 import { getCurriculums, getLevelsForCurriculum, getSubjectsForCurriculumLevel } from "@/utils/curriculumData";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -19,7 +20,7 @@ interface LeadData {
   phoneNumber: string;
   curriculum: string;
   gradeLevel: string;
-  subject: string;
+  subjects: string[];
   location: string;
 }
 
@@ -31,7 +32,7 @@ export const WhatsAppLeadForm = ({ open, onOpenChange }: WhatsAppLeadFormProps) 
     phoneNumber: "",
     curriculum: "",
     gradeLevel: "",
-    subject: "",
+    subjects: [],
     location: "",
   });
 
@@ -41,14 +42,23 @@ export const WhatsAppLeadForm = ({ open, onOpenChange }: WhatsAppLeadFormProps) 
     ? getSubjectsForCurriculumLevel(data.curriculum, data.gradeLevel) 
     : [];
 
-  const canSubmit = data.parentName && data.phoneNumber && data.curriculum && data.gradeLevel && data.subject;
+  const canSubmit = data.parentName && data.phoneNumber && data.curriculum && data.gradeLevel && data.subjects.length > 0;
 
   const handleCurriculumChange = (value: string) => {
-    setData(prev => ({ ...prev, curriculum: value, gradeLevel: "", subject: "" }));
+    setData(prev => ({ ...prev, curriculum: value, gradeLevel: "", subjects: [] }));
   };
 
   const handleGradeLevelChange = (value: string) => {
-    setData(prev => ({ ...prev, gradeLevel: value, subject: "" }));
+    setData(prev => ({ ...prev, gradeLevel: value, subjects: [] }));
+  };
+
+  const toggleSubject = (subject: string) => {
+    setData(prev => ({
+      ...prev,
+      subjects: prev.subjects.includes(subject)
+        ? prev.subjects.filter(s => s !== subject)
+        : [...prev.subjects, subject]
+    }));
   };
 
   const handleSubmit = async () => {
@@ -65,7 +75,7 @@ export const WhatsAppLeadForm = ({ open, onOpenChange }: WhatsAppLeadFormProps) 
           phone_number: data.phoneNumber,
           email: '', // Not collected in this form
           grade_levels: [data.gradeLevel],
-          subjects_of_interest: [data.subject],
+          subjects_of_interest: data.subjects,
           number_of_children: 1,
           additional_notes: `Curriculum: ${data.curriculum}, Location: ${data.location || 'Not specified'}`,
           status: 'pending',
@@ -96,7 +106,7 @@ export const WhatsAppLeadForm = ({ open, onOpenChange }: WhatsAppLeadFormProps) 
         phoneNumber: "",
         curriculum: "",
         gradeLevel: "",
-        subject: "",
+        subjects: [],
         location: "",
       });
     }, 300);
@@ -116,7 +126,7 @@ export const WhatsAppLeadForm = ({ open, onOpenChange }: WhatsAppLeadFormProps) 
             </p>
             <div className="bg-muted/50 rounded-lg p-4 text-left space-y-2 mb-6">
               <p className="text-sm"><strong>Grade:</strong> {data.gradeLevel}</p>
-              <p className="text-sm"><strong>Subject:</strong> {data.subject}</p>
+              <p className="text-sm"><strong>Subjects:</strong> {data.subjects.join(", ")}</p>
               <p className="text-sm"><strong>Curriculum:</strong> {data.curriculum}</p>
             </div>
             <p className="text-xs text-muted-foreground">
@@ -199,21 +209,31 @@ export const WhatsAppLeadForm = ({ open, onOpenChange }: WhatsAppLeadFormProps) 
           </div>
 
           <div>
-            <Label htmlFor="subject">Subject Needed *</Label>
-            <Select 
-              value={data.subject} 
-              onValueChange={(v) => setData(prev => ({ ...prev, subject: v }))}
-              disabled={!data.gradeLevel}
-            >
-              <SelectTrigger>
-                <SelectValue placeholder={data.gradeLevel ? "Select subject" : "Select grade first"} />
-              </SelectTrigger>
-              <SelectContent className="bg-background z-[100]">
+            <Label>Subjects Needed * <span className="text-muted-foreground text-xs">(Select all that apply)</span></Label>
+            {data.gradeLevel ? (
+              <div className="flex flex-wrap gap-2 mt-2 p-3 border rounded-md bg-muted/30 max-h-40 overflow-y-auto">
                 {availableSubjects.map((subject) => (
-                  <SelectItem key={subject} value={subject}>{subject}</SelectItem>
+                  <Badge
+                    key={subject}
+                    variant={data.subjects.includes(subject) ? "default" : "outline"}
+                    className="cursor-pointer hover:bg-primary/20 py-1.5 px-3 text-sm"
+                    onClick={() => toggleSubject(subject)}
+                  >
+                    {subject}
+                    {data.subjects.includes(subject) && <X className="w-3 h-3 ml-1" />}
+                  </Badge>
                 ))}
-              </SelectContent>
-            </Select>
+              </div>
+            ) : (
+              <div className="p-3 border rounded-md bg-muted/30 text-muted-foreground text-sm">
+                Select curriculum and grade first
+              </div>
+            )}
+            {data.subjects.length > 0 && (
+              <p className="text-xs text-muted-foreground mt-2">
+                Selected: {data.subjects.length} subject(s)
+              </p>
+            )}
           </div>
 
           <div>
