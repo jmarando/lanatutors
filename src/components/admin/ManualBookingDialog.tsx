@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { format, addWeeks, addDays } from "date-fns";
 import {
   Dialog,
   DialogContent,
@@ -12,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
 import {
   Select,
   SelectContent,
@@ -36,8 +38,9 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { toast } from "sonner";
-import { Check, ChevronsUpDown, Plus, UserPlus, Users } from "lucide-react";
+import { Check, ChevronsUpDown, Plus, UserPlus, Users, Calendar, Repeat, X, CalendarPlus } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface ManualBookingDialogProps {
@@ -116,6 +119,12 @@ export function ManualBookingDialog({ open, onClose, onSuccess }: ManualBookingD
   const [sendConfirmation, setSendConfirmation] = useState(true);
   const [notifyTutor, setNotifyTutor] = useState(true);
   const [addToCalendar, setAddToCalendar] = useState(true);
+
+  // Recurring booking state
+  const [bookingType, setBookingType] = useState<"single" | "recurring" | "multiple">("single");
+  const [recurringWeeks, setRecurringWeeks] = useState("4");
+  const [multipleDates, setMultipleDates] = useState<string[]>([]);
+  const [newMultipleDate, setNewMultipleDate] = useState("");
 
   // Combobox state
   const [parentOpen, setParentOpen] = useState(false);
@@ -233,6 +242,46 @@ export function ManualBookingDialog({ open, onClose, onSuccess }: ManualBookingD
     return data.id;
   };
 
+  // Helper to add a date to multiple dates list
+  const addMultipleDate = () => {
+    if (newMultipleDate && !multipleDates.includes(newMultipleDate)) {
+      setMultipleDates([...multipleDates, newMultipleDate].sort());
+      setNewMultipleDate("");
+    }
+  };
+
+  // Helper to remove a date from multiple dates list
+  const removeMultipleDate = (dateToRemove: string) => {
+    setMultipleDates(multipleDates.filter(d => d !== dateToRemove));
+  };
+
+  // Generate dates for recurring bookings
+  const generateRecurringDates = (): string[] => {
+    if (!date) return [];
+    const dates: string[] = [];
+    const baseDate = new Date(date);
+    const weeks = parseInt(recurringWeeks);
+    for (let i = 0; i < weeks; i++) {
+      const newDate = addWeeks(baseDate, i);
+      dates.push(format(newDate, 'yyyy-MM-dd'));
+    }
+    return dates;
+  };
+
+  // Get all dates to book based on booking type
+  const getAllBookingDates = (): string[] => {
+    switch (bookingType) {
+      case "single":
+        return date ? [date] : [];
+      case "recurring":
+        return generateRecurringDates();
+      case "multiple":
+        return multipleDates;
+      default:
+        return [];
+    }
+  };
+
   const handleSubmit = async () => {
     // Validation
     if (parentMode === "new") {
@@ -251,8 +300,28 @@ export function ManualBookingDialog({ open, onClose, onSuccess }: ManualBookingD
       }
     }
 
-    if (!selectedTutorId || !date || !time || !subject) {
+    // Validate based on booking type
+    if (bookingType === "single" && (!date || !time)) {
+      toast.error("Please select a date and time");
+      return;
+    }
+    if (bookingType === "recurring" && (!date || !time)) {
+      toast.error("Please select a start date and time for recurring sessions");
+      return;
+    }
+    if (bookingType === "multiple" && (multipleDates.length === 0 || !time)) {
+      toast.error("Please add at least one date and select a time");
+      return;
+    }
+
+    if (!selectedTutorId || !subject) {
       toast.error("Please fill in all booking details");
+      return;
+    }
+
+    const bookingDates = getAllBookingDates();
+    if (bookingDates.length === 0) {
+      toast.error("No dates selected for booking");
       return;
     }
 
@@ -276,51 +345,11 @@ export function ManualBookingDialog({ open, onClose, onSuccess }: ManualBookingD
         studentProfileId = newStudentId;
       }
 
-      const startTime = new Date(`${date}T${time}`);
-      const endTime = new Date(startTime.getTime() + parseInt(duration) * 60 * 1000);
-
       // Get the tutor's user_id (auth.users.id) for the availability slot
       const selectedTutor = tutors.find(t => t.id === selectedTutorId);
       if (!selectedTutor) {
         throw new Error("Selected tutor not found");
       }
-
-      // Create availability slot using user_id (foreign key references auth.users)
-      const { data: slot, error: slotError } = await supabase
-        .from("tutor_availability")
-        .insert({
-          tutor_id: selectedTutor.user_id,
-          start_time: startTime.toISOString(),
-          end_time: endTime.toISOString(),
-          is_booked: true,
-          slot_type: "manual",
-        })
-        .select()
-        .single();
-
-      if (slotError) throw slotError;
-
-      // Create booking (using user_id for tutor since FK references auth.users)
-      // Note: payment_option must be 'deposit', 'full', or 'package' per DB constraint
-      const { data: bookingData, error: bookingError } = await supabase
-        .from("bookings")
-        .insert({
-          student_id: parentId,
-          tutor_id: selectedTutor.user_id,
-          availability_slot_id: slot.id,
-          subject,
-          amount: parseFloat(amount) || 0,
-          status: "confirmed",
-          payment_option: paymentStatus === "paid" ? "full" : "deposit",
-          notes: `[OFFLINE BOOKING] ${notes}`.trim(),
-          student_profile_id: studentProfileId,
-          booking_source: "manual",
-          class_type: classType,
-        })
-        .select()
-        .single();
-
-      if (bookingError) throw bookingError;
 
       // Get student and tutor names for meeting/emails
       const studentName = studentProfileId 
@@ -328,86 +357,150 @@ export function ManualBookingDialog({ open, onClose, onSuccess }: ManualBookingD
         : (parentMode === "new" ? newStudentName : "Student");
       const tutorName = tutors.find(t => t.id === selectedTutorId)?.full_name || "Tutor";
 
-      // Generate meeting link for online classes
-      let meetingLink = null;
-      if (classType === "online") {
+      // Generate a unique booking group ID for recurring/multiple bookings
+      const bookingGroupId = bookingDates.length > 1 ? crypto.randomUUID() : null;
+
+      let successCount = 0;
+      let firstBookingId: string | null = null;
+
+      // Create bookings for each date
+      for (const bookingDate of bookingDates) {
         try {
-          const { data: meetData } = await supabase.functions.invoke("generate-google-meet-link", {
-            body: {
-              summary: `${subject} Session`,
-              description: `Tutoring session with ${tutorName} for ${studentName}`,
-              startDateTime: startTime.toISOString(),
-              endDateTime: endTime.toISOString(),
-            },
-          });
-          if (meetData?.meetingLink) {
-            meetingLink = meetData.meetingLink;
-            // Update booking with meeting link
-            await supabase
-              .from("bookings")
-              .update({ meeting_link: meetingLink })
-              .eq("id", bookingData.id);
+          const startTime = new Date(`${bookingDate}T${time}`);
+          const endTime = new Date(startTime.getTime() + parseInt(duration) * 60 * 1000);
+
+          // Create availability slot using user_id (foreign key references auth.users)
+          const { data: slot, error: slotError } = await supabase
+            .from("tutor_availability")
+            .insert({
+              tutor_id: selectedTutor.user_id,
+              start_time: startTime.toISOString(),
+              end_time: endTime.toISOString(),
+              is_booked: true,
+              slot_type: "manual",
+            })
+            .select()
+            .single();
+
+          if (slotError) throw slotError;
+
+          // Create booking
+          const { data: bookingData, error: bookingError } = await supabase
+            .from("bookings")
+            .insert({
+              student_id: parentId,
+              tutor_id: selectedTutor.user_id,
+              availability_slot_id: slot.id,
+              subject,
+              amount: parseFloat(amount) || 0,
+              status: "confirmed",
+              payment_option: paymentStatus === "paid" ? "full" : "deposit",
+              notes: `[OFFLINE BOOKING]${bookingGroupId ? ` [Group: ${bookingGroupId}]` : ""} ${notes}`.trim(),
+              student_profile_id: studentProfileId,
+              booking_source: "manual",
+              class_type: classType,
+              booking_group_id: bookingGroupId,
+            })
+            .select()
+            .single();
+
+          if (bookingError) throw bookingError;
+
+          if (!firstBookingId) firstBookingId = bookingData.id;
+
+          // Generate meeting link for online classes
+          let meetingLink = null;
+          if (classType === "online") {
+            try {
+              const { data: meetData } = await supabase.functions.invoke("generate-google-meet-link", {
+                body: {
+                  summary: `${subject} Session`,
+                  description: `Tutoring session with ${tutorName} for ${studentName}`,
+                  startDateTime: startTime.toISOString(),
+                  endDateTime: endTime.toISOString(),
+                },
+              });
+              if (meetData?.meetingLink) {
+                meetingLink = meetData.meetingLink;
+                // Update booking with meeting link
+                await supabase
+                  .from("bookings")
+                  .update({ meeting_link: meetingLink })
+                  .eq("id", bookingData.id);
+              }
+            } catch (meetError) {
+              console.error("Google Meet generation error:", meetError);
+            }
           }
-        } catch (meetError) {
-          console.error("Google Meet generation error:", meetError);
+
+          // Add to central calendar if enabled
+          if (addToCalendar) {
+            try {
+              await supabase.functions.invoke("sync-to-central-calendar", {
+                body: {
+                  bookingId: bookingData.id,
+                  summary: `${subject} - ${studentName}`,
+                  description: `Tutoring session\nStudent: ${studentName}\nTutor: ${tutorName}\nSubject: ${subject}\n${meetingLink ? `Meeting Link: ${meetingLink}\n` : ""}${notes ? `Notes: ${notes}` : ""}`,
+                  startTime: startTime.toISOString(),
+                  endTime: endTime.toISOString(),
+                },
+              });
+            } catch (calError) {
+              console.error("Calendar sync error:", calError);
+            }
+          }
+
+          successCount++;
+        } catch (dateError: any) {
+          console.error(`Error creating booking for ${bookingDate}:`, dateError);
         }
       }
 
-      // Send confirmation email to parent/student
-      if (sendConfirmation) {
-        try {
-          await supabase.functions.invoke("send-booking-email", {
-            body: {
-              bookingId: bookingData.id,
-              meetingLink: meetingLink,
-              recipientType: "student",
-            },
-          });
-          console.log("Parent confirmation email sent");
-        } catch (emailError) {
-          console.error("Failed to send parent email:", emailError);
-          toast.warning("Booking created but parent email failed to send");
+      // Send emails only once for the series (using first booking)
+      if (firstBookingId && successCount > 0) {
+        // Send confirmation email to parent/student
+        if (sendConfirmation) {
+          try {
+            await supabase.functions.invoke("send-booking-email", {
+              body: {
+                bookingId: firstBookingId,
+                recipientType: "student",
+              },
+            });
+            console.log("Parent confirmation email sent");
+          } catch (emailError) {
+            console.error("Failed to send parent email:", emailError);
+          }
+        }
+
+        // Send notification email to tutor
+        if (notifyTutor) {
+          try {
+            await supabase.functions.invoke("send-booking-email", {
+              body: {
+                bookingId: firstBookingId,
+                recipientType: "tutor",
+              },
+            });
+            console.log("Tutor notification email sent");
+          } catch (emailError) {
+            console.error("Failed to send tutor email:", emailError);
+          }
         }
       }
 
-      // Send notification email to tutor
-      if (notifyTutor) {
-        try {
-          await supabase.functions.invoke("send-booking-email", {
-            body: {
-              bookingId: bookingData.id,
-              meetingLink: meetingLink,
-              recipientType: "tutor",
-            },
-          });
-          console.log("Tutor notification email sent");
-        } catch (emailError) {
-          console.error("Failed to send tutor email:", emailError);
-          toast.warning("Booking created but tutor email failed to send");
-        }
+      if (successCount === bookingDates.length) {
+        toast.success(
+          bookingDates.length === 1 
+            ? (parentMode === "new" ? "Parent, student and booking created successfully!" : "Booking created successfully!")
+            : `${successCount} bookings created successfully!`
+        );
+      } else if (successCount > 0) {
+        toast.warning(`${successCount} of ${bookingDates.length} bookings created. Some failed.`);
+      } else {
+        toast.error("Failed to create bookings");
       }
 
-      // Add to central calendar if enabled
-      if (addToCalendar) {
-        try {
-          await supabase.functions.invoke("sync-to-central-calendar", {
-            body: {
-              bookingId: bookingData.id,
-              summary: `${subject} - ${studentName}`,
-              description: `Tutoring session\nStudent: ${studentName}\nTutor: ${tutorName}\nSubject: ${subject}\n${meetingLink ? `Meeting Link: ${meetingLink}\n` : ""}${notes ? `Notes: ${notes}` : ""}`,
-              startTime: startTime.toISOString(),
-              endTime: endTime.toISOString(),
-            },
-          });
-        } catch (calError) {
-          console.error("Calendar sync error:", calError);
-          toast.warning("Booking created but calendar sync failed");
-        }
-      }
-
-      toast.success(parentMode === "new" 
-        ? "Parent, student and booking created successfully!" 
-        : "Booking created successfully!");
       handleClose();
       onSuccess();
     } catch (error: any) {
@@ -439,6 +532,10 @@ export function ManualBookingDialog({ open, onClose, onSuccess }: ManualBookingD
     setNotes("");
     setSendConfirmation(true);
     setNotifyTutor(true);
+    setBookingType("single");
+    setRecurringWeeks("4");
+    setMultipleDates([]);
+    setNewMultipleDate("");
     onClose();
   };
 
@@ -727,27 +824,151 @@ export function ManualBookingDialog({ open, onClose, onSuccess }: ManualBookingD
               </Popover>
             </div>
 
-            {/* Session Details */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="date">Date *</Label>
-                <Input
-                  id="date"
-                  type="date"
-                  value={date}
-                  onChange={(e) => setDate(e.target.value)}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="time">Time *</Label>
-                <Input
-                  id="time"
-                  type="time"
-                  value={time}
-                  onChange={(e) => setTime(e.target.value)}
-                />
-              </div>
+            {/* Booking Type */}
+            <div className="space-y-3">
+              <Label>Booking Type</Label>
+              <RadioGroup value={bookingType} onValueChange={(v) => setBookingType(v as "single" | "recurring" | "multiple")} className="flex flex-wrap gap-4">
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="single" id="single" />
+                  <Label htmlFor="single" className="font-normal flex items-center gap-1">
+                    <Calendar className="h-4 w-4" />
+                    Single Session
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="recurring" id="recurring" />
+                  <Label htmlFor="recurring" className="font-normal flex items-center gap-1">
+                    <Repeat className="h-4 w-4" />
+                    Weekly Recurring
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="multiple" id="multiple" />
+                  <Label htmlFor="multiple" className="font-normal flex items-center gap-1">
+                    <CalendarPlus className="h-4 w-4" />
+                    Multiple Dates
+                  </Label>
+                </div>
+              </RadioGroup>
             </div>
+
+            {/* Single or Recurring Date/Time */}
+            {(bookingType === "single" || bookingType === "recurring") && (
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="date">{bookingType === "recurring" ? "Start Date *" : "Date *"}</Label>
+                  <Input
+                    id="date"
+                    type="date"
+                    value={date}
+                    onChange={(e) => setDate(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="time">Time *</Label>
+                  <Input
+                    id="time"
+                    type="time"
+                    value={time}
+                    onChange={(e) => setTime(e.target.value)}
+                  />
+                </div>
+              </div>
+            )}
+
+            {/* Recurring Options */}
+            {bookingType === "recurring" && (
+              <Card className="bg-muted/50">
+                <CardContent className="pt-4 space-y-3">
+                  <div className="flex items-center gap-2">
+                    <Repeat className="h-4 w-4 text-primary" />
+                    <Label className="font-medium">Recurring Settings</Label>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Number of Weeks</Label>
+                      <Select value={recurringWeeks} onValueChange={setRecurringWeeks}>
+                        <SelectTrigger>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {[2, 4, 6, 8, 10, 12, 16, 20, 24].map((n) => (
+                            <SelectItem key={n} value={n.toString()}>{n} weeks</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Sessions Preview</Label>
+                      <div className="text-sm text-muted-foreground pt-2">
+                        {date ? `${generateRecurringDates().length} sessions` : "Select a start date"}
+                      </div>
+                    </div>
+                  </div>
+                  {date && (
+                    <div className="flex flex-wrap gap-1 max-h-24 overflow-y-auto">
+                      {generateRecurringDates().map((d, i) => (
+                        <Badge key={d} variant="secondary" className="text-xs">
+                          {format(new Date(d), "MMM d")}
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            )}
+
+            {/* Multiple Dates Selection */}
+            {bookingType === "multiple" && (
+              <Card className="bg-muted/50">
+                <CardContent className="pt-4 space-y-3">
+                  <div className="flex items-center gap-2">
+                    <CalendarPlus className="h-4 w-4 text-primary" />
+                    <Label className="font-medium">Select Dates</Label>
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="time">Time (same for all sessions) *</Label>
+                    <Input
+                      id="time"
+                      type="time"
+                      value={time}
+                      onChange={(e) => setTime(e.target.value)}
+                    />
+                  </div>
+                  <div className="flex gap-2">
+                    <Input
+                      type="date"
+                      value={newMultipleDate}
+                      onChange={(e) => setNewMultipleDate(e.target.value)}
+                      className="flex-1"
+                    />
+                    <Button type="button" onClick={addMultipleDate} disabled={!newMultipleDate}>
+                      <Plus className="h-4 w-4 mr-1" />
+                      Add
+                    </Button>
+                  </div>
+                  {multipleDates.length > 0 && (
+                    <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto">
+                      {multipleDates.map((d) => (
+                        <Badge key={d} variant="secondary" className="flex items-center gap-1">
+                          {format(new Date(d), "MMM d, yyyy")}
+                          <button
+                            type="button"
+                            onClick={() => removeMultipleDate(d)}
+                            className="ml-1 hover:text-destructive"
+                          >
+                            <X className="h-3 w-3" />
+                          </button>
+                        </Badge>
+                      ))}
+                    </div>
+                  )}
+                  <p className="text-xs text-muted-foreground">
+                    {multipleDates.length} session{multipleDates.length !== 1 ? "s" : ""} selected
+                  </p>
+                </CardContent>
+              </Card>
+            )}
 
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
@@ -877,13 +1098,27 @@ export function ManualBookingDialog({ open, onClose, onSuccess }: ManualBookingD
           </div>
         </div>
 
-        <DialogFooter>
+        <DialogFooter className="flex-col sm:flex-row gap-2">
+          <div className="text-sm text-muted-foreground mr-auto">
+            {getAllBookingDates().length > 1 && (
+              <span className="flex items-center gap-1">
+                <Calendar className="h-4 w-4" />
+                {getAllBookingDates().length} sessions will be created
+              </span>
+            )}
+          </div>
           <Button variant="outline" onClick={handleClose}>
             Cancel
           </Button>
           <Button onClick={handleSubmit} disabled={submitting}>
             <Plus className="h-4 w-4 mr-2" />
-            {submitting ? "Creating..." : parentMode === "new" ? "Create Parent & Booking" : "Create Booking"}
+            {submitting 
+              ? "Creating..." 
+              : getAllBookingDates().length > 1 
+                ? `Create ${getAllBookingDates().length} Bookings` 
+                : parentMode === "new" 
+                  ? "Create Parent & Booking" 
+                  : "Create Booking"}
           </Button>
         </DialogFooter>
       </DialogContent>
