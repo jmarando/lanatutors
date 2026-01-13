@@ -30,69 +30,101 @@ const handler = async (req: Request): Promise<Response> => {
 
     const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
-    // Get the time window we're checking for (24 hours or 1 hour from now)
-    const now = new Date();
-    const targetTime24h = new Date(now.getTime() + 24 * 60 * 60 * 1000);
-    const targetTime1h = new Date(now.getTime() + 60 * 60 * 1000);
-
-    // Query consultations happening in ~24 hours (23-25 hour window)
-    const start24h = new Date(targetTime24h.getTime() - 60 * 60 * 1000).toISOString().split('T')[0];
-    const end24h = new Date(targetTime24h.getTime() + 60 * 60 * 1000).toISOString().split('T')[0];
-
-    // Query consultations happening in ~1 hour (0.5-1.5 hour window)
-    const start1h = new Date(targetTime1h.getTime() - 30 * 60 * 1000).toISOString().split('T')[0];
-    const end1h = new Date(targetTime1h.getTime() + 30 * 60 * 1000).toISOString().split('T')[0];
-
-    const { data: consultations24h, error: error24h } = await supabase
-      .from("consultation_bookings")
-      .select("*")
-      .eq("status", "confirmed")
-      .gte("consultation_date", start24h)
-      .lte("consultation_date", end24h);
-
-    const { data: consultations1h, error: error1h } = await supabase
-      .from("consultation_bookings")
-      .select("*")
-      .eq("status", "confirmed")
-      .gte("consultation_date", start1h)
-      .lte("consultation_date", end1h);
-
-    if (error24h || error1h) {
-      throw new Error(`Database error: ${error24h?.message || error1h?.message}`);
+    // Check if specific consultation IDs were provided for manual sending
+    let manualConsultationIds: string[] = [];
+    try {
+      const body = await req.json();
+      if (body.consultationIds && Array.isArray(body.consultationIds)) {
+        manualConsultationIds = body.consultationIds;
+      }
+    } catch {
+      // No body or invalid JSON, proceed with automatic detection
     }
 
     const reminders: ConsultationReminder[] = [];
 
-    // Process 24-hour reminders
-    if (consultations24h) {
-      for (const consultation of consultations24h) {
-        const consultationDateTime = new Date(`${consultation.consultation_date}T${consultation.consultation_time}`);
-        const timeDiff = consultationDateTime.getTime() - now.getTime();
-        const hoursDiff = timeDiff / (1000 * 60 * 60);
+    if (manualConsultationIds.length > 0) {
+      // Manual mode: send to specific consultations regardless of time
+      console.log(`Manual mode: sending reminders to ${manualConsultationIds.length} consultations`);
+      
+      const { data: manualConsultations, error } = await supabase
+        .from("consultation_bookings")
+        .select("*")
+        .in("id", manualConsultationIds);
 
-        // Send if between 23-25 hours away
-        if (hoursDiff >= 23 && hoursDiff <= 25 && consultation.email) {
+      if (error) throw error;
+
+      for (const consultation of manualConsultations || []) {
+        if (consultation.email) {
           reminders.push({
             ...consultation,
-            reminderType: "24h",
+            reminderType: "manual",
           });
         }
       }
-    }
+    } else {
+      // Automatic mode: check time windows
+      const now = new Date();
+      const targetTime24h = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+      const targetTime1h = new Date(now.getTime() + 60 * 60 * 1000);
 
-    // Process 1-hour reminders
-    if (consultations1h) {
-      for (const consultation of consultations1h) {
-        const consultationDateTime = new Date(`${consultation.consultation_date}T${consultation.consultation_time}`);
-        const timeDiff = consultationDateTime.getTime() - now.getTime();
-        const hoursDiff = timeDiff / (1000 * 60 * 60);
+      // Query consultations happening in ~24 hours (23-25 hour window)
+      const start24h = new Date(targetTime24h.getTime() - 60 * 60 * 1000).toISOString().split('T')[0];
+      const end24h = new Date(targetTime24h.getTime() + 60 * 60 * 1000).toISOString().split('T')[0];
 
-        // Send if between 0.75-1.25 hours away
-        if (hoursDiff >= 0.75 && hoursDiff <= 1.25 && consultation.email) {
-          reminders.push({
-            ...consultation,
-            reminderType: "1h",
-          });
+      // Query consultations happening in ~1 hour (0.5-1.5 hour window)
+      const start1h = new Date(targetTime1h.getTime() - 30 * 60 * 1000).toISOString().split('T')[0];
+      const end1h = new Date(targetTime1h.getTime() + 30 * 60 * 1000).toISOString().split('T')[0];
+
+      const { data: consultations24h, error: error24h } = await supabase
+        .from("consultation_bookings")
+        .select("*")
+        .eq("status", "confirmed")
+        .gte("consultation_date", start24h)
+        .lte("consultation_date", end24h);
+
+      const { data: consultations1h, error: error1h } = await supabase
+        .from("consultation_bookings")
+        .select("*")
+        .eq("status", "confirmed")
+        .gte("consultation_date", start1h)
+        .lte("consultation_date", end1h);
+
+      if (error24h || error1h) {
+        throw new Error(`Database error: ${error24h?.message || error1h?.message}`);
+      }
+
+      // Process 24-hour reminders
+      if (consultations24h) {
+        for (const consultation of consultations24h) {
+          const consultationDateTime = new Date(`${consultation.consultation_date}T${consultation.consultation_time}`);
+          const timeDiff = consultationDateTime.getTime() - now.getTime();
+          const hoursDiff = timeDiff / (1000 * 60 * 60);
+
+          // Send if between 23-25 hours away
+          if (hoursDiff >= 23 && hoursDiff <= 25 && consultation.email) {
+            reminders.push({
+              ...consultation,
+              reminderType: "24h",
+            });
+          }
+        }
+      }
+
+      // Process 1-hour reminders
+      if (consultations1h) {
+        for (const consultation of consultations1h) {
+          const consultationDateTime = new Date(`${consultation.consultation_date}T${consultation.consultation_time}`);
+          const timeDiff = consultationDateTime.getTime() - now.getTime();
+          const hoursDiff = timeDiff / (1000 * 60 * 60);
+
+          // Send if between 0.75-1.25 hours away
+          if (hoursDiff >= 0.75 && hoursDiff <= 1.25 && consultation.email) {
+            reminders.push({
+              ...consultation,
+              reminderType: "1h",
+            });
+          }
         }
       }
     }
