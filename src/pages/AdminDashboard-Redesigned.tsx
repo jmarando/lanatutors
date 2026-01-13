@@ -1677,23 +1677,33 @@ The Lana Tutors Team`
   // Render Consultations Content
   const renderConsultationsContent = () => {
     const now = new Date();
-    const tomorrow = new Date(now);
+    const today = new Date(now);
+    today.setHours(0, 0, 0, 0);
+    const tomorrow = new Date(today);
     tomorrow.setDate(tomorrow.getDate() + 1);
-    const weekEnd = new Date(now);
+    const weekEnd = new Date(today);
     weekEnd.setDate(weekEnd.getDate() + 7);
+    weekEnd.setHours(23, 59, 59, 999);
 
+    const todayStr = today.toISOString().split('T')[0];
     const tomorrowStr = tomorrow.toISOString().split('T')[0];
+    
+    const todayConsultations = consultationBookings.filter(b => 
+      b.consultation_date === todayStr && b.status !== 'cancelled'
+    );
+    
     const tomorrowConsultations = consultationBookings.filter(b => 
       b.consultation_date === tomorrowStr && b.status !== 'cancelled'
     );
 
     const thisWeekConsultations = consultationBookings.filter(b => {
       const bookingDate = new Date(b.consultation_date);
-      return bookingDate >= now && bookingDate <= weekEnd && b.status !== 'cancelled';
+      bookingDate.setHours(12, 0, 0, 0); // Set to noon to avoid timezone issues
+      return bookingDate >= today && bookingDate <= weekEnd && b.status !== 'cancelled';
     });
 
     const pendingFollowUps = consultationBookings.filter(b => 
-      !b.follow_up_sent_at && b.status === 'confirmed' && new Date(b.consultation_date) < now
+      !b.follow_up_sent_at && b.status === 'confirmed' && new Date(b.consultation_date) < today
     );
 
     return (
@@ -1701,7 +1711,20 @@ The Lana Tutors Team`
         <h2 className="text-2xl font-bold">Consultations</h2>
         
         {/* Upcoming Summary Cards */}
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-4 mb-6">
+        <div className="grid grid-cols-2 md:grid-cols-6 gap-4 mb-6">
+          <Card className="border-red-200 bg-red-50 dark:bg-red-950/20">
+            <CardContent className="p-4">
+              <div className="flex items-center gap-3">
+                <div className="p-2 bg-red-500/20 rounded-lg">
+                  <CalendarIcon className="h-5 w-5 text-red-600" />
+                </div>
+                <div>
+                  <p className="text-2xl font-bold text-red-600">{todayConsultations.length}</p>
+                  <p className="text-xs text-muted-foreground">Today</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
           <Card className="border-orange-200 bg-orange-50 dark:bg-orange-950/20">
             <CardContent className="p-4">
               <div className="flex items-center gap-3">
@@ -1793,13 +1816,25 @@ The Lana Tutors Team`
                 </TableHeader>
                 <TableBody>
                   {thisWeekConsultations
-                    .sort((a, b) => new Date(a.consultation_date).getTime() - new Date(b.consultation_date).getTime())
+                    .sort((a, b) => {
+                      const dateCompare = new Date(a.consultation_date).getTime() - new Date(b.consultation_date).getTime();
+                      if (dateCompare !== 0) return dateCompare;
+                      // Sort by time within the same day
+                      return a.consultation_time.localeCompare(b.consultation_time);
+                    })
                     .map((booking) => {
+                      const isToday = booking.consultation_date === todayStr;
                       const isTomorrow = booking.consultation_date === tomorrowStr;
+                      const rowClass = isToday 
+                        ? "bg-red-50 dark:bg-red-950/20" 
+                        : isTomorrow 
+                          ? "bg-orange-50 dark:bg-orange-950/20" 
+                          : "";
                       return (
-                        <TableRow key={booking.id} className={isTomorrow ? "bg-orange-50 dark:bg-orange-950/20" : ""}>
+                        <TableRow key={booking.id} className={rowClass}>
                           <TableCell className="font-medium">
                             <div className="flex items-center gap-2">
+                              {isToday && <Badge variant="outline" className="border-red-500 text-red-600 text-xs">Today</Badge>}
                               {isTomorrow && <Badge variant="outline" className="border-orange-500 text-orange-600 text-xs">Tomorrow</Badge>}
                               {formatConsultationDate(booking.consultation_date)}
                             </div>
