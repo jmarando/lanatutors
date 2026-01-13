@@ -7,9 +7,23 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Loader2, Plus, Trash2, Send, FileText, Search, Sparkles, CreditCard, Users } from "lucide-react";
+import { Loader2, Plus, Trash2, Send, FileText, Sparkles, CreditCard, Users, Check, ChevronsUpDown } from "lucide-react";
 import { toast } from "sonner";
 import { getCurriculums, getLevelsForCurriculum, getSubjectsForCurriculumLevel } from "@/utils/curriculumData";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
 
 interface SessionSchedule {
   day: string;
@@ -38,7 +52,7 @@ export const AdminCreateLearningPlan = () => {
   const [generatingPaymentLink, setGeneratingPaymentLink] = useState(false);
   const [tutors, setTutors] = useState<Tutor[]>([]);
   const [tutorsLoading, setTutorsLoading] = useState(true);
-  const [searchQuery, setSearchQuery] = useState("");
+  const [openTutorPopover, setOpenTutorPopover] = useState<number | null>(null);
 
   // Parent/Student Info
   const [parentName, setParentName] = useState("");
@@ -222,10 +236,6 @@ Lana Tutors Team`;
     toast.success("Message generated!");
   };
 
-  const filteredTutors = tutors.filter(t =>
-    t.full_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    t.subjects.some(s => s.toLowerCase().includes(searchQuery.toLowerCase()))
-  );
 
   const addSubject = () => {
     setSubjects([...subjects, { name: "", sessions: 8, rate: 1500, sessionsPerWeek: 2, weeks: 4, tutorId: "" }]);
@@ -546,23 +556,12 @@ Lana Tutors Team`;
               />
             </div>
 
-            {/* Tutor Search */}
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                placeholder="Filter tutors by name or subject..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-
             {/* How it works hint */}
             <div className="bg-primary/5 border border-primary/20 rounded-lg p-4">
               <p className="text-sm font-medium text-primary mb-2">How it works:</p>
               <ol className="text-sm text-muted-foreground space-y-1 list-decimal list-inside">
                 <li>Click <strong>"Add Subject"</strong> to add a subject to the plan</li>
-                <li>Select a <strong>tutor</strong> who will teach that subject</li>
+                <li>Search and select a <strong>tutor</strong> who will teach that subject</li>
                 <li>Choose the <strong>subject</strong> from the tutor's specializations or curriculum</li>
                 <li>Set the <strong>sessions per week</strong> and <strong>duration</strong></li>
                 <li>Repeat for each subject the student needs</li>
@@ -608,26 +607,62 @@ Lana Tutors Team`;
                                 <Loader2 className="w-4 h-4 animate-spin" />
                               </div>
                             ) : (
-                              <Select
-                                value={subject.tutorId}
-                                onValueChange={(v) => updateSubject(index, "tutorId", v)}
+                              <Popover 
+                                open={openTutorPopover === index} 
+                                onOpenChange={(open) => setOpenTutorPopover(open ? index : null)}
                               >
-                                <SelectTrigger className={!subject.tutorId ? 'border-primary' : ''}>
-                                  <SelectValue placeholder="Choose a tutor first">
-                                    {selectedTutor ? selectedTutor.full_name : "Choose a tutor first"}
-                                  </SelectValue>
-                                </SelectTrigger>
-                                <SelectContent className="bg-background z-50">
-                                  {filteredTutors.map((tutor) => (
-                                    <SelectItem key={tutor.id} value={tutor.id} className="py-2">
-                                      <span className="font-medium">{tutor.full_name}</span>
-                                      <span className="text-xs text-muted-foreground ml-2">
-                                        {tutor.subjects.slice(0, 2).join(", ")}{tutor.subjects.length > 2 ? '...' : ''} • KES {tutor.hourly_rate?.toLocaleString()}/hr
-                                      </span>
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
+                                <PopoverTrigger asChild>
+                                  <Button
+                                    variant="outline"
+                                    role="combobox"
+                                    aria-expanded={openTutorPopover === index}
+                                    className={cn(
+                                      "w-full justify-between font-normal",
+                                      !subject.tutorId && "border-primary"
+                                    )}
+                                  >
+                                    {selectedTutor ? (
+                                      <span className="truncate">{selectedTutor.full_name}</span>
+                                    ) : (
+                                      <span className="text-muted-foreground">Search tutors...</span>
+                                    )}
+                                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                  </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-[300px] p-0" align="start">
+                                  <Command>
+                                    <CommandInput placeholder="Search by name or subject..." />
+                                    <CommandList>
+                                      <CommandEmpty>No tutor found.</CommandEmpty>
+                                      <CommandGroup>
+                                        {tutors.map((tutor) => (
+                                          <CommandItem
+                                            key={tutor.id}
+                                            value={`${tutor.full_name} ${tutor.subjects.join(" ")}`}
+                                            onSelect={() => {
+                                              updateSubject(index, "tutorId", tutor.id);
+                                              setOpenTutorPopover(null);
+                                            }}
+                                          >
+                                            <Check
+                                              className={cn(
+                                                "mr-2 h-4 w-4",
+                                                subject.tutorId === tutor.id ? "opacity-100" : "opacity-0"
+                                              )}
+                                            />
+                                            <div className="flex-1 min-w-0">
+                                              <p className="font-medium truncate">{tutor.full_name}</p>
+                                              <p className="text-xs text-muted-foreground truncate">
+                                                {tutor.subjects.slice(0, 3).join(", ")}{tutor.subjects.length > 3 ? '...' : ''} • KES {tutor.hourly_rate?.toLocaleString()}/hr
+                                              </p>
+                                            </div>
+                                          </CommandItem>
+                                        ))}
+                                      </CommandGroup>
+                                    </CommandList>
+                                  </Command>
+                                </PopoverContent>
+                              </Popover>
                             )}
                           </div>
 
