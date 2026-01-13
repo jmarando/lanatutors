@@ -1,47 +1,68 @@
 import { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, CheckCircle, FileText } from "lucide-react";
+import { Loader2, CheckCircle, FileText, Share2, Copy, Check } from "lucide-react";
 import { toast } from "sonner";
-import { format } from "date-fns";
 import { SEO } from "@/components/SEO";
 
 const LearningPlanView = () => {
   const { planId } = useParams();
+  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const [loading, setLoading] = useState(true);
   const [plan, setPlan] = useState<any>(null);
   const [processing, setProcessing] = useState(false);
+  const [copied, setCopied] = useState(false);
+  const [isPublicView, setIsPublicView] = useState(false);
+
+  // Check if this is a public view via share token
+  const shareToken = searchParams.get("token");
 
   useEffect(() => {
     fetchPlan();
-  }, [planId]);
+  }, [planId, shareToken]);
 
   const fetchPlan = async () => {
     try {
-      // Ensure the user is authenticated before loading the plan, otherwise RLS will hide it
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
-        // Redirect to login; after login the parent can reopen the email link
-        navigate("/login");
-        return;
+      // If share token is provided, fetch via share token (public access)
+      if (shareToken) {
+        const { data, error } = await supabase
+          .from("learning_plans")
+          .select(`
+            *,
+            tutor_profiles!inner(user_id),
+            profiles!tutor_profiles_user_id_fkey(full_name)
+          `)
+          .eq("share_token", shareToken)
+          .single();
+
+        if (error) throw error;
+        setPlan(data);
+        setIsPublicView(true);
+      } else {
+        // Authenticated access via planId
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) {
+          navigate("/login");
+          return;
+        }
+
+        const { data, error } = await supabase
+          .from("learning_plans")
+          .select(`
+            *,
+            tutor_profiles!inner(user_id),
+            profiles!tutor_profiles_user_id_fkey(full_name)
+          `)
+          .eq("id", planId)
+          .single();
+
+        if (error) throw error;
+        setPlan(data);
       }
-
-      const { data, error } = await supabase
-        .from("learning_plans")
-        .select(`
-          *,
-          tutor_profiles!inner(user_id),
-          profiles!tutor_profiles_user_id_fkey(full_name)
-        `)
-        .eq("id", planId)
-        .single();
-
-      if (error) throw error;
-      setPlan(data);
     } catch (error: any) {
       console.error("Error fetching plan:", error);
       toast.error("Failed to load learning plan");
@@ -50,10 +71,36 @@ const LearningPlanView = () => {
     }
   };
 
+  const handleCopyLink = async () => {
+    if (!plan?.share_token) {
+      toast.error("Share link not available");
+      return;
+    }
+
+    const shareUrl = `https://lanatutors.africa/learning-plan/${plan.id}?token=${plan.share_token}`;
+    
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      setCopied(true);
+      toast.success("Link copied to clipboard!");
+      setTimeout(() => setCopied(false), 2000);
+    } catch (err) {
+      // Fallback for browsers that don't support clipboard API
+      const textArea = document.createElement("textarea");
+      textArea.value = shareUrl;
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand("copy");
+      document.body.removeChild(textArea);
+      setCopied(true);
+      toast.success("Link copied to clipboard!");
+      setTimeout(() => setCopied(false), 2000);
+    }
+  };
+
   const handleAccept = async () => {
     setProcessing(true);
     try {
-      // Navigate to invoice preview with plan data
       navigate("/invoice-preview", {
         state: {
           type: "learning_plan",
@@ -82,7 +129,7 @@ const LearningPlanView = () => {
       const { error } = await supabase
         .from("learning_plans")
         .update({ status: "declined" })
-        .eq("id", planId);
+        .eq("id", planId || plan?.id);
 
       if (error) throw error;
 
@@ -145,19 +192,73 @@ const LearningPlanView = () => {
           {/* Header */}
           <Card className="mb-6">
             <CardHeader>
-              <div className="flex items-start justify-between">
+              <div className="flex items-start justify-between flex-wrap gap-4">
                 <div>
                   <CardTitle className="text-2xl mb-2">{plan.title}</CardTitle>
                   <p className="text-muted-foreground">
                     Tutor: {plan.profiles?.full_name || "Lana Tutors Team"}
                   </p>
                 </div>
-                <Badge className={getStatusColor(plan.status)}>
-                  {plan.status}
-                </Badge>
+                <div className="flex items-center gap-2">
+                  <Badge className={getStatusColor(plan.status)}>
+                    {plan.status}
+                  </Badge>
+                  {/* Share Button */}
+                  {plan.share_token && !isPublicView && (
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={handleCopyLink}
+                      className="gap-2"
+                    >
+                      {copied ? (
+                        <>
+                          <Check className="w-4 h-4 text-green-500" />
+                          Copied!
+                        </>
+                      ) : (
+                        <>
+                          <Share2 className="w-4 h-4" />
+                          Share Link
+                        </>
+                      )}
+                    </Button>
+                  )}
+                </div>
               </div>
             </CardHeader>
           </Card>
+
+          {/* Share Link Info (for authenticated users) */}
+          {plan.share_token && !isPublicView && (
+            <Card className="mb-6 bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800">
+              <CardContent className="p-4">
+                <div className="flex items-start gap-3">
+                  <Share2 className="w-5 h-5 text-blue-600 mt-0.5" />
+                  <div className="flex-1">
+                    <p className="text-sm font-medium text-blue-900 dark:text-blue-100">
+                      Share this learning plan
+                    </p>
+                    <p className="text-xs text-blue-700 dark:text-blue-300 mt-1">
+                      Copy the link below to share this learning plan with others:
+                    </p>
+                    <div className="mt-2 flex items-center gap-2">
+                      <code className="flex-1 bg-white dark:bg-blue-900 px-3 py-2 rounded text-xs break-all border">
+                        https://lanatutors.africa/learning-plan/{plan.id}?token={plan.share_token}
+                      </code>
+                      <Button
+                        variant="secondary"
+                        size="sm"
+                        onClick={handleCopyLink}
+                      >
+                        <Copy className="w-4 h-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Plan Details */}
           <Card className="mb-6">
@@ -232,8 +333,8 @@ const LearningPlanView = () => {
             </Card>
           )}
 
-          {/* Actions */}
-          {plan.status === "proposed" && (
+          {/* Actions - Only show for non-public views and proposed status */}
+          {!isPublicView && plan.status === "proposed" && (
             <div className="flex flex-col sm:flex-row gap-4">
               <Button
                 variant="outline"
@@ -261,6 +362,23 @@ const LearningPlanView = () => {
                 )}
               </Button>
             </div>
+          )}
+
+          {/* Public view message */}
+          {isPublicView && plan.status === "proposed" && (
+            <Card className="bg-blue-50 border-blue-200">
+              <CardContent className="p-6 text-center">
+                <p className="text-lg font-semibold text-blue-900 mb-2">
+                  This is a preview of the learning plan
+                </p>
+                <p className="text-sm text-blue-700">
+                  To accept or decline this plan, please log in to your account.
+                </p>
+                <Button className="mt-4" onClick={() => navigate("/login")}>
+                  Log In to Accept
+                </Button>
+              </CardContent>
+            </Card>
           )}
 
           {plan.status === "accepted" && (
