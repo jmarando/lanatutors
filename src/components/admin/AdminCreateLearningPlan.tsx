@@ -59,6 +59,9 @@ export const AdminCreateLearningPlan = () => {
   
   // Payment option
   const [paymentOption, setPaymentOption] = useState<"full" | "deposit">("full");
+  
+  // Class type
+  const [classType, setClassType] = useState<"online" | "physical">("online");
 
   const curriculums = getCurriculums();
   const availableLevels = curriculum ? getLevelsForCurriculum(curriculum) : [];
@@ -315,7 +318,7 @@ Lana Tutors Team`;
           total_price: totalPrice,
           discount_applied: discount,
           validity_days: validityDays,
-          notes: `Curriculum: ${curriculum} | Grade: ${gradeLevel} | Payment Option: ${paymentOption} | Tutors: ${assignedTutors.map(t => t.full_name).join(", ")}\n\n${notes}`,
+          notes: `Curriculum: ${curriculum} | Grade: ${gradeLevel} | Class Type: ${classType === 'physical' ? 'Physical (In-Person)' : 'Online'} | Payment Option: ${paymentOption} | Tutors: ${assignedTutors.map(t => t.full_name).join(", ")}\n\n${notes}`,
           status: "proposed",
         })
         .select()
@@ -870,6 +873,21 @@ Lana Tutors Team`;
                 <span className="font-semibold text-primary">KES {totals.depositAmount.toLocaleString()}</span>
               </div>
             </RadioGroup>
+            
+            {/* Class Type */}
+            <div className="pt-4 border-t mt-4">
+              <Label className="text-base mb-3 block">Session Type</Label>
+              <RadioGroup value={classType} onValueChange={(v) => setClassType(v as "online" | "physical")} className="flex gap-4">
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="online" id="online" />
+                  <Label htmlFor="online" className="cursor-pointer">Online Sessions</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="physical" id="physical" />
+                  <Label htmlFor="physical" className="cursor-pointer">Physical (In-Person)</Label>
+                </div>
+              </RadioGroup>
+            </div>
           </CardContent>
         </Card>
 

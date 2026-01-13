@@ -111,6 +111,7 @@ export function ManualBookingDialog({ open, onClose, onSuccess }: ManualBookingD
   const [subject, setSubject] = useState("");
   const [amount, setAmount] = useState("");
   const [paymentStatus, setPaymentStatus] = useState("pending");
+  const [classType, setClassType] = useState<"online" | "physical">("online");
   const [notes, setNotes] = useState("");
   const [sendConfirmation, setSendConfirmation] = useState(true);
   const [notifyTutor, setNotifyTutor] = useState(true);
@@ -307,6 +308,7 @@ export function ManualBookingDialog({ open, onClose, onSuccess }: ManualBookingD
           notes: `[OFFLINE BOOKING] ${notes}`.trim(),
           student_profile_id: studentProfileId,
           booking_source: "manual",
+          class_type: classType,
         })
         .select()
         .single();
@@ -716,8 +718,22 @@ export function ManualBookingDialog({ open, onClose, onSuccess }: ManualBookingD
                       </div>
                     )}
                   </SelectContent>
-                </Select>
+              </Select>
               </div>
+            </div>
+
+            {/* Class Type */}
+            <div className="space-y-2">
+              <Label>Class Type</Label>
+              <Select value={classType} onValueChange={(v) => setClassType(v as "online" | "physical")}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="online">Online</SelectItem>
+                  <SelectItem value="physical">Physical (In-Person)</SelectItem>
+                </SelectContent>
+              </Select>
             </div>
 
             {/* Payment Info */}
