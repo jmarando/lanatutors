@@ -279,11 +279,17 @@ export function ManualBookingDialog({ open, onClose, onSuccess }: ManualBookingD
       const startTime = new Date(`${date}T${time}`);
       const endTime = new Date(startTime.getTime() + parseInt(duration) * 60 * 1000);
 
-      // Create availability slot
+      // Get the tutor's user_id (auth.users.id) for the availability slot
+      const selectedTutor = tutors.find(t => t.id === selectedTutorId);
+      if (!selectedTutor) {
+        throw new Error("Selected tutor not found");
+      }
+
+      // Create availability slot using user_id (foreign key references auth.users)
       const { data: slot, error: slotError } = await supabase
         .from("tutor_availability")
         .insert({
-          tutor_id: selectedTutorId,
+          tutor_id: selectedTutor.user_id,
           start_time: startTime.toISOString(),
           end_time: endTime.toISOString(),
           is_booked: true,
@@ -294,12 +300,12 @@ export function ManualBookingDialog({ open, onClose, onSuccess }: ManualBookingD
 
       if (slotError) throw slotError;
 
-      // Create booking
+      // Create booking (using user_id for tutor since FK references auth.users)
       const { data: bookingData, error: bookingError } = await supabase
         .from("bookings")
         .insert({
           student_id: parentId,
-          tutor_id: selectedTutorId,
+          tutor_id: selectedTutor.user_id,
           availability_slot_id: slot.id,
           subject,
           amount: parseFloat(amount) || 0,
