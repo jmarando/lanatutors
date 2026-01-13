@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
-import { CheckCircle, XCircle, AlertCircle, Calendar as CalendarIcon, Clock, Mail, Phone, User, BookOpen, FileText, Video, Edit, Save, X, MessageCircle, Send, TrendingUp, Users, DollarSign, BookMarked, Activity, ArrowUpRight, ArrowDownRight, GraduationCap, Star, ExternalLink } from "lucide-react";
+import { CheckCircle, XCircle, AlertCircle, Calendar as CalendarIcon, Clock, Mail, Phone, User, BookOpen, FileText, Video, Edit, Save, X, MessageCircle, Send, TrendingUp, Users, DollarSign, BookMarked, Activity, ArrowUpRight, ArrowDownRight, GraduationCap, Star, ExternalLink, Bell } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
@@ -74,6 +74,7 @@ const AdminDashboard = () => {
   const [newNoteContent, setNewNoteContent] = useState("");
   const [consultationNotes, setConsultationNotes] = useState<Record<string, any[]>>({});
   const [expandedQuickView, setExpandedQuickView] = useState<'today' | 'tomorrow' | 'week' | null>(null);
+  const [sendingReminders, setSendingReminders] = useState(false);
 
   // Message templates for customer journey - Enhanced and professional
   const messageTemplates = {
@@ -1755,9 +1756,48 @@ The Lana Tutors Team`
       </div>
     );
 
+    const handleSendReminders = async () => {
+      setSendingReminders(true);
+      try {
+        const { data, error } = await supabase.functions.invoke('send-consultation-reminder');
+        
+        if (error) throw error;
+        
+        const results = data?.results || [];
+        const successful = results.filter((r: any) => r.success).length;
+        const failed = results.filter((r: any) => !r.success).length;
+        
+        if (successful > 0) {
+          toast.success(`Sent ${successful} reminder email(s)${failed > 0 ? `, ${failed} failed` : ''}`);
+        } else if (data?.message?.includes('0 reminders')) {
+          toast.info('No reminders to send at this time (consultations must be 1h or 24h away)');
+        } else if (failed > 0) {
+          toast.error(`Failed to send ${failed} reminder(s)`);
+        } else {
+          toast.info('No upcoming consultations require reminders');
+        }
+      } catch (error: any) {
+        console.error('Error sending reminders:', error);
+        toast.error('Failed to send reminders: ' + error.message);
+      } finally {
+        setSendingReminders(false);
+      }
+    };
+
     return (
       <div className="space-y-4">
-        <h2 className="text-2xl font-bold">Consultations</h2>
+        <div className="flex items-center justify-between">
+          <h2 className="text-2xl font-bold">Consultations</h2>
+          <Button 
+            onClick={handleSendReminders} 
+            disabled={sendingReminders}
+            variant="outline"
+            className="gap-2"
+          >
+            <Bell className="h-4 w-4" />
+            {sendingReminders ? 'Sending...' : 'Send Reminders'}
+          </Button>
+        </div>
         
         {/* Upcoming Summary Cards - Clickable */}
         <div className="grid grid-cols-2 md:grid-cols-6 gap-4 mb-6">
