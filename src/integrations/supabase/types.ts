@@ -308,6 +308,7 @@ export type Database = {
         Row: {
           additional_notes: string | null
           admin_notes: string | null
+          budget_range: string | null
           consultation_date: string
           consultation_outcome: string | null
           consultation_time: string
@@ -327,14 +328,17 @@ export type Database = {
           preferred_mode: string
           recommended_subjects: string[] | null
           recommended_tutors: string[] | null
+          specific_challenges: string | null
           status: string
           student_name: string
           subjects_interest: string[]
           updated_at: string | null
+          urgency: string | null
         }
         Insert: {
           additional_notes?: string | null
           admin_notes?: string | null
+          budget_range?: string | null
           consultation_date: string
           consultation_outcome?: string | null
           consultation_time: string
@@ -354,14 +358,17 @@ export type Database = {
           preferred_mode: string
           recommended_subjects?: string[] | null
           recommended_tutors?: string[] | null
+          specific_challenges?: string | null
           status?: string
           student_name: string
           subjects_interest: string[]
           updated_at?: string | null
+          urgency?: string | null
         }
         Update: {
           additional_notes?: string | null
           admin_notes?: string | null
+          budget_range?: string | null
           consultation_date?: string
           consultation_outcome?: string | null
           consultation_time?: string
@@ -381,10 +388,12 @@ export type Database = {
           preferred_mode?: string
           recommended_subjects?: string[] | null
           recommended_tutors?: string[] | null
+          specific_challenges?: string | null
           status?: string
           student_name?: string
           subjects_interest?: string[]
           updated_at?: string | null
+          urgency?: string | null
         }
         Relationships: []
       }
@@ -1092,6 +1101,7 @@ export type Database = {
           id: string
           inquiry_id: string | null
           notes: string | null
+          share_token: string | null
           status: string | null
           student_id: string | null
           subjects: Json
@@ -1109,6 +1119,7 @@ export type Database = {
           id?: string
           inquiry_id?: string | null
           notes?: string | null
+          share_token?: string | null
           status?: string | null
           student_id?: string | null
           subjects?: Json
@@ -1126,6 +1137,7 @@ export type Database = {
           id?: string
           inquiry_id?: string | null
           notes?: string | null
+          share_token?: string | null
           status?: string | null
           student_id?: string | null
           subjects?: Json

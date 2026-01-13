@@ -33,6 +33,7 @@ interface LearningPlanEmailRequest {
   tutorName?: string;
   sessionSchedule?: SessionSchedule[];
   startDate?: string;
+  shareToken?: string;
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -58,10 +59,12 @@ const handler = async (req: Request): Promise<Response> => {
       tutorName,
       sessionSchedule,
       startDate,
+      shareToken,
     }: LearningPlanEmailRequest = await req.json();
 
-    const appUrl = req.headers.get("origin") || "https://lanatutors.africa";
+    const appUrl = "https://lanatutors.africa";
     const planUrl = `${appUrl}/learning-plan/${planId}`;
+    const shareUrl = shareToken ? `${appUrl}/learning-plan/${planId}?token=${shareToken}` : planUrl;
 
     // Calculate deposit amount (30%)
     const calculatedDeposit = depositAmount || Math.ceil(totalPrice * 0.3);
@@ -313,6 +316,23 @@ const handler = async (req: Request): Promise<Response> => {
                           </td>
                         </tr>
                       </table>
+
+                      <!-- Share Link Section -->
+                      ${shareToken ? `
+                      <table role="presentation" style="width: 100%; margin: 20px 0; background-color: #f0f9ff; border: 2px solid #0ea5e9; border-radius: 8px;">
+                        <tr>
+                          <td style="padding: 20px;">
+                            <h4 style="margin: 0 0 10px 0; color: #0369a1; font-size: 16px;">🔗 Share This Learning Plan</h4>
+                            <p style="margin: 0 0 10px 0; color: #374151; font-size: 14px;">
+                              Share this plan with family members or anyone who needs to review it:
+                            </p>
+                            <p style="margin: 0; background: #ffffff; padding: 12px; border-radius: 6px; font-size: 12px; word-break: break-all; border: 1px solid #e5e7eb;">
+                              <a href="${shareUrl}" style="color: #0369a1;">${shareUrl}</a>
+                            </p>
+                          </td>
+                        </tr>
+                      </table>
+                      ` : ''}
 
                       <p style="margin: 30px 0 10px 0; font-size: 14px; line-height: 1.6; color: #6b7280;">
                         <strong>Next Steps:</strong>

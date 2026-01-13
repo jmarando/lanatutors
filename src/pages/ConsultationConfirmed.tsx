@@ -2,7 +2,16 @@ import { useEffect } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { CheckCircle2, Calendar, Clock, Mail, Video, BookOpen, Lightbulb, ClipboardList, ArrowRight, Sparkles } from "lucide-react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { CheckCircle2, Calendar, Clock, Mail, Video, BookOpen, Lightbulb, ClipboardList, ArrowRight, User } from "lucide-react";
+
+// Consultant info - can be expanded later to fetch from database
+const CONSULTANT = {
+  name: "Sarah Njeri",
+  title: "Education Consultant",
+  photo: "https://images.unsplash.com/photo-1580489944761-15a19d654956?w=150&h=150&fit=crop&crop=face",
+  initials: "SN"
+};
 
 const ConsultationConfirmed = () => {
   const [searchParams] = useSearchParams();
@@ -38,19 +47,43 @@ const ConsultationConfirmed = () => {
             <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-green-100 mb-4">
               <CheckCircle2 className="w-12 h-12 text-green-600" />
             </div>
-            <h1 className="text-4xl font-bold mb-2">Consultation Confirmed! ✅</h1>
+            <h1 className="text-4xl font-bold mb-2">Assessment Call Confirmed! ✅</h1>
             <p className="text-muted-foreground text-lg">
-              Hi {parentName}, your free consultation for {studentName} has been successfully scheduled
+              Hi {parentName}, your academic assessment call for {studentName} has been successfully scheduled
             </p>
           </div>
 
+          {/* Consultant Card - NEW */}
+          <Card className="mb-6 border-2 border-primary/20 bg-gradient-to-r from-primary/5 to-transparent">
+            <CardContent className="p-6">
+              <div className="flex items-center gap-4">
+                <Avatar className="w-20 h-20 border-2 border-primary/20">
+                  <AvatarImage src={CONSULTANT.photo} alt={CONSULTANT.name} />
+                  <AvatarFallback className="bg-primary/10 text-primary text-xl font-semibold">
+                    {CONSULTANT.initials}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex-1">
+                  <p className="text-sm text-muted-foreground mb-1">You're booked with</p>
+                  <h3 className="text-xl font-bold text-foreground">{CONSULTANT.name}</h3>
+                  <p className="text-sm text-muted-foreground">{CONSULTANT.title} at Lana Tutors</p>
+                </div>
+                <div className="hidden sm:flex items-center justify-center w-12 h-12 rounded-full bg-primary/10">
+                  <User className="w-6 h-6 text-primary" />
+                </div>
+              </div>
+              <p className="mt-4 text-sm text-muted-foreground">
+                {CONSULTANT.name} will guide you through understanding {studentName}'s learning needs and help create a personalized tutoring plan.
+              </p>
+            </CardContent>
+          </Card>
 
           {/* Consultation Details Card */}
           <Card className="mb-6">
             <CardHeader className="bg-primary/5">
               <CardTitle className="flex items-center gap-2">
                 <Calendar className="w-5 h-5" />
-                Consultation Details
+                Assessment Call Details
               </CardTitle>
             </CardHeader>
             <CardContent className="p-6 space-y-4">
@@ -95,7 +128,7 @@ const ConsultationConfirmed = () => {
             <CardHeader className="bg-accent/5">
               <CardTitle className="flex items-center gap-2 text-accent">
                 <Lightbulb className="w-5 h-5" />
-                What to Expect During Your Consultation
+                What to Expect During Your Assessment Call
               </CardTitle>
             </CardHeader>
             <CardContent className="p-6">
@@ -105,9 +138,9 @@ const ConsultationConfirmed = () => {
                     <Video className="w-4 h-4 text-accent" />
                   </div>
                   <div>
-                    <p className="font-semibold">Meet Your Expert</p>
+                    <p className="font-semibold">Meet {CONSULTANT.name}</p>
                     <p className="text-sm text-muted-foreground">
-                      You'll chat with a Lana curriculum specialist who understands your child's learning system
+                      Your dedicated education consultant who understands your child's curriculum and learning needs
                     </p>
                   </div>
                 </li>
@@ -169,7 +202,7 @@ const ConsultationConfirmed = () => {
             </CardHeader>
             <CardContent className="p-6">
               <p className="text-sm text-muted-foreground mb-4">
-                To make the most of your consultation, please have ready:
+                To make the most of your assessment call, please have ready:
               </p>
               <ul className="space-y-2 text-sm">
                 <li className="flex items-start gap-2">
@@ -205,8 +238,8 @@ const ConsultationConfirmed = () => {
                     We'll send you email reminders:
                   </p>
                   <ul className="text-sm space-y-1">
-                    <li>• 1 day before your consultation</li>
-                    <li>• 1 hour before your consultation</li>
+                    <li>• 1 day before your assessment call</li>
+                    <li>• 1 hour before your assessment call</li>
                   </ul>
                 </div>
               </div>
