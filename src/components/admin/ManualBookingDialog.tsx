@@ -322,6 +322,65 @@ export function ManualBookingDialog({ open, onClose, onSuccess }: ManualBookingD
 
       if (bookingError) throw bookingError;
 
+      // Generate meeting link for online classes
+      let meetingLink = null;
+      if (classType === "online") {
+        try {
+          const { data: meetData } = await supabase.functions.invoke("generate-google-meet-link", {
+            body: {
+              bookingId: bookingData.id,
+              summary: `${subject} Session`,
+              startTime: startTime.toISOString(),
+              endTime: endTime.toISOString(),
+            },
+          });
+          if (meetData?.meetLink) {
+            meetingLink = meetData.meetLink;
+            // Update booking with meeting link
+            await supabase
+              .from("bookings")
+              .update({ meeting_link: meetingLink })
+              .eq("id", bookingData.id);
+          }
+        } catch (meetError) {
+          console.error("Google Meet generation error:", meetError);
+        }
+      }
+
+      // Send confirmation email to parent/student
+      if (sendConfirmation) {
+        try {
+          await supabase.functions.invoke("send-booking-email", {
+            body: {
+              bookingId: bookingData.id,
+              meetingLink: meetingLink,
+              recipientType: "student",
+            },
+          });
+          console.log("Parent confirmation email sent");
+        } catch (emailError) {
+          console.error("Failed to send parent email:", emailError);
+          toast.warning("Booking created but parent email failed to send");
+        }
+      }
+
+      // Send notification email to tutor
+      if (notifyTutor) {
+        try {
+          await supabase.functions.invoke("send-booking-email", {
+            body: {
+              bookingId: bookingData.id,
+              meetingLink: meetingLink,
+              recipientType: "tutor",
+            },
+          });
+          console.log("Tutor notification email sent");
+        } catch (emailError) {
+          console.error("Failed to send tutor email:", emailError);
+          toast.warning("Booking created but tutor email failed to send");
+        }
+      }
+
       // Add to central calendar if enabled
       if (addToCalendar) {
         try {
@@ -334,14 +393,13 @@ export function ManualBookingDialog({ open, onClose, onSuccess }: ManualBookingD
             body: {
               bookingId: bookingData.id,
               summary: `${subject} - ${studentName}`,
-              description: `Tutoring session\nStudent: ${studentName}\nTutor: ${tutorName}\nSubject: ${subject}\n${notes ? `Notes: ${notes}` : ""}`,
+              description: `Tutoring session\nStudent: ${studentName}\nTutor: ${tutorName}\nSubject: ${subject}\n${meetingLink ? `Meeting Link: ${meetingLink}\n` : ""}${notes ? `Notes: ${notes}` : ""}`,
               startTime: startTime.toISOString(),
               endTime: endTime.toISOString(),
             },
           });
         } catch (calError) {
           console.error("Calendar sync error:", calError);
-          // Don't fail the booking if calendar sync fails
           toast.warning("Booking created but calendar sync failed");
         }
       }
