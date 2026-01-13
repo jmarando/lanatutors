@@ -238,7 +238,7 @@ const Home = () => {
               <div className="flex flex-wrap gap-4">
                 <Link to="/book-consultation">
                   <Button size="lg" className="h-14 px-8 text-lg hover-scale">
-                    Book Free Consultation
+                    Book Assessment Call
                   </Button>
                 </Link>
                 <Link to="/book-class">
