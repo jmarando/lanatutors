@@ -322,16 +322,22 @@ export function ManualBookingDialog({ open, onClose, onSuccess }: ManualBookingD
 
       if (bookingError) throw bookingError;
 
+      // Get student and tutor names for meeting/emails
+      const studentName = studentProfileId 
+        ? (parentMode === "new" ? newStudentName : students.find(s => s.id === studentProfileId)?.full_name || "Student")
+        : (parentMode === "new" ? newStudentName : "Student");
+      const tutorName = tutors.find(t => t.id === selectedTutorId)?.full_name || "Tutor";
+
       // Generate meeting link for online classes
       let meetingLink = null;
       if (classType === "online") {
         try {
           const { data: meetData } = await supabase.functions.invoke("generate-google-meet-link", {
             body: {
-              bookingId: bookingData.id,
               summary: `${subject} Session`,
-              startTime: startTime.toISOString(),
-              endTime: endTime.toISOString(),
+              description: `Tutoring session with ${tutorName} for ${studentName}`,
+              startDateTime: startTime.toISOString(),
+              endDateTime: endTime.toISOString(),
             },
           });
           if (meetData?.meetingLink) {
@@ -384,11 +390,6 @@ export function ManualBookingDialog({ open, onClose, onSuccess }: ManualBookingD
       // Add to central calendar if enabled
       if (addToCalendar) {
         try {
-          const studentName = studentProfileId 
-            ? (parentMode === "new" ? newStudentName : students.find(s => s.id === studentProfileId)?.full_name || "Student")
-            : (parentMode === "new" ? newStudentName : "Student");
-          const tutorName = tutors.find(t => t.id === selectedTutorId)?.full_name || "Tutor";
-
           await supabase.functions.invoke("sync-to-central-calendar", {
             body: {
               bookingId: bookingData.id,
