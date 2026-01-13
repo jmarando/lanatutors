@@ -94,31 +94,70 @@ serve(async (req) => {
 
     if (authError) {
       // Check if user already exists
-      if (authError.code === 'email_exists') {
+      if (authError.code === 'email_exists' || authError.message?.includes('already been registered')) {
         console.log(`User with email ${email} already exists, looking up existing user`);
         
-        // Find the existing user by email
-        const { data: existingUsers, error: listError } = await supabaseAdmin.auth.admin.listUsers();
+        // Find the existing user by querying the profiles table which we can access
+        const { data: existingProfile, error: profileLookupError } = await supabaseAdmin
+          .from("profiles")
+          .select("id")
+          .eq("id", (
+            await supabaseAdmin
+              .from("profiles")
+              .select("id")
+              .limit(1)
+          ).data?.[0]?.id) // Dummy query to trigger search
+          .limit(1);
         
-        if (listError) {
-          console.error("Error listing users:", listError);
-          return new Response(
-            JSON.stringify({ error: "Failed to lookup existing user" }),
-            { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-          );
+        // Use a different approach - query auth.users through RPC or direct lookup
+        // Since we can't easily get user by email, let's check profiles table directly
+        // by phone number which should be unique
+        const { data: profileByPhone, error: phoneError } = await supabaseAdmin
+          .from("profiles")
+          .select("id, full_name")
+          .eq("phone_number", parentData.phoneNumber)
+          .maybeSingle();
+        
+        if (profileByPhone) {
+          userId = profileByPhone.id;
+          isExistingUser = true;
+          console.log(`Found existing user by phone with id ${userId}`);
+        } else {
+          // Try to get user through admin API with pagination
+          let foundUser = null;
+          let page = 1;
+          const perPage = 1000;
+          
+          while (!foundUser) {
+            const { data: usersPage, error: listError } = await supabaseAdmin.auth.admin.listUsers({
+              page,
+              perPage,
+            });
+            
+            if (listError || !usersPage.users.length) {
+              break;
+            }
+            
+            foundUser = usersPage.users.find(u => u.email === email);
+            if (foundUser) break;
+            
+            // If we got fewer than perPage users, we've reached the end
+            if (usersPage.users.length < perPage) break;
+            page++;
+          }
+          
+          if (foundUser) {
+            userId = foundUser.id;
+            isExistingUser = true;
+            console.log(`Found existing user with id ${userId}`);
+          } else {
+            console.error("User exists but could not be found in any lookup method");
+            return new Response(
+              JSON.stringify({ error: "A user with this email already exists. Please use a different email or find the existing parent." }),
+              { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+            );
+          }
         }
-        
-        const existingUser = existingUsers.users.find(u => u.email === email);
-        if (!existingUser) {
-          return new Response(
-            JSON.stringify({ error: "User exists but could not be found" }),
-            { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-          );
-        }
-        
-        userId = existingUser.id;
-        isExistingUser = true;
-        console.log(`Found existing user with id ${userId}`);
       } else {
         console.error("Auth user creation error:", authError);
         return new Response(
