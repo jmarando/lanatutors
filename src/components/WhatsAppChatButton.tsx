@@ -1,16 +1,17 @@
 import { useState } from "react";
-import { WhatsAppLeadForm } from "./WhatsAppLeadForm";
+import { MessageCircle } from "lucide-react";
+import { OnboardingWizard } from "./OnboardingWizard";
 
 interface WhatsAppChatButtonProps {
   showWizard?: boolean;
 }
 
 const WhatsAppChatButton = ({ showWizard = true }: WhatsAppChatButtonProps) => {
-  const [formOpen, setFormOpen] = useState(false);
+  const [wizardOpen, setWizardOpen] = useState(false);
 
   const handleClick = () => {
     if (showWizard) {
-      setFormOpen(true);
+      setWizardOpen(true);
     } else {
       // Fallback to direct WhatsApp
       const phoneNumber = "254117512316";
@@ -37,7 +38,7 @@ const WhatsAppChatButton = ({ showWizard = true }: WhatsAppChatButtonProps) => {
         <span className="hidden sm:inline font-medium">Chat with us</span>
       </button>
 
-      <WhatsAppLeadForm open={formOpen} onOpenChange={setFormOpen} />
+      <OnboardingWizard open={wizardOpen} onOpenChange={setWizardOpen} />
     </>
   );
 };
