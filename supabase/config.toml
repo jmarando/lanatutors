@@ -152,3 +152,6 @@ verify_jwt = false
 
 [functions.sync-to-central-calendar]
 verify_jwt = false
+
+[functions.send-consultation-reminder]
+verify_jwt = false
