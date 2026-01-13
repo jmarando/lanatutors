@@ -140,26 +140,23 @@ const handler = async (req: Request): Promise<Response> => {
                   
                   <!-- Branded Header with Logo -->
                   <tr>
-                    <td style="background: linear-gradient(135deg, #dc2626 0%, #ea580c 50%, #f59e0b 100%); padding: 0;">
+                    <td style="background: #e7422d; padding: 0;">
                       <table role="presentation" style="width: 100%;">
                         <tr>
-                          <td style="padding: 30px 30px 20px 30px; text-align: center;">
-                            <img src="https://lanatutors.africa/logo.png" alt="Lana Tutors" style="height: 50px; width: auto; margin-bottom: 15px;" onerror="this.style.display='none'" />
-                            <h1 style="margin: 0; color: #ffffff; font-size: 24px; font-weight: bold; text-shadow: 0 2px 4px rgba(0,0,0,0.2);">
-                              LANA TUTORS
-                            </h1>
-                            <p style="margin: 8px 0 0 0; color: rgba(255,255,255,0.9); font-size: 14px; letter-spacing: 1px;">
+                          <td style="padding: 35px 30px 25px 30px; text-align: center;">
+                            <img src="https://lanatutors.africa/lana-logo-white.png" alt="Lana Tutors" style="height: 60px; width: auto; margin-bottom: 10px;" onerror="this.style.display='none'" />
+                            <p style="margin: 0; color: rgba(255,255,255,0.95); font-size: 13px; letter-spacing: 1.5px; text-transform: uppercase;">
                               Empowering Students Through Personalized Learning
                             </p>
                           </td>
                         </tr>
                         <tr>
-                          <td style="padding: 0 30px 30px 30px; text-align: center;">
-                            <div style="background: rgba(255,255,255,0.2); padding: 15px; border-radius: 8px; display: inline-block;">
-                              <h2 style="margin: 0; color: #ffffff; font-size: 22px;">
+                          <td style="padding: 0 30px 35px 30px; text-align: center;">
+                            <div style="background: rgba(255,255,255,0.15); padding: 18px 25px; border-radius: 10px; display: inline-block;">
+                              <h2 style="margin: 0; color: #ffffff; font-size: 22px; font-weight: 600;">
                                 📚 Custom Learning Plan for ${studentName}
                               </h2>
-                              ${tutorName ? `<p style="margin: 8px 0 0 0; color: rgba(255,255,255,0.95); font-size: 16px;">with ${tutorName}</p>` : ''}
+                              ${tutorName ? `<p style="margin: 10px 0 0 0; color: rgba(255,255,255,0.95); font-size: 15px;">with ${tutorName}</p>` : ''}
                             </div>
                           </td>
                         </tr>
@@ -175,7 +172,7 @@ const handler = async (req: Request): Promise<Response> => {
                       </p>
                       
                       ${personalMessage ? `
-                        <table role="presentation" style="width: 100%; margin: 0 0 30px 0; background-color: #fef2f2; border-left: 4px solid #dc2626; border-radius: 4px;">
+                        <table role="presentation" style="width: 100%; margin: 0 0 30px 0; background-color: #fef5f4; border-left: 4px solid #e7422d; border-radius: 4px;">
                           <tr>
                             <td style="padding: 20px;">
                               <p style="margin: 0; font-size: 16px; line-height: 1.6; color: #374151; white-space: pre-wrap;">${personalMessage}</p>
@@ -189,10 +186,10 @@ const handler = async (req: Request): Promise<Response> => {
                       `}
 
                       <!-- Plan Title -->
-                      <table role="presentation" style="width: 100%; margin: 30px 0; border: 2px solid #dc2626; border-radius: 8px;">
+                      <table role="presentation" style="width: 100%; margin: 30px 0; border: 2px solid #e7422d; border-radius: 8px;">
                         <tr>
-                          <td style="padding: 20px; background-color: #fef2f2;">
-                            <h2 style="margin: 0; color: #dc2626; font-size: 20px;">
+                          <td style="padding: 20px; background-color: #fef5f4;">
+                            <h2 style="margin: 0; color: #e7422d; font-size: 20px;">
                               ${planTitle}
                             </h2>
                           </td>
@@ -283,7 +280,7 @@ const handler = async (req: Request): Promise<Response> => {
                       <table role="presentation" style="width: 100%; margin: 30px 0;">
                         <tr>
                           <td align="center">
-                            <a href="${planUrl}" style="display: inline-block; padding: 18px 48px; background: linear-gradient(135deg, #dc2626 0%, #ea580c 100%); color: #ffffff; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 18px; box-shadow: 0 4px 6px rgba(220, 38, 38, 0.3);">
+                            <a href="${planUrl}" style="display: inline-block; padding: 18px 48px; background: #e7422d; color: #ffffff; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 18px; box-shadow: 0 4px 12px rgba(231, 66, 45, 0.3);">
                               View Plan Online
                             </a>
                           </td>
