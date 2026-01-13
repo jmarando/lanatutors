@@ -362,6 +362,7 @@ export function ManualBookingDialog({ open, onClose, onSuccess }: ManualBookingD
 
       let successCount = 0;
       let firstBookingId: string | null = null;
+      let firstMeetingLink: string | null = null;
 
       // Create bookings for each date
       for (const bookingDate of bookingDates) {
@@ -422,6 +423,8 @@ export function ManualBookingDialog({ open, onClose, onSuccess }: ManualBookingD
               });
               if (meetData?.meetingLink) {
                 meetingLink = meetData.meetingLink;
+                // Store the first meeting link for email
+                if (!firstMeetingLink) firstMeetingLink = meetingLink;
                 // Update booking with meeting link
                 await supabase
                   .from("bookings")
@@ -464,6 +467,7 @@ export function ManualBookingDialog({ open, onClose, onSuccess }: ManualBookingD
             await supabase.functions.invoke("send-booking-email", {
               body: {
                 bookingId: firstBookingId,
+                meetingLink: firstMeetingLink,
                 recipientType: "student",
               },
             });
@@ -479,6 +483,7 @@ export function ManualBookingDialog({ open, onClose, onSuccess }: ManualBookingD
             await supabase.functions.invoke("send-booking-email", {
               body: {
                 bookingId: firstBookingId,
+                meetingLink: firstMeetingLink,
                 recipientType: "tutor",
               },
             });
