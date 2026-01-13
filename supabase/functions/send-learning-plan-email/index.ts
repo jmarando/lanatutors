@@ -308,7 +308,7 @@ const handler = async (req: Request): Promise<Response> => {
                               </tr>
                             </table>
                             <p style="margin: 15px 0 0 0; color: #6b7280; font-size: 13px;">
-                              ✓ After payment, send confirmation to <strong>+254 728 895 050</strong> or reply to this email
+                              ✓ After payment, send confirmation to <strong>+254 117 512316</strong> or reply to this email
                             </p>
                           </td>
                         </tr>
@@ -325,7 +325,7 @@ const handler = async (req: Request): Promise<Response> => {
                       </ul>
 
                       <p style="margin: 30px 0 0 0; font-size: 14px; line-height: 1.6; color: #6b7280;">
-                        Questions? Reply to this email or call us at <strong>+254 728 895 050</strong>
+                        Questions? Reply to this email or call us at <strong>+254 117 512316</strong>
                       </p>
                     </td>
                   </tr>
@@ -340,7 +340,7 @@ const handler = async (req: Request): Promise<Response> => {
                         Empowering Students Through Personalized Learning
                       </p>
                       <p style="margin: 0; color: rgba(255,255,255,0.6); font-size: 12px;">
-                        📞 +254 728 895 050 | 📧 info@lanatutors.africa
+                        📞 +254 117 512316 | 📧 info@lanatutors.africa
                       </p>
                       <p style="margin: 15px 0 0 0; color: rgba(255,255,255,0.5); font-size: 11px;">
                         © ${new Date().getFullYear()} Lana Tutors. All rights reserved.
