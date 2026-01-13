@@ -301,6 +301,7 @@ export function ManualBookingDialog({ open, onClose, onSuccess }: ManualBookingD
       if (slotError) throw slotError;
 
       // Create booking (using user_id for tutor since FK references auth.users)
+      // Note: payment_option must be 'deposit', 'full', or 'package' per DB constraint
       const { data: bookingData, error: bookingError } = await supabase
         .from("bookings")
         .insert({
@@ -310,7 +311,7 @@ export function ManualBookingDialog({ open, onClose, onSuccess }: ManualBookingD
           subject,
           amount: parseFloat(amount) || 0,
           status: "confirmed",
-          payment_option: paymentStatus === "paid" ? "full" : "pending",
+          payment_option: paymentStatus === "paid" ? "full" : "deposit",
           notes: `[OFFLINE BOOKING] ${notes}`.trim(),
           student_profile_id: studentProfileId,
           booking_source: "manual",
