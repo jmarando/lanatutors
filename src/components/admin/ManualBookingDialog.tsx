@@ -334,8 +334,8 @@ export function ManualBookingDialog({ open, onClose, onSuccess }: ManualBookingD
               endTime: endTime.toISOString(),
             },
           });
-          if (meetData?.meetLink) {
-            meetingLink = meetData.meetLink;
+          if (meetData?.meetingLink) {
+            meetingLink = meetData.meetingLink;
             // Update booking with meeting link
             await supabase
               .from("bookings")
