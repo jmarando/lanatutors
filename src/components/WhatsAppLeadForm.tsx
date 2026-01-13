@@ -87,6 +87,23 @@ export const WhatsAppLeadForm = ({ open, onOpenChange }: WhatsAppLeadFormProps) 
         return;
       }
 
+      // Send WhatsApp notification to admin
+      try {
+        await supabase.functions.invoke('notify-whatsapp-lead', {
+          body: {
+            parentName: data.parentName,
+            phoneNumber: data.phoneNumber,
+            curriculum: data.curriculum,
+            gradeLevel: data.gradeLevel,
+            subjects: data.subjects,
+            location: data.location,
+          }
+        });
+      } catch (notifyError) {
+        // Don't fail the submission if notification fails
+        console.error('Failed to send admin notification:', notifyError);
+      }
+
       setIsSubmitted(true);
     } catch (err) {
       console.error('Error:', err);
