@@ -7,7 +7,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Loader2, Plus, Trash2, Send, FileText, Sparkles, CreditCard, Users, Check, ChevronsUpDown } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Loader2, Plus, Trash2, Send, FileText, Sparkles, CreditCard, Users, Check, ChevronsUpDown, Copy, ExternalLink, CheckCircle } from "lucide-react";
 import { toast } from "sonner";
 import { getCurriculums, getLevelsForCurriculum, getSubjectsForCurriculumLevel } from "@/utils/curriculumData";
 import {
@@ -53,6 +54,11 @@ export const AdminCreateLearningPlan = () => {
   const [tutors, setTutors] = useState<Tutor[]>([]);
   const [tutorsLoading, setTutorsLoading] = useState(true);
   const [openTutorPopover, setOpenTutorPopover] = useState<number | null>(null);
+
+  // Success dialog state
+  const [successDialogOpen, setSuccessDialogOpen] = useState(false);
+  const [createdPlan, setCreatedPlan] = useState<{ id: string; shareToken: string; title: string } | null>(null);
+  const [linkCopied, setLinkCopied] = useState(false);
 
   // Parent/Student Info
   const [parentName, setParentName] = useState("");
@@ -149,69 +155,10 @@ export const AdminCreateLearningPlan = () => {
       return;
     }
     
-    const ratePerSession = 1500;
-    const subjectList = subjects
-      .filter(s => s.name && s.tutorId)
-      .map(s => {
-        const tutor = tutors.find(t => t.id === s.tutorId);
-        const totalSessions = s.sessions;
-        const weeks = s.weeks || 4;
-        const subjectTotal = totalSessions * s.rate;
-        return `• ${s.name} with ${tutor?.full_name || 'TBD'}: ${totalSessions} sessions (${s.sessionsPerWeek} session/week over ${weeks} weeks) - KES ${s.rate.toLocaleString()}/session = KES ${subjectTotal.toLocaleString()}`;
-      })
-      .join("\n");
-    
+    // Simplified message - the email template already includes subject details, pricing, and payment options
+    // This is just for any additional personalized notes
     const curriculumInfo = curriculum ? ` following the ${curriculum} curriculum` : "";
     const gradeInfo = gradeLevel ? ` in ${gradeLevel}` : "";
-    
-    const scheduledDays = sessionSchedule.filter(s => s.day && s.time);
-    let scheduleText = "";
-    
-    if (scheduledDays.length > 0) {
-      const formatTime = (time: string) => {
-        const [hours, minutes] = time.split(":");
-        const hour = parseInt(hours);
-        const ampm = hour >= 12 ? "PM" : "AM";
-        const hour12 = hour % 12 || 12;
-        return `${hour12}:${minutes} ${ampm}`;
-      };
-      
-      const allSameTime = scheduledDays.every(s => s.time === scheduledDays[0].time);
-      const dayNames = scheduledDays.map(s => s.day);
-      
-      if (allSameTime && scheduledDays.length > 1) {
-        const timeStr = formatTime(scheduledDays[0].time);
-        const daysStr = dayNames.length === 2 
-          ? `${dayNames[0]} and ${dayNames[1]}`
-          : `${dayNames.slice(0, -1).join(", ")} and ${dayNames[dayNames.length - 1]}`;
-        
-        scheduleText = `\n\nProposed Schedule:\n${daysStr} at ${timeStr}`;
-      } else {
-        scheduleText = `\n\nProposed Schedule:\n${scheduledDays.map(s => `• ${s.day} at ${formatTime(s.time)}`).join("\n")}`;
-      }
-      
-      const totalWeeks = subjects.length > 0 ? Math.max(...subjects.map(s => s.weeks || 4)) : 4;
-      scheduleText += `\n\nProgram Duration: ${totalWeeks} weeks`;
-      
-      if (startDate) {
-        scheduleText += `\n\nStarting: ${new Date(startDate).toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' })}`;
-      }
-    }
-    
-    const { totalPrice, depositAmount } = calculateTotals();
-    const paymentText = `
-
-Payment Options:
-• Full Payment: KES ${totalPrice.toLocaleString()} [M-Pesa/Card payment link will be included]
-• 30% Deposit to Start: KES ${depositAmount.toLocaleString()} [M-Pesa/Card payment link will be included]
-  (Balance: KES ${(totalPrice - depositAmount).toLocaleString()})
-
-Alternative Payment - Bank Transfer:
-• Bank: NCBA
-• Paybill: 880100
-• Account Number: 1006114657
-
-Note: Secure M-Pesa and Card payment links will be automatically generated and included in the email when you send this plan.`;
     
     const tutorNames = assignedTutors.map(t => t.full_name).join(" and ");
     const tutorIntro = assignedTutors.length === 1 
@@ -222,10 +169,7 @@ Note: Secure M-Pesa and Card payment links will be automatically generated and i
 
 Thank you for your interest in our tutoring services. We are pleased to present a personalized learning plan for ${studentName}${gradeInfo}${curriculumInfo}.
 
-Recommended Subjects:
-${subjectList || "To be confirmed"}
-
-${tutorIntro} With their expertise and personalized approach, we are confident that ${studentName} will make excellent progress.${scheduleText}${paymentText}
+${tutorIntro} With their expertise and personalized approach, we are confident that ${studentName} will make excellent progress.
 
 We look forward to supporting ${studentName}'s academic journey.
 
@@ -413,9 +357,15 @@ Lana Tutors Team`;
       if (emailError) {
         console.error("Email error:", emailError);
         toast.error("Learning plan created but email failed to send");
-      } else {
-        toast.success("Learning plan created and sent to parent!");
       }
+
+      // Show success dialog with share link
+      setCreatedPlan({
+        id: plan.id,
+        shareToken: plan.share_token,
+        title: title,
+      });
+      setSuccessDialogOpen(true);
 
       // Reset form
       setParentName("");
@@ -437,6 +387,29 @@ Lana Tutors Team`;
     } finally {
       setLoading(false);
       setGeneratingPaymentLink(false);
+    }
+  };
+
+  const copyShareLink = async () => {
+    if (!createdPlan?.shareToken) return;
+    
+    const shareUrl = `https://lanatutors.africa/learning-plan/${createdPlan.id}?token=${createdPlan.shareToken}`;
+    
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      setLinkCopied(true);
+      toast.success("Share link copied to clipboard!");
+      setTimeout(() => setLinkCopied(false), 2000);
+    } catch (err) {
+      const textArea = document.createElement("textarea");
+      textArea.value = shareUrl;
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand("copy");
+      document.body.removeChild(textArea);
+      setLinkCopied(true);
+      toast.success("Link copied!");
+      setTimeout(() => setLinkCopied(false), 2000);
     }
   };
 
@@ -1013,6 +986,69 @@ Lana Tutors Team`;
           )}
         </Button>
       </form>
+
+      {/* Success Dialog with Share Link */}
+      <Dialog open={successDialogOpen} onOpenChange={setSuccessDialogOpen}>
+        <DialogContent className="sm:max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-green-600">
+              <CheckCircle className="w-6 h-6" />
+              Learning Plan Sent Successfully!
+            </DialogTitle>
+            <DialogDescription>
+              The learning plan has been created and emailed to the parent.
+            </DialogDescription>
+          </DialogHeader>
+          
+          {createdPlan && (
+            <div className="space-y-4">
+              <div>
+                <p className="text-sm font-medium mb-1">{createdPlan.title}</p>
+                <p className="text-xs text-muted-foreground">Plan ID: {createdPlan.id}</p>
+              </div>
+
+              <div className="p-4 bg-muted rounded-lg">
+                <p className="text-sm font-medium mb-2">Share Link</p>
+                <p className="text-xs text-muted-foreground mb-3">
+                  Copy this link to share with the parent via WhatsApp or other channels:
+                </p>
+                <div className="flex items-center gap-2">
+                  <code className="flex-1 p-2 bg-background rounded text-xs break-all border">
+                    https://lanatutors.africa/learning-plan/{createdPlan.id}?token={createdPlan.shareToken}
+                  </code>
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={copyShareLink}
+                  >
+                    {linkCopied ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
+                  </Button>
+                </div>
+              </div>
+
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  className="flex-1"
+                  onClick={() => window.open(`/learning-plan/${createdPlan.id}?token=${createdPlan.shareToken}`, '_blank')}
+                >
+                  <ExternalLink className="w-4 h-4 mr-2" />
+                  Preview Plan
+                </Button>
+                <Button
+                  className="flex-1"
+                  onClick={() => {
+                    setSuccessDialogOpen(false);
+                    setCreatedPlan(null);
+                  }}
+                >
+                  Create Another
+                </Button>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
