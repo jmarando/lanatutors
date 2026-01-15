@@ -113,18 +113,38 @@ export const AdminLearningPlansList = () => {
     }
   };
 
+  const statusOptions = [
+    { value: "proposed", label: "Proposed", color: "bg-blue-500" },
+    { value: "sent", label: "Sent", color: "bg-indigo-500" },
+    { value: "viewed", label: "Viewed", color: "bg-purple-500" },
+    { value: "accepted", label: "Accepted", color: "bg-green-500" },
+    { value: "paid", label: "Paid", color: "bg-emerald-600" },
+    { value: "declined", label: "Declined", color: "bg-red-500" },
+    { value: "expired", label: "Expired", color: "bg-gray-500" },
+  ];
+
   const getStatusBadge = (status: string) => {
-    switch (status) {
-      case "proposed":
-        return <Badge className="bg-blue-500">Proposed</Badge>;
-      case "accepted":
-        return <Badge className="bg-green-500">Accepted</Badge>;
-      case "declined":
-        return <Badge className="bg-red-500">Declined</Badge>;
-      case "expired":
-        return <Badge variant="secondary">Expired</Badge>;
-      default:
-        return <Badge variant="outline">{status}</Badge>;
+    const option = statusOptions.find(o => o.value === status);
+    if (option) {
+      return <Badge className={option.color}>{option.label}</Badge>;
+    }
+    return <Badge variant="outline">{status}</Badge>;
+  };
+
+  const updatePlanStatus = async (planId: string, newStatus: string) => {
+    try {
+      const { error } = await supabase
+        .from("learning_plans")
+        .update({ status: newStatus })
+        .eq("id", planId);
+
+      if (error) throw error;
+
+      setPlans(plans.map(p => p.id === planId ? { ...p, status: newStatus } : p));
+      toast.success(`Status updated to ${statusOptions.find(o => o.value === newStatus)?.label}`);
+    } catch (error: any) {
+      console.error("Error updating status:", error);
+      toast.error("Failed to update status");
     }
   };
 
@@ -220,9 +240,9 @@ export const AdminLearningPlansList = () => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">All Status</SelectItem>
-                <SelectItem value="proposed">Pending</SelectItem>
-                <SelectItem value="accepted">Accepted</SelectItem>
-                <SelectItem value="declined">Declined</SelectItem>
+                {statusOptions.map(opt => (
+                  <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                ))}
               </SelectContent>
             </Select>
             <Button variant="outline" onClick={fetchPlans}>
@@ -268,7 +288,25 @@ export const AdminLearningPlansList = () => {
                     <TableCell>{plan.profiles?.full_name || "Team"}</TableCell>
                     <TableCell>{plan.total_sessions}</TableCell>
                     <TableCell>KES {plan.total_price?.toLocaleString()}</TableCell>
-                    <TableCell>{getStatusBadge(plan.status || "proposed")}</TableCell>
+                    <TableCell>
+                      <Select 
+                        value={plan.status || "proposed"} 
+                        onValueChange={(value) => updatePlanStatus(plan.id, value)}
+                      >
+                        <SelectTrigger className="w-[130px] h-8">
+                          <SelectValue>
+                            {getStatusBadge(plan.status || "proposed")}
+                          </SelectValue>
+                        </SelectTrigger>
+                        <SelectContent>
+                          {statusOptions.map(opt => (
+                            <SelectItem key={opt.value} value={opt.value}>
+                              <Badge className={opt.color}>{opt.label}</Badge>
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </TableCell>
                     <TableCell>
                       <div>
                         <p className="text-sm">{format(new Date(plan.created_at), "MMM d, yyyy")}</p>
