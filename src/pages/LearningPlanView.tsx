@@ -3,7 +3,7 @@ import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Loader2, CheckCircle, FileText, Share2, Copy, Check, Phone, Mail } from "lucide-react";
+import { Loader2, CheckCircle, FileText, Share2, Copy, Check, Phone, Mail, CreditCard } from "lucide-react";
 import { toast } from "sonner";
 import { SEO } from "@/components/SEO";
 import lanaLogo from "@/assets/lana-tutors-logo.png";
@@ -16,6 +16,7 @@ const LearningPlanView = () => {
   const [processing, setProcessing] = useState(false);
   const [copied, setCopied] = useState(false);
   const [isPublicView, setIsPublicView] = useState(false);
+  const [paymentOption, setPaymentOption] = useState<'full' | 'deposit'>('full');
 
   // Check if this is a public view via share token
   const shareToken = searchParams.get("token");
@@ -112,10 +113,9 @@ const LearningPlanView = () => {
       return;
     }
 
-    // Use prettier slug URL if available, otherwise fall back to token-based URL
-    const shareUrl = plan.url_slug 
-      ? `https://lanatutors.africa/learning-plan/${plan.url_slug}`
-      : `https://lanatutors.africa/learning-plan/${plan.id}?token=${plan.share_token}`;
+    // Use the production URL
+    const baseUrl = "https://lanatutors.lovable.app";
+    const shareUrl = `${baseUrl}/learning-plan/${plan.id}?token=${plan.share_token}`;
     
     try {
       await navigator.clipboard.writeText(shareUrl);
@@ -136,15 +136,22 @@ const LearningPlanView = () => {
     }
   };
 
-  const handleAccept = async () => {
+  const handleAccept = async (option: 'full' | 'deposit') => {
     setProcessing(true);
     try {
+      const depositAmount = Math.round(plan.total_price * 0.3);
+      const payAmount = option === 'deposit' ? depositAmount : plan.total_price;
+      const balanceDue = option === 'deposit' ? plan.total_price - depositAmount : 0;
+      
       navigate("/invoice-preview", {
         state: {
           type: "learning_plan",
           planId: plan.id,
           tutorId: plan.tutor_id,
-          totalAmount: plan.total_price,
+          totalAmount: payAmount,
+          fullAmount: plan.total_price,
+          balanceDue: balanceDue,
+          paymentType: option,
           items: plan.subjects,
           totalSessions: plan.total_sessions,
           currency: "KES",
@@ -321,11 +328,83 @@ const LearningPlanView = () => {
           </Card>
 
 
-          {/* Accept & Pay Button - Always show for proposed plans */}
+          {/* Payment Options - Always show for proposed plans */}
           {plan.status === "proposed" && (
             <div className="mb-8">
+              {/* Payment Options Card */}
+              <Card className="mb-4 border-0 shadow-md overflow-hidden">
+                <div className="bg-[#E07A5F] text-white px-6 py-3">
+                  <h3 className="font-semibold flex items-center gap-2">
+                    <CreditCard className="w-5 h-5" />
+                    Payment Options (M-Pesa)
+                  </h3>
+                </div>
+                <CardContent className="p-4 space-y-3">
+                  {/* Full Payment Option */}
+                  <div 
+                    onClick={() => setPaymentOption('full')}
+                    className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                      paymentOption === 'full' 
+                        ? 'border-[#E07A5F] bg-[#FDF8F6]' 
+                        : 'border-gray-200 hover:border-gray-300'
+                    }`}
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                          paymentOption === 'full' ? 'border-[#E07A5F]' : 'border-gray-300'
+                        }`}>
+                          {paymentOption === 'full' && (
+                            <div className="w-3 h-3 rounded-full bg-[#E07A5F]" />
+                          )}
+                        </div>
+                        <div>
+                          <p className="font-semibold text-gray-900">Pay in Full</p>
+                          <p className="text-sm text-gray-500">Complete payment now</p>
+                        </div>
+                      </div>
+                      <p className="text-lg font-bold text-[#E07A5F]">
+                        KES {plan.total_price?.toLocaleString()}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Deposit Option */}
+                  <div 
+                    onClick={() => setPaymentOption('deposit')}
+                    className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                      paymentOption === 'deposit' 
+                        ? 'border-[#E07A5F] bg-[#FDF8F6]' 
+                        : 'border-gray-200 hover:border-gray-300'
+                    }`}
+                  >
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
+                          paymentOption === 'deposit' ? 'border-[#E07A5F]' : 'border-gray-300'
+                        }`}>
+                          {paymentOption === 'deposit' && (
+                            <div className="w-3 h-3 rounded-full bg-[#E07A5F]" />
+                          )}
+                        </div>
+                        <div>
+                          <p className="font-semibold text-gray-900">Pay 30% Deposit</p>
+                          <p className="text-sm text-gray-500">
+                            Balance of KES {Math.round(plan.total_price * 0.7).toLocaleString()} due later
+                          </p>
+                        </div>
+                      </div>
+                      <p className="text-lg font-bold text-[#E07A5F]">
+                        KES {Math.round(plan.total_price * 0.3).toLocaleString()}
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Accept Button */}
               <Button
-                onClick={handleAccept}
+                onClick={() => handleAccept(paymentOption)}
                 disabled={processing}
                 className="w-full bg-[#E07A5F] hover:bg-[#D66A4F] text-white py-6 text-lg font-semibold rounded-xl shadow-lg"
               >
@@ -337,7 +416,10 @@ const LearningPlanView = () => {
                 ) : (
                   <>
                     <CheckCircle className="w-5 h-5 mr-2" />
-                    Accept & Proceed to Payment
+                    {paymentOption === 'deposit' 
+                      ? `Pay KES ${Math.round(plan.total_price * 0.3).toLocaleString()} Deposit`
+                      : `Pay KES ${plan.total_price?.toLocaleString()} in Full`
+                    }
                   </>
                 )}
               </Button>
