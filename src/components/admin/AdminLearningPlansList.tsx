@@ -20,6 +20,7 @@ interface LearningPlan {
   created_at: string | null;
   expires_at: string | null;
   share_token: string | null;
+  url_slug: string | null;
   notes: string | null;
   subjects: any;
   validity_days: number | null;
@@ -87,12 +88,15 @@ export const AdminLearningPlansList = () => {
   };
 
   const copyShareLink = async (plan: LearningPlan) => {
-    if (!plan.share_token) {
+    if (!plan.url_slug && !plan.share_token) {
       toast.error("Share link not available for this plan");
       return;
     }
 
-    const shareUrl = `https://lanatutors.africa/learning-plan/${plan.id}?token=${plan.share_token}`;
+    // Use prettier slug URL if available
+    const shareUrl = plan.url_slug
+      ? `https://lanatutors.africa/learning-plan/${plan.url_slug}`
+      : `https://lanatutors.africa/learning-plan/${plan.id}?token=${plan.share_token}`;
     
     try {
       await navigator.clipboard.writeText(shareUrl);

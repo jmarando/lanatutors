@@ -1110,6 +1110,7 @@ export type Database = {
           total_sessions: number
           tutor_id: string
           updated_at: string | null
+          url_slug: string | null
           validity_days: number | null
         }
         Insert: {
@@ -1128,6 +1129,7 @@ export type Database = {
           total_sessions: number
           tutor_id: string
           updated_at?: string | null
+          url_slug?: string | null
           validity_days?: number | null
         }
         Update: {
@@ -1146,6 +1148,7 @@ export type Database = {
           total_sessions?: number
           tutor_id?: string
           updated_at?: string | null
+          url_slug?: string | null
           validity_days?: number | null
         }
         Relationships: [
