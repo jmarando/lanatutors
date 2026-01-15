@@ -114,7 +114,9 @@ const LearningPlanView = () => {
 
     // Use the production URL
     const baseUrl = "https://lanatutors.africa";
-    const shareUrl = `${baseUrl}/learning-plan/${plan.id}?token=${plan.share_token}`;
+    const shareUrl = plan.url_slug 
+      ? `${baseUrl}/learning-plan/${plan.url_slug}`
+      : `${baseUrl}/learning-plan/${plan.id}?token=${plan.share_token}`;
     
     try {
       await navigator.clipboard.writeText(shareUrl);
@@ -419,13 +421,13 @@ const LearningPlanView = () => {
             <p className="text-gray-600 mb-4">Questions? We're here to help!</p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
               <a 
-                href="https://wa.me/254791513513" 
+                href="https://wa.me/254117512316" 
                 target="_blank" 
                 rel="noopener noreferrer"
                 className="flex items-center gap-2 text-[#25D366] hover:underline"
               >
                 <Phone className="w-4 h-4" />
-                WhatsApp: +254 791 513 513
+                WhatsApp: +254 117 512 316
               </a>
               <a 
                 href="mailto:info@lanatutors.africa"
