@@ -4,10 +4,10 @@ import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, CheckCircle, FileText, Share2, Copy, Check } from "lucide-react";
+import { Loader2, CheckCircle, FileText, Share2, Copy, Check, BookOpen } from "lucide-react";
 import { toast } from "sonner";
 import { SEO } from "@/components/SEO";
-
+import lanaLogo from "@/assets/lana-tutors-logo.png";
 const LearningPlanView = () => {
   const { planId } = useParams();
   const [searchParams] = useSearchParams();
@@ -226,47 +226,66 @@ const LearningPlanView = () => {
         title={`${plan.title} | Lana Tutors`}
         description={`Review your personalized learning plan`}
       />
-      <div className="min-h-screen bg-[image:var(--gradient-page)] py-12 px-4">
-        <div className="max-w-4xl mx-auto">
-          {/* Header */}
-          <Card className="mb-6">
-            <CardHeader>
-              <div className="flex items-start justify-between flex-wrap gap-4">
-                <div>
-                  <CardTitle className="text-2xl mb-2">{plan.title}</CardTitle>
-                  <p className="text-muted-foreground">
-                    Tutor: {plan.profiles?.full_name || "Lana Tutors Team"}
-                  </p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Badge className={getStatusColor(plan.status)}>
-                    {plan.status}
-                  </Badge>
-                  {/* Share Button */}
-                  {plan.share_token && !isPublicView && (
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={handleCopyLink}
-                      className="gap-2"
-                    >
-                      {copied ? (
-                        <>
-                          <Check className="w-4 h-4 text-green-500" />
-                          Copied!
-                        </>
-                      ) : (
-                        <>
-                          <Share2 className="w-4 h-4" />
-                          Share Link
-                        </>
-                      )}
-                    </Button>
-                  )}
-                </div>
+      <div className="min-h-screen bg-secondary">
+        {/* Branded Header */}
+        <div className="bg-primary py-10 px-4">
+          <div className="max-w-4xl mx-auto text-center">
+            {/* Logo */}
+            <img 
+              src={lanaLogo} 
+              alt="Lana Tutors" 
+              className="h-12 mx-auto mb-4"
+            />
+            
+            {/* Tagline */}
+            <p className="text-primary-foreground/90 text-sm tracking-[0.2em] uppercase mb-8">
+              Empowering Students Through Personalized Learning
+            </p>
+            
+            {/* Plan Title Card */}
+            <div className="bg-primary-foreground/15 backdrop-blur-sm rounded-2xl p-8 max-w-2xl mx-auto">
+              <div className="flex items-center justify-center gap-3 mb-3">
+                <BookOpen className="w-8 h-8 text-primary-foreground" />
+                <h1 className="text-2xl md:text-3xl font-bold text-primary-foreground">
+                  Custom {plan.title}
+                </h1>
               </div>
-            </CardHeader>
-          </Card>
+              <p className="text-primary-foreground/90 text-lg">
+                with {plan.profiles?.full_name?.toUpperCase() || "LANA TUTORS TEAM"}
+              </p>
+              
+              {/* Status Badge */}
+              <div className="mt-4 flex items-center justify-center gap-3">
+                <Badge className={`${getStatusColor(plan.status)} text-white`}>
+                  {plan.status}
+                </Badge>
+                {plan.share_token && !isPublicView && (
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    onClick={handleCopyLink}
+                    className="gap-2"
+                  >
+                    {copied ? (
+                      <>
+                        <Check className="w-4 h-4 text-green-500" />
+                        Copied!
+                      </>
+                    ) : (
+                      <>
+                        <Share2 className="w-4 h-4" />
+                        Share Link
+                      </>
+                    )}
+                  </Button>
+                )}
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Content */}
+        <div className="max-w-4xl mx-auto py-8 px-4">
 
           {/* Share Link Info (for authenticated users) */}
           {(plan.url_slug || plan.share_token) && !isPublicView && (
