@@ -13,7 +13,8 @@ import {
   Edit,
   UserPlus,
   CalendarClock,
-  BarChart3
+  BarChart3,
+  Send
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -137,6 +138,11 @@ export function AdminSidebar({ activeTab, onTabChange, counts }: AdminSidebarPro
           id: "learning-plans", 
           label: "Create Plans", 
           icon: Edit 
+        },
+        { 
+          id: "sent-learning-plans", 
+          label: "Sent Plans", 
+          icon: Send 
         },
       ],
     },

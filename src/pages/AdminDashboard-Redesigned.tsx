@@ -27,6 +27,7 @@ import { BootcampEnrollments } from "@/components/admin/BootcampEnrollments";
 import { EmailComposer } from "@/components/admin/EmailComposer";
 import { AdminCreateLearningPlan } from "@/components/admin/AdminCreateLearningPlan";
 import { AdminLearningPlanRequests } from "@/components/admin/AdminLearningPlanRequests";
+import { AdminLearningPlansList } from "@/components/admin/AdminLearningPlansList";
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { AdminClassManagement } from "@/components/admin/AdminClassManagement";
 import { AdminReports } from "@/components/admin/AdminReports";
@@ -2340,6 +2341,8 @@ The Lana Tutors Team`
         return <AdminLearningPlanRequests />;
       case 'learning-plans':
         return <AdminCreateLearningPlan />;
+      case 'sent-learning-plans':
+        return <AdminLearningPlansList />;
       case 'consultations':
         return renderConsultationsContent();
       case 'class-management':
