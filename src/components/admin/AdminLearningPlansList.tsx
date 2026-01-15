@@ -88,15 +88,14 @@ export const AdminLearningPlansList = () => {
   };
 
   const copyShareLink = async (plan: LearningPlan) => {
-    if (!plan.url_slug && !plan.share_token) {
+    if (!plan.share_token) {
       toast.error("Share link not available for this plan");
       return;
     }
 
-    // Use prettier slug URL if available
-    const shareUrl = plan.url_slug
-      ? `https://lanatutors.africa/learning-plan/${plan.url_slug}`
-      : `https://lanatutors.africa/learning-plan/${plan.id}?token=${plan.share_token}`;
+    // Use the production URL
+    const baseUrl = "https://lanatutors.lovable.app";
+    const shareUrl = `${baseUrl}/learning-plan/${plan.id}?token=${plan.share_token}`;
     
     try {
       await navigator.clipboard.writeText(shareUrl);
@@ -411,7 +410,7 @@ export const AdminLearningPlansList = () => {
                                   <p className="text-sm font-medium mb-2">Share Link</p>
                                   <div className="flex items-center gap-2">
                                     <code className="flex-1 p-2 bg-background rounded text-xs break-all">
-                                      https://lanatutors.africa/learning-plan/{plan.id}?token={plan.share_token}
+                                      https://lanatutors.lovable.app/learning-plan/{plan.id}?token={plan.share_token}
                                     </code>
                                     <Button
                                       variant="secondary"
