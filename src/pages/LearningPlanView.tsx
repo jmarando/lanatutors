@@ -27,7 +27,11 @@ const LearningPlanView = () => {
 
   const fetchPlan = async () => {
     try {
-      // If share token is provided, fetch via share token (public access)
+      // First try to fetch by url_slug (for pretty URLs like /learning-plan/john-doe-abc123)
+      // If planId looks like a UUID, also try by ID for backwards compatibility
+      const isUUID = planId && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(planId);
+      
+      // If share token is provided, fetch via share token (legacy support)
       if (shareToken) {
         const { data, error } = await supabase
           .from("learning_plans")
@@ -42,26 +46,50 @@ const LearningPlanView = () => {
         if (error) throw error;
         setPlan(data);
         setIsPublicView(true);
-      } else {
-        // Authenticated access via planId
-        const { data: { user } } = await supabase.auth.getUser();
-        if (!user) {
-          navigate("/login");
-          return;
+      } else if (planId) {
+        // Try by url_slug first (for pretty URLs), then by ID
+        let data = null;
+        let error = null;
+
+        // Try by slug first (unless it's a UUID)
+        if (!isUUID) {
+          const slugResult = await supabase
+            .from("learning_plans")
+            .select(`
+              *,
+              tutor_profiles!inner(user_id),
+              profiles!tutor_profiles_user_id_fkey(full_name)
+            `)
+            .eq("url_slug", planId)
+            .single();
+          
+          data = slugResult.data;
+          error = slugResult.error;
         }
 
-        const { data, error } = await supabase
-          .from("learning_plans")
-          .select(`
-            *,
-            tutor_profiles!inner(user_id),
-            profiles!tutor_profiles_user_id_fkey(full_name)
-          `)
-          .eq("id", planId)
-          .single();
+        // If not found by slug (or is UUID), try by ID
+        if (!data && (isUUID || error?.code === 'PGRST116')) {
+          const idResult = await supabase
+            .from("learning_plans")
+            .select(`
+              *,
+              tutor_profiles!inner(user_id),
+              profiles!tutor_profiles_user_id_fkey(full_name)
+            `)
+            .eq("id", planId)
+            .single();
+          
+          data = idResult.data;
+          error = idResult.error;
+        }
 
-        if (error) throw error;
-        setPlan(data);
+        if (error && error.code !== 'PGRST116') throw error;
+        
+        if (data) {
+          setPlan(data);
+          // If accessed by slug, it's a public view
+          setIsPublicView(!isUUID);
+        }
       }
     } catch (error: any) {
       console.error("Error fetching plan:", error);
@@ -72,12 +100,15 @@ const LearningPlanView = () => {
   };
 
   const handleCopyLink = async () => {
-    if (!plan?.share_token) {
+    if (!plan?.url_slug && !plan?.share_token) {
       toast.error("Share link not available");
       return;
     }
 
-    const shareUrl = `https://lanatutors.africa/learning-plan/${plan.id}?token=${plan.share_token}`;
+    // Use prettier slug URL if available, otherwise fall back to token-based URL
+    const shareUrl = plan.url_slug 
+      ? `https://lanatutors.africa/learning-plan/${plan.url_slug}`
+      : `https://lanatutors.africa/learning-plan/${plan.id}?token=${plan.share_token}`;
     
     try {
       await navigator.clipboard.writeText(shareUrl);
@@ -230,7 +261,7 @@ const LearningPlanView = () => {
           </Card>
 
           {/* Share Link Info (for authenticated users) */}
-          {plan.share_token && !isPublicView && (
+          {(plan.url_slug || plan.share_token) && !isPublicView && (
             <Card className="mb-6 bg-blue-50 dark:bg-blue-950 border-blue-200 dark:border-blue-800">
               <CardContent className="p-4">
                 <div className="flex items-start gap-3">
@@ -244,7 +275,10 @@ const LearningPlanView = () => {
                     </p>
                     <div className="mt-2 flex items-center gap-2">
                       <code className="flex-1 bg-white dark:bg-blue-900 px-3 py-2 rounded text-xs break-all border">
-                        https://lanatutors.africa/learning-plan/{plan.id}?token={plan.share_token}
+                        {plan.url_slug 
+                          ? `https://lanatutors.africa/learning-plan/${plan.url_slug}`
+                          : `https://lanatutors.africa/learning-plan/${plan.id}?token=${plan.share_token}`
+                        }
                       </code>
                       <Button
                         variant="secondary"

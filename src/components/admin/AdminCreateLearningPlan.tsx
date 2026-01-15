@@ -57,7 +57,7 @@ export const AdminCreateLearningPlan = () => {
 
   // Success dialog state
   const [successDialogOpen, setSuccessDialogOpen] = useState(false);
-  const [createdPlan, setCreatedPlan] = useState<{ id: string; shareToken: string; title: string } | null>(null);
+  const [createdPlan, setCreatedPlan] = useState<{ id: string; shareToken: string; urlSlug: string; title: string } | null>(null);
   const [linkCopied, setLinkCopied] = useState(false);
 
   // Parent/Student Info
@@ -251,12 +251,27 @@ Lana Tutors Team`;
       // Use the first tutor as the primary for the learning plan record
       const primaryTutorId = assignedTutors[0].id;
 
+      // Generate a URL-friendly slug from student name
+      const generateSlug = (name: string) => {
+        const baseSlug = name
+          .toLowerCase()
+          .replace(/[^a-z0-9\s-]/g, '')
+          .replace(/\s+/g, '-')
+          .substring(0, 50);
+        // Add a short random suffix for uniqueness
+        const suffix = Math.random().toString(36).substring(2, 8);
+        return `${baseSlug}-${suffix}`;
+      };
+
+      const urlSlug = generateSlug(studentName);
+
       // Create learning plan
       const { data: plan, error: planError } = await supabase
         .from("learning_plans")
         .insert({
           tutor_id: primaryTutorId,
           title,
+          url_slug: urlSlug,
           subjects: subjects.map(s => {
             const tutor = tutors.find(t => t.id === s.tutorId);
             return {
@@ -363,6 +378,7 @@ Lana Tutors Team`;
       setCreatedPlan({
         id: plan.id,
         shareToken: plan.share_token,
+        urlSlug: plan.url_slug,
         title: title,
       });
       setSuccessDialogOpen(true);
@@ -391,9 +407,10 @@ Lana Tutors Team`;
   };
 
   const copyShareLink = async () => {
-    if (!createdPlan?.shareToken) return;
+    if (!createdPlan?.urlSlug) return;
     
-    const shareUrl = `https://lanatutors.africa/learning-plan/${createdPlan.id}?token=${createdPlan.shareToken}`;
+    // Use the prettier slug-based URL
+    const shareUrl = `https://lanatutors.africa/learning-plan/${createdPlan.urlSlug}`;
     
     try {
       await navigator.clipboard.writeText(shareUrl);
