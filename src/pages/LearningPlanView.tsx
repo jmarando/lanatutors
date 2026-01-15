@@ -31,65 +31,73 @@ const LearningPlanView = () => {
       // If planId looks like a UUID, also try by ID for backwards compatibility
       const isUUID = planId && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(planId);
       
+      let planData = null;
+      let isPublic = false;
+
       // If share token is provided, fetch via share token (legacy support)
       if (shareToken) {
         const { data, error } = await supabase
           .from("learning_plans")
-          .select(`
-            *,
-            tutor_profiles!inner(user_id),
-            profiles!tutor_profiles_user_id_fkey(full_name)
-          `)
+          .select("*")
           .eq("share_token", shareToken)
           .single();
 
         if (error) throw error;
-        setPlan(data);
-        setIsPublicView(true);
+        planData = data;
+        isPublic = true;
       } else if (planId) {
         // Try by url_slug first (for pretty URLs), then by ID
-        let data = null;
-        let error = null;
-
         // Try by slug first (unless it's a UUID)
         if (!isUUID) {
-          const slugResult = await supabase
+          const { data, error } = await supabase
             .from("learning_plans")
-            .select(`
-              *,
-              tutor_profiles!inner(user_id),
-              profiles!tutor_profiles_user_id_fkey(full_name)
-            `)
+            .select("*")
             .eq("url_slug", planId)
             .single();
           
-          data = slugResult.data;
-          error = slugResult.error;
+          if (!error) {
+            planData = data;
+            isPublic = true;
+          }
         }
 
         // If not found by slug (or is UUID), try by ID
-        if (!data && (isUUID || error?.code === 'PGRST116')) {
-          const idResult = await supabase
+        if (!planData && isUUID) {
+          const { data, error } = await supabase
             .from("learning_plans")
-            .select(`
-              *,
-              tutor_profiles!inner(user_id),
-              profiles!tutor_profiles_user_id_fkey(full_name)
-            `)
+            .select("*")
             .eq("id", planId)
             .single();
           
-          data = idResult.data;
-          error = idResult.error;
+          if (!error) {
+            planData = data;
+            isPublic = false;
+          }
         }
+      }
 
-        if (error && error.code !== 'PGRST116') throw error;
-        
-        if (data) {
-          setPlan(data);
-          // If accessed by slug, it's a public view
-          setIsPublicView(!isUUID);
+      if (planData) {
+        // Fetch tutor name separately using the public view (which allows anon access)
+        if (planData.tutor_id) {
+          const { data: tutorData } = await supabase
+            .from("tutor_profiles_public")
+            .select("user_id")
+            .eq("id", planData.tutor_id)
+            .single();
+          
+          if (tutorData?.user_id) {
+            const { data: profileData } = await supabase
+              .from("public_tutor_profiles")
+              .select("full_name")
+              .eq("id", tutorData.user_id)
+              .single();
+            
+            planData.profiles = profileData;
+          }
         }
+        
+        setPlan(planData);
+        setIsPublicView(isPublic);
       }
     } catch (error: any) {
       console.error("Error fetching plan:", error);
