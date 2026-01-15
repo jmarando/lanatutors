@@ -114,7 +114,7 @@ const LearningPlanView = () => {
     }
 
     // Use the production URL
-    const baseUrl = "https://lanatutors.lovable.app";
+    const baseUrl = "https://lanatutors.africa";
     const shareUrl = `${baseUrl}/learning-plan/${plan.id}?token=${plan.share_token}`;
     
     try {

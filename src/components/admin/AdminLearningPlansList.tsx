@@ -94,7 +94,7 @@ export const AdminLearningPlansList = () => {
     }
 
     // Use the production URL
-    const baseUrl = "https://lanatutors.lovable.app";
+    const baseUrl = "https://lanatutors.africa";
     const shareUrl = `${baseUrl}/learning-plan/${plan.id}?token=${plan.share_token}`;
     
     try {
@@ -410,7 +410,7 @@ export const AdminLearningPlansList = () => {
                                   <p className="text-sm font-medium mb-2">Share Link</p>
                                   <div className="flex items-center gap-2">
                                     <code className="flex-1 p-2 bg-background rounded text-xs break-all">
-                                      https://lanatutors.lovable.app/learning-plan/{plan.id}?token={plan.share_token}
+                                      https://lanatutors.africa/learning-plan/{plan.id}?token={plan.share_token}
                                     </code>
                                     <Button
                                       variant="secondary"
