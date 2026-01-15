@@ -3,7 +3,7 @@ import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Loader2, CheckCircle, FileText, Share2, Copy, Check, Phone, Mail, CreditCard } from "lucide-react";
+import { Loader2, CheckCircle, FileText, Share2, Copy, Check, Phone, Mail, Building2, Smartphone } from "lucide-react";
 import { toast } from "sonner";
 import { SEO } from "@/components/SEO";
 import lanaLogo from "@/assets/lana-tutors-logo.png";
@@ -16,7 +16,6 @@ const LearningPlanView = () => {
   const [processing, setProcessing] = useState(false);
   const [copied, setCopied] = useState(false);
   const [isPublicView, setIsPublicView] = useState(false);
-  const [paymentOption, setPaymentOption] = useState<'full' | 'deposit'>('full');
 
   // Check if this is a public view via share token
   const shareToken = searchParams.get("token");
@@ -136,33 +135,8 @@ const LearningPlanView = () => {
     }
   };
 
-  const handleAccept = async (option: 'full' | 'deposit') => {
-    setProcessing(true);
-    try {
-      const depositAmount = Math.round(plan.total_price * 0.3);
-      const payAmount = option === 'deposit' ? depositAmount : plan.total_price;
-      const balanceDue = option === 'deposit' ? plan.total_price - depositAmount : 0;
-      
-      navigate("/invoice-preview", {
-        state: {
-          type: "learning_plan",
-          planId: plan.id,
-          tutorId: plan.tutor_id,
-          totalAmount: payAmount,
-          fullAmount: plan.total_price,
-          balanceDue: balanceDue,
-          paymentType: option,
-          items: plan.subjects,
-          totalSessions: plan.total_sessions,
-          currency: "KES",
-        },
-      });
-    } catch (error: any) {
-      console.error("Error accepting plan:", error);
-      toast.error("Failed to proceed with payment");
-      setProcessing(false);
-    }
-  };
+  const depositAmount = plan ? Math.round(plan.total_price * 0.3) : 0;
+  const balanceAfterDeposit = plan ? plan.total_price - depositAmount : 0;
 
   const handleDecline = async () => {
     if (!confirm("Are you sure you want to decline this learning plan?")) {
@@ -252,18 +226,13 @@ const LearningPlanView = () => {
         {/* Content */}
         <div className="max-w-2xl mx-auto py-8 px-4">
 
-          {/* Greeting */}
-          <div className="mb-8">
-            <p className="text-gray-700 leading-relaxed">
-              Hello! We're pleased to share this custom learning plan designed to help your child excel. 
-              Please review the details below and proceed to payment when ready.
-            </p>
-          </div>
-
           {/* Plan Details Card */}
-          <Card className="mb-6 border-0 shadow-md overflow-hidden">
-            <div className="bg-[#E07A5F] text-white px-6 py-4">
-              <h2 className="text-lg font-semibold">📚 Your Custom Learning Plan</h2>
+          <Card className="mb-6 border-0 shadow-lg overflow-hidden">
+            <div className="bg-gradient-to-r from-[#E07A5F] to-[#D66A4F] text-white px-6 py-4">
+              <h2 className="text-lg font-semibold flex items-center gap-2">
+                <FileText className="w-5 h-5" />
+                Learning Plan Details
+              </h2>
             </div>
             <CardContent className="p-0">
               <div className="overflow-x-auto">
@@ -278,7 +247,7 @@ const LearningPlanView = () => {
                   </thead>
                   <tbody>
                     {plan.subjects?.map((subject: any, index: number) => (
-                      <tr key={index} className="border-b last:border-0">
+                      <tr key={index} className="border-b last:border-0 hover:bg-gray-50/50 transition-colors">
                         <td className="py-4 px-6 font-medium text-gray-900">
                           {subject.name}
                         </td>
@@ -296,7 +265,7 @@ const LearningPlanView = () => {
               </div>
               
               {/* Summary */}
-              <div className="border-t bg-gray-50 p-6 space-y-3">
+              <div className="border-t bg-gradient-to-b from-gray-50 to-white p-6 space-y-3">
                 <div className="flex justify-between text-gray-700">
                   <span>Total Sessions:</span>
                   <span className="font-semibold">{plan.total_sessions} sessions</span>
@@ -327,106 +296,76 @@ const LearningPlanView = () => {
             </CardContent>
           </Card>
 
-
-          {/* Payment Options - Always show for proposed plans */}
+          {/* Payment Options Section */}
           {plan.status === "proposed" && (
-            <div className="mb-8">
-              {/* Payment Options Card */}
-              <Card className="mb-4 border-0 shadow-md overflow-hidden">
-                <div className="bg-[#E07A5F] text-white px-6 py-3">
+            <div className="space-y-6 mb-8">
+              {/* Payment Options Summary */}
+              <Card className="border-0 shadow-lg overflow-hidden">
+                <div className="bg-gradient-to-r from-[#E07A5F] to-[#D66A4F] text-white px-6 py-4">
                   <h3 className="font-semibold flex items-center gap-2">
-                    <CreditCard className="w-5 h-5" />
-                    Payment Options (M-Pesa)
+                    <Smartphone className="w-5 h-5" />
+                    Payment Options
                   </h3>
                 </div>
-                <CardContent className="p-4 space-y-3">
-                  {/* Full Payment Option */}
-                  <div 
-                    onClick={() => setPaymentOption('full')}
-                    className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
-                      paymentOption === 'full' 
-                        ? 'border-[#E07A5F] bg-[#FDF8F6]' 
-                        : 'border-gray-200 hover:border-gray-300'
-                    }`}
-                  >
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                          paymentOption === 'full' ? 'border-[#E07A5F]' : 'border-gray-300'
-                        }`}>
-                          {paymentOption === 'full' && (
-                            <div className="w-3 h-3 rounded-full bg-[#E07A5F]" />
-                          )}
-                        </div>
-                        <div>
-                          <p className="font-semibold text-gray-900">Pay in Full</p>
-                          <p className="text-sm text-gray-500">Complete payment now</p>
-                        </div>
-                      </div>
-                      <p className="text-lg font-bold text-[#E07A5F]">
+                <CardContent className="p-6 space-y-4">
+                  <div className="grid gap-4 md:grid-cols-2">
+                    {/* Full Payment */}
+                    <div className="p-4 rounded-xl bg-gradient-to-br from-[#FDF8F6] to-white border-2 border-[#E07A5F]/20">
+                      <p className="text-sm text-gray-500 mb-1">Pay in Full</p>
+                      <p className="text-2xl font-bold text-[#E07A5F]">
                         KES {plan.total_price?.toLocaleString()}
                       </p>
                     </div>
-                  </div>
-
-                  {/* Deposit Option */}
-                  <div 
-                    onClick={() => setPaymentOption('deposit')}
-                    className={`p-4 rounded-lg border-2 cursor-pointer transition-all ${
-                      paymentOption === 'deposit' 
-                        ? 'border-[#E07A5F] bg-[#FDF8F6]' 
-                        : 'border-gray-200 hover:border-gray-300'
-                    }`}
-                  >
-                    <div className="flex items-start justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center ${
-                          paymentOption === 'deposit' ? 'border-[#E07A5F]' : 'border-gray-300'
-                        }`}>
-                          {paymentOption === 'deposit' && (
-                            <div className="w-3 h-3 rounded-full bg-[#E07A5F]" />
-                          )}
-                        </div>
-                        <div>
-                          <p className="font-semibold text-gray-900">Pay 30% Deposit</p>
-                          <p className="text-sm text-gray-500">
-                            Balance of KES {Math.round(plan.total_price * 0.7).toLocaleString()} due later
-                          </p>
-                        </div>
-                      </div>
-                      <p className="text-lg font-bold text-[#E07A5F]">
-                        KES {Math.round(plan.total_price * 0.3).toLocaleString()}
+                    
+                    {/* 30% Deposit */}
+                    <div className="p-4 rounded-xl bg-gradient-to-br from-blue-50 to-white border-2 border-blue-200/50">
+                      <p className="text-sm text-gray-500 mb-1">Or Pay 30% Deposit</p>
+                      <p className="text-2xl font-bold text-blue-600">
+                        KES {depositAmount.toLocaleString()}
+                      </p>
+                      <p className="text-xs text-gray-500 mt-1">
+                        Balance: KES {balanceAfterDeposit.toLocaleString()} due before sessions begin
                       </p>
                     </div>
                   </div>
                 </CardContent>
               </Card>
 
-              {/* Accept Button */}
-              <Button
-                onClick={() => handleAccept(paymentOption)}
-                disabled={processing}
-                className="w-full bg-[#E07A5F] hover:bg-[#D66A4F] text-white py-6 text-lg font-semibold rounded-xl shadow-lg"
-              >
-                {processing ? (
-                  <>
-                    <Loader2 className="w-5 h-5 mr-2 animate-spin" />
-                    Processing...
-                  </>
-                ) : (
-                  <>
-                    <CheckCircle className="w-5 h-5 mr-2" />
-                    {paymentOption === 'deposit' 
-                      ? `Pay KES ${Math.round(plan.total_price * 0.3).toLocaleString()} Deposit`
-                      : `Pay KES ${plan.total_price?.toLocaleString()} in Full`
-                    }
-                  </>
-                )}
-              </Button>
-              
+              {/* M-Pesa Payment Details */}
+              <Card className="border-0 shadow-lg overflow-hidden">
+                <div className="bg-gradient-to-r from-green-600 to-green-500 text-white px-6 py-4">
+                  <h3 className="font-semibold flex items-center gap-2">
+                    <Building2 className="w-5 h-5" />
+                    M-Pesa Payment Details
+                  </h3>
+                </div>
+                <CardContent className="p-6">
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between py-3 border-b border-gray-100">
+                      <span className="text-gray-600">NCBA Paybill</span>
+                      <span className="font-bold text-gray-900 text-lg">880100</span>
+                    </div>
+                    <div className="flex items-center justify-between py-3 border-b border-gray-100">
+                      <span className="text-gray-600">Account Number</span>
+                      <span className="font-bold text-gray-900 text-lg">1006114657</span>
+                    </div>
+                    <div className="flex items-center justify-between py-3">
+                      <span className="text-gray-600">Recipient</span>
+                      <span className="font-bold text-gray-900">Lana Bespoke Limited</span>
+                    </div>
+                  </div>
+                  
+                  <div className="mt-6 p-4 bg-amber-50 rounded-xl border border-amber-200">
+                    <p className="text-sm text-amber-800">
+                      <strong>Important:</strong> After making payment, please send a screenshot of your M-Pesa confirmation message via WhatsApp to confirm your booking.
+                    </p>
+                  </div>
+                </CardContent>
+              </Card>
+
               {/* Share link for admins */}
               {(plan.url_slug || plan.share_token) && !isPublicView && (
-                <div className="mt-4 flex items-center justify-center gap-2">
+                <div className="flex items-center justify-center">
                   <Button
                     variant="outline"
                     size="sm"
