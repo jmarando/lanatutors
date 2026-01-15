@@ -604,9 +604,14 @@ Lana Tutors Team`;
                                   </Button>
                                 </PopoverTrigger>
                                 <PopoverContent className="w-[300px] p-0" align="start">
-                                  <Command>
+                                  <Command
+                                    filter={(value, search) => {
+                                      if (value.toLowerCase().includes(search.toLowerCase())) return 1;
+                                      return 0;
+                                    }}
+                                  >
                                     <CommandInput placeholder="Search by name or subject..." />
-                                    <CommandList>
+                                    <CommandList className="max-h-[300px]">
                                       <CommandEmpty>No tutor found.</CommandEmpty>
                                       <CommandGroup>
                                         {tutors.map((tutor) => (
