@@ -125,7 +125,7 @@ export const CreateLearningPlanForm = ({
         .update({ status: "plan_created" })
         .eq("id", inquiry.id);
 
-      // Send email to parent
+      // Send email to parent with share token for shareable link
       const { error: emailError } = await supabase.functions.invoke("send-learning-plan-email", {
         body: {
           planId: plan.id,
@@ -142,6 +142,7 @@ export const CreateLearningPlanForm = ({
             sessions: s.sessions,
             rate: s.rate,
           })),
+          shareToken: plan.share_token, // Include share token for shareable link
         },
       });
 
