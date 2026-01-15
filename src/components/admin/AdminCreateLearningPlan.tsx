@@ -378,7 +378,7 @@ Lana Tutors Team`;
       }
       setGeneratingPaymentLink(false);
 
-      // Send email to parent
+      // Send email to parent with share token
       const tutorNames = assignedTutors.map(t => t.full_name).join(", ");
       const { error: emailError } = await supabase.functions.invoke("send-learning-plan-email", {
         body: {
@@ -406,6 +406,7 @@ Lana Tutors Team`;
           tutorName: tutorNames,
           sessionSchedule: sessionSchedule.filter(s => s.day && s.time),
           startDate,
+          shareToken: plan.share_token, // Include share token for shareable link
         },
       });
 
