@@ -223,24 +223,27 @@ const LearningPlanView = () => {
               className="h-14 mx-auto mb-3"
             />
             
-            {/* Tagline */}
-            <p className="text-white/90 text-xs tracking-[0.15em] uppercase">
-              Empowering Students Through Personalized Learning
+            {/* Title */}
+            <h1 className="text-xl md:text-2xl font-bold text-white mb-2">
+              {plan.title}
+            </h1>
+            <p className="text-white/90">
+              with {plan.profiles?.full_name || "Lana Tutors Team"}
             </p>
+            
+            {/* Plan Details in Header */}
+            {plan.notes && (
+              <div className="mt-4 bg-white/10 backdrop-blur-sm rounded-lg px-4 py-3 text-left">
+                <p className="text-white/95 text-sm leading-relaxed whitespace-pre-line">
+                  {plan.notes}
+                </p>
+              </div>
+            )}
           </div>
         </div>
 
         {/* Content */}
         <div className="max-w-2xl mx-auto py-8 px-4">
-          {/* Title Section */}
-          <div className="text-center mb-8">
-            <h1 className="text-2xl md:text-3xl font-bold text-gray-900 mb-2">
-              {plan.title}
-            </h1>
-            <p className="text-gray-600">
-              with {plan.profiles?.full_name || "Lana Tutors Team"}
-            </p>
-          </div>
 
           {/* Greeting */}
           <div className="mb-8">
@@ -291,9 +294,17 @@ const LearningPlanView = () => {
                   <span>Total Sessions:</span>
                   <span className="font-semibold">{plan.total_sessions} sessions</span>
                 </div>
+                {plan.validity_days && plan.total_sessions && (
+                  <div className="flex justify-between text-gray-700">
+                    <span>Session Frequency:</span>
+                    <span className="font-semibold">
+                      ~{Math.round(plan.total_sessions / (plan.validity_days / 7))} session{Math.round(plan.total_sessions / (plan.validity_days / 7)) !== 1 ? 's' : ''} per week
+                    </span>
+                  </div>
+                )}
                 <div className="flex justify-between text-gray-700">
                   <span>Valid for:</span>
-                  <span className="font-semibold">{plan.validity_days} days</span>
+                  <span className="font-semibold">{plan.validity_days} days ({Math.round(plan.validity_days / 7)} weeks)</span>
                 </div>
                 {plan.discount_applied > 0 && (
                   <div className="flex justify-between text-green-600">
@@ -309,15 +320,6 @@ const LearningPlanView = () => {
             </CardContent>
           </Card>
 
-          {/* Notes */}
-          {plan.notes && (
-            <Card className="mb-6 border-0 shadow-md">
-              <CardContent className="p-6">
-                <h3 className="font-semibold text-gray-900 mb-2">Additional Notes</h3>
-                <p className="text-gray-600">{plan.notes}</p>
-              </CardContent>
-            </Card>
-          )}
 
           {/* Accept & Pay Button - Always show for proposed plans */}
           {plan.status === "proposed" && (
