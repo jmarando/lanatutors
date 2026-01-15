@@ -93,9 +93,11 @@ export const AdminLearningPlansList = () => {
       return;
     }
 
-    // Use the production URL
+    // Use the production URL with pretty slug when available
     const baseUrl = "https://lanatutors.africa";
-    const shareUrl = `${baseUrl}/learning-plan/${plan.id}?token=${plan.share_token}`;
+    const shareUrl = plan.url_slug 
+      ? `${baseUrl}/learning-plan/${plan.url_slug}`
+      : `${baseUrl}/learning-plan/${plan.id}?token=${plan.share_token}`;
     
     try {
       await navigator.clipboard.writeText(shareUrl);
@@ -336,8 +338,8 @@ export const AdminLearningPlansList = () => {
                         <Button
                           variant="ghost"
                           size="sm"
-                          onClick={() => window.open(`/learning-plan/${plan.id}?token=${plan.share_token}`, '_blank')}
-                          disabled={!plan.share_token}
+                          onClick={() => window.open(`/learning-plan/${plan.url_slug || plan.id}${!plan.url_slug ? `?token=${plan.share_token}` : ''}`, '_blank')}
+                          disabled={!plan.share_token && !plan.url_slug}
                           title="View plan"
                         >
                           <ExternalLink className="w-4 h-4" />
@@ -405,12 +407,12 @@ export const AdminLearningPlansList = () => {
                                 </div>
                               )}
 
-                              {plan.share_token && (
+                              {(plan.share_token || plan.url_slug) && (
                                 <div className="p-4 bg-muted rounded-lg">
                                   <p className="text-sm font-medium mb-2">Share Link</p>
                                   <div className="flex items-center gap-2">
                                     <code className="flex-1 p-2 bg-background rounded text-xs break-all">
-                                      https://lanatutors.africa/learning-plan/{plan.id}?token={plan.share_token}
+                                      https://lanatutors.africa/learning-plan/{plan.url_slug || `${plan.id}?token=${plan.share_token}`}
                                     </code>
                                     <Button
                                       variant="secondary"
