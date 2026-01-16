@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
-import { Loader2, Plus, Trash2, Send, FileText, Sparkles, CreditCard, Users, Check, ChevronsUpDown, Copy, ExternalLink, CheckCircle } from "lucide-react";
+import { Loader2, Plus, Trash2, Send, FileText, Sparkles, CreditCard, Users, Check, ChevronsUpDown, Copy, ExternalLink, CheckCircle, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 import { getCurriculums, getLevelsForCurriculum, getSubjectsForCurriculumLevel } from "@/utils/curriculumData";
 import {
@@ -25,6 +25,8 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
+import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 interface SessionSchedule {
   day: string;
@@ -37,7 +39,15 @@ interface Subject {
   rate: number;
   sessionsPerWeek: number;
   weeks: number;
-  tutorId: string; // Each subject can have its own tutor
+  tutorId: string;
+}
+
+interface StudentEntry {
+  id: string;
+  name: string;
+  curriculum: string;
+  gradeLevel: string;
+  subjects: Subject[];
 }
 
 interface Tutor {
@@ -48,29 +58,38 @@ interface Tutor {
   hourly_rate: number;
 }
 
+interface CreatedPlanInfo {
+  id: string;
+  shareToken: string;
+  urlSlug: string;
+  title: string;
+  studentName: string;
+}
+
 export const AdminCreateLearningPlan = () => {
   const [loading, setLoading] = useState(false);
   const [generatingPaymentLink, setGeneratingPaymentLink] = useState(false);
   const [tutors, setTutors] = useState<Tutor[]>([]);
   const [tutorsLoading, setTutorsLoading] = useState(true);
-  const [openTutorPopover, setOpenTutorPopover] = useState<number | null>(null);
+  const [openTutorPopover, setOpenTutorPopover] = useState<string | null>(null);
 
   // Success dialog state
   const [successDialogOpen, setSuccessDialogOpen] = useState(false);
-  const [createdPlan, setCreatedPlan] = useState<{ id: string; shareToken: string; urlSlug: string; title: string } | null>(null);
-  const [linkCopied, setLinkCopied] = useState(false);
+  const [createdPlans, setCreatedPlans] = useState<CreatedPlanInfo[]>([]);
+  const [linkCopied, setLinkCopied] = useState<string | null>(null);
 
-  // Parent/Student Info
+  // Parent Info
   const [parentName, setParentName] = useState("");
   const [parentEmail, setParentEmail] = useState("");
   const [parentPhone, setParentPhone] = useState("");
-  const [studentName, setStudentName] = useState("");
-  const [curriculum, setCurriculum] = useState("");
-  const [gradeLevel, setGradeLevel] = useState("");
+  
+  // Multiple Students
+  const [students, setStudents] = useState<StudentEntry[]>([
+    { id: crypto.randomUUID(), name: "", curriculum: "", gradeLevel: "", subjects: [] }
+  ]);
+  const [activeStudentId, setActiveStudentId] = useState(students[0].id);
 
-  // Plan Details
-  const [title, setTitle] = useState("");
-  const [subjects, setSubjects] = useState<Subject[]>([]);
+  // Plan Details (shared across students)
   const [discount, setDiscount] = useState(0);
   const [validityDays, setValidityDays] = useState(90);
   const [notes, setNotes] = useState("");
@@ -84,18 +103,18 @@ export const AdminCreateLearningPlan = () => {
   const [classType, setClassType] = useState<"online" | "physical">("online");
 
   const curriculums = getCurriculums();
-  const availableLevels = curriculum ? getLevelsForCurriculum(curriculum) : [];
-  const availableSubjects = curriculum && gradeLevel ? getSubjectsForCurriculumLevel(curriculum, gradeLevel) : [];
+  
+  // Get active student
+  const activeStudent = students.find(s => s.id === activeStudentId) || students[0];
+  const activeStudentIndex = students.findIndex(s => s.id === activeStudentId);
+  const availableLevels = activeStudent?.curriculum ? getLevelsForCurriculum(activeStudent.curriculum) : [];
+  const availableSubjects = activeStudent?.curriculum && activeStudent?.gradeLevel 
+    ? getSubjectsForCurriculumLevel(activeStudent.curriculum, activeStudent.gradeLevel) 
+    : [];
 
   useEffect(() => {
     fetchTutors();
   }, []);
-
-  useEffect(() => {
-    if (studentName) {
-      setTitle(`Learning Plan for ${studentName}`);
-    }
-  }, [studentName]);
 
   const fetchTutors = async () => {
     setTutorsLoading(true);
@@ -142,36 +161,44 @@ export const AdminCreateLearningPlan = () => {
     }
   };
 
-  // Get unique tutors assigned to subjects
-  const getAssignedTutors = () => {
-    const tutorIds = [...new Set(subjects.filter(s => s.tutorId).map(s => s.tutorId))];
+  // Get unique tutors assigned to a student's subjects
+  const getAssignedTutorsForStudent = (student: StudentEntry) => {
+    const tutorIds = [...new Set(student.subjects.filter(s => s.tutorId).map(s => s.tutorId))];
     return tutors.filter(t => tutorIds.includes(t.id));
   };
 
+  // Get all unique tutors across all students
+  const getAllAssignedTutors = () => {
+    const allTutorIds = new Set<string>();
+    students.forEach(student => {
+      student.subjects.forEach(subject => {
+        if (subject.tutorId) allTutorIds.add(subject.tutorId);
+      });
+    });
+    return tutors.filter(t => allTutorIds.has(t.id));
+  };
+
   const generateEmailBody = () => {
-    const assignedTutors = getAssignedTutors();
-    if (assignedTutors.length === 0 || !studentName) {
-      toast.error("Please add subjects with tutors and enter student name first");
+    const allTutors = getAllAssignedTutors();
+    if (allTutors.length === 0 || students.every(s => !s.name)) {
+      toast.error("Please add subjects with tutors and enter student names first");
       return;
     }
     
-    // Simplified message - the email template already includes subject details, pricing, and payment options
-    // This is just for any additional personalized notes
-    const curriculumInfo = curriculum ? ` following the ${curriculum} curriculum` : "";
-    const gradeInfo = gradeLevel ? ` in ${gradeLevel}` : "";
+    const studentNames = students.filter(s => s.name).map(s => s.name);
+    const studentListText = studentNames.length === 1 
+      ? studentNames[0] 
+      : studentNames.slice(0, -1).join(", ") + " and " + studentNames[studentNames.length - 1];
     
-    const tutorNames = assignedTutors.map(t => t.full_name).join(" and ");
-    const tutorIntro = assignedTutors.length === 1 
-      ? `${tutorNames} will be ${studentName}'s dedicated tutor.`
-      : `${tutorNames} will be ${studentName}'s dedicated tutors for their respective subjects.`;
+    const tutorNames = allTutors.map(t => t.full_name).join(" and ");
 
     const generatedBody = `Dear ${parentName || "Parent"},
 
-Thank you for your interest in our tutoring services. We are pleased to present a personalized learning plan for ${studentName}${gradeInfo}${curriculumInfo}.
+Thank you for your interest in our tutoring services. We are pleased to present personalized learning plan${students.length > 1 ? 's' : ''} for ${studentListText}.
 
-${tutorIntro} With their expertise and personalized approach, we are confident that ${studentName} will make excellent progress.
+${tutorNames} will be your dedicated tutor${allTutors.length > 1 ? 's' : ''} for these sessions. With their expertise and personalized approach, we are confident that your child${students.length > 1 ? 'ren' : ''} will make excellent progress.
 
-We look forward to supporting ${studentName}'s academic journey.
+We look forward to supporting your family's academic journey.
 
 Warm regards,
 Lana Tutors Team`;
@@ -180,243 +207,311 @@ Lana Tutors Team`;
     toast.success("Message generated!");
   };
 
-
-  const addSubject = () => {
-    setSubjects([...subjects, { name: "", sessions: 8, rate: 1500, sessionsPerWeek: 2, weeks: 4, tutorId: "" }]);
+  // Student management
+  const addStudent = () => {
+    const newStudent: StudentEntry = {
+      id: crypto.randomUUID(),
+      name: "",
+      curriculum: "",
+      gradeLevel: "",
+      subjects: []
+    };
+    setStudents([...students, newStudent]);
+    setActiveStudentId(newStudent.id);
   };
 
-  const removeSubject = (index: number) => {
-    setSubjects(subjects.filter((_, i) => i !== index));
+  const removeStudent = (studentId: string) => {
+    if (students.length <= 1) {
+      toast.error("At least one student is required");
+      return;
+    }
+    const newStudents = students.filter(s => s.id !== studentId);
+    setStudents(newStudents);
+    if (activeStudentId === studentId) {
+      setActiveStudentId(newStudents[0].id);
+    }
   };
 
-  const updateSubject = (index: number, field: keyof Subject, value: any) => {
-    const updated = [...subjects];
-    updated[index] = { ...updated[index], [field]: value };
-
-    // If tutor changed, update the rate to that tutor's rate
-    if (field === "tutorId") {
-      const tutor = tutors.find(t => t.id === value);
-      if (tutor) {
-        updated[index].rate = tutor.hourly_rate || 1500;
+  const updateStudent = (studentId: string, field: keyof StudentEntry, value: any) => {
+    setStudents(students.map(s => {
+      if (s.id !== studentId) return s;
+      if (field === "curriculum") {
+        return { ...s, [field]: value, gradeLevel: "", subjects: [] };
       }
-    }
-
-    if (field === "sessionsPerWeek" || field === "weeks") {
-      const sessionsPerWeek = field === "sessionsPerWeek" ? value : updated[index].sessionsPerWeek;
-      const weeks = field === "weeks" ? value : updated[index].weeks;
-      updated[index].sessions = sessionsPerWeek * weeks;
-    }
-
-    setSubjects(updated);
+      if (field === "gradeLevel") {
+        return { ...s, [field]: value };
+      }
+      return { ...s, [field]: value };
+    }));
   };
 
-  const calculateTotals = () => {
-    const totalSessions = subjects.reduce((sum, s) => sum + Number(s.sessions), 0);
-    const subtotal = subjects.reduce((sum, s) => sum + (Number(s.sessions) * Number(s.rate)), 0);
+  // Subject management for active student
+  const addSubject = () => {
+    const newSubject: Subject = { name: "", sessions: 8, rate: 1500, sessionsPerWeek: 2, weeks: 4, tutorId: "" };
+    setStudents(students.map(s => 
+      s.id === activeStudentId 
+        ? { ...s, subjects: [...s.subjects, newSubject] }
+        : s
+    ));
+  };
+
+  const removeSubject = (subjectIndex: number) => {
+    setStudents(students.map(s => 
+      s.id === activeStudentId 
+        ? { ...s, subjects: s.subjects.filter((_, i) => i !== subjectIndex) }
+        : s
+    ));
+  };
+
+  const updateSubject = (subjectIndex: number, field: keyof Subject, value: any) => {
+    setStudents(students.map(s => {
+      if (s.id !== activeStudentId) return s;
+      
+      const updatedSubjects = [...s.subjects];
+      updatedSubjects[subjectIndex] = { ...updatedSubjects[subjectIndex], [field]: value };
+
+      // If tutor changed, update the rate to that tutor's rate
+      if (field === "tutorId") {
+        const tutor = tutors.find(t => t.id === value);
+        if (tutor) {
+          updatedSubjects[subjectIndex].rate = tutor.hourly_rate || 1500;
+        }
+      }
+
+      if (field === "sessionsPerWeek" || field === "weeks") {
+        const sessionsPerWeek = field === "sessionsPerWeek" ? value : updatedSubjects[subjectIndex].sessionsPerWeek;
+        const weeks = field === "weeks" ? value : updatedSubjects[subjectIndex].weeks;
+        updatedSubjects[subjectIndex].sessions = sessionsPerWeek * weeks;
+      }
+
+      return { ...s, subjects: updatedSubjects };
+    }));
+  };
+
+  // Calculate totals for a single student
+  const calculateStudentTotals = (student: StudentEntry) => {
+    const totalSessions = student.subjects.reduce((sum, s) => sum + Number(s.sessions), 0);
+    const subtotal = student.subjects.reduce((sum, s) => sum + (Number(s.sessions) * Number(s.rate)), 0);
     const discountAmount = subtotal * (Number(discount) / 100);
     const totalPrice = subtotal - discountAmount;
     const depositAmount = Math.ceil(totalPrice * 0.3);
     return { totalSessions, subtotal, discountAmount, totalPrice, depositAmount };
   };
 
+  // Calculate grand totals across all students
+  const calculateGrandTotals = () => {
+    let grandTotalSessions = 0;
+    let grandSubtotal = 0;
+    
+    students.forEach(student => {
+      const { totalSessions, subtotal } = calculateStudentTotals(student);
+      grandTotalSessions += totalSessions;
+      grandSubtotal += subtotal;
+    });
+    
+    const discountAmount = grandSubtotal * (Number(discount) / 100);
+    const totalPrice = grandSubtotal - discountAmount;
+    const depositAmount = Math.ceil(totalPrice * 0.3);
+    
+    return { totalSessions: grandTotalSessions, subtotal: grandSubtotal, discountAmount, totalPrice, depositAmount };
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    const assignedTutors = getAssignedTutors();
-    if (assignedTutors.length === 0) {
-      toast.error("Please add at least one subject with a tutor assigned");
+    // Validate all students have subjects
+    const studentsWithSubjects = students.filter(s => s.subjects.length > 0 && s.name);
+    if (studentsWithSubjects.length === 0) {
+      toast.error("Please add at least one student with subjects");
       return;
     }
 
-    if (!parentName || !parentEmail || !studentName) {
-      toast.error("Please fill in parent and student details");
+    if (!parentName || !parentEmail) {
+      toast.error("Please fill in parent details");
       return;
     }
 
-    if (subjects.length === 0) {
-      toast.error("Please add at least one subject");
-      return;
-    }
-
-    if (subjects.some(s => !s.name || !s.tutorId || s.sessions < 1 || s.rate < 1)) {
-      toast.error("Please fill in all subject details including tutor assignment");
-      return;
+    // Check all students have valid subjects
+    for (const student of studentsWithSubjects) {
+      if (student.subjects.some(s => !s.name || !s.tutorId || s.sessions < 1 || s.rate < 1)) {
+        toast.error(`Please fill in all subject details for ${student.name}`);
+        return;
+      }
     }
 
     setLoading(true);
+    const createdPlansList: CreatedPlanInfo[] = [];
+
     try {
-      const { totalSessions, totalPrice, depositAmount } = calculateTotals();
-      const amountDue = paymentOption === "deposit" ? depositAmount : totalPrice;
+      // Create a learning plan for each student
+      for (const student of studentsWithSubjects) {
+        const studentTotals = calculateStudentTotals(student);
+        const assignedTutors = getAssignedTutorsForStudent(student);
+        const primaryTutorId = assignedTutors[0]?.id;
 
-      // Use the first tutor as the primary for the learning plan record
-      const primaryTutorId = assignedTutors[0].id;
+        if (!primaryTutorId) continue;
 
-      // Generate a URL-friendly slug from student name
-      const generateSlug = (name: string) => {
-        const baseSlug = name
-          .toLowerCase()
-          .replace(/[^a-z0-9\s-]/g, '')
-          .replace(/\s+/g, '-')
-          .substring(0, 50);
-        // Add a short random suffix for uniqueness
-        const suffix = Math.random().toString(36).substring(2, 8);
-        return `${baseSlug}-${suffix}`;
-      };
+        const title = `Learning Plan for ${student.name}`;
 
-      const urlSlug = generateSlug(studentName);
+        // Generate a URL-friendly slug from student name
+        const generateSlug = (name: string) => {
+          const baseSlug = name
+            .toLowerCase()
+            .replace(/[^a-z0-9\s-]/g, '')
+            .replace(/\s+/g, '-')
+            .substring(0, 50);
+          const suffix = Math.random().toString(36).substring(2, 8);
+          return `${baseSlug}-${suffix}`;
+        };
 
-      // Create learning plan
-      const { data: plan, error: planError } = await supabase
-        .from("learning_plans")
-        .insert({
-          tutor_id: primaryTutorId,
+        const urlSlug = generateSlug(student.name);
+
+        // Create learning plan
+        const { data: plan, error: planError } = await supabase
+          .from("learning_plans")
+          .insert({
+            tutor_id: primaryTutorId,
+            title,
+            url_slug: urlSlug,
+            subjects: student.subjects.map(s => {
+              const tutor = tutors.find(t => t.id === s.tutorId);
+              return {
+                name: s.name,
+                sessions: s.sessions,
+                rate: s.rate,
+                total: s.sessions * s.rate,
+                tutorId: s.tutorId,
+                tutorName: tutor?.full_name || "Unknown",
+              };
+            }),
+            total_sessions: studentTotals.totalSessions,
+            total_price: studentTotals.totalPrice,
+            discount_applied: discount,
+            validity_days: validityDays,
+            notes: `Curriculum: ${student.curriculum} | Grade: ${student.gradeLevel} | Class Type: ${classType === 'physical' ? 'Physical (In-Person)' : 'Online'} | Payment Option: ${paymentOption} | Tutors: ${assignedTutors.map(t => t.full_name).join(", ")}\n\n${notes}`,
+            status: "proposed",
+          })
+          .select()
+          .single();
+
+        if (planError) throw planError;
+
+        // Generate payment links
+        setGeneratingPaymentLink(true);
+        let fullPaymentLink = "";
+        let depositPaymentLink = "";
+        
+        try {
+          const [fullPaymentResult, depositPaymentResult] = await Promise.all([
+            supabase.functions.invoke("generate-learning-plan-payment-link", {
+              body: {
+                planId: plan.id,
+                amount: studentTotals.totalPrice,
+                parentEmail,
+                parentPhone,
+                studentName: student.name,
+                description: `Full Payment - ${title}`,
+                isDeposit: false,
+              },
+            }),
+            supabase.functions.invoke("generate-learning-plan-payment-link", {
+              body: {
+                planId: plan.id,
+                amount: studentTotals.depositAmount,
+                parentEmail,
+                parentPhone,
+                studentName: student.name,
+                description: `30% Deposit - ${title}`,
+                isDeposit: true,
+              },
+            }),
+          ]);
+
+          if (fullPaymentResult.data?.paymentLink) {
+            fullPaymentLink = fullPaymentResult.data.paymentLink;
+          }
+          if (depositPaymentResult.data?.paymentLink) {
+            depositPaymentLink = depositPaymentResult.data.paymentLink;
+          }
+        } catch (err) {
+          console.error("Error generating payment links:", err);
+        }
+
+        // Send email to parent
+        const tutorNames = assignedTutors.map(t => t.full_name).join(", ");
+        await supabase.functions.invoke("send-learning-plan-email", {
+          body: {
+            planId: plan.id,
+            parentEmail,
+            parentName,
+            studentName: student.name,
+            planTitle: title,
+            totalSessions: studentTotals.totalSessions,
+            totalPrice: studentTotals.totalPrice,
+            validityDays,
+            personalMessage: notes,
+            subjects: student.subjects.map(s => {
+              const tutor = tutors.find(t => t.id === s.tutorId);
+              return {
+                name: s.name,
+                sessions: s.sessions,
+                rate: s.rate,
+                tutorName: tutor?.full_name,
+              };
+            }),
+            depositAmount: studentTotals.depositAmount,
+            fullPaymentLink,
+            depositPaymentLink,
+            tutorName: tutorNames,
+            sessionSchedule: sessionSchedule.filter(s => s.day && s.time),
+            startDate,
+            shareToken: plan.share_token,
+          },
+        });
+
+        createdPlansList.push({
+          id: plan.id,
+          shareToken: plan.share_token,
+          urlSlug: plan.url_slug,
           title,
-          url_slug: urlSlug,
-          subjects: subjects.map(s => {
-            const tutor = tutors.find(t => t.id === s.tutorId);
-            return {
-              name: s.name,
-              sessions: s.sessions,
-              rate: s.rate,
-              total: s.sessions * s.rate,
-              tutorId: s.tutorId,
-              tutorName: tutor?.full_name || "Unknown",
-            };
-          }),
-          total_sessions: totalSessions,
-          total_price: totalPrice,
-          discount_applied: discount,
-          validity_days: validityDays,
-          notes: `Curriculum: ${curriculum} | Grade: ${gradeLevel} | Class Type: ${classType === 'physical' ? 'Physical (In-Person)' : 'Online'} | Payment Option: ${paymentOption} | Tutors: ${assignedTutors.map(t => t.full_name).join(", ")}\n\n${notes}`,
-          status: "proposed",
-        })
-        .select()
-        .single();
-
-      if (planError) throw planError;
-
-      // Generate payment links
-      setGeneratingPaymentLink(true);
-      let fullPaymentLink = "";
-      let depositPaymentLink = "";
-      
-      try {
-        const [fullPaymentResult, depositPaymentResult] = await Promise.all([
-          supabase.functions.invoke("generate-learning-plan-payment-link", {
-            body: {
-              planId: plan.id,
-              amount: totalPrice,
-              parentEmail,
-              parentPhone,
-              studentName,
-              description: `Full Payment - ${title}`,
-              isDeposit: false,
-            },
-          }),
-          supabase.functions.invoke("generate-learning-plan-payment-link", {
-            body: {
-              planId: plan.id,
-              amount: depositAmount,
-              parentEmail,
-              parentPhone,
-              studentName,
-              description: `30% Deposit - ${title}`,
-              isDeposit: true,
-            },
-          }),
-        ]);
-
-        if (fullPaymentResult.data?.paymentLink) {
-          fullPaymentLink = fullPaymentResult.data.paymentLink;
-        }
-        if (depositPaymentResult.data?.paymentLink) {
-          depositPaymentLink = depositPaymentResult.data.paymentLink;
-        }
-      } catch (err) {
-        console.error("Error generating payment links:", err);
+          studentName: student.name,
+        });
       }
+
       setGeneratingPaymentLink(false);
-
-      // Send email to parent with share token
-      const tutorNames = assignedTutors.map(t => t.full_name).join(", ");
-      const { error: emailError } = await supabase.functions.invoke("send-learning-plan-email", {
-        body: {
-          planId: plan.id,
-          parentEmail,
-          parentName,
-          studentName,
-          planTitle: title,
-          totalSessions,
-          totalPrice,
-          validityDays,
-          personalMessage: notes,
-          subjects: subjects.map(s => {
-            const tutor = tutors.find(t => t.id === s.tutorId);
-            return {
-              name: s.name,
-              sessions: s.sessions,
-              rate: s.rate,
-              tutorName: tutor?.full_name,
-            };
-          }),
-          depositAmount,
-          fullPaymentLink,
-          depositPaymentLink,
-          tutorName: tutorNames,
-          sessionSchedule: sessionSchedule.filter(s => s.day && s.time),
-          startDate,
-          shareToken: plan.share_token, // Include share token for shareable link
-        },
-      });
-
-      if (emailError) {
-        console.error("Email error:", emailError);
-        toast.error("Learning plan created but email failed to send");
-      }
-
-      // Show success dialog with share link
-      setCreatedPlan({
-        id: plan.id,
-        shareToken: plan.share_token,
-        urlSlug: plan.url_slug,
-        title: title,
-      });
+      setCreatedPlans(createdPlansList);
       setSuccessDialogOpen(true);
 
       // Reset form
       setParentName("");
       setParentEmail("");
       setParentPhone("");
-      setStudentName("");
-      setCurriculum("");
-      setGradeLevel("");
-      setTitle("");
-      setSubjects([]);
+      setStudents([{ id: crypto.randomUUID(), name: "", curriculum: "", gradeLevel: "", subjects: [] }]);
+      setActiveStudentId(students[0].id);
       setDiscount(0);
       setNotes("");
       setPaymentOption("full");
       setSessionSchedule([]);
       setStartDate("");
+      
+      toast.success(`${createdPlansList.length} learning plan${createdPlansList.length > 1 ? 's' : ''} created and sent!`);
     } catch (error: any) {
-      console.error("Error creating learning plan:", error);
-      toast.error(error.message || "Failed to create learning plan");
+      console.error("Error creating learning plans:", error);
+      toast.error(error.message || "Failed to create learning plans");
     } finally {
       setLoading(false);
       setGeneratingPaymentLink(false);
     }
   };
 
-  const copyShareLink = async () => {
-    if (!createdPlan?.urlSlug) return;
-    
-    // Use the prettier slug-based URL
-    const shareUrl = `https://lanatutors.africa/learning-plan/${createdPlan.urlSlug}`;
+  const copyShareLink = async (plan: CreatedPlanInfo) => {
+    const shareUrl = `https://lanatutors.africa/learning-plan/${plan.urlSlug}`;
     
     try {
       await navigator.clipboard.writeText(shareUrl);
-      setLinkCopied(true);
-      toast.success("Share link copied to clipboard!");
-      setTimeout(() => setLinkCopied(false), 2000);
+      setLinkCopied(plan.id);
+      toast.success("Share link copied!");
+      setTimeout(() => setLinkCopied(null), 2000);
     } catch (err) {
       const textArea = document.createElement("textarea");
       textArea.value = shareUrl;
@@ -424,14 +519,15 @@ Lana Tutors Team`;
       textArea.select();
       document.execCommand("copy");
       document.body.removeChild(textArea);
-      setLinkCopied(true);
+      setLinkCopied(plan.id);
       toast.success("Link copied!");
-      setTimeout(() => setLinkCopied(false), 2000);
+      setTimeout(() => setLinkCopied(null), 2000);
     }
   };
 
-  const totals = calculateTotals();
-  const assignedTutors = getAssignedTutors();
+  const grandTotals = calculateGrandTotals();
+  const allAssignedTutors = getAllAssignedTutors();
+  const totalStudentsWithSubjects = students.filter(s => s.subjects.length > 0 && s.name).length;
 
   return (
     <div className="space-y-6">
@@ -439,19 +535,19 @@ Lana Tutors Team`;
         <FileText className="h-6 w-6 text-primary" />
         <div>
           <h2 className="text-2xl font-bold">Create Learning Plan</h2>
-          <p className="text-muted-foreground">Send a customized learning plan proposal to parents with multiple tutors & subjects</p>
+          <p className="text-muted-foreground">Send customized learning plans to parents - supports multiple children</p>
         </div>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
-        {/* Step 1: Parent/Student Info */}
+        {/* Step 1: Parent Info */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg">1. Parent & Student Details</CardTitle>
-            <CardDescription>Enter the parent and student information</CardDescription>
+            <CardTitle className="text-lg">1. Parent Details</CardTitle>
+            <CardDescription>Enter the parent's contact information</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
                 <Label htmlFor="parentName">Parent Name *</Label>
                 <Input
@@ -482,292 +578,310 @@ Lana Tutors Team`;
                   placeholder="+254..."
                 />
               </div>
-              <div>
-                <Label htmlFor="studentName">Student Name *</Label>
-                <Input
-                  id="studentName"
-                  value={studentName}
-                  onChange={(e) => setStudentName(e.target.value)}
-                  placeholder="Enter student's name"
-                  required
-                />
-              </div>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <Label htmlFor="curriculum">Curriculum</Label>
-                <Select value={curriculum} onValueChange={(v) => { setCurriculum(v); setGradeLevel(""); }}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select curriculum" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {curriculums.map((c) => (
-                      <SelectItem key={c} value={c}>{c}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label htmlFor="gradeLevel">Grade Level</Label>
-                <Select value={gradeLevel} onValueChange={setGradeLevel} disabled={!curriculum}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select grade" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {availableLevels.map((l) => (
-                      <SelectItem key={l.value} value={l.value}>{l.label}</SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
             </div>
           </CardContent>
         </Card>
 
-        {/* Step 2: Subjects with Tutor Assignment */}
+        {/* Step 2: Students */}
         <Card>
           <CardHeader>
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Users className="h-5 w-5" />
-              2. Subjects & Tutor Assignments
-            </CardTitle>
-            <CardDescription>
-              Build the learning plan by adding subjects. For each subject, select a tutor who will teach it.
-            </CardDescription>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Users className="h-5 w-5" />
+                  2. Students & Subjects
+                </CardTitle>
+                <CardDescription>Add students and their subjects. Each student will receive a separate learning plan.</CardDescription>
+              </div>
+              <Button type="button" variant="outline" onClick={addStudent}>
+                <UserPlus className="w-4 h-4 mr-2" />
+                Add Another Child
+              </Button>
+            </div>
           </CardHeader>
           <CardContent className="space-y-4">
-            <div>
-              <Label htmlFor="title">Plan Title</Label>
-              <Input
-                id="title"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="Learning Plan for [Student Name]"
-                required
-              />
-            </div>
+            {/* Student Tabs */}
+            <Tabs value={activeStudentId} onValueChange={setActiveStudentId}>
+              <TabsList className="flex flex-wrap h-auto gap-1">
+                {students.map((student, index) => (
+                  <TabsTrigger 
+                    key={student.id} 
+                    value={student.id}
+                    className="flex items-center gap-2"
+                  >
+                    {student.name || `Child ${index + 1}`}
+                    {student.subjects.length > 0 && (
+                      <Badge variant="secondary" className="ml-1 h-5 w-5 p-0 flex items-center justify-center text-xs">
+                        {student.subjects.length}
+                      </Badge>
+                    )}
+                  </TabsTrigger>
+                ))}
+              </TabsList>
 
-            {/* How it works hint */}
-            <div className="bg-primary/5 border border-primary/20 rounded-lg p-4">
-              <p className="text-sm font-medium text-primary mb-2">How it works:</p>
-              <ol className="text-sm text-muted-foreground space-y-1 list-decimal list-inside">
-                <li>Click <strong>"Add Subject"</strong> to add a subject to the plan</li>
-                <li>Search and select a <strong>tutor</strong> who will teach that subject</li>
-                <li>Choose the <strong>subject</strong> from the tutor's specializations or curriculum</li>
-                <li>Set the <strong>sessions per week</strong> and <strong>duration</strong></li>
-                <li>Repeat for each subject the student needs</li>
-              </ol>
-            </div>
-
-            {/* Subjects List */}
-            <div>
-              <div className="flex items-center justify-between mb-3">
-                <div>
-                  <Label className="text-base">Subjects & Sessions</Label>
-                  <p className="text-xs text-muted-foreground">Each row = 1 subject with its assigned tutor</p>
-                </div>
-                <Button type="button" variant="default" size="sm" onClick={addSubject}>
-                  <Plus className="w-4 h-4 mr-2" />
-                  Add Subject
-                </Button>
-              </div>
-              <div className="space-y-3">
-                {subjects.map((subject, index) => {
-                  const selectedTutor = tutors.find(t => t.id === subject.tutorId);
-                  const tutorSubjects = selectedTutor?.subjects || [];
-                  
-                  return (
-                    <Card key={index} className={`border-l-4 ${subject.tutorId ? 'border-l-primary bg-primary/5' : 'border-l-muted-foreground/30'}`}>
-                      <CardContent className="p-4">
-                        <div className="flex items-center gap-2 mb-3">
-                          <span className="bg-primary text-primary-foreground text-xs font-bold px-2 py-0.5 rounded-full">
-                            {index + 1}
-                          </span>
-                          <span className="text-sm font-medium">
-                            {subject.name && subject.tutorId 
-                              ? `${subject.name} with ${selectedTutor?.full_name}`
-                              : 'New Subject Assignment'}
-                          </span>
-                        </div>
-                        <div className="grid grid-cols-1 lg:grid-cols-7 gap-3">
-                          {/* Step A: Tutor Selection */}
-                          <div className="lg:col-span-2">
-                            <Label className="text-xs font-semibold text-primary">Step 1: Select Tutor *</Label>
-                            {tutorsLoading ? (
-                              <div className="h-10 flex items-center">
-                                <Loader2 className="w-4 h-4 animate-spin" />
-                              </div>
-                            ) : (
-                              <Popover 
-                                open={openTutorPopover === index} 
-                                onOpenChange={(open) => setOpenTutorPopover(open ? index : null)}
-                              >
-                                <PopoverTrigger asChild>
-                                  <Button
-                                    variant="outline"
-                                    role="combobox"
-                                    aria-expanded={openTutorPopover === index}
-                                    className={cn(
-                                      "w-full justify-between font-normal",
-                                      !subject.tutorId && "border-primary"
-                                    )}
-                                  >
-                                    {selectedTutor ? (
-                                      <span className="truncate">{selectedTutor.full_name}</span>
-                                    ) : (
-                                      <span className="text-muted-foreground">Search tutors...</span>
-                                    )}
-                                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                                  </Button>
-                                </PopoverTrigger>
-                                <PopoverContent className="w-[300px] p-0" align="start">
-                                  <Command
-                                    filter={(value, search) => {
-                                      if (value.toLowerCase().includes(search.toLowerCase())) return 1;
-                                      return 0;
-                                    }}
-                                  >
-                                    <CommandInput placeholder="Search by name or subject..." />
-                                    <CommandList className="max-h-[300px]">
-                                      <CommandEmpty>No tutor found.</CommandEmpty>
-                                      <CommandGroup>
-                                        {tutors.map((tutor) => (
-                                          <CommandItem
-                                            key={tutor.id}
-                                            value={`${tutor.full_name} ${tutor.subjects.join(" ")}`}
-                                            onSelect={() => {
-                                              updateSubject(index, "tutorId", tutor.id);
-                                              setOpenTutorPopover(null);
-                                            }}
-                                          >
-                                            <Check
-                                              className={cn(
-                                                "mr-2 h-4 w-4",
-                                                subject.tutorId === tutor.id ? "opacity-100" : "opacity-0"
-                                              )}
-                                            />
-                                            <div className="flex-1 min-w-0">
-                                              <p className="font-medium truncate">{tutor.full_name}</p>
-                                              <p className="text-xs text-muted-foreground truncate">
-                                                {tutor.subjects.slice(0, 3).join(", ")}{tutor.subjects.length > 3 ? '...' : ''} • KES {tutor.hourly_rate?.toLocaleString()}/hr
-                                              </p>
-                                            </div>
-                                          </CommandItem>
-                                        ))}
-                                      </CommandGroup>
-                                    </CommandList>
-                                  </Command>
-                                </PopoverContent>
-                              </Popover>
-                            )}
-                          </div>
-
-                          {/* Step B: Subject Selection */}
-                          <div className="lg:col-span-2">
-                            <Label className="text-xs font-semibold text-primary">Step 2: Select Subject *</Label>
-                            <Select
-                              value={subject.name}
-                              onValueChange={(v) => updateSubject(index, "name", v)}
-                              disabled={!subject.tutorId}
-                            >
-                              <SelectTrigger className={subject.tutorId && !subject.name ? 'border-primary' : ''}>
-                                <SelectValue placeholder={subject.tutorId ? "Now pick a subject" : "Select tutor first"} />
-                              </SelectTrigger>
-                              <SelectContent>
-                                {/* Show tutor's subjects first if assigned */}
-                                {tutorSubjects.length > 0 && (
-                                  <>
-                                    <SelectItem value="_header_tutor" disabled className="font-semibold text-xs opacity-70">
-                                      {selectedTutor?.full_name}'s subjects:
-                                    </SelectItem>
-                                    {tutorSubjects.map((s) => (
-                                      <SelectItem key={`tutor-${s}`} value={s}>{s}</SelectItem>
-                                    ))}
-                                  </>
-                                )}
-                                {/* Then curriculum subjects */}
-                                {availableSubjects.length > 0 && (
-                                  <>
-                                    <SelectItem value="_header_curriculum" disabled className="font-semibold text-xs opacity-70 mt-2">
-                                      Curriculum subjects:
-                                    </SelectItem>
-                                    {availableSubjects.filter(s => !tutorSubjects.includes(s)).map((s) => (
-                                      <SelectItem key={`curr-${s}`} value={s}>{s}</SelectItem>
-                                    ))}
-                                  </>
-                                )}
-                              </SelectContent>
-                            </Select>
-                          </div>
-
-                          <div>
-                            <Label className="text-xs">Sessions/Week</Label>
-                            <Input
-                              type="number"
-                              min="1"
-                              max="7"
-                              value={subject.sessionsPerWeek}
-                              onChange={(e) => updateSubject(index, "sessionsPerWeek", parseInt(e.target.value) || 2)}
-                            />
-                          </div>
-                          <div>
-                            <Label className="text-xs">Weeks</Label>
-                            <Input
-                              type="number"
-                              min="1"
-                              value={subject.weeks}
-                              onChange={(e) => updateSubject(index, "weeks", parseInt(e.target.value) || 4)}
-                            />
-                          </div>
-                          <div className="flex items-end gap-2">
-                            <div className="flex-1">
-                              <Label className="text-xs">Rate/Session</Label>
-                              <Input
-                                type="number"
-                                min="1"
-                                value={subject.rate}
-                                onChange={(e) => updateSubject(index, "rate", parseInt(e.target.value) || 1500)}
-                              />
-                            </div>
-                            <Button
-                              type="button"
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => removeSubject(index)}
-                            >
-                              <Trash2 className="w-4 h-4 text-destructive" />
-                            </Button>
-                          </div>
-                        </div>
-                        <p className="text-xs text-muted-foreground mt-2">
-                          {subject.sessionsPerWeek} × {subject.weeks} weeks = <strong>{subject.sessions} sessions</strong> | 
-                          Subtotal: <strong>KES {(subject.sessions * subject.rate).toLocaleString()}</strong>
-                        </p>
-                      </CardContent>
-                    </Card>
-                  );
-                })}
-                {subjects.length === 0 && (
-                  <div className="border-2 border-dashed border-muted-foreground/30 rounded-lg p-8 text-center">
-                    <Users className="w-10 h-10 mx-auto text-muted-foreground/50 mb-3" />
-                    <p className="text-sm text-muted-foreground mb-3">
-                      No subjects added yet. Each subject can have its own dedicated tutor.
-                    </p>
-                    <Button type="button" variant="outline" onClick={addSubject}>
-                      <Plus className="w-4 h-4 mr-2" />
-                      Add First Subject
-                    </Button>
+              {students.map((student) => (
+                <TabsContent key={student.id} value={student.id} className="space-y-4 mt-4">
+                  {/* Student Info */}
+                  <div className="grid grid-cols-1 md:grid-cols-4 gap-4 p-4 bg-muted/30 rounded-lg">
+                    <div>
+                      <Label>Student Name *</Label>
+                      <Input
+                        value={student.name}
+                        onChange={(e) => updateStudent(student.id, "name", e.target.value)}
+                        placeholder="Child's name"
+                      />
+                    </div>
+                    <div>
+                      <Label>Curriculum</Label>
+                      <Select 
+                        value={student.curriculum} 
+                        onValueChange={(v) => updateStudent(student.id, "curriculum", v)}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select curriculum" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {curriculums.map((c) => (
+                            <SelectItem key={c} value={c}>{c}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div>
+                      <Label>Grade Level</Label>
+                      <Select 
+                        value={student.gradeLevel} 
+                        onValueChange={(v) => updateStudent(student.id, "gradeLevel", v)} 
+                        disabled={!student.curriculum}
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select grade" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {(student.curriculum ? getLevelsForCurriculum(student.curriculum) : []).map((l) => (
+                            <SelectItem key={l.value} value={l.value}>{l.label}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="flex items-end">
+                      {students.length > 1 && (
+                        <Button 
+                          type="button" 
+                          variant="destructive" 
+                          size="sm"
+                          onClick={() => removeStudent(student.id)}
+                        >
+                          <Trash2 className="w-4 h-4 mr-1" />
+                          Remove
+                        </Button>
+                      )}
+                    </div>
                   </div>
-                )}
-              </div>
-            </div>
 
-            {/* Assigned Tutors Summary */}
-            {assignedTutors.length > 0 && (
+                  {/* Subjects for this student */}
+                  <div>
+                    <div className="flex items-center justify-between mb-3">
+                      <Label className="text-base">Subjects for {student.name || "this child"}</Label>
+                      <Button type="button" variant="default" size="sm" onClick={addSubject}>
+                        <Plus className="w-4 h-4 mr-2" />
+                        Add Subject
+                      </Button>
+                    </div>
+                    
+                    <div className="space-y-3">
+                      {student.subjects.map((subject, subjectIndex) => {
+                        const selectedTutor = tutors.find(t => t.id === subject.tutorId);
+                        const tutorSubjects = selectedTutor?.subjects || [];
+                        const currentAvailableSubjects = student.curriculum && student.gradeLevel 
+                          ? getSubjectsForCurriculumLevel(student.curriculum, student.gradeLevel) 
+                          : [];
+                        
+                        return (
+                          <Card key={subjectIndex} className={`border-l-4 ${subject.tutorId ? 'border-l-primary bg-primary/5' : 'border-l-muted-foreground/30'}`}>
+                            <CardContent className="p-4">
+                              <div className="flex items-center gap-2 mb-3">
+                                <span className="bg-primary text-primary-foreground text-xs font-bold px-2 py-0.5 rounded-full">
+                                  {subjectIndex + 1}
+                                </span>
+                                <span className="text-sm font-medium">
+                                  {subject.name && subject.tutorId 
+                                    ? `${subject.name} with ${selectedTutor?.full_name}`
+                                    : 'New Subject'}
+                                </span>
+                              </div>
+                              <div className="grid grid-cols-1 lg:grid-cols-7 gap-3">
+                                {/* Tutor Selection */}
+                                <div className="lg:col-span-2">
+                                  <Label className="text-xs font-semibold text-primary">Tutor *</Label>
+                                  {tutorsLoading ? (
+                                    <div className="h-10 flex items-center">
+                                      <Loader2 className="w-4 h-4 animate-spin" />
+                                    </div>
+                                  ) : (
+                                    <Popover 
+                                      open={openTutorPopover === `${student.id}-${subjectIndex}`} 
+                                      onOpenChange={(open) => setOpenTutorPopover(open ? `${student.id}-${subjectIndex}` : null)}
+                                    >
+                                      <PopoverTrigger asChild>
+                                        <Button
+                                          variant="outline"
+                                          role="combobox"
+                                          className={cn("w-full justify-between font-normal", !subject.tutorId && "border-primary")}
+                                        >
+                                          {selectedTutor ? (
+                                            <span className="truncate">{selectedTutor.full_name}</span>
+                                          ) : (
+                                            <span className="text-muted-foreground">Search tutors...</span>
+                                          )}
+                                          <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                                        </Button>
+                                      </PopoverTrigger>
+                                      <PopoverContent className="w-[300px] p-0" align="start">
+                                        <Command filter={(value, search) => value.toLowerCase().includes(search.toLowerCase()) ? 1 : 0}>
+                                          <CommandInput placeholder="Search by name or subject..." />
+                                          <CommandList className="max-h-[300px]">
+                                            <CommandEmpty>No tutor found.</CommandEmpty>
+                                            <CommandGroup>
+                                              {tutors.map((tutor) => (
+                                                <CommandItem
+                                                  key={tutor.id}
+                                                  value={`${tutor.full_name} ${tutor.subjects.join(" ")}`}
+                                                  onSelect={() => {
+                                                    updateSubject(subjectIndex, "tutorId", tutor.id);
+                                                    setOpenTutorPopover(null);
+                                                  }}
+                                                >
+                                                  <Check className={cn("mr-2 h-4 w-4", subject.tutorId === tutor.id ? "opacity-100" : "opacity-0")} />
+                                                  <div className="flex-1 min-w-0">
+                                                    <p className="font-medium truncate">{tutor.full_name}</p>
+                                                    <p className="text-xs text-muted-foreground truncate">
+                                                      {tutor.subjects.slice(0, 3).join(", ")}{tutor.subjects.length > 3 ? '...' : ''} • KES {tutor.hourly_rate?.toLocaleString()}/hr
+                                                    </p>
+                                                  </div>
+                                                </CommandItem>
+                                              ))}
+                                            </CommandGroup>
+                                          </CommandList>
+                                        </Command>
+                                      </PopoverContent>
+                                    </Popover>
+                                  )}
+                                </div>
+
+                                {/* Subject Selection */}
+                                <div className="lg:col-span-2">
+                                  <Label className="text-xs font-semibold text-primary">Subject *</Label>
+                                  <Select
+                                    value={subject.name}
+                                    onValueChange={(v) => updateSubject(subjectIndex, "name", v)}
+                                    disabled={!subject.tutorId}
+                                  >
+                                    <SelectTrigger className={subject.tutorId && !subject.name ? 'border-primary' : ''}>
+                                      <SelectValue placeholder={subject.tutorId ? "Select subject" : "Select tutor first"} />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                      {tutorSubjects.length > 0 && (
+                                        <>
+                                          <SelectItem value="_header_tutor" disabled className="font-semibold text-xs opacity-70">
+                                            {selectedTutor?.full_name}'s subjects:
+                                          </SelectItem>
+                                          {tutorSubjects.map((s) => (
+                                            <SelectItem key={`tutor-${s}`} value={s}>{s}</SelectItem>
+                                          ))}
+                                        </>
+                                      )}
+                                      {currentAvailableSubjects.length > 0 && (
+                                        <>
+                                          <SelectItem value="_header_curriculum" disabled className="font-semibold text-xs opacity-70 mt-2">
+                                            Curriculum subjects:
+                                          </SelectItem>
+                                          {currentAvailableSubjects.filter(s => !tutorSubjects.includes(s)).map((s) => (
+                                            <SelectItem key={`curr-${s}`} value={s}>{s}</SelectItem>
+                                          ))}
+                                        </>
+                                      )}
+                                    </SelectContent>
+                                  </Select>
+                                </div>
+
+                                <div>
+                                  <Label className="text-xs">Sessions/Week</Label>
+                                  <Input
+                                    type="number"
+                                    min="1"
+                                    max="7"
+                                    value={subject.sessionsPerWeek}
+                                    onChange={(e) => updateSubject(subjectIndex, "sessionsPerWeek", parseInt(e.target.value) || 2)}
+                                  />
+                                </div>
+                                <div>
+                                  <Label className="text-xs">Weeks</Label>
+                                  <Input
+                                    type="number"
+                                    min="1"
+                                    value={subject.weeks}
+                                    onChange={(e) => updateSubject(subjectIndex, "weeks", parseInt(e.target.value) || 4)}
+                                  />
+                                </div>
+                                <div className="flex items-end gap-2">
+                                  <div className="flex-1">
+                                    <Label className="text-xs">Rate/Session</Label>
+                                    <Input
+                                      type="number"
+                                      min="1"
+                                      value={subject.rate}
+                                      onChange={(e) => updateSubject(subjectIndex, "rate", parseInt(e.target.value) || 1500)}
+                                    />
+                                  </div>
+                                  <Button type="button" variant="ghost" size="icon" onClick={() => removeSubject(subjectIndex)}>
+                                    <Trash2 className="w-4 h-4 text-destructive" />
+                                  </Button>
+                                </div>
+                              </div>
+                              <p className="text-xs text-muted-foreground mt-2">
+                                {subject.sessionsPerWeek} × {subject.weeks} weeks = <strong>{subject.sessions} sessions</strong> | 
+                                Subtotal: <strong>KES {(subject.sessions * subject.rate).toLocaleString()}</strong>
+                              </p>
+                            </CardContent>
+                          </Card>
+                        );
+                      })}
+                      
+                      {student.subjects.length === 0 && (
+                        <div className="border-2 border-dashed border-muted-foreground/30 rounded-lg p-8 text-center">
+                          <Users className="w-10 h-10 mx-auto text-muted-foreground/50 mb-3" />
+                          <p className="text-sm text-muted-foreground mb-3">No subjects added for {student.name || "this child"}</p>
+                          <Button type="button" variant="outline" onClick={addSubject}>
+                            <Plus className="w-4 h-4 mr-2" />
+                            Add Subject
+                          </Button>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Student subtotal */}
+                    {student.subjects.length > 0 && (
+                      <div className="mt-4 p-3 bg-muted/50 rounded-lg">
+                        <div className="flex justify-between text-sm">
+                          <span>{student.name}'s Total:</span>
+                          <span className="font-semibold">
+                            {calculateStudentTotals(student).totalSessions} sessions • KES {calculateStudentTotals(student).totalPrice.toLocaleString()}
+                          </span>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </TabsContent>
+              ))}
+            </Tabs>
+
+            {/* All Assigned Tutors Summary */}
+            {allAssignedTutors.length > 0 && (
               <div className="bg-muted/50 p-3 rounded-lg">
-                <p className="text-sm font-medium mb-1">Assigned Tutors ({assignedTutors.length})</p>
+                <p className="text-sm font-medium mb-1">All Assigned Tutors ({allAssignedTutors.length})</p>
                 <div className="flex flex-wrap gap-2">
-                  {assignedTutors.map(tutor => (
+                  {allAssignedTutors.map(tutor => (
                     <span key={tutor.id} className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-full">
                       {tutor.full_name}
                     </span>
@@ -883,7 +997,7 @@ Lana Tutors Team`;
               <CreditCard className="h-5 w-5" />
               4. Payment Option
             </CardTitle>
-            <CardDescription>Choose how the parent will pay for this plan</CardDescription>
+            <CardDescription>Choose how the parent will pay</CardDescription>
           </CardHeader>
           <CardContent>
             <RadioGroup value={paymentOption} onValueChange={(v) => setPaymentOption(v as "full" | "deposit")} className="space-y-3">
@@ -893,15 +1007,15 @@ Lana Tutors Team`;
                   <p className="font-medium">Full Payment</p>
                   <p className="text-sm text-muted-foreground">Pay the full amount upfront</p>
                 </Label>
-                <span className="font-semibold text-primary">KES {totals.totalPrice.toLocaleString()}</span>
+                <span className="font-semibold text-primary">KES {grandTotals.totalPrice.toLocaleString()}</span>
               </div>
               <div className="flex items-center space-x-3 p-3 border rounded-lg hover:bg-muted/50 transition-colors">
                 <RadioGroupItem value="deposit" id="deposit" />
                 <Label htmlFor="deposit" className="flex-1 cursor-pointer">
                   <p className="font-medium">30% Deposit</p>
-                  <p className="text-sm text-muted-foreground">Pay 30% now to get started, balance before sessions complete</p>
+                  <p className="text-sm text-muted-foreground">Pay 30% now, balance before sessions complete</p>
                 </Label>
-                <span className="font-semibold text-primary">KES {totals.depositAmount.toLocaleString()}</span>
+                <span className="font-semibold text-primary">KES {grandTotals.depositAmount.toLocaleString()}</span>
               </div>
             </RadioGroup>
             
@@ -938,7 +1052,7 @@ Lana Tutors Team`;
                 variant="outline"
                 size="sm"
                 onClick={generateEmailBody}
-                disabled={assignedTutors.length === 0 || !studentName}
+                disabled={allAssignedTutors.length === 0 || students.every(s => !s.name)}
               >
                 <Sparkles className="w-4 h-4 mr-2" />
                 Generate Message
@@ -948,45 +1062,46 @@ Lana Tutors Team`;
               id="notes"
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              placeholder="Write a personal introduction... Click 'Generate Message' after filling in all details above."
-              rows={12}
+              placeholder="Write a personal introduction..."
+              rows={10}
             />
-            <p className="text-xs text-muted-foreground">
-              Tip: Fill in subjects with tutors, schedule and payment option first, then click "Generate Message" to auto-populate.
-            </p>
           </CardContent>
         </Card>
 
-        {/* Summary */}
-        {subjects.length > 0 && (
+        {/* Grand Summary */}
+        {totalStudentsWithSubjects > 0 && (
           <Card className="bg-primary/5 border-primary/20">
             <CardContent className="p-4 space-y-2">
               <div className="flex justify-between text-sm">
-                <span>Total Sessions:</span>
-                <span className="font-semibold">{totals.totalSessions}</span>
+                <span>Students with Plans:</span>
+                <span className="font-semibold">{totalStudentsWithSubjects}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span>Total Sessions (all students):</span>
+                <span className="font-semibold">{grandTotals.totalSessions}</span>
               </div>
               <div className="flex justify-between text-sm">
                 <span>Tutors Assigned:</span>
-                <span className="font-semibold">{assignedTutors.length}</span>
+                <span className="font-semibold">{allAssignedTutors.length}</span>
               </div>
               <div className="flex justify-between text-sm">
                 <span>Subtotal:</span>
-                <span>KES {totals.subtotal.toLocaleString()}</span>
+                <span>KES {grandTotals.subtotal.toLocaleString()}</span>
               </div>
               {discount > 0 && (
                 <div className="flex justify-between text-sm text-green-600">
                   <span>Discount ({discount}%):</span>
-                  <span>- KES {totals.discountAmount.toLocaleString()}</span>
+                  <span>- KES {grandTotals.discountAmount.toLocaleString()}</span>
                 </div>
               )}
               <div className="flex justify-between text-lg font-bold border-t pt-2">
-                <span>Total Price:</span>
-                <span>KES {totals.totalPrice.toLocaleString()}</span>
+                <span>Grand Total:</span>
+                <span>KES {grandTotals.totalPrice.toLocaleString()}</span>
               </div>
               {paymentOption === "deposit" && (
                 <div className="flex justify-between text-sm text-blue-600 bg-blue-50 p-2 rounded">
                   <span>Amount Due Now (30%):</span>
-                  <span className="font-semibold">KES {totals.depositAmount.toLocaleString()}</span>
+                  <span className="font-semibold">KES {grandTotals.depositAmount.toLocaleString()}</span>
                 </div>
               )}
             </CardContent>
@@ -998,77 +1113,64 @@ Lana Tutors Team`;
           {loading || generatingPaymentLink ? (
             <>
               <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-              {generatingPaymentLink ? "Generating Payment Link..." : "Creating..."}
+              {generatingPaymentLink ? "Generating Payment Links..." : "Creating Plans..."}
             </>
           ) : (
             <>
               <Send className="w-4 h-4 mr-2" />
-              Create & Send Learning Plan to Parent
+              Create & Send {totalStudentsWithSubjects > 1 ? `${totalStudentsWithSubjects} Learning Plans` : 'Learning Plan'} to Parent
             </>
           )}
         </Button>
       </form>
 
-      {/* Success Dialog with Share Link */}
+      {/* Success Dialog */}
       <Dialog open={successDialogOpen} onOpenChange={setSuccessDialogOpen}>
         <DialogContent className="sm:max-w-lg">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2 text-green-600">
               <CheckCircle className="w-6 h-6" />
-              Learning Plan Sent Successfully!
+              Learning Plan{createdPlans.length > 1 ? 's' : ''} Sent Successfully!
             </DialogTitle>
             <DialogDescription>
-              The learning plan has been created and emailed to the parent.
+              {createdPlans.length} plan{createdPlans.length > 1 ? 's have' : ' has'} been created and emailed to the parent.
             </DialogDescription>
           </DialogHeader>
           
-          {createdPlan && (
-            <div className="space-y-4">
-              <div>
-                <p className="text-sm font-medium mb-1">{createdPlan.title}</p>
-                <p className="text-xs text-muted-foreground">Plan ID: {createdPlan.id}</p>
-              </div>
-
-              <div className="p-4 bg-muted rounded-lg">
-                <p className="text-sm font-medium mb-2">Share Link</p>
-                <p className="text-xs text-muted-foreground mb-3">
-                  Copy this link to share with the parent via WhatsApp or other channels:
-                </p>
+          <div className="space-y-4 max-h-[60vh] overflow-y-auto">
+            {createdPlans.map((plan) => (
+              <div key={plan.id} className="p-4 bg-muted rounded-lg space-y-3">
+                <p className="text-sm font-medium">{plan.title}</p>
                 <div className="flex items-center gap-2">
                   <code className="flex-1 p-2 bg-background rounded text-xs break-all border">
-                    https://lanatutors.africa/learning-plan/{createdPlan.id}?token={createdPlan.shareToken}
+                    https://lanatutors.africa/learning-plan/{plan.urlSlug}
                   </code>
-                  <Button
-                    variant="secondary"
-                    size="sm"
-                    onClick={copyShareLink}
-                  >
-                    {linkCopied ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
+                  <Button variant="secondary" size="sm" onClick={() => copyShareLink(plan)}>
+                    {linkCopied === plan.id ? <Check className="w-4 h-4 text-green-500" /> : <Copy className="w-4 h-4" />}
                   </Button>
                 </div>
-              </div>
-
-              <div className="flex gap-2">
                 <Button
                   variant="outline"
-                  className="flex-1"
-                  onClick={() => window.open(`/learning-plan/${createdPlan.id}?token=${createdPlan.shareToken}`, '_blank')}
+                  size="sm"
+                  className="w-full"
+                  onClick={() => window.open(`/learning-plan/${plan.urlSlug}`, '_blank')}
                 >
                   <ExternalLink className="w-4 h-4 mr-2" />
-                  Preview Plan
-                </Button>
-                <Button
-                  className="flex-1"
-                  onClick={() => {
-                    setSuccessDialogOpen(false);
-                    setCreatedPlan(null);
-                  }}
-                >
-                  Create Another
+                  Preview
                 </Button>
               </div>
-            </div>
-          )}
+            ))}
+          </div>
+
+          <Button
+            className="w-full mt-4"
+            onClick={() => {
+              setSuccessDialogOpen(false);
+              setCreatedPlans([]);
+            }}
+          >
+            Create Another
+          </Button>
         </DialogContent>
       </Dialog>
     </div>
