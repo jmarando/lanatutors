@@ -611,7 +611,7 @@ const Home = () => {
               <div className="text-sm text-muted-foreground space-y-1">
                 <p>First Floor, Arbor House,</p>
                 <p>Arboretum Drive, Nairobi</p>
-                <p>(+254) 725252542</p>
+                <p>(+254) 117 512316</p>
                 <p>info@lanatutors.africa</p>
               </div>
               <div className="flex gap-4 mt-4">
