@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { CheckCircle, XCircle, Loader2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { analytics } from "@/utils/analytics";
 
 type PaymentStatus = "processing" | "success" | "error";
 
@@ -104,6 +105,8 @@ export default function PaymentCallback() {
           navigate(`/december-intensive/confirmed?enrollment_id=${paymentInfo.reference_id}`);
         }, redirectDelay);
       } else if ((paymentInfo.payment_type === "booking" || paymentInfo.payment_type === "booking_balance") && paymentInfo.reference_id) {
+        // Track class booked via payment
+        analytics.classBooked({ subject: undefined, tutorId: undefined, amount: undefined });
         // Booking payment - redirect to booking confirmed
         setTimeout(() => {
           navigate(`/booking-confirmed?bookingId=${paymentInfo.reference_id}`);

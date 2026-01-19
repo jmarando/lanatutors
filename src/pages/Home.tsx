@@ -19,6 +19,7 @@ import {
 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { SEO } from "@/components/SEO";
+import { analytics } from "@/utils/analytics";
 import { supabase } from "@/integrations/supabase/client";
 import { GroupClassBanner } from "@/components/GroupClassBanner";
 import { PriceDisplay } from "@/components/PriceDisplay";
@@ -236,12 +237,12 @@ const Home = () => {
                 Learn from verified tutors from Kenya's top schools. Choose between online or in-person sessions. Rigorously vetted educators. Seamless payments via M-Pesa or Card. All CBC, IGCSE, American, and 8-4-4 subjects covered.
               </p>
               <div className="flex flex-wrap gap-4">
-                <Link to="/book-consultation">
+                <Link to="/book-consultation" onClick={() => analytics.bookAssessmentClick('hero')}>
                   <Button size="lg" className="h-14 px-8 text-lg hover-scale">
                     Book Assessment Call
                   </Button>
                 </Link>
-                <Link to="/book-class">
+                <Link to="/book-class" onClick={() => analytics.bookClassClick('hero')}>
                   <Button size="lg" variant="outline" className="h-14 px-8 text-lg hover-scale group">
                     <Calendar className="w-5 h-5 mr-2 group-hover:rotate-12 transition-transform" />
                     Book a Class
@@ -589,7 +590,7 @@ const Home = () => {
             <CardContent className="p-10 text-center">
               <h2 className="text-3xl font-bold mb-3">Ready to Excel in Your Studies?</h2>
               <p className="text-lg mb-6 opacity-90">Join thousands of students learning with Lana</p>
-              <Link to="/tutors">
+              <Link to="/tutors" onClick={() => analytics.bookClassClick('cta_section')}>
                 <Button size="lg" variant="secondary" className="text-lg px-8 shadow-lg">
                   Book a Class Now
                 </Button>

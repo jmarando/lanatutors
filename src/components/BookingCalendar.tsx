@@ -20,6 +20,7 @@ import { getLevelsForCurriculum } from "@/utils/curriculumData";
 import { StudentPicker } from "./StudentPicker";
 import { Student } from "@/hooks/useStudents";
 import { PriceDisplay } from "@/components/PriceDisplay";
+import { analytics } from "@/utils/analytics";
 
 interface AvailabilitySlot {
   id: string;
@@ -571,6 +572,9 @@ export const BookingCalendar = ({
           title: "Booking confirmed!",
           description: `Your session has been booked using ${sessionsToDeduct} package credit${sessionsToDeduct > 1 ? 's' : ''}. ${newSessionsRemaining} remaining.`,
         });
+
+        // Track class booked event
+        analytics.classBooked({ subject: subject.trim(), tutorId, amount: 0 });
 
         window.location.href = `/booking-confirmed?bookingId=${booking.id}`;
         return;
