@@ -14,6 +14,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { CalendarIcon, Clock, CheckCircle, Users, GraduationCap, Target, Award, AlertTriangle, DollarSign, Timer } from "lucide-react";
 import { validateAndNormalizePhone } from "@/utils/phoneValidation";
 import { SEO } from "@/components/SEO";
+import { analytics } from "@/utils/analytics";
 import { getCurriculums, getLevelsForCurriculum, getSubjectsForCurriculumLevel } from "@/utils/curriculumData";
 import { startOfDay, addHours, format, parse, isAfter } from "date-fns";
 import { toZonedTime } from "date-fns-tz";
@@ -314,6 +315,13 @@ const BookConsultation = () => {
           phoneNumber: formData.phoneNumber
         }
       });
+      
+      // Track successful assessment booking
+      analytics.assessmentFormCompleted({
+        curriculum: formData.curriculum,
+        gradeLevel: formData.gradeLevel
+      });
+      
       toast.success("Academic Assessment Call booked! Check your email and WhatsApp for details.");
 
       // Navigate to confirmation page

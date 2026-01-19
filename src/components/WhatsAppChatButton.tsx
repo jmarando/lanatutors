@@ -1,5 +1,8 @@
+import { analytics } from "@/utils/analytics";
+
 const WhatsAppChatButton = () => {
   const handleClick = () => {
+    analytics.whatsappChatClick();
     const phoneNumber = "254117512316";
     const message = "Hi Lana Tutors! I'd like to learn more about your tutoring services.";
     const encodedMessage = encodeURIComponent(message);
