@@ -23,6 +23,7 @@ import { Student } from "@/hooks/useStudents";
 import { cn } from "@/lib/utils";
 import { getCurriculums, getLevelsForCurriculum, getSubjectsForCurriculumLevel } from "@/utils/curriculumData";
 import { PriceDisplay } from "@/components/PriceDisplay";
+import { analytics } from "@/utils/analytics";
 
 import tutor1 from "@/assets/tutor-1.jpg";
 import tutor2 from "@/assets/tutor-2.jpg";
@@ -206,6 +207,9 @@ const TutorProfile = () => {
       teachingExperience: tutorProfile.teaching_experience || [],
       verified: tutorProfile.verified,
     });
+
+    // Track tutor profile view
+    analytics.tutorProfileView(tutorProfile.id, userProfile?.full_name || "Tutor");
 
     setLoading(false);
   };

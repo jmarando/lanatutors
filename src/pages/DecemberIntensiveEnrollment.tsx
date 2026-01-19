@@ -12,6 +12,7 @@ import { Loader2, ShoppingCart, User, ArrowLeft, Trash2, Zap, CreditCard, Check,
 import { StudentPicker } from "@/components/StudentPicker";
 import { Student } from "@/hooks/useStudents";
 import { PriceDisplay } from "@/components/PriceDisplay";
+import { analytics } from "@/utils/analytics";
 
 interface CartItem {
   id: string;

@@ -3,6 +3,7 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { X, ShoppingCart } from "lucide-react";
 import { useNavigate } from "react-router-dom";
+import { analytics } from "@/utils/analytics";
 
 export interface CartStudent {
   id: string;
@@ -97,7 +98,10 @@ export const IntensiveCart = ({ students, onRemoveStudent, onRemoveSubject }: In
                 Clear Cart
               </Button>
               <Button
-                onClick={() => navigate("/december-intensive/enroll")}
+                onClick={() => {
+                  analytics.intensiveCheckoutStarted({ totalClasses: totalSubjects, totalAmount });
+                  navigate("/december-intensive/enroll");
+                }}
                 className="flex-1"
                 size="lg"
               >

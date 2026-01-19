@@ -100,6 +100,8 @@ export default function PaymentCallback() {
       const redirectDelay = 1500;
       
       if (paymentInfo.payment_type === "intensive_enrollment" && paymentInfo.reference_id) {
+        // Track intensive enrollment completed
+        analytics.intensiveEnrollmentCompleted({ enrollmentId: paymentInfo.reference_id, totalClasses: 0, amount: 0 });
         // December Intensive enrollment - redirect to confirmation page
         setTimeout(() => {
           navigate(`/december-intensive/confirmed?enrollment_id=${paymentInfo.reference_id}`);
@@ -112,6 +114,8 @@ export default function PaymentCallback() {
           navigate(`/booking-confirmed?bookingId=${paymentInfo.reference_id}`);
         }, redirectDelay);
       } else if (paymentInfo.payment_type === "package_purchase" && paymentInfo.reference_id) {
+        // Track package purchased
+        analytics.packagePurchased({ packageId: paymentInfo.reference_id });
         // Package purchase - redirect to package confirmed
         setTimeout(() => {
           navigate(`/package-confirmed?packageId=${paymentInfo.reference_id}`);
