@@ -9,6 +9,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { CheckCircle2, Mail, Sparkles, X } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { analytics } from "@/utils/analytics";
 import { getCurriculums, getLevelsForCurriculum, getSubjectsForCurriculumLevel } from "@/utils/curriculumData";
 
 interface GeneralLearningPlanRequestProps {
@@ -153,6 +154,12 @@ export const GeneralLearningPlanRequest = ({
         console.error("Email error:", emailError);
         toast.error("Failed to send request. Please try again.");
       } else {
+        // Track learning plan request
+        analytics.learningPlanRequested({
+          curriculum: formData.curriculum,
+          subjects: selectedSubjects
+        });
+        
         toast.success("Learning plan request sent! Our team will contact you via email within 24 hours.");
         onSubmitSuccess();
       }

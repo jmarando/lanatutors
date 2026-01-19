@@ -9,6 +9,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Award, Eye, EyeOff, User } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { analytics } from "@/utils/analytics";
 
 import { validateAndNormalizePhone } from "@/utils/phoneValidation";
 import { getCurriculums, getLevelsForCurriculum, getSubjectsForCurriculumLevel } from "@/utils/curriculumData";
@@ -136,6 +137,9 @@ const StudentSignup = () => {
       }
     }
 
+    // Track signup started
+    analytics.signupStarted('email');
+
     setIsLoading(true);
 
     try {
@@ -199,6 +203,9 @@ const StudentSignup = () => {
       }).then(({ error }) => {
         if (error) console.error('Welcome email error:', error);
       });
+
+      // Track successful signup
+      analytics.signupCompleted('email');
 
       toast({
         title: "Welcome to Lana!",

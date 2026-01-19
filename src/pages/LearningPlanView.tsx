@@ -6,6 +6,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Loader2, CheckCircle, FileText, Share2, Copy, Check, Phone, Mail, Building2, Smartphone } from "lucide-react";
 import { toast } from "sonner";
 import { SEO } from "@/components/SEO";
+import { analytics } from "@/utils/analytics";
 import lanaLogo from "@/assets/lana-tutors-logo.png";
 const LearningPlanView = () => {
   const { planId } = useParams();
@@ -76,6 +77,8 @@ const LearningPlanView = () => {
       }
 
       if (planData) {
+        // Track learning plan view
+        analytics.learningPlanViewed(planData.id);
         // Fetch tutor name separately using the public view (which allows anon access)
         if (planData.tutor_id) {
           const { data: tutorData } = await supabase

@@ -9,6 +9,7 @@ import { Award, Eye, EyeOff } from "lucide-react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
+import { analytics } from "@/utils/analytics";
 
 const Login = () => {
   const navigate = useNavigate();
@@ -78,6 +79,9 @@ const Login = () => {
         // No role assigned, send to home
         navigate("/");
       }
+
+      // Track successful login
+      analytics.loginCompleted('email');
 
       toast({
         title: "Welcome back!",

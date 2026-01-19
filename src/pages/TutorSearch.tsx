@@ -15,6 +15,7 @@ import { TutorAvatar, TutorBioDisplay } from "@/components/TutorDisplayInfo";
 import { formatName, cleanDisplayText } from "@/utils/textFormatting";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { analytics } from "@/utils/analytics";
 import { CURRICULUM_DATA, getCurriculums, getAllSubjects, getLevelsForCurriculum, getSubjectsForCurriculumLevel } from "@/utils/curriculumData";
 import { NAIROBI_LOCATIONS } from "@/utils/locationData";
 import { format } from "date-fns";
