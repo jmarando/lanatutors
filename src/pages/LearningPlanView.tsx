@@ -143,6 +143,31 @@ const LearningPlanView = () => {
   const depositAmount = plan ? Math.round(plan.total_price * 0.3) : 0;
   const balanceAfterDeposit = plan ? plan.total_price - depositAmount : 0;
 
+  // Extract student name from title (e.g., "Learning Plan for Ibrahim" -> "Ibrahim")
+  const extractStudentName = () => {
+    if (!plan?.title) return "your child";
+    const match = plan.title.match(/Learning Plan for (.+)/i);
+    return match ? match[1] : "your child";
+  };
+
+  // Calculate sessions per week
+  const calculateSessionsPerWeek = () => {
+    if (!plan?.validity_days || !plan?.total_sessions) return null;
+    const weeks = plan.validity_days / 7;
+    return Math.round(plan.total_sessions / weeks * 10) / 10;
+  };
+
+  // Generate auto intro message
+  const generateAutoIntro = () => {
+    const studentName = extractStudentName();
+    const tutorName = plan?.profiles?.full_name || "our dedicated tutor";
+    const sessionsPerWeek = calculateSessionsPerWeek();
+    const weeks = plan?.validity_days ? Math.round(plan.validity_days / 7) : null;
+    const subjectNames = plan?.subjects?.map((s: any) => s.name).join(", ") || "your selected subjects";
+    
+    return `We've designed a personalized learning journey for ${studentName}, covering ${subjectNames}. ${tutorName} will guide ${studentName} through ${sessionsPerWeek ? `${sessionsPerWeek} sessions per week over ${weeks} weeks` : 'regular sessions'} to build confidence and achieve academic success.`;
+  };
+
   const handleDecline = async () => {
     if (!confirm("Are you sure you want to decline this learning plan?")) {
       return;
@@ -192,6 +217,10 @@ const LearningPlanView = () => {
     );
   }
 
+  const sessionsPerWeek = calculateSessionsPerWeek();
+  const weeks = plan?.validity_days ? Math.round(plan.validity_days / 7) : null;
+  const studentName = extractStudentName();
+
   return (
     <>
       <SEO
@@ -216,87 +245,106 @@ const LearningPlanView = () => {
             <p className="text-white/90">
               with {plan.profiles?.full_name || "Lana Tutors Team"}
             </p>
-            
-            {/* Plan Details in Header */}
-            {plan.notes && (
-              <div className="mt-4 bg-white/10 backdrop-blur-sm rounded-lg px-4 py-3 text-left">
-                <p className="text-white/95 text-sm leading-relaxed whitespace-pre-line">
-                  {plan.notes}
-                </p>
-              </div>
-            )}
           </div>
         </div>
 
         {/* Content */}
         <div className="max-w-2xl mx-auto py-8 px-4">
+          
+          {/* Auto-generated Personalized Introduction */}
+          <Card className="mb-6 border-0 shadow-lg overflow-hidden bg-gradient-to-br from-[#FDF8F6] to-white">
+            <CardContent className="p-6">
+              <p className="text-gray-700 leading-relaxed text-center">
+                {generateAutoIntro()}
+              </p>
+            </CardContent>
+          </Card>
 
-          {/* Plan Details Card */}
+          {/* Schedule Overview Card - NEW */}
+          <Card className="mb-6 border-0 shadow-lg overflow-hidden">
+            <div className="bg-gradient-to-r from-blue-600 to-blue-500 text-white px-6 py-4">
+              <h2 className="text-lg font-semibold">📅 Schedule Overview</h2>
+            </div>
+            <CardContent className="p-6">
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+                <div className="p-4 bg-blue-50 rounded-xl">
+                  <p className="text-3xl font-bold text-blue-600">{plan.total_sessions}</p>
+                  <p className="text-sm text-gray-600">Total Sessions</p>
+                </div>
+                <div className="p-4 bg-green-50 rounded-xl">
+                  <p className="text-3xl font-bold text-green-600">{sessionsPerWeek || "~"}</p>
+                  <p className="text-sm text-gray-600">Per Week</p>
+                </div>
+                <div className="p-4 bg-purple-50 rounded-xl">
+                  <p className="text-3xl font-bold text-purple-600">{weeks || "~"}</p>
+                  <p className="text-sm text-gray-600">Weeks</p>
+                </div>
+                <div className="p-4 bg-amber-50 rounded-xl">
+                  <p className="text-3xl font-bold text-amber-600">{plan.subjects?.length || 0}</p>
+                  <p className="text-sm text-gray-600">Subjects</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Subject Breakdown Card - REDESIGNED */}
           <Card className="mb-6 border-0 shadow-lg overflow-hidden">
             <div className="bg-gradient-to-r from-[#E07A5F] to-[#D66A4F] text-white px-6 py-4">
               <h2 className="text-lg font-semibold flex items-center gap-2">
                 <FileText className="w-5 h-5" />
-                Learning Plan Details
+                Subject Breakdown
               </h2>
             </div>
             <CardContent className="p-0">
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="bg-gray-50 border-b">
-                      <th className="text-left py-3 px-6 font-semibold text-gray-700">Subject</th>
-                      <th className="text-center py-3 px-4 font-semibold text-gray-700">Sessions</th>
-                      <th className="text-right py-3 px-4 font-semibold text-gray-700">Rate</th>
-                      <th className="text-right py-3 px-6 font-semibold text-gray-700">Total</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {plan.subjects?.map((subject: any, index: number) => (
-                      <tr key={index} className="border-b last:border-0 hover:bg-gray-50/50 transition-colors">
-                        <td className="py-4 px-6 font-medium text-gray-900">
-                          {subject.name}
-                        </td>
-                        <td className="text-center py-4 px-4 text-gray-600">{subject.sessions}</td>
-                        <td className="text-right py-4 px-4 text-gray-600">
-                          KES {subject.rate?.toLocaleString()}
-                        </td>
-                        <td className="text-right py-4 px-6 font-semibold text-gray-900">
+              <div className="divide-y">
+                {plan.subjects?.map((subject: any, index: number) => {
+                  // Calculate per-subject sessions per week if total sessions known
+                  const subjectSessionsPerWeek = weeks ? Math.round((subject.sessions / weeks) * 10) / 10 : null;
+                  
+                  return (
+                    <div key={index} className="p-4 hover:bg-gray-50/50 transition-colors">
+                      <div className="flex justify-between items-start mb-2">
+                        <h3 className="font-semibold text-gray-900 text-lg">{subject.name}</h3>
+                        <span className="font-bold text-[#E07A5F] text-lg">
                           KES {subject.total?.toLocaleString()}
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                        </span>
+                      </div>
+                      <div className="flex flex-wrap gap-x-6 gap-y-1 text-sm text-gray-600">
+                        <span className="flex items-center gap-1">
+                          <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
+                          {subject.sessions} sessions
+                        </span>
+                        {subjectSessionsPerWeek && (
+                          <span className="flex items-center gap-1">
+                            <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                            {subjectSessionsPerWeek} per week
+                          </span>
+                        )}
+                        <span className="flex items-center gap-1">
+                          <span className="w-2 h-2 bg-purple-500 rounded-full"></span>
+                          KES {subject.rate?.toLocaleString()}/session
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
               
-              {/* Summary */}
-              <div className="border-t bg-gradient-to-b from-gray-50 to-white p-6 space-y-3">
-                <div className="flex justify-between text-gray-700">
-                  <span>Total Sessions:</span>
-                  <span className="font-semibold">{plan.total_sessions} sessions</span>
-                </div>
-                {plan.validity_days && plan.total_sessions && (
-                  <div className="flex justify-between text-gray-700">
-                    <span>Session Frequency:</span>
-                    <span className="font-semibold">
-                      ~{Math.round(plan.total_sessions / (plan.validity_days / 7))} session{Math.round(plan.total_sessions / (plan.validity_days / 7)) !== 1 ? 's' : ''} per week
-                    </span>
-                  </div>
-                )}
-                <div className="flex justify-between text-gray-700">
-                  <span>Valid for:</span>
-                  <span className="font-semibold">{plan.validity_days} days ({Math.round(plan.validity_days / 7)} weeks)</span>
-                </div>
+              {/* Summary Footer */}
+              <div className="border-t bg-gradient-to-b from-gray-50 to-white p-6">
                 {plan.discount_applied > 0 && (
-                  <div className="flex justify-between text-green-600">
+                  <div className="flex justify-between text-green-600 mb-3">
                     <span>Discount Applied:</span>
                     <span className="font-semibold">-{plan.discount_applied}%</span>
                   </div>
                 )}
-                <div className="flex justify-between text-xl font-bold text-gray-900 border-t pt-3">
+                <div className="flex justify-between text-2xl font-bold text-gray-900 pt-2 border-t">
                   <span>Total Investment:</span>
                   <span className="text-[#E07A5F]">KES {plan.total_price?.toLocaleString()}</span>
                 </div>
+                <p className="text-sm text-gray-500 mt-2 text-right">
+                  Valid for {plan.validity_days} days ({weeks} weeks)
+                </p>
               </div>
             </CardContent>
           </Card>
