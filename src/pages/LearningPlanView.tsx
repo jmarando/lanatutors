@@ -150,22 +150,53 @@ const LearningPlanView = () => {
     return match ? match[1] : "your child";
   };
 
-  // Calculate sessions per week
-  const calculateSessionsPerWeek = () => {
+  // Format session frequency in a parent-friendly way
+  const formatSessionFrequency = () => {
     if (!plan?.validity_days || !plan?.total_sessions) return null;
-    const weeks = plan.validity_days / 7;
-    return Math.round(plan.total_sessions / weeks * 10) / 10;
+    const weeks = Math.round(plan.validity_days / 7);
+    const totalSessions = plan.total_sessions;
+    
+    // Calculate raw sessions per week
+    const rawPerWeek = totalSessions / weeks;
+    
+    // If it's a clean number (1, 2, 3, etc.), show as "X per week"
+    if (rawPerWeek >= 1 && Number.isInteger(rawPerWeek)) {
+      return { type: 'perWeek', value: rawPerWeek, weeks };
+    }
+    
+    // If less than 1 per week, express differently
+    if (rawPerWeek < 1) {
+      // e.g., 8 sessions over 13 weeks = roughly 1 session every 1.6 weeks
+      const weeksPerSession = Math.round(weeks / totalSessions * 10) / 10;
+      if (weeksPerSession <= 2) {
+        return { type: 'biweekly', value: totalSessions, weeks };
+      }
+      return { type: 'spread', value: totalSessions, weeks };
+    }
+    
+    // For decimals like 1.5, 2.5, show the rounded value
+    return { type: 'perWeek', value: Math.round(rawPerWeek), weeks };
   };
 
   // Generate auto intro message
   const generateAutoIntro = () => {
     const studentName = extractStudentName();
     const tutorName = plan?.profiles?.full_name || "our dedicated tutor";
-    const sessionsPerWeek = calculateSessionsPerWeek();
-    const weeks = plan?.validity_days ? Math.round(plan.validity_days / 7) : null;
+    const frequency = formatSessionFrequency();
     const subjectNames = plan?.subjects?.map((s: any) => s.name).join(", ") || "your selected subjects";
     
-    return `We've designed a personalized learning journey for ${studentName}, covering ${subjectNames}. ${tutorName} will guide ${studentName} through ${sessionsPerWeek ? `${sessionsPerWeek} sessions per week over ${weeks} weeks` : 'regular sessions'} to build confidence and achieve academic success.`;
+    let scheduleText = 'regular sessions';
+    if (frequency) {
+      if (frequency.type === 'perWeek') {
+        scheduleText = `${frequency.value} session${frequency.value > 1 ? 's' : ''} per week over ${frequency.weeks} weeks`;
+      } else if (frequency.type === 'biweekly') {
+        scheduleText = `${frequency.value} sessions spread across ${frequency.weeks} weeks`;
+      } else {
+        scheduleText = `${plan.total_sessions} sessions over ${frequency.weeks} weeks`;
+      }
+    }
+    
+    return `We've designed a personalized learning journey for ${studentName}, covering ${subjectNames}. ${tutorName} will guide ${studentName} through ${scheduleText} to build confidence and achieve academic success.`;
   };
 
   const handleDecline = async () => {
@@ -217,7 +248,7 @@ const LearningPlanView = () => {
     );
   }
 
-  const sessionsPerWeek = calculateSessionsPerWeek();
+  const frequency = formatSessionFrequency();
   const weeks = plan?.validity_days ? Math.round(plan.validity_days / 7) : null;
   const studentName = extractStudentName();
 
@@ -228,8 +259,8 @@ const LearningPlanView = () => {
         description={`Review your personalized learning plan`}
       />
       <div className="min-h-screen bg-[#FDF8F6]">
-        {/* Coral Header */}
-        <div className="bg-[#E07A5F] py-8 px-4">
+        {/* Brand Header */}
+        <div className="bg-[#e7422d] py-8 px-4">
           <div className="max-w-2xl mx-auto text-center">
             {/* Logo */}
             <img 
@@ -266,14 +297,10 @@ const LearningPlanView = () => {
               <h2 className="text-lg font-semibold">📅 Schedule Overview</h2>
             </div>
             <CardContent className="p-6">
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-4 text-center">
                 <div className="p-4 bg-blue-50 rounded-xl">
                   <p className="text-3xl font-bold text-blue-600">{plan.total_sessions}</p>
                   <p className="text-sm text-gray-600">Total Sessions</p>
-                </div>
-                <div className="p-4 bg-green-50 rounded-xl">
-                  <p className="text-3xl font-bold text-green-600">{sessionsPerWeek || "~"}</p>
-                  <p className="text-sm text-gray-600">Per Week</p>
                 </div>
                 <div className="p-4 bg-purple-50 rounded-xl">
                   <p className="text-3xl font-bold text-purple-600">{weeks || "~"}</p>
@@ -283,6 +310,14 @@ const LearningPlanView = () => {
                   <p className="text-3xl font-bold text-amber-600">{plan.subjects?.length || 0}</p>
                   <p className="text-sm text-gray-600">Subjects</p>
                 </div>
+              </div>
+              {/* Friendly frequency message */}
+              <div className="mt-4 p-3 bg-green-50 rounded-lg text-center">
+                <p className="text-green-700 font-medium">
+                  {frequency?.type === 'perWeek' 
+                    ? `${frequency.value} session${frequency.value > 1 ? 's' : ''} per week`
+                    : `${plan.total_sessions} sessions spread over ${weeks} weeks`}
+                </p>
               </div>
             </CardContent>
           </Card>
