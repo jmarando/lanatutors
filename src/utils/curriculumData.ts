@@ -174,7 +174,12 @@ export const CURRICULUM_DATA: CurriculumData = {
         "Art & Design",
         "Music",
         "Physical Education",
-        "Computing"
+        "Computing",
+        "Skills Development",
+        "Early Literacy",
+        "Early Numeracy",
+        "Cognitive and Social Development",
+        "Motor Skills"
       ]
     },
     {
