@@ -333,8 +333,29 @@ const LearningPlanView = () => {
             <CardContent className="p-0">
               <div className="divide-y">
                 {plan.subjects?.map((subject: any, index: number) => {
-                  // Calculate per-subject sessions per week if total sessions known
-                  const subjectSessionsPerWeek = weeks ? Math.round((subject.sessions / weeks) * 10) / 10 : null;
+                  // Calculate per-subject frequency in a parent-friendly way
+                  const getSubjectFrequency = () => {
+                    if (!weeks || !subject.sessions) return null;
+                    const sessionsPerWeek = subject.sessions / weeks;
+                    
+                    // If 1 or more per week and clean number
+                    if (sessionsPerWeek >= 1 && Number.isInteger(sessionsPerWeek)) {
+                      return `${sessionsPerWeek} session${sessionsPerWeek > 1 ? 's' : ''}/week`;
+                    }
+                    
+                    // If less than 1 per week, show as "X session(s) over Y weeks"
+                    if (sessionsPerWeek < 1) {
+                      // Calculate how many weeks needed for the sessions
+                      const weeksNeeded = Math.ceil(subject.sessions / 1); // 1 session per week
+                      return `1 session/week for ${subject.sessions} week${subject.sessions > 1 ? 's' : ''}`;
+                    }
+                    
+                    // For non-integer values >= 1, round
+                    const rounded = Math.round(sessionsPerWeek);
+                    return `~${rounded} session${rounded > 1 ? 's' : ''}/week`;
+                  };
+                  
+                  const frequencyText = getSubjectFrequency();
                   
                   return (
                     <div key={index} className="p-4 hover:bg-gray-50/50 transition-colors">
@@ -349,10 +370,10 @@ const LearningPlanView = () => {
                           <span className="w-2 h-2 bg-blue-500 rounded-full"></span>
                           {subject.sessions} sessions
                         </span>
-                        {subjectSessionsPerWeek && (
+                        {frequencyText && (
                           <span className="flex items-center gap-1">
                             <span className="w-2 h-2 bg-green-500 rounded-full"></span>
-                            {subjectSessionsPerWeek} per week
+                            {frequencyText}
                           </span>
                         )}
                         <span className="flex items-center gap-1">
