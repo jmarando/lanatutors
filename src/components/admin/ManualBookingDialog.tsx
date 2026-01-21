@@ -409,27 +409,32 @@ export function ManualBookingDialog({ open, onClose, onSuccess }: ManualBookingD
 
           if (!firstBookingId) firstBookingId = bookingData.id;
 
-          // Generate meeting link for online classes
+          // Generate meeting link for online classes using central calendar OAuth
           let meetingLink = null;
           if (classType === "online") {
             try {
-              const { data: meetData } = await supabase.functions.invoke("generate-google-meet-link", {
+              // Use create-google-meet-session which uses central calendar OAuth tokens
+              const { data: meetData, error: meetError } = await supabase.functions.invoke("create-google-meet-session", {
                 body: {
-                  summary: `${subject} Session`,
-                  description: `Tutoring session with ${tutorName} for ${studentName}`,
-                  startDateTime: startTime.toISOString(),
-                  endDateTime: endTime.toISOString(),
+                  bookingId: bookingData.id,
+                  tutorEmail: "info@lanatutors.africa", // Central calendar email
+                  studentEmail: newParentEmail || "student@lanatutors.africa",
+                  studentName: studentName,
+                  tutorName: tutorName,
+                  subject: subject,
+                  startTime: startTime.toISOString(),
+                  endTime: endTime.toISOString(),
                 },
               });
-              if (meetData?.meetingLink) {
-                meetingLink = meetData.meetingLink;
+              
+              if (meetError) {
+                console.error("Google Meet generation error:", meetError);
+              } else if (meetData?.meetLink) {
+                meetingLink = meetData.meetLink;
                 // Store the first meeting link for email
                 if (!firstMeetingLink) firstMeetingLink = meetingLink;
-                // Update booking with meeting link
-                await supabase
-                  .from("bookings")
-                  .update({ meeting_link: meetingLink })
-                  .eq("id", bookingData.id);
+              } else if (meetData?.message) {
+                console.log("Meet creation message:", meetData.message);
               }
             } catch (meetError) {
               console.error("Google Meet generation error:", meetError);
