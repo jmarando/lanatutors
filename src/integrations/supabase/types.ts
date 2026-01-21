@@ -1612,6 +1612,44 @@ export type Database = {
         }
         Relationships: []
       }
+      student_notes: {
+        Row: {
+          created_at: string | null
+          created_by: string | null
+          id: string
+          note: string
+          note_type: string | null
+          parent_id: string
+          student_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          note: string
+          note_type?: string | null
+          parent_id: string
+          student_id: string
+        }
+        Update: {
+          created_at?: string | null
+          created_by?: string | null
+          id?: string
+          note?: string
+          note_type?: string | null
+          parent_id?: string
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "student_notes_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       student_progress: {
         Row: {
           created_at: string | null
@@ -1679,6 +1717,7 @@ export type Database = {
       }
       students: {
         Row: {
+          admin_notes: string | null
           age: number | null
           avatar_url: string | null
           created_at: string | null
@@ -1693,6 +1732,7 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          admin_notes?: string | null
           age?: number | null
           avatar_url?: string | null
           created_at?: string | null
@@ -1707,6 +1747,7 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          admin_notes?: string | null
           age?: number | null
           avatar_url?: string | null
           created_at?: string | null

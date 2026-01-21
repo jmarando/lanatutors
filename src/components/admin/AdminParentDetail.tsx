@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { 
   Phone, 
   Mail, 
@@ -24,12 +25,16 @@ import {
   Clock,
   Calendar,
   GraduationCap,
-  Plus
+  Plus,
+  ChevronDown,
+  ChevronRight,
+  FileText
 } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
 import { CommunicationTimeline } from "./CommunicationTimeline";
 import { QuickContactDialog } from "./QuickContactDialog";
+import { StudentNotesPanel } from "./StudentNotesPanel";
 
 interface AdminParentDetailProps {
   parentId: string | null;
@@ -371,29 +376,7 @@ export function AdminParentDetail({ parentId, onClose }: AdminParentDetailProps)
                     </p>
                   ) : (
                     students.map((student) => (
-                      <Card key={student.id}>
-                        <CardContent className="p-4">
-                          <div className="flex items-start justify-between">
-                            <div>
-                              <p className="font-medium">{student.full_name}</p>
-                              <div className="flex gap-2 mt-1">
-                                <Badge variant="outline">{student.curriculum}</Badge>
-                                <Badge variant="secondary">{student.grade_level}</Badge>
-                              </div>
-                              {student.subjects_of_interest && (
-                                <p className="text-xs text-muted-foreground mt-2">
-                                  Interests: {student.subjects_of_interest.join(", ")}
-                                </p>
-                              )}
-                            </div>
-                            {student.age && (
-                              <span className="text-sm text-muted-foreground">
-                                {student.age} yrs
-                              </span>
-                            )}
-                          </div>
-                        </CardContent>
-                      </Card>
+                      <StudentCard key={student.id} student={student} />
                     ))
                   )}
                 </TabsContent>
@@ -482,5 +465,54 @@ export function AdminParentDetail({ parentId, onClose }: AdminParentDetailProps)
         }}
       />
     </>
+  );
+}
+
+// Student card with expandable notes section
+function StudentCard({ student }: { student: StudentData }) {
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <Card>
+      <CardContent className="p-4">
+        <Collapsible open={isOpen} onOpenChange={setIsOpen}>
+          <div className="flex items-start justify-between">
+            <div className="flex-1">
+              <div className="flex items-center gap-2">
+                <p className="font-medium">{student.full_name}</p>
+                {student.age && (
+                  <span className="text-sm text-muted-foreground">
+                    ({student.age} yrs)
+                  </span>
+                )}
+              </div>
+              <div className="flex gap-2 mt-1">
+                <Badge variant="outline">{student.curriculum}</Badge>
+                <Badge variant="secondary">{student.grade_level}</Badge>
+              </div>
+              {student.subjects_of_interest && (
+                <p className="text-xs text-muted-foreground mt-2">
+                  Interests: {student.subjects_of_interest.join(", ")}
+                </p>
+              )}
+            </div>
+            <CollapsibleTrigger asChild>
+              <Button variant="ghost" size="sm">
+                <FileText className="h-4 w-4 mr-1" />
+                Notes
+                {isOpen ? (
+                  <ChevronDown className="h-4 w-4 ml-1" />
+                ) : (
+                  <ChevronRight className="h-4 w-4 ml-1" />
+                )}
+              </Button>
+            </CollapsibleTrigger>
+          </div>
+          <CollapsibleContent className="mt-4 pt-4 border-t">
+            <StudentNotesPanel studentId={student.id} studentName={student.full_name} />
+          </CollapsibleContent>
+        </Collapsible>
+      </CardContent>
+    </Card>
   );
 }
