@@ -1796,6 +1796,68 @@ export type Database = {
           },
         ]
       }
+      school_parent_bookings: {
+        Row: {
+          created_at: string
+          id: string
+          parent_member_id: string
+          reason: string | null
+          school_id: string
+          slot_id: string
+          status: string
+          student_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          parent_member_id: string
+          reason?: string | null
+          school_id: string
+          slot_id: string
+          status?: string
+          student_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          parent_member_id?: string
+          reason?: string | null
+          school_id?: string
+          slot_id?: string
+          status?: string
+          student_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "school_parent_bookings_parent_member_id_fkey"
+            columns: ["parent_member_id"]
+            isOneToOne: false
+            referencedRelation: "school_members"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "school_parent_bookings_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "school_parent_bookings_slot_id_fkey"
+            columns: ["slot_id"]
+            isOneToOne: false
+            referencedRelation: "school_teacher_slots"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "school_parent_bookings_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "school_students"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       school_results: {
         Row: {
           created_at: string
@@ -1904,6 +1966,54 @@ export type Database = {
             columns: ["school_id"]
             isOneToOne: false
             referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      school_teacher_slots: {
+        Row: {
+          created_at: string
+          end_time: string
+          id: string
+          is_booked: boolean
+          school_id: string
+          slot_date: string
+          start_time: string
+          teacher_member_id: string
+        }
+        Insert: {
+          created_at?: string
+          end_time: string
+          id?: string
+          is_booked?: boolean
+          school_id: string
+          slot_date: string
+          start_time: string
+          teacher_member_id: string
+        }
+        Update: {
+          created_at?: string
+          end_time?: string
+          id?: string
+          is_booked?: boolean
+          school_id?: string
+          slot_date?: string
+          start_time?: string
+          teacher_member_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "school_teacher_slots_school_id_fkey"
+            columns: ["school_id"]
+            isOneToOne: false
+            referencedRelation: "schools"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "school_teacher_slots_teacher_member_id_fkey"
+            columns: ["teacher_member_id"]
+            isOneToOne: false
+            referencedRelation: "school_members"
             referencedColumns: ["id"]
           },
         ]
