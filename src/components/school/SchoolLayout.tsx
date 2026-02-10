@@ -2,7 +2,7 @@ import React from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { School, SchoolMember } from "@/hooks/useSchool";
 import kirawaLogo from "@/assets/kirawa-logo.png";
-import { LogOut, Home, Megaphone, BookOpen, GraduationCap, Calendar, Users } from "lucide-react";
+import { LogOut, Home, Megaphone, BookOpen, GraduationCap, Calendar, Users, CalendarClock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -25,10 +25,12 @@ const SchoolLayout: React.FC<SchoolLayoutProps> = ({ school, member, children, a
     { id: "homework", label: "Homework", icon: BookOpen },
     { id: "results", label: "Results", icon: GraduationCap },
     { id: "students", label: "Students", icon: Users },
+    { id: "consultations", label: "Parent Meetings", icon: CalendarClock },
   ] : [
     { id: "announcements", label: "Announcements", icon: Megaphone },
     { id: "homework", label: "Homework", icon: BookOpen },
     { id: "reports", label: "Report Cards", icon: GraduationCap },
+    { id: "meetings", label: "Book Teacher", icon: CalendarClock },
   ];
 
   const handleLogout = async () => {

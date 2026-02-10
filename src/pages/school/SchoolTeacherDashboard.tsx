@@ -6,6 +6,7 @@ import SchoolLayout from "@/components/school/SchoolLayout";
 import HomeworkForm from "@/components/school/HomeworkForm";
 import HomeworkList from "@/components/school/HomeworkList";
 import ResultsEntry from "@/components/school/ResultsEntry";
+import TeacherSlotManager from "@/components/school/TeacherSlotManager";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users } from "lucide-react";
@@ -69,6 +70,9 @@ const SchoolTeacherDashboard: React.FC = () => {
             </Table>
           </CardContent>
         </Card>
+      )}
+      {tab === "consultations" && (
+        <TeacherSlotManager schoolId={school.id} teacherMemberId={member.id} />
       )}
     </SchoolLayout>
   );

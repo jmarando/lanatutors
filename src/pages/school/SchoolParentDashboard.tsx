@@ -6,6 +6,7 @@ import SchoolLayout from "@/components/school/SchoolLayout";
 import AnnouncementFeed from "@/components/school/AnnouncementFeed";
 import HomeworkList from "@/components/school/HomeworkList";
 import ReportCard from "@/components/school/ReportCard";
+import ParentTeacherBooking from "@/components/school/ParentTeacherBooking";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { User } from "lucide-react";
@@ -117,6 +118,17 @@ const SchoolParentDashboard: React.FC = () => {
           ) : (
             <ReportCard school={school} students={myStudents.length > 0 ? myStudents : students} />
           )}
+        </div>
+      )}
+
+      {tab === "meetings" && (
+        <div className="space-y-4">
+          <h2 className="text-xl font-bold" style={{ color: school.primary_color }}>Book Teacher Meeting</h2>
+          <ParentTeacherBooking
+            schoolId={school.id}
+            parentMemberId={member.id}
+            myStudents={myStudents}
+          />
         </div>
       )}
     </SchoolLayout>
