@@ -1621,6 +1621,7 @@ export type Database = {
           id: string
           published: boolean
           school_id: string
+          target_class: string | null
           title: string
         }
         Insert: {
@@ -1631,6 +1632,7 @@ export type Database = {
           id?: string
           published?: boolean
           school_id: string
+          target_class?: string | null
           title: string
         }
         Update: {
@@ -1641,6 +1643,7 @@ export type Database = {
           id?: string
           published?: boolean
           school_id?: string
+          target_class?: string | null
           title?: string
         }
         Relationships: [

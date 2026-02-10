@@ -80,7 +80,7 @@ const SchoolAdminDashboard: React.FC = () => {
       )}
       {tab === "announcements" && (
         <div className="space-y-6">
-          <AnnouncementComposer schoolId={school.id} authorId={member.id} onCreated={() => setRefreshKey(k => k + 1)} />
+          <AnnouncementComposer schoolId={school.id} authorId={member.id} classes={[...new Set(students.map(s => s.class_name))]} onCreated={() => setRefreshKey(k => k + 1)} />
           <AnnouncementFeed schoolId={school.id} refreshKey={refreshKey} />
         </div>
       )}
