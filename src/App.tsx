@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { lazy, Suspense, useMemo } from "react";
 import Navigation from "./components/Navigation";
 import { AuthProvider } from "@/contexts/AuthContext";
@@ -56,8 +56,80 @@ const TutorOnboardingGuide = lazy(() => import("./pages/TutorOnboardingGuide"));
 const TutorGuidePrintable = lazy(() => import("./pages/TutorGuidePrintable"));
 const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
 
+// School module
+const SchoolLogin = lazy(() => import("./pages/school/SchoolLogin"));
+const SchoolAdminDashboard = lazy(() => import("./pages/school/SchoolAdminDashboard"));
+const SchoolTeacherDashboard = lazy(() => import("./pages/school/SchoolTeacherDashboard"));
+const SchoolParentDashboard = lazy(() => import("./pages/school/SchoolParentDashboard"));
+
+const AppContent = () => {
+  const location = useLocation();
+  const isSchoolRoute = location.pathname.startsWith("/school/");
+  return (
+    <>
+      {!isSchoolRoute && <Navigation />}
+      <Suspense fallback={
+        <div className="min-h-screen flex items-center justify-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
+        </div>
+      }>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/book-class" element={<BookingOptions />} />
+          <Route path="/how-it-works" element={<HowItWorks />} />
+          <Route path="/about" element={<AboutUs />} />
+          <Route path="/blog" element={<Blog />} />
+          <Route path="/blog/:slug" element={<BlogPost />} />
+          <Route path="/for-students" element={<ForStudents />} />
+          <Route path="/for-tutors" element={<ForTutors />} />
+          <Route path="/tutors" element={<TutorSearch />} />
+          <Route path="/tutors/:id" element={<TutorProfile />} />
+          <Route path="/tutor-profile/:id" element={<TutorProfile />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/reset-password" element={<ResetPassword />} />
+          <Route path="/student-signup" element={<StudentSignup />} />
+          <Route path="/tutor-signup" element={<TutorSignup />} />
+          <Route path="/become-a-tutor" element={<BecomeATutor />} />
+          <Route path="/student/dashboard" element={<UnifiedStudentDashboard />} />
+          <Route path="/student/dashboard-old" element={<StudentDashboard />} />
+          <Route path="/tutor/dashboard" element={<TutorDashboard />} />
+          <Route path="/tutor/availability" element={<TutorAvailability />} />
+          <Route path="/tutor-profile-setup" element={<TutorProfileSetup />} />
+          <Route path="/tutor-profile-edit" element={<TutorProfileEdit />} />
+          <Route path="/tutor-profile-submitted" element={<TutorProfileSubmitted />} />
+          <Route path="/tutor-onboarding-guide" element={<TutorOnboardingGuide />} />
+          <Route path="/tutor-guide-printable" element={<TutorGuidePrintable />} />
+          <Route path="/admin" element={<AdminDashboardRedesigned />} />
+          <Route path="/book-consultation" element={<BookConsultation />} />
+          <Route path="/test-email" element={<TestEmail />} />
+          <Route path="/booking-confirmed" element={<BookingConfirmed />} />
+          <Route path="/package-confirmed" element={<PackageConfirmed />} />
+          <Route path="/consultation-confirmed" element={<ConsultationConfirmed />} />
+          <Route path="/setup-central-calendar" element={<SetupCentralCalendar />} />
+          <Route path="/payment-callback" element={<PaymentCallback />} />
+          <Route path="/admin/holiday-packages" element={<AdminHolidayPackages />} />
+          <Route path="/multi-tutor-package" element={<MultiTutorPackage />} />
+          <Route path="/pay-balance" element={<PayBalance />} />
+          <Route path="/invoice-preview" element={<InvoicePreview />} />
+          <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+          <Route path="/profile-settings" element={<ProfileSettings />} />
+          <Route path="/learning-plan/:planId" element={<LearningPlanView />} />
+          <Route path="/request-learning-plan" element={<RequestLearningPlan />} />
+          <Route path="/group-classes" element={<GroupClassMarketplace />} />
+          <Route path="/group-classes/:classId/enroll" element={<GroupClassEnrollment />} />
+          <Route path="/school/:slug" element={<SchoolLogin />} />
+          <Route path="/school/:slug/admin" element={<SchoolAdminDashboard />} />
+          <Route path="/school/:slug/teacher" element={<SchoolTeacherDashboard />} />
+          <Route path="/school/:slug/parent" element={<SchoolParentDashboard />} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </Suspense>
+      {!isSchoolRoute && <WhatsAppChatButton />}
+    </>
+  );
+};
+
 const App = () => {
-  // Create QueryClient inside component with memoization to prevent recreation on re-renders
   const queryClient = useMemo(() => new QueryClient({
     defaultOptions: {
       queries: {
@@ -75,62 +147,7 @@ const App = () => {
             <Toaster />
             <Sonner />
             <BrowserRouter>
-              <Navigation />
-              <Suspense fallback={
-                <div className="min-h-screen flex items-center justify-center">
-                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
-                </div>
-              }>
-              <Routes>
-                <Route path="/" element={<Home />} />
-                <Route path="/book-class" element={<BookingOptions />} />
-                <Route path="/how-it-works" element={<HowItWorks />} />
-            <Route path="/about" element={<AboutUs />} />
-            <Route path="/blog" element={<Blog />} />
-            <Route path="/blog/:slug" element={<BlogPost />} />
-                <Route path="/for-students" element={<ForStudents />} />
-                <Route path="/for-tutors" element={<ForTutors />} />
-                <Route path="/tutors" element={<TutorSearch />} />
-                <Route path="/tutors/:id" element={<TutorProfile />} />
-                <Route path="/tutor-profile/:id" element={<TutorProfile />} /> {/* Legacy route for backward compatibility */}
-                <Route path="/login" element={<Login />} />
-                <Route path="/reset-password" element={<ResetPassword />} />
-                <Route path="/student-signup" element={<StudentSignup />} />
-                <Route path="/tutor-signup" element={<TutorSignup />} />
-                <Route path="/become-a-tutor" element={<BecomeATutor />} />
-                <Route path="/student/dashboard" element={<UnifiedStudentDashboard />} />
-                <Route path="/student/dashboard-old" element={<StudentDashboard />} />
-                <Route path="/tutor/dashboard" element={<TutorDashboard />} />
-                <Route path="/tutor/availability" element={<TutorAvailability />} />
-            <Route path="/tutor-profile-setup" element={<TutorProfileSetup />} />
-            <Route path="/tutor-profile-edit" element={<TutorProfileEdit />} />
-                <Route path="/tutor-profile-submitted" element={<TutorProfileSubmitted />} />
-                <Route path="/tutor-onboarding-guide" element={<TutorOnboardingGuide />} />
-                <Route path="/tutor-guide-printable" element={<TutorGuidePrintable />} />
-                <Route path="/admin" element={<AdminDashboardRedesigned />} />
-                <Route path="/book-consultation" element={<BookConsultation />} />
-                <Route path="/test-email" element={<TestEmail />} />
-                <Route path="/booking-confirmed" element={<BookingConfirmed />} />
-                <Route path="/package-confirmed" element={<PackageConfirmed />} />
-                <Route path="/consultation-confirmed" element={<ConsultationConfirmed />} />
-                <Route path="/setup-central-calendar" element={<SetupCentralCalendar />} />
-                <Route path="/payment-callback" element={<PaymentCallback />} />
-                
-                <Route path="/admin/holiday-packages" element={<AdminHolidayPackages />} />
-                <Route path="/multi-tutor-package" element={<MultiTutorPackage />} />
-                <Route path="/pay-balance" element={<PayBalance />} />
-                <Route path="/invoice-preview" element={<InvoicePreview />} />
-                <Route path="/privacy-policy" element={<PrivacyPolicy />} />
-              <Route path="/profile-settings" element={<ProfileSettings />} />
-              <Route path="/learning-plan/:planId" element={<LearningPlanView />} />
-              <Route path="/request-learning-plan" element={<RequestLearningPlan />} />
-          <Route path="/group-classes" element={<GroupClassMarketplace />} />
-          <Route path="/group-classes/:classId/enroll" element={<GroupClassEnrollment />} />
-                {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-              </Suspense>
-              <WhatsAppChatButton />
+              <AppContent />
             </BrowserRouter>
           </TooltipProvider>
         </AuthProvider>
