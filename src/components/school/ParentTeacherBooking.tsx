@@ -132,6 +132,20 @@ const ParentTeacherBooking: React.FC<ParentTeacherBookingProps> = ({
     }
   };
 
+  // Separate bookings into upcoming vs past (older than 2 weeks)
+  const twoWeeksAgo = new Date();
+  twoWeeksAgo.setDate(twoWeeksAgo.getDate() - 14);
+
+  const upcomingBookings = myBookings.filter(b => {
+    const slotDate = b.school_teacher_slots?.slot_date;
+    return slotDate ? parseISO(slotDate) >= twoWeeksAgo : true;
+  });
+
+  const pastBookings = myBookings.filter(b => {
+    const slotDate = b.school_teacher_slots?.slot_date;
+    return slotDate ? parseISO(slotDate) < twoWeeksAgo : false;
+  });
+
   // Group available slots by date
   const slotsByDate: Record<string, TeacherSlot[]> = {};
   availableSlots.forEach(slot => {
@@ -141,16 +155,16 @@ const ParentTeacherBooking: React.FC<ParentTeacherBookingProps> = ({
 
   return (
     <div className="space-y-6">
-      {/* My Bookings */}
-      {myBookings.length > 0 && (
+      {/* Upcoming Bookings */}
+      {upcomingBookings.length > 0 && (
         <Card>
           <CardHeader>
             <CardTitle className="text-base flex items-center gap-2">
-              <CheckCircle className="h-5 w-5 text-green-600" /> My Booked Meetings
+              <CheckCircle className="h-5 w-5 text-primary" /> Upcoming Meetings
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            {myBookings.map(b => {
+            {upcomingBookings.map(b => {
               const slot = b.school_teacher_slots;
               return (
                 <div key={b.id} className="flex items-center justify-between p-3 rounded-lg border bg-accent/30">
@@ -171,6 +185,35 @@ const ParentTeacherBooking: React.FC<ParentTeacherBookingProps> = ({
                   <Button variant="ghost" size="sm" onClick={() => handleCancel(b.id, b.slot_id)} className="text-destructive">
                     <XCircle className="h-4 w-4 mr-1" /> Cancel
                   </Button>
+                </div>
+              );
+            })}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Past Bookings */}
+      {pastBookings.length > 0 && (
+        <Card className="opacity-75">
+          <CardHeader>
+            <CardTitle className="text-base flex items-center gap-2 text-muted-foreground">
+              <Clock className="h-5 w-5" /> Past Meetings
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-2">
+            {pastBookings.map(b => {
+              const slot = b.school_teacher_slots;
+              return (
+                <div key={b.id} className="flex items-center justify-between p-3 rounded-lg border text-sm text-muted-foreground">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <Calendar className="h-4 w-4" />
+                      <span>{slot ? format(parseISO(slot.slot_date), "MMM d, yyyy") : ""}</span>
+                      <span>{slot?.start_time?.slice(0, 5)} – {slot?.end_time?.slice(0, 5)}</span>
+                    </div>
+                    <p>Teacher: {(slot?.school_members as any)?.full_name} · Child: {(b.school_students as any)?.student_name}</p>
+                  </div>
+                  <Badge variant="outline">Completed</Badge>
                 </div>
               );
             })}
