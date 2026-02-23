@@ -11,7 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
-import { CheckCircle, XCircle, AlertCircle, Calendar as CalendarIcon, Clock, Mail, Phone, User, BookOpen, FileText, Video, Edit, Save, X, MessageCircle, Send, TrendingUp, Users, DollarSign, BookMarked, Activity, ArrowUpRight, ArrowDownRight, GraduationCap, Star, ExternalLink, Bell } from "lucide-react";
+import { CheckCircle, XCircle, AlertCircle, Calendar as CalendarIcon, Clock, Mail, Phone, User, BookOpen, FileText, Video, Edit, Save, X, MessageCircle, Send, TrendingUp, Users, DollarSign, BookMarked, Activity, ArrowUpRight, ArrowDownRight, GraduationCap, Star, ExternalLink, Bell, Download } from "lucide-react";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { LineChart, Line, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
@@ -890,8 +890,7 @@ Reply with A, B, or C!
       const { data, error } = await supabase
         .from("consultation_bookings")
         .select("*")
-        .order("consultation_date", { ascending: false })
-        .order("consultation_time", { ascending: false });
+        .order("created_at", { ascending: false });
 
       if (error) throw error;
       setConsultationBookings(data || []);
@@ -1975,6 +1974,46 @@ The Lana Tutors Team`
               </Table>
             </CardContent>
           </Card>
+        )}
+
+        {/* Export CSV Button */}
+        {consultationBookings.length > 0 && (
+          <div className="flex justify-end">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                const headers = ["Date", "Time", "Student", "Parent", "Phone", "Email", "Grade Level", "Subjects", "Mode", "Status", "Budget", "Challenges", "Notes", "Created At"];
+                const rows = consultationBookings.map((b: any) => [
+                  b.consultation_date,
+                  b.consultation_time,
+                  b.student_name,
+                  b.parent_name,
+                  b.phone_number,
+                  b.email || "",
+                  b.grade_level,
+                  (b.subjects_interest || []).join("; "),
+                  b.preferred_mode,
+                  b.status,
+                  b.budget_range || "",
+                  (b.specific_challenges || "").replace(/[\n\r,]/g, " "),
+                  (b.additional_notes || "").replace(/[\n\r,]/g, " "),
+                  b.created_at ? new Date(b.created_at).toLocaleString() : "",
+                ]);
+                const csv = [headers, ...rows].map(r => r.map((c: string) => `"${c}"`).join(",")).join("\n");
+                const blob = new Blob([csv], { type: "text/csv" });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = `consultations-${new Date().toISOString().slice(0, 10)}.csv`;
+                a.click();
+                URL.revokeObjectURL(url);
+                toast.success("CSV downloaded!");
+              }}
+            >
+              <Download className="h-4 w-4 mr-2" /> Export CSV ({consultationBookings.length})
+            </Button>
+          </div>
         )}
 
         {consultationBookings.length === 0 ? (
