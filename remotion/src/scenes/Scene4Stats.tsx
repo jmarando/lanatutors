@@ -5,7 +5,6 @@ const { fontFamily } = loadFont("normal", { weights: ["400", "700", "800"], subs
 
 const RED = "#E7422D";
 const TEAL = "#1D9DB8";
-const CREAM = "#FEF5F4";
 
 const stats = [
   { value: "50+", label: "Verified Tutors", color: RED },
@@ -22,7 +21,6 @@ export const Scene4Stats = () => {
       background: `linear-gradient(135deg, ${RED} 0%, #D63A28 100%)`,
       fontFamily,
     }}>
-      {/* Photo background with overlay */}
       <div style={{
         position: "absolute", inset: 0, opacity: 0.15,
       }}>
@@ -31,7 +29,6 @@ export const Scene4Stats = () => {
         }} />
       </div>
 
-      {/* Decorative circles */}
       {[0, 1, 2].map((i) => (
         <div key={i} style={{
           position: "absolute",
@@ -42,7 +39,7 @@ export const Scene4Stats = () => {
           left: "50%",
           top: "50%",
           transform: `translate(-50%, -50%) scale(${spring({
-            frame: frame - i * 5, fps, config: { damping: 20 },
+            frame: frame - i * 3, fps, config: { damping: 20 },
           })})`,
         }} />
       ))}
@@ -55,16 +52,16 @@ export const Scene4Stats = () => {
         <div style={{
           fontSize: 24, fontWeight: 700, color: "rgba(255,255,255,0.9)",
           letterSpacing: 6, textTransform: "uppercase",
-          opacity: interpolate(frame, [0, 15], [0, 1], { extrapolateRight: "clamp" }),
+          opacity: interpolate(frame, [0, 10], [0, 1], { extrapolateRight: "clamp" }),
         }}>
           BY THE NUMBERS
         </div>
 
         <div style={{ display: "flex", gap: 120 }}>
           {stats.map((s, i) => {
-            const delay = 10 + i * 12;
+            const delay = 5 + i * 8;
             const sp = spring({ frame: frame - delay, fps, config: { damping: 10 } });
-            const op = interpolate(frame, [delay, delay + 12], [0, 1], { extrapolateRight: "clamp" });
+            const op = interpolate(frame, [delay, delay + 10], [0, 1], { extrapolateRight: "clamp" });
             const scale = interpolate(sp, [0, 1], [0.5, 1]);
 
             return (

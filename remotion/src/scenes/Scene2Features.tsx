@@ -18,27 +18,24 @@ export const Scene2Features = () => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
 
-  const headOp = interpolate(frame, [0, 20], [0, 1], { extrapolateRight: "clamp" });
+  const headOp = interpolate(frame, [0, 15], [0, 1], { extrapolateRight: "clamp" });
   const headY = interpolate(
     spring({ frame, fps, config: { damping: 20 } }),
     [0, 1], [-40, 0]
   );
 
-  // Group photo with subtle zoom
-  const photoZoom = interpolate(frame, [0, 210], [1, 1.08]);
+  const photoZoom = interpolate(frame, [0, 130], [1, 1.06]);
 
   return (
     <AbsoluteFill style={{
       background: `linear-gradient(160deg, #FFFFFF 0%, ${CREAM} 100%)`,
       fontFamily,
     }}>
-      {/* Coral accent bar */}
       <div style={{
         position: "absolute", top: 0, left: 0, right: 0, height: 5,
         background: `linear-gradient(90deg, ${RED}, ${TEAL})`,
       }} />
 
-      {/* Coral half-circle left */}
       <div style={{
         position: "absolute", left: -120, top: "50%",
         width: 300, height: 300, borderRadius: "50%",
@@ -46,11 +43,10 @@ export const Scene2Features = () => {
         transform: "translateY(-50%)",
       }} />
 
-      {/* Photo strip on left */}
       <div style={{
         position: "absolute", left: 80, top: 100, bottom: 100,
         width: 420, borderRadius: 24, overflow: "hidden",
-        opacity: interpolate(frame, [5, 25], [0, 1], { extrapolateRight: "clamp" }),
+        opacity: interpolate(frame, [3, 18], [0, 1], { extrapolateRight: "clamp" }),
         boxShadow: "0 16px 48px rgba(0,0,0,0.1)",
       }}>
         <Img src={staticFile("images/group-students.jpg")} style={{
@@ -59,7 +55,6 @@ export const Scene2Features = () => {
         }} />
       </div>
 
-      {/* Section header */}
       <div style={{
         position: "absolute", top: 100, left: 560, right: 80,
         opacity: headOp,
@@ -70,15 +65,14 @@ export const Scene2Features = () => {
         </div>
       </div>
 
-      {/* Feature cards - 2x2 grid on right */}
       <div style={{
         position: "absolute", top: 190, left: 560, right: 80,
         display: "flex", flexWrap: "wrap", gap: 24,
       }}>
         {features.map((f, i) => {
-          const delay = 20 + i * 15;
+          const delay = 10 + i * 10;
           const s = spring({ frame: frame - delay, fps, config: { damping: 14, stiffness: 120 } });
-          const cardOp = interpolate(frame, [delay, delay + 15], [0, 1], { extrapolateRight: "clamp" });
+          const cardOp = interpolate(frame, [delay, delay + 12], [0, 1], { extrapolateRight: "clamp" });
           const cardY = interpolate(s, [0, 1], [40, 0]);
 
           return (

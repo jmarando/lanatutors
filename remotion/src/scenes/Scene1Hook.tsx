@@ -11,60 +11,54 @@ export const Scene1Hook = () => {
   const frame = useCurrentFrame();
   const { fps } = useVideoConfig();
 
-  const barWidth = interpolate(frame, [0, 20], [0, 100], { extrapolateRight: "clamp" });
+  const barWidth = interpolate(frame, [0, 15], [0, 100], { extrapolateRight: "clamp" });
 
   const titleY = interpolate(
-    spring({ frame: frame - 10, fps, config: { damping: 15, stiffness: 120 } }),
+    spring({ frame: frame - 5, fps, config: { damping: 15, stiffness: 120 } }),
     [0, 1], [80, 0]
   );
-  const titleOp = interpolate(frame, [10, 30], [0, 1], { extrapolateRight: "clamp" });
+  const titleOp = interpolate(frame, [5, 20], [0, 1], { extrapolateRight: "clamp" });
 
-  const subOp = interpolate(frame, [40, 60], [0, 1], { extrapolateRight: "clamp" });
+  const subOp = interpolate(frame, [25, 40], [0, 1], { extrapolateRight: "clamp" });
   const subY = interpolate(
-    spring({ frame: frame - 40, fps, config: { damping: 20 } }),
+    spring({ frame: frame - 25, fps, config: { damping: 20 } }),
     [0, 1], [40, 0]
   );
 
-  const tagOp = interpolate(frame, [70, 90], [0, 1], { extrapolateRight: "clamp" });
+  const tagOp = interpolate(frame, [45, 60], [0, 1], { extrapolateRight: "clamp" });
 
-  // Photo reveal
-  const photoScale = spring({ frame: frame - 5, fps, config: { damping: 14 } });
-  const photoOp = interpolate(frame, [5, 25], [0, 1], { extrapolateRight: "clamp" });
+  const photoScale = spring({ frame: frame - 3, fps, config: { damping: 14 } });
+  const photoOp = interpolate(frame, [3, 18], [0, 1], { extrapolateRight: "clamp" });
 
-  // Coral circle accent (like the poster)
-  const circleScale = spring({ frame: frame - 3, fps, config: { damping: 12 } });
+  const circleScale = spring({ frame: frame - 2, fps, config: { damping: 12 } });
 
   return (
     <AbsoluteFill style={{
       background: `linear-gradient(135deg, #FFFFFF 0%, ${CREAM} 50%, #FFF8F6 100%)`,
       fontFamily,
     }}>
-      {/* Large coral circle accent bottom-right (like poster) */}
       <div style={{
         position: "absolute", right: -150, bottom: -200,
         width: 700, height: 700, borderRadius: "50%",
         background: RED,
-        opacity: interpolate(frame, [0, 15], [0, 0.9], { extrapolateRight: "clamp" }),
+        opacity: interpolate(frame, [0, 10], [0, 0.9], { extrapolateRight: "clamp" }),
         transform: `scale(${circleScale})`,
       }} />
 
-      {/* Smaller coral circle top-right */}
       <div style={{
         position: "absolute", right: 200, top: -80,
         width: 250, height: 250, borderRadius: "50%",
         background: RED,
-        opacity: interpolate(frame, [8, 20], [0, 0.25], { extrapolateRight: "clamp" }),
-        transform: `scale(${spring({ frame: frame - 8, fps, config: { damping: 15 } })})`,
+        opacity: interpolate(frame, [5, 15], [0, 0.25], { extrapolateRight: "clamp" }),
+        transform: `scale(${spring({ frame: frame - 5, fps, config: { damping: 15 } })})`,
       }} />
 
-      {/* Red accent bar top */}
       <div style={{
         position: "absolute", top: 0, left: 0,
         width: `${barWidth}%`, height: 6,
         background: `linear-gradient(90deg, ${RED}, ${TEAL})`,
       }} />
 
-      {/* Photo on right side */}
       <div style={{
         position: "absolute", right: 80, top: 120,
         width: 550, height: 650,
@@ -79,7 +73,6 @@ export const Scene1Hook = () => {
         }} />
       </div>
 
-      {/* Main content left */}
       <div style={{
         display: "flex", flexDirection: "column",
         justifyContent: "center", alignItems: "flex-start",
@@ -137,9 +130,9 @@ export const Scene1Hook = () => {
               color: i === 0 ? "#FFF" : "#333",
               fontSize: 20,
               fontWeight: 700,
-              opacity: interpolate(frame, [75 + i * 8, 90 + i * 8], [0, 1], { extrapolateRight: "clamp" }),
+              opacity: interpolate(frame, [48 + i * 5, 58 + i * 5], [0, 1], { extrapolateRight: "clamp" }),
               transform: `translateX(${interpolate(
-                spring({ frame: frame - 75 - i * 8, fps, config: { damping: 15 } }),
+                spring({ frame: frame - 48 - i * 5, fps, config: { damping: 15 } }),
                 [0, 1], [-30, 0]
               )}px)`,
             }}>
@@ -149,10 +142,9 @@ export const Scene1Hook = () => {
         </div>
       </div>
 
-      {/* Bottom accent bar */}
       <div style={{
         position: "absolute", bottom: 0, left: 0,
-        width: `${interpolate(frame, [30, 50], [0, 60], { extrapolateRight: "clamp" })}%`,
+        width: `${interpolate(frame, [20, 35], [0, 60], { extrapolateRight: "clamp" })}%`,
         height: 6,
         background: RED,
       }} />
