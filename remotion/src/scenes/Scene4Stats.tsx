@@ -1,15 +1,16 @@
-import { AbsoluteFill, useCurrentFrame, interpolate, spring, useVideoConfig } from "remotion";
+import { AbsoluteFill, useCurrentFrame, interpolate, spring, useVideoConfig, Img, staticFile } from "remotion";
 import { loadFont } from "@remotion/google-fonts/Poppins";
 
 const { fontFamily } = loadFont("normal", { weights: ["400", "700", "800"], subsets: ["latin"] });
 
-const RED = "#ED3F27";
+const RED = "#E7422D";
 const TEAL = "#1D9DB8";
+const CREAM = "#FEF5F4";
 
 const stats = [
   { value: "50+", label: "Verified Tutors", color: RED },
   { value: "500+", label: "Happy Students", color: TEAL },
-  { value: "All", label: "Curricula Covered", color: "#FFF" },
+  { value: "All", label: "Curricula Covered", color: RED },
 ];
 
 export const Scene4Stats = () => {
@@ -18,9 +19,18 @@ export const Scene4Stats = () => {
 
   return (
     <AbsoluteFill style={{
-      background: `linear-gradient(135deg, ${RED} 0%, #C0321F 100%)`,
+      background: `linear-gradient(135deg, ${RED} 0%, #D63A28 100%)`,
       fontFamily,
     }}>
+      {/* Photo background with overlay */}
+      <div style={{
+        position: "absolute", inset: 0, opacity: 0.15,
+      }}>
+        <Img src={staticFile("images/parent-child.jpg")} style={{
+          width: "100%", height: "100%", objectFit: "cover",
+        }} />
+      </div>
+
       {/* Decorative circles */}
       {[0, 1, 2].map((i) => (
         <div key={i} style={{
@@ -28,7 +38,7 @@ export const Scene4Stats = () => {
           width: 500 + i * 200,
           height: 500 + i * 200,
           borderRadius: "50%",
-          border: "2px solid rgba(255,255,255,0.08)",
+          border: "2px solid rgba(255,255,255,0.12)",
           left: "50%",
           top: "50%",
           transform: `translate(-50%, -50%) scale(${spring({
@@ -43,7 +53,7 @@ export const Scene4Stats = () => {
         height: "100%", gap: 60,
       }}>
         <div style={{
-          fontSize: 24, fontWeight: 700, color: "rgba(255,255,255,0.8)",
+          fontSize: 24, fontWeight: 700, color: "rgba(255,255,255,0.9)",
           letterSpacing: 6, textTransform: "uppercase",
           opacity: interpolate(frame, [0, 15], [0, 1], { extrapolateRight: "clamp" }),
         }}>
@@ -70,7 +80,7 @@ export const Scene4Stats = () => {
                   {s.value}
                 </div>
                 <div style={{
-                  fontSize: 22, color: "rgba(255,255,255,0.85)",
+                  fontSize: 22, color: "rgba(255,255,255,0.9)",
                   fontWeight: 400, marginTop: 12,
                 }}>
                   {s.label}
