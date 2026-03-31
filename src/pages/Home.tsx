@@ -22,6 +22,7 @@ import { SEO } from "@/components/SEO";
 import { analytics } from "@/utils/analytics";
 import { supabase } from "@/integrations/supabase/client";
 import { GroupClassBanner } from "@/components/GroupClassBanner";
+import { AprilHolidayBanner } from "@/components/AprilHolidayBanner";
 import { PriceDisplay } from "@/components/PriceDisplay";
 import { useNavigate } from "react-router-dom";
 import heroVideo from "@/assets/hero-video.mp4";
@@ -268,6 +269,11 @@ const Home = () => {
         </div>
       </section>
 
+
+      {/* April Holiday Banner */}
+      <section className="max-w-7xl mx-auto px-6 py-8">
+        <AprilHolidayBanner onViewCampaign={() => navigate("/april-holiday")} />
+      </section>
 
       {/* Stats Section */}
       <section className="border-y bg-secondary/30">

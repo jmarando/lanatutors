@@ -40,6 +40,7 @@ const LearningPlanView = lazy(() => import("./pages/LearningPlanView"));
 const RequestLearningPlan = lazy(() => import("./pages/RequestLearningPlan"));
 const GroupClassMarketplace = lazy(() => import("./pages/GroupClassMarketplace"));
 const GroupClassEnrollment = lazy(() => import("./pages/GroupClassEnrollment"));
+const AprilHolidayCampaign = lazy(() => import("./pages/AprilHolidayCampaign"));
 
 const NotFound = lazy(() => import("./pages/NotFound"));
 const TestEmail = lazy(() => import("./pages/TestEmail"));
@@ -115,6 +116,7 @@ const AppContent = () => {
           <Route path="/profile-settings" element={<ProfileSettings />} />
           <Route path="/learning-plan/:planId" element={<LearningPlanView />} />
           <Route path="/request-learning-plan" element={<RequestLearningPlan />} />
+          <Route path="/april-holiday" element={<AprilHolidayCampaign />} />
           <Route path="/group-classes" element={<GroupClassMarketplace />} />
           <Route path="/group-classes/:classId/enroll" element={<GroupClassEnrollment />} />
           <Route path="/school/:slug" element={<SchoolLogin />} />
