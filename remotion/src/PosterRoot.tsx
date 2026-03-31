@@ -1,5 +1,4 @@
 import { Composition } from "remotion";
-import { MainVideo } from "./MainVideo";
 import { Poster1Feed } from "./posters/Poster1Feed";
 import { Poster2Story } from "./posters/Poster2Story";
 import { Poster3Display } from "./posters/Poster3Display";
@@ -7,21 +6,8 @@ import { Poster4Feed } from "./posters/Poster4Feed";
 import { Poster5Story } from "./posters/Poster5Story";
 import { Poster6Feed } from "./posters/Poster6Feed";
 
-export const RemotionRoot = () => (
+export const PosterRoot = () => (
   <>
-    {/* Original launch video */}
-    <Composition
-      id="main"
-      component={MainVideo}
-      durationInFrames={600}
-      fps={30}
-      width={1920}
-      height={1080}
-    />
-
-    {/* April Holiday Campaign Posters */}
-
-    {/* Poster 1: "April Holiday Revision Packages" — Meta Feed 1080x1080 */}
     <Composition
       id="april-poster-1-feed"
       component={Poster1Feed}
@@ -30,8 +16,6 @@ export const RemotionRoot = () => (
       width={1080}
       height={1080}
     />
-
-    {/* Poster 2: "Don't Let the Holiday Go to Waste" — IG/Meta Story 1080x1920 */}
     <Composition
       id="april-poster-2-story"
       component={Poster2Story}
@@ -40,8 +24,6 @@ export const RemotionRoot = () => (
       width={1080}
       height={1920}
     />
-
-    {/* Poster 3: "April Holiday Revision" — Google Display 1200x628 */}
     <Composition
       id="april-poster-3-display"
       component={Poster3Display}
@@ -50,8 +32,6 @@ export const RemotionRoot = () => (
       width={1200}
       height={628}
     />
-
-    {/* Poster 4: "Make This Holiday Count" — Meta Feed 1080x1080 */}
     <Composition
       id="april-poster-4-feed"
       component={Poster4Feed}
@@ -60,8 +40,6 @@ export const RemotionRoot = () => (
       width={1080}
       height={1080}
     />
-
-    {/* Poster 5: "Results That Speak for Themselves" — IG/Meta Story 1080x1920 */}
     <Composition
       id="april-poster-5-story"
       component={Poster5Story}
@@ -70,8 +48,6 @@ export const RemotionRoot = () => (
       width={1080}
       height={1920}
     />
-
-    {/* Poster 6: "Expert Tutors. Real Results." — Meta Feed 1080x1080 */}
     <Composition
       id="april-poster-6-feed"
       component={Poster6Feed}
