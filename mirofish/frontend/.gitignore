@@ -22,12 +22,3 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
-
-# MiroFish prediction engine
-mirofish/.env
-mirofish/.env.local
-mirofish/.env.*.local
-mirofish/backend/.venv/
-mirofish/backend/__pycache__/
-mirofish/frontend/node_modules/
-mirofish/node_modules/
