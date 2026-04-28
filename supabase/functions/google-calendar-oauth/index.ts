@@ -130,18 +130,34 @@ serve(async (req) => {
           },
         });
       } else {
-        // Update tutor profile with OAuth tokens
-        const { error: updateError } = await supabase
-          .from('tutor_profiles')
-          .update({
-            google_calendar_connected: true,
+        // tutorId here is tutor_profiles.id (passed from dashboard)
+        const tutorProfileId = tutorId!;
+
+        // Store sensitive tokens in private credentials table
+        const { error: credError } = await supabase
+          .from('tutor_calendar_credentials')
+          .upsert({
+            tutor_id: tutorProfileId,
             google_oauth_token: tokens.access_token,
             google_refresh_token: tokens.refresh_token,
             google_token_expires_at: expiresAt.toISOString(),
             google_calendar_email: userInfo.email,
+            updated_at: new Date().toISOString(),
+          });
+
+        if (credError) {
+          console.error('Failed to store tutor calendar credentials:', credError);
+          throw credError;
+        }
+
+        // Mark tutor as connected (no tokens stored on profile)
+        const { error: updateError } = await supabase
+          .from('tutor_profiles')
+          .update({
+            google_calendar_connected: true,
             calendar_sync_enabled: true,
           })
-          .eq('id', tutorId!);
+          .eq('id', tutorProfileId);
 
         if (updateError) {
           console.error('Failed to update tutor profile:', updateError);

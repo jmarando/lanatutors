@@ -2307,6 +2307,51 @@ export type Database = {
         }
         Relationships: []
       }
+      tutor_calendar_credentials: {
+        Row: {
+          created_at: string
+          google_calendar_email: string | null
+          google_oauth_token: string | null
+          google_refresh_token: string | null
+          google_token_expires_at: string | null
+          tutor_id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          google_calendar_email?: string | null
+          google_oauth_token?: string | null
+          google_refresh_token?: string | null
+          google_token_expires_at?: string | null
+          tutor_id: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          google_calendar_email?: string | null
+          google_oauth_token?: string | null
+          google_refresh_token?: string | null
+          google_token_expires_at?: string | null
+          tutor_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "tutor_calendar_credentials_tutor_id_fkey"
+            columns: ["tutor_id"]
+            isOneToOne: true
+            referencedRelation: "tutor_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "tutor_calendar_credentials_tutor_id_fkey"
+            columns: ["tutor_id"]
+            isOneToOne: true
+            referencedRelation: "tutor_profiles_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       tutor_inquiries: {
         Row: {
           available_time_per_week: string | null
@@ -2442,10 +2487,6 @@ export type Database = {
           experience_years: number | null
           gender: string | null
           google_calendar_connected: boolean | null
-          google_calendar_email: string | null
-          google_oauth_token: string | null
-          google_refresh_token: string | null
-          google_token_expires_at: string | null
           graduation_year: number | null
           hourly_rate: number | null
           id: string
@@ -2482,10 +2523,6 @@ export type Database = {
           experience_years?: number | null
           gender?: string | null
           google_calendar_connected?: boolean | null
-          google_calendar_email?: string | null
-          google_oauth_token?: string | null
-          google_refresh_token?: string | null
-          google_token_expires_at?: string | null
           graduation_year?: number | null
           hourly_rate?: number | null
           id?: string
@@ -2522,10 +2559,6 @@ export type Database = {
           experience_years?: number | null
           gender?: string | null
           google_calendar_connected?: boolean | null
-          google_calendar_email?: string | null
-          google_oauth_token?: string | null
-          google_refresh_token?: string | null
-          google_token_expires_at?: string | null
           graduation_year?: number | null
           hourly_rate?: number | null
           id?: string

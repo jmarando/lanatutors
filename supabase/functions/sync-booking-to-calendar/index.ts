@@ -31,14 +31,14 @@ serve(async (req) => {
 
     console.log('Syncing booking to calendar:', { bookingId, tutorId });
 
-    // Get tutor's Google Calendar credentials
-    const { data: tutorProfile, error: tutorError } = await supabaseClient
+    // Look up the tutor profile id from user id, then load private credentials
+    const { data: tutorRow, error: tutorError } = await supabaseClient
       .from('tutor_profiles')
-      .select('google_oauth_token, google_refresh_token, google_calendar_email')
+      .select('id')
       .eq('user_id', tutorId)
       .single();
 
-    if (tutorError || !tutorProfile) {
+    if (tutorError || !tutorRow) {
       console.error('Tutor not found:', tutorError);
       return new Response(
         JSON.stringify({ error: 'Tutor not found' }),
@@ -46,7 +46,13 @@ serve(async (req) => {
       );
     }
 
-    if (!tutorProfile.google_oauth_token || !tutorProfile.google_calendar_email) {
+    const { data: tutorProfile } = await supabaseClient
+      .from('tutor_calendar_credentials')
+      .select('google_oauth_token, google_refresh_token, google_calendar_email')
+      .eq('tutor_id', tutorRow.id)
+      .maybeSingle();
+
+    if (!tutorProfile || !tutorProfile.google_oauth_token || !tutorProfile.google_calendar_email) {
       console.log('Tutor has not connected Google Calendar');
       return new Response(
         JSON.stringify({ message: 'Tutor has not connected Google Calendar' }),
