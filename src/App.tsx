@@ -55,6 +55,8 @@ const TutorAvailability = lazy(() => import("./pages/TutorAvailability"));
 const TutorOnboardingGuide = lazy(() => import("./pages/TutorOnboardingGuide"));
 const TutorGuidePrintable = lazy(() => import("./pages/TutorGuidePrintable"));
 const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
+const TutorsInKenya = lazy(() => import("./pages/TutorsInKenya"));
+const SubjectLanding = lazy(() => import("./pages/SubjectLanding"));
 
 // School module
 const SchoolLogin = lazy(() => import("./pages/school/SchoolLogin"));
@@ -112,6 +114,8 @@ const AppContent = () => {
           <Route path="/pay-balance" element={<PayBalance />} />
           <Route path="/invoice-preview" element={<InvoicePreview />} />
           <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+          <Route path="/tutors-in-kenya" element={<TutorsInKenya />} />
+          <Route path="/subjects/:subject" element={<SubjectLanding />} />
           <Route path="/profile-settings" element={<ProfileSettings />} />
           <Route path="/learning-plan/:planId" element={<LearningPlanView />} />
           <Route path="/request-learning-plan" element={<RequestLearningPlan />} />
