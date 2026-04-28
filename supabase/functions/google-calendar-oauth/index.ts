@@ -130,22 +130,14 @@ serve(async (req) => {
           },
         });
       } else {
-        // Look up tutor_profile id from user id (state stores user id as tutorId)
-        const { data: tp } = await supabase
-          .from('tutor_profiles')
-          .select('id')
-          .eq('user_id', tutorId!)
-          .single();
-
-        if (!tp) {
-          throw new Error('Tutor profile not found for user');
-        }
+        // tutorId here is tutor_profiles.id (passed from dashboard)
+        const tutorProfileId = tutorId!;
 
         // Store sensitive tokens in private credentials table
         const { error: credError } = await supabase
           .from('tutor_calendar_credentials')
           .upsert({
-            tutor_id: tp.id,
+            tutor_id: tutorProfileId,
             google_oauth_token: tokens.access_token,
             google_refresh_token: tokens.refresh_token,
             google_token_expires_at: expiresAt.toISOString(),
@@ -165,7 +157,7 @@ serve(async (req) => {
             google_calendar_connected: true,
             calendar_sync_enabled: true,
           })
-          .eq('id', tp.id);
+          .eq('id', tutorProfileId);
 
         if (updateError) {
           console.error('Failed to update tutor profile:', updateError);
