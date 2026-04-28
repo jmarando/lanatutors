@@ -356,7 +356,7 @@ const TutorDashboard = () => {
                 <GoogleCalendarConnect 
                   tutorId={tutorProfile?.id}
                   isConnected={tutorProfile?.google_calendar_connected}
-                  calendarEmail={tutorProfile?.google_calendar_email}
+                  calendarEmail={undefined}
                 />
               )}
             </div>
