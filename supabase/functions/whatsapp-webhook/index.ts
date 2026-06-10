@@ -398,16 +398,16 @@ async function handleIncoming(body: any) {
     // Log inbound
     await logComm({ phone: from, parentId: convo.parent_id, direction: "inbound", content: text });
 
-    // If already escalated, send a short holding message and stop
-    if (convo.escalated) {
-      const hold = "Thanks — our team has your previous message and will follow up via email shortly 💛";
-      await sendWhatsAppMessage(from, hold);
-      await logComm({ phone: from, parentId: convo.parent_id, direction: "outbound", content: hold });
-      return;
-    }
-
     const history: Msg[] = Array.isArray(convo.messages) ? convo.messages : [];
     history.push({ role: "user", content: text, ts: new Date().toISOString() });
+
+    // If a human has taken over, just save the inbound message and stay silent.
+    // The admin replies from the WhatsApp Inbox; no canned auto-reply.
+    if (convo.escalated) {
+      console.log(`Convo escalated — saving inbound from ${from}, AI silent.`);
+      await saveConversation(from, history);
+      return;
+    }
 
     const { text: reply, escalated } = await callGemini(history, profileName, convo.parent_id, from);
 
