@@ -92,6 +92,11 @@ const TOOLS = [
 type Msg = { role: "user" | "model"; content: string; ts: string };
 
 async function sendWhatsAppMessage(to: string, text: string) {
+  // Safety: strip any "— Lana 💛" / "- Lana" sign-offs the model may add
+  const cleaned = text
+    .replace(/\n*\s*[—-]\s*Lana\s*(💛|❤️|♥|<3)?\s*$/i, "")
+    .replace(/\n*\s*Lana\s*(💛|❤️|♥)\s*$/i, "")
+    .trim();
   const res = await fetch(`https://graph.facebook.com/v21.0/${WA_PHONE_ID}/messages`, {
     method: "POST",
     headers: { Authorization: `Bearer ${WA_TOKEN}`, "Content-Type": "application/json" },
@@ -99,7 +104,7 @@ async function sendWhatsAppMessage(to: string, text: string) {
       messaging_product: "whatsapp",
       to,
       type: "text",
-      text: { body: text },
+      text: { body: cleaned, preview_url: true },
     }),
   });
   const data = await res.json();
