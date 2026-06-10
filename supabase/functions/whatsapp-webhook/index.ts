@@ -395,7 +395,7 @@ async function handleIncoming(body: any) {
       console.log("Non-text message:", msg.type);
       await sendWhatsAppMessage(
         from,
-        "Thanks for your message! I can only read text right now — please type your question and I'll help 💛",
+        "Thanks for your message. I can only read text right now — please type your question and I'll help.",
       );
       return;
     }
