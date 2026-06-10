@@ -24,6 +24,8 @@ export function WhatsAppInbox() {
   const [active, setActive] = useState<Conversation | null>(null);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [draft, setDraft] = useState("");
+  const [sending, setSending] = useState(false);
 
   const load = async () => {
     setLoading(true);
