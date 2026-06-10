@@ -2395,6 +2395,8 @@ The Lana Tutors Team`
         return <AdminIntensivePrograms />;
       case 'reports':
         return <AdminReports />;
+      case 'whatsapp-inbox':
+        return <WhatsAppInbox />;
       default:
         return renderDashboardContent();
     }
