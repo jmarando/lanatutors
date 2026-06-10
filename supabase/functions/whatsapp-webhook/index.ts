@@ -51,10 +51,9 @@ async function sendWhatsAppMessage(to: string, text: string) {
   else console.log("WhatsApp send ok:", data);
 }
 
-async function getAiReplyFromGemini(userText: string, profileName?: string): Promise<string | null> {
-  if (!GEMINI_API_KEY) return null;
+async function callGeminiModel(model: string, userText: string, profileName?: string): Promise<string | null> {
   const sys = SYSTEM_PROMPT + (profileName ? `\n\nThe user's WhatsApp profile name is "${profileName}".` : "");
-  const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`;
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_API_KEY}`;
   const res = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -64,12 +63,30 @@ async function getAiReplyFromGemini(userText: string, profileName?: string): Pro
     }),
   });
   if (!res.ok) {
-    console.error("Gemini API error:", res.status, await res.text());
+    console.error(`Gemini ${model} error:`, res.status, await res.text());
     return null;
   }
   const data = await res.json();
   const text = data?.candidates?.[0]?.content?.parts?.map((p: any) => p.text).filter(Boolean).join("").trim();
   return text || null;
+}
+
+async function getAiReplyFromGemini(userText: string, profileName?: string): Promise<string | null> {
+  if (!GEMINI_API_KEY) return null;
+  // Try primary model, then fallbacks. Retry once on 503/overload.
+  const models = [GEMINI_MODEL, "gemini-2.5-flash-lite", "gemini-2.0-flash", "gemini-1.5-flash"];
+  const seen = new Set<string>();
+  for (const model of models) {
+    if (seen.has(model)) continue;
+    seen.add(model);
+    for (let attempt = 0; attempt < 2; attempt++) {
+      const reply = await callGeminiModel(model, userText, profileName);
+      if (reply) return reply;
+      // small backoff before retry
+      await new Promise((r) => setTimeout(r, 400));
+    }
+  }
+  return null;
 }
 
 async function getAiReplyFromLovable(userText: string, profileName?: string): Promise<string | null> {
