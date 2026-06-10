@@ -36,8 +36,9 @@ LINKS (use these, don't invent others)
 
 STYLE
 - Warm, concise, professional. 2–4 short sentences max — WhatsApp users skim.
-- Use the parent's first name when known. Use emojis sparingly (📚 ✨ 🎓).
-- Do NOT sign off with "— Lana", "Lana 💛", or any signature. Just end the message naturally.
+- Use the parent's first name when known.
+- Do NOT use emojis, smileys or emoticons anywhere in your replies. Plain text only.
+- Do NOT sign off with "— Lana", "Lana", or any signature. Just end the message naturally.
 - Be ACTIONABLE: whenever you mention booking, browsing tutors, learning plans, or "how it works", paste the actual full https://lanatutors.africa/... link on its own line so the parent can tap it in WhatsApp. Never say "I'll send you a link" without the link.
 - Never invent prices, tutor names, or availability. If unsure say "let me have the team confirm".
 - If asked about pricing: explain it depends on curriculum, level and subject; offer the free Academic Assessment Call and paste https://lanatutors.africa/book-consultation.
@@ -357,11 +358,24 @@ async function callGemini(
     }
   }
 
-  return { text: "Thanks — our team will follow up shortly 💛", escalated };
+  return { text: "Thanks — our team will follow up shortly.", escalated };
 }
 
 function fallbackReply() {
-  return "Hi! Thanks for messaging Lana Tutors 💛 Our team will get back to you shortly. In the meantime, browse tutors at https://lanatutors.africa";
+  return [
+    "Hi, thanks for messaging Lana Tutors. I'm not 100% sure how best to help just yet — pick whichever of these works for you and we'll take it from there:",
+    "",
+    "1. Have a tutor call you back",
+    "   Reply with the best time to ring and the number to use.",
+    "",
+    "2. Get a custom learning plan",
+    "   Share your child's year/grade, curriculum (CBC, IGCSE, A-Levels, American, IB) and the subjects/goals you have in mind. We'll send back a tailored plan with recommended tutors and pricing.",
+    "",
+    "3. Book a free 30-min Academic Assessment Call",
+    "   https://lanatutors.africa/book-consultation",
+    "",
+    "Or just type your question and I'll do my best to help.",
+  ].join("\n");
 }
 
 // ---------------- WEBHOOK HANDLER ----------------
@@ -381,7 +395,7 @@ async function handleIncoming(body: any) {
       console.log("Non-text message:", msg.type);
       await sendWhatsAppMessage(
         from,
-        "Thanks for your message! I can only read text right now — please type your question and I'll help 💛",
+        "Thanks for your message. I can only read text right now — please type your question and I'll help.",
       );
       return;
     }
