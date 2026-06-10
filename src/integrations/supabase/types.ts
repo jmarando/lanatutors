@@ -2668,6 +2668,42 @@ export type Database = {
         }
         Relationships: []
       }
+      whatsapp_conversations: {
+        Row: {
+          created_at: string
+          escalated: boolean
+          escalated_at: string | null
+          last_message_at: string
+          messages: Json
+          parent_id: string | null
+          phone_number: string
+          profile_name: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          escalated?: boolean
+          escalated_at?: string | null
+          last_message_at?: string
+          messages?: Json
+          parent_id?: string | null
+          phone_number: string
+          profile_name?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          escalated?: boolean
+          escalated_at?: string | null
+          last_message_at?: string
+          messages?: Json
+          parent_id?: string | null
+          phone_number?: string
+          profile_name?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       public_tutor_profiles: {

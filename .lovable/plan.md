@@ -1,127 +1,99 @@
+# Lana WhatsApp AI — 5 Upgrades
 
-
-# Lana for Schools: Kirawa School Demo
-
-Build a working demo at `kirawa.lanatutors.africa` (routed via `/school/kirawa`) featuring three modules: School Communications, Homework & Assignments, and Digital Report Cards -- all branded with Kirawa School's identity (logo from their website, their red/gold color scheme).
+Goal: Turn the WhatsApp bot from a single-shot Q&A into a context-aware assistant that remembers conversations, logs everything, escalates when needed, and can actually look things up.
 
 ---
 
-## What You'll See in the Demo
+## 1. Sharpen the system prompt
+Bake in concrete, Lana-specific facts so Lana stops giving generic answers:
+- Curricula offered (CBC, IGCSE, A-Levels, American, IB) + the specialized IGCSE early-years subjects
+- Booking paths: Single Session / Custom Package / Learning Plan / Academic Assessment Call
+- Pricing model (multi-currency, KES base, 30% platform fee not shown to parents)
+- Online (Google Meet) and in-person (Nairobi) modes
+- Payments: Pesapal (cards, M-Pesa)
+- Brand voice rules already in place (short, warm, sign off "Lana 💛" first reply only)
+- Hard rules: never invent prices/tutor names, never share dashboard links, all email from info@lanatutors.africa
 
-### 1. School Landing/Login Page (`/school/kirawa`)
-- Kirawa School branded page with their logo and colors
-- Login for three roles: School Admin, Teacher, Parent
-- Demo accounts pre-seeded for tomorrow's meeting
-
-### 2. School Admin Dashboard (`/school/kirawa/admin`)
-- **Announcements**: Create/publish announcements and circulars (with category tags: General, Academic, Sports, Events)
-- **Event Calendar**: Visual calendar showing upcoming school events (sports day, parent evenings, term dates)
-- **Overview stats**: Total students, teachers, announcements sent, homework pending
-
-### 3. Teacher Portal (`/school/kirawa/teacher`)
-- **Post Homework**: Create assignments with subject, class, due date, description, and optional file attachments
-- **Enter Results**: Input student scores per subject per term, with grade auto-calculation
-- **View class roster**: See students in their assigned classes
-
-### 4. Parent Portal (`/school/kirawa/parent`)
-- **Announcements Feed**: See all school communications in a clean timeline
-- **Homework View**: See pending and past homework for their children, with due dates and status
-- **Report Cards**: View term-by-term results with subject scores, grades, teacher comments, and PDF download
+I'll ask you to confirm pricing ranges before publishing those specifically.
 
 ---
 
-## Database Schema (New Tables)
+## 2. Conversation memory
+Today every message is treated as the first one — Lana has amnesia.
 
-```text
-schools
-  id, name, slug, logo_url, primary_color, secondary_color, 
-  tagline, website, created_at
+Add a `whatsapp_conversations` table:
+- `phone_number` (PK)
+- `profile_name`
+- `messages` (jsonb array of `{role, content, ts}`, capped to last 20)
+- `parent_id` (nullable — linked when we match the phone to a parent account)
+- `last_message_at`
+- `escalated` (bool)
 
-school_members
-  id, school_id, user_id, role (admin/teacher/parent), 
-  full_name, created_at
-
-school_students  
-  id, school_id, student_name, class_name, grade_level,
-  parent_member_id (FK to school_members), created_at
-
-school_announcements
-  id, school_id, title, content, category (general/academic/sports/events),
-  author_id (FK to school_members), published, created_at
-
-school_events
-  id, school_id, title, description, event_date, event_time,
-  location, category, created_at
-
-school_homework
-  id, school_id, teacher_id (FK to school_members), 
-  class_name, subject, title, description, due_date,
-  created_at
-
-school_results
-  id, school_student_id, school_id, subject, term, year,
-  score, max_score, grade, teacher_comments,
-  teacher_id (FK to school_members), created_at
-```
-
-RLS policies will scope all data by school_id and role-based access.
+On every inbound message:
+1. Load history for that phone
+2. Send full history to Gemini
+3. Append user msg + assistant reply
+4. Trim to last 20 turns
 
 ---
 
-## New Files to Create
+## 3. Log every WhatsApp message to `communication_logs`
+You already have a `communication_logs` table + `CommunicationTimeline` admin UI. Right now WhatsApp messages don't show up there.
 
-### Pages
-- `src/pages/school/SchoolLogin.tsx` -- Branded login for Kirawa
-- `src/pages/school/SchoolAdminDashboard.tsx` -- Admin: announcements, events, overview
-- `src/pages/school/SchoolTeacherDashboard.tsx` -- Teacher: homework, results entry
-- `src/pages/school/SchoolParentDashboard.tsx` -- Parent: announcements, homework, report cards
+For every inbound + outbound WA message, insert:
+- `channel: "whatsapp"`
+- `direction: inbound | outbound`
+- `content`
+- `parent_id` (if phone matches a parent in `profiles`)
+- `status: "sent"`
 
-### Components
-- `src/components/school/SchoolLayout.tsx` -- Branded wrapper with Kirawa header/sidebar
-- `src/components/school/AnnouncementComposer.tsx` -- Create/edit announcements
-- `src/components/school/AnnouncementFeed.tsx` -- Timeline of announcements
-- `src/components/school/EventCalendar.tsx` -- Monthly calendar with events
-- `src/components/school/HomeworkForm.tsx` -- Teacher creates homework
-- `src/components/school/HomeworkList.tsx` -- View homework (parent/teacher)
-- `src/components/school/ResultsEntry.tsx` -- Teacher enters scores per student
-- `src/components/school/ReportCard.tsx` -- Parent views results + PDF export (using jsPDF, already installed)
-
-### Routes (added to App.tsx)
-- `/school/:slug` -- School login
-- `/school/:slug/admin` -- Admin dashboard
-- `/school/:slug/teacher` -- Teacher dashboard  
-- `/school/:slug/parent` -- Parent portal
+Result: every parent's profile page in admin will show their full WhatsApp thread alongside emails.
 
 ---
 
-## Demo Data (Pre-seeded for Kirawa)
+## 4. Escalation to the team
+When Lana detects:
+- Frustration / complaint keywords ("angry", "refund", "complaint", "terrible", "unacceptable")
+- Explicit request for a human ("speak to someone", "talk to a person")
+- Complex billing/payment issues
+- 3+ back-and-forth turns without resolution
 
-- **School**: Kirawa Road School, slug: `kirawa`
-- **3 demo classes**: Grade 4, Grade 5, Grade 6
-- **Sample announcements**: Term dates, sports day, parents' evening
-- **Sample homework**: Math worksheet, English essay, Science project
-- **Sample results**: Term 1 scores for a few students across subjects
-- **Sample events**: Swimming gala, music recital, end of term
-
----
-
-## Technical Approach
-
-- **Authentication**: Reuse existing Supabase auth -- school members log in with the same auth system, their `school_members` entry determines which school and role they see
-- **PDF Report Cards**: Use jsPDF (already installed) to generate branded report cards with Kirawa logo, student details, term results table, and teacher comments
-- **Multi-tenant**: All queries filtered by `school_id` from the slug, making this immediately extensible to other schools
-- **Branding**: School logo, colors, and name pulled from `schools` table and applied via CSS variables
+She will:
+1. Send a warm holding reply ("Let me get someone from the team to help — they'll email you at...")
+2. Mark conversation `escalated = true`
+3. Send an email to info@lanatutors.africa with the full transcript via existing Resend setup
+4. Stop auto-replying until an admin manually clears `escalated`
 
 ---
 
-## Sequence of Implementation
+## 5. Tools (function calling)
+Give Lana actual capabilities using Gemini function calling:
 
-1. Create database tables with migration (schools, school_members, school_students, school_announcements, school_events, school_homework, school_results) + RLS policies
-2. Seed Kirawa School demo data
-3. Build SchoolLayout component with Kirawa branding
-4. Build School Login page
-5. Build Admin Dashboard (announcements + events)
-6. Build Teacher Dashboard (homework + results entry)
-7. Build Parent Portal (announcements feed + homework view + report card with PDF)
-8. Add routes to App.tsx
+- `lookup_tutors({subject, curriculum, level})` → queries `tutor_profiles` via the public RPC and returns 2–3 matches with names + brief bio
+- `get_booking_link({type})` → returns the right deep link for assessment call / single session / package / learning plan
+- `check_parent_account({phone})` → tells Lana whether the WhatsApp number maps to an existing parent (so she can greet returning families by name and skip onboarding info)
 
+These run server-side in the edge function; results get fed back to Gemini so the final reply is grounded in real data.
+
+---
+
+## Technical details
+
+**Files**
+- `supabase/functions/whatsapp-webhook/index.ts` — rewrite to support memory, logging, tools, escalation
+- New migration: `whatsapp_conversations` table with RLS (admin read-only; service role full access)
+- New edge function: `whatsapp-escalation-email` (or reuse existing email-sender pattern)
+
+**Order of work**
+1. DB migration (memory table)
+2. Rewrite webhook with: prompt + memory + logging
+3. Add escalation path + email
+4. Add Gemini function-calling tools
+5. Test end-to-end via WhatsApp
+
+**Risks / things I need from you**
+- Real pricing ranges per curriculum (or confirm "always say 'team will confirm'")
+- Confirm escalation email should go to `info@lanatutors.africa` (or a different inbox)
+- OK to use Gemini 2.5 Flash (current) for tool calling — it supports it natively
+
+I'll ship steps 1–4 in one pass, then verify in the WhatsApp UI before adding tools (step 5) since those need the most testing.
