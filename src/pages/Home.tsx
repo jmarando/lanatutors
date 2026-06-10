@@ -637,22 +637,27 @@ const Home = () => {
               <h4 className="font-bold mb-4">For Students</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li><Link to="/tutors">Find Tutors</Link></li>
+                <li><Link to="/diaspora">Tutors for Diaspora Families</Link></li>
                 <li><Link to="/login">My Dashboard</Link></li>
-                <li><Link to="#">How It Works</Link></li>
+                <li><Link to="/how-it-works">How It Works</Link></li>
               </ul>
             </div>
             <div>
-              <h4 className="font-bold mb-4">For Tutors</h4>
+              <h4 className="font-bold mb-4">Subjects</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><Link to="/login">Tutor Dashboard</Link></li>
-                <li><Link to="/become-a-tutor">Become a Tutor</Link></li>
+                <li><Link to="/subjects/mathematics">Mathematics Tutors</Link></li>
+                <li><Link to="/subjects/chemistry">Chemistry Tutors</Link></li>
+                <li><Link to="/subjects/physics">Physics Tutors</Link></li>
+                <li><Link to="/subjects/biology">Biology Tutors</Link></li>
+                <li><Link to="/subjects/english">English Tutors</Link></li>
               </ul>
             </div>
             <div>
               <h4 className="font-bold mb-4">Support</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><a href="#about" className="hover:text-primary transition-colors">About Us</a></li>
-                <li><a href="https://wa.me/254725252542" target="_blank" rel="noopener noreferrer" className="hover:text-primary transition-colors">Contact Us</a></li>
+                <li><Link to="/about" className="hover:text-primary transition-colors">About Us</Link></li>
+                <li><Link to="/become-a-tutor" className="hover:text-primary transition-colors">Become a Tutor</Link></li>
+                <li><a href="https://wa.me/254117512316" target="_blank" rel="noopener noreferrer" className="hover:text-primary transition-colors">Contact Us</a></li>
                 <li><Link to="/privacy-policy" className="hover:text-primary transition-colors">Privacy Policy</Link></li>
               </ul>
             </div>

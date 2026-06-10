@@ -57,6 +57,7 @@ const TutorGuidePrintable = lazy(() => import("./pages/TutorGuidePrintable"));
 const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
 const TutorsInKenya = lazy(() => import("./pages/TutorsInKenya"));
 const SubjectLanding = lazy(() => import("./pages/SubjectLanding"));
+const Diaspora = lazy(() => import("./pages/Diaspora"));
 
 // School module
 const SchoolLogin = lazy(() => import("./pages/school/SchoolLogin"));
@@ -116,6 +117,10 @@ const AppContent = () => {
           <Route path="/privacy-policy" element={<PrivacyPolicy />} />
           <Route path="/tutors-in-kenya" element={<TutorsInKenya />} />
           <Route path="/subjects/:subject" element={<SubjectLanding />} />
+          <Route path="/diaspora" element={<Diaspora />} />
+          <Route path="/tutors-for-african-students-abroad" element={<Diaspora />} />
+          <Route path="/kenyan-tutors-uk" element={<Diaspora />} />
+          <Route path="/kenyan-tutors-usa" element={<Diaspora />} />
           <Route path="/profile-settings" element={<ProfileSettings />} />
           <Route path="/learning-plan/:planId" element={<LearningPlanView />} />
           <Route path="/request-learning-plan" element={<RequestLearningPlan />} />
