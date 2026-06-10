@@ -4,8 +4,9 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { MessageCircle, RefreshCw, Search, AlertCircle, CheckCircle2 } from "lucide-react";
+import { MessageCircle, RefreshCw, Search, AlertCircle, CheckCircle2, Send, Hand, Bot } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { toast } from "sonner";
 
@@ -23,6 +24,8 @@ export function WhatsAppInbox() {
   const [active, setActive] = useState<Conversation | null>(null);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [draft, setDraft] = useState("");
+  const [sending, setSending] = useState(false);
 
   const load = async () => {
     setLoading(true);
@@ -35,25 +38,53 @@ export function WhatsAppInbox() {
       toast.error("Failed to load conversations");
       console.error(error);
     } else {
-      setConversations((data as Conversation[]) || []);
-      if (data && data.length && !active) setActive(data[0] as Conversation);
+      const list = (data as Conversation[]) || [];
+      setConversations(list);
+      if (list.length && !active) setActive(list[0]);
+      else if (active) {
+        const refreshed = list.find(c => c.phone_number === active.phone_number);
+        if (refreshed) setActive(refreshed);
+      }
     }
     setLoading(false);
   };
 
   useEffect(() => { load(); }, []);
 
-  const clearEscalation = async (phone: string) => {
+  // Poll every 10s so new inbound messages show up
+  useEffect(() => {
+    const t = setInterval(load, 10000);
+    return () => clearInterval(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [active?.phone_number]);
+
+  const setEscalated = async (phone: string, escalated: boolean) => {
     const { error } = await supabase
       .from("whatsapp_conversations")
-      .update({ escalated: false, escalated_at: null })
+      .update({ escalated, escalated_at: escalated ? new Date().toISOString() : null })
       .eq("phone_number", phone);
     if (error) {
-      toast.error("Failed to clear");
+      toast.error("Failed to update");
     } else {
-      toast.success("Escalation cleared — Lana will reply again");
+      toast.success(escalated ? "Auto-replies paused — you're handling this chat" : "Lana will reply again");
       load();
     }
+  };
+
+  const sendHuman = async () => {
+    if (!active || !draft.trim()) return;
+    setSending(true);
+    const { error } = await supabase.functions.invoke("whatsapp-send", {
+      body: { phone: active.phone_number, text: draft.trim(), pauseAi: true },
+    });
+    setSending(false);
+    if (error) {
+      toast.error("Failed to send: " + error.message);
+      return;
+    }
+    setDraft("");
+    toast.success("Message sent");
+    load();
   };
 
   const filtered = conversations.filter(c => {
@@ -127,18 +158,25 @@ export function WhatsAppInbox() {
                   <p className="font-semibold">{active.profile_name || "Unknown"}</p>
                   <p className="text-xs text-muted-foreground">+{active.phone_number}</p>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 flex-wrap justify-end">
                   {active.escalated ? (
                     <>
                       <Badge variant="destructive" className="gap-1">
-                        <AlertCircle className="h-3 w-3" /> Escalated
+                        <Hand className="h-3 w-3" /> Human handling
                       </Badge>
-                      <Button size="sm" variant="outline" onClick={() => clearEscalation(active.phone_number)}>
-                        <CheckCircle2 className="h-4 w-4 mr-1" /> Resolve
+                      <Button size="sm" variant="outline" onClick={() => setEscalated(active.phone_number, false)}>
+                        <Bot className="h-4 w-4 mr-1" /> Resume AI
                       </Button>
                     </>
                   ) : (
-                    <Badge variant="secondary">Auto-replying</Badge>
+                    <>
+                      <Badge variant="secondary" className="gap-1">
+                        <Bot className="h-3 w-3" /> Auto-replying
+                      </Badge>
+                      <Button size="sm" variant="outline" onClick={() => setEscalated(active.phone_number, true)}>
+                        <Hand className="h-4 w-4 mr-1" /> Take over
+                      </Button>
+                    </>
                   )}
                   <Button size="sm" variant="outline" asChild>
                     <a href={`https://wa.me/${active.phone_number}`} target="_blank" rel="noreferrer">
@@ -151,11 +189,21 @@ export function WhatsAppInbox() {
                 <div className="space-y-3">
                   {messages.map((m: any, i: number) => {
                     const isUser = m.role === "user";
+                    const isHuman = m.sent_by === "human";
                     return (
                       <div key={i} className={`flex ${isUser ? "justify-start" : "justify-end"}`}>
                         <div className={`max-w-[80%] rounded-lg px-3 py-2 text-sm whitespace-pre-wrap ${
-                          isUser ? "bg-white border" : "bg-primary text-primary-foreground"
+                          isUser
+                            ? "bg-white border"
+                            : isHuman
+                              ? "bg-emerald-600 text-white"
+                              : "bg-primary text-primary-foreground"
                         }`}>
+                          {!isUser && (
+                            <div className="text-[10px] uppercase tracking-wide opacity-80 mb-0.5">
+                              {isHuman ? "You (human)" : "Lana (AI)"}
+                            </div>
+                          )}
                           {m.content}
                           {m.ts && (
                             <div className={`text-[10px] mt-1 opacity-70`}>
@@ -171,6 +219,32 @@ export function WhatsAppInbox() {
                   )}
                 </div>
               </ScrollArea>
+              <div className="border-t p-3 bg-background space-y-2">
+                {!active.escalated && (
+                  <p className="text-[11px] text-muted-foreground">
+                    Sending a message will pause the AI for this chat. Click "Resume AI" when you're done.
+                  </p>
+                )}
+                <div className="flex gap-2 items-end">
+                  <Textarea
+                    placeholder="Reply as a human… (Enter to send, Shift+Enter for newline)"
+                    value={draft}
+                    onChange={(e) => setDraft(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && !e.shiftKey) {
+                        e.preventDefault();
+                        sendHuman();
+                      }
+                    }}
+                    rows={2}
+                    className="resize-none"
+                  />
+                  <Button onClick={sendHuman} disabled={sending || !draft.trim()}>
+                    <Send className="h-4 w-4 mr-1" />
+                    {sending ? "Sending..." : "Send"}
+                  </Button>
+                </div>
+              </div>
             </>
           )}
         </Card>
