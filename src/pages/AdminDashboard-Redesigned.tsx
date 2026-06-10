@@ -31,6 +31,7 @@ import { AdminLearningPlansList } from "@/components/admin/AdminLearningPlansLis
 import { AdminLayout } from "@/components/admin/AdminLayout";
 import { AdminClassManagement } from "@/components/admin/AdminClassManagement";
 import { AdminReports } from "@/components/admin/AdminReports";
+import { WhatsAppInbox } from "@/components/admin/WhatsAppInbox";
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -2394,6 +2395,8 @@ The Lana Tutors Team`
         return <AdminIntensivePrograms />;
       case 'reports':
         return <AdminReports />;
+      case 'whatsapp-inbox':
+        return <WhatsAppInbox />;
       default:
         return renderDashboardContent();
     }

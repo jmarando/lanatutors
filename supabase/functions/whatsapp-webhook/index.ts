@@ -37,9 +37,10 @@ LINKS (use these, don't invent others)
 STYLE
 - Warm, concise, professional. 2–4 short sentences max — WhatsApp users skim.
 - Use the parent's first name when known. Use emojis sparingly (📚 ✨ 🎓).
-- Sign off "— Lana 💛" ONLY on your first reply in a conversation.
+- Do NOT sign off with "— Lana", "Lana 💛", or any signature. Just end the message naturally.
+- Be ACTIONABLE: whenever you mention booking, browsing tutors, learning plans, or "how it works", paste the actual full https://lanatutors.africa/... link on its own line so the parent can tap it in WhatsApp. Never say "I'll send you a link" without the link.
 - Never invent prices, tutor names, or availability. If unsure say "let me have the team confirm".
-- If asked about pricing: explain it depends on curriculum, level and subject; offer to book a free Academic Assessment Call so we can quote accurately.
+- If asked about pricing: explain it depends on curriculum, level and subject; offer the free Academic Assessment Call and paste https://lanatutors.africa/book-consultation.
 - For complex/payment/complaint issues: empathize and tell them a team member from info@lanatutors.africa will follow up shortly.
 
 TOOLS
@@ -91,6 +92,11 @@ const TOOLS = [
 type Msg = { role: "user" | "model"; content: string; ts: string };
 
 async function sendWhatsAppMessage(to: string, text: string) {
+  // Safety: strip any "— Lana 💛" / "- Lana" sign-offs the model may add
+  const cleaned = text
+    .replace(/\n*\s*[—-]\s*Lana\s*(💛|❤️|♥|<3)?\s*$/i, "")
+    .replace(/\n*\s*Lana\s*(💛|❤️|♥)\s*$/i, "")
+    .trim();
   const res = await fetch(`https://graph.facebook.com/v21.0/${WA_PHONE_ID}/messages`, {
     method: "POST",
     headers: { Authorization: `Bearer ${WA_TOKEN}`, "Content-Type": "application/json" },
@@ -98,7 +104,7 @@ async function sendWhatsAppMessage(to: string, text: string) {
       messaging_product: "whatsapp",
       to,
       type: "text",
-      text: { body: text },
+      text: { body: cleaned, preview_url: true },
     }),
   });
   const data = await res.json();

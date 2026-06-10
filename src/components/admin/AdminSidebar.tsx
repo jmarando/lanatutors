@@ -116,6 +116,11 @@ export function AdminSidebar({ activeTab, onTabChange, counts }: AdminSidebarPro
           label: "Plan Requests", 
           icon: ClipboardList 
         },
+        { 
+          id: "whatsapp-inbox", 
+          label: "WhatsApp Inbox", 
+          icon: MessageSquare
+        },
       ],
     },
     {
