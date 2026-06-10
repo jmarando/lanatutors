@@ -164,6 +164,77 @@ const SUBJECTS: Record<string, SubjectContent> = {
       },
     ],
   },
+  kiswahili: {
+    slug: "kiswahili",
+    name: "Kiswahili",
+    title: "Kiswahili Tutors in Kenya — KCSE, CBC & IB Kiswahili",
+    description:
+      "Verified Kenyan Kiswahili tutors for KCSE, CBC, IGCSE and IB. Online one-on-one Kiswahili lessons with qualified teachers.",
+    intro:
+      "From insha and ufahamu to fasihi simulizi and isimu jamii — our native Kiswahili tutors strengthen reading, writing, and exam responses across CBC, KCSE and IB Kiswahili.",
+    curricula: ["CBC Kiswahili", "KCSE Kiswahili (8-4-4)", "IB Kiswahili A & B"],
+    topics: ["Ufahamu", "Insha", "Sarufi", "Fasihi (Riwaya, Tamthilia, Ushairi)", "Isimu jamii", "Methali & Misemo", "Mazungumzo", "Past paper practice"],
+    faqs: [
+      { q: "Do tutors cover the current KCSE set books (fasihi)?", a: "Yes. Our Kiswahili tutors prepare students on the current KCSE set texts with uchambuzi wa wahusika, dhamira na maudhui." },
+      { q: "Are tutors native Kiswahili speakers?", a: "Yes — all our Kiswahili tutors are native speakers and most are practising classroom Kiswahili teachers in Kenya." },
+    ],
+  },
+  "business-studies": {
+    slug: "business-studies",
+    name: "Business Studies",
+    title: "Business Studies Tutors in Kenya — KCSE & IGCSE Business",
+    description:
+      "Online Business Studies tutors in Kenya for KCSE and IGCSE Business. Verified Kenyan teachers, one-on-one lessons.",
+    intro:
+      "From business environment and forms of ownership to accounting, finance, and marketing — our Business Studies tutors break down theory with Kenyan case studies and exam-style practice.",
+    curricula: ["KCSE Business Studies (8-4-4)", "IGCSE Business Studies 0450", "A-Level Business"],
+    topics: ["Business environment", "Forms of business ownership", "Production", "Marketing", "Finance & accounting", "Office practice", "Government & business", "Past paper practice"],
+    faqs: [
+      { q: "Do tutors cover the KCSE Business Studies syllabus in full?", a: "Yes — Form 1 through Form 4, with focus on KCSE Paper 1 and Paper 2 patterns and marking schemes." },
+    ],
+  },
+  "computer-studies": {
+    slug: "computer-studies",
+    name: "Computer Studies",
+    title: "Computer Studies Tutors in Kenya — KCSE Computer Studies & IGCSE ICT",
+    description:
+      "Verified Kenyan Computer Studies and ICT tutors for KCSE, IGCSE and CBC. Online one-on-one lessons.",
+    intro:
+      "From programming and data processing to networking, spreadsheets and databases — our Computer Studies tutors prepare students for KCSE Computer Studies, IGCSE ICT 0417 and CBC Computer Science.",
+    curricula: ["KCSE Computer Studies (8-4-4)", "IGCSE ICT 0417", "IGCSE Computer Science 0478", "CBC Computer Science"],
+    topics: ["Programming (Pascal, Python)", "Spreadsheets", "Databases", "Word processing", "Networking & internet", "System security", "Data representation", "Past paper practice"],
+    faqs: [
+      { q: "Do tutors help with the KCSE Computer Studies project?", a: "Yes. Our tutors guide students through the project from design to documentation and presentation." },
+    ],
+  },
+  geography: {
+    slug: "geography",
+    name: "Geography",
+    title: "Geography Tutors in Kenya — KCSE & IGCSE Geography",
+    description:
+      "Online Geography tutors in Kenya for KCSE, IGCSE 0460, and IB Geography. Verified Kenyan teachers offering one-on-one lessons.",
+    intro:
+      "From map work and statistical methods to climate, agriculture, industry and population — our Geography tutors strengthen content and exam technique for KCSE, IGCSE and IB Geography.",
+    curricula: ["KCSE Geography (8-4-4)", "IGCSE Geography 0460", "IB Geography SL & HL"],
+    topics: ["Map work", "Statistical methods", "Climate & weather", "Agriculture", "Mining & industry", "Population & settlement", "Field work", "Past paper practice"],
+    faqs: [
+      { q: "Can tutors help with KCSE Geography field work?", a: "Yes. Our tutors prepare students for KCSE field work questions, including planning, data collection, and reporting." },
+    ],
+  },
+  history: {
+    slug: "history",
+    name: "History",
+    title: "History Tutors in Kenya — KCSE History & Government, IGCSE History",
+    description:
+      "Verified Kenyan History tutors for KCSE History & Government, IGCSE and IB History. Online one-on-one lessons.",
+    intro:
+      "From the development of African societies to constitutional history and international relations — our History tutors prepare students for KCSE History & Government, IGCSE History 0470 and IB History.",
+    curricula: ["KCSE History & Government (8-4-4)", "IGCSE History 0470", "IB History SL & HL"],
+    topics: ["African history", "Kenyan history & government", "World wars", "Cold War", "International relations", "Constitutional development", "Source-based questions", "Past paper practice"],
+    faqs: [
+      { q: "Are tutors familiar with KCSE Paper 1 and Paper 2 structure?", a: "Yes. Our History tutors train students on both Paper 1 (short answers) and Paper 2 (essays)." },
+    ],
+  },
 };
 
 const SubjectLanding = () => {
