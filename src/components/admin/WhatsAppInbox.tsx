@@ -38,25 +38,53 @@ export function WhatsAppInbox() {
       toast.error("Failed to load conversations");
       console.error(error);
     } else {
-      setConversations((data as Conversation[]) || []);
-      if (data && data.length && !active) setActive(data[0] as Conversation);
+      const list = (data as Conversation[]) || [];
+      setConversations(list);
+      if (list.length && !active) setActive(list[0]);
+      else if (active) {
+        const refreshed = list.find(c => c.phone_number === active.phone_number);
+        if (refreshed) setActive(refreshed);
+      }
     }
     setLoading(false);
   };
 
   useEffect(() => { load(); }, []);
 
-  const clearEscalation = async (phone: string) => {
+  // Poll every 10s so new inbound messages show up
+  useEffect(() => {
+    const t = setInterval(load, 10000);
+    return () => clearInterval(t);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [active?.phone_number]);
+
+  const setEscalated = async (phone: string, escalated: boolean) => {
     const { error } = await supabase
       .from("whatsapp_conversations")
-      .update({ escalated: false, escalated_at: null })
+      .update({ escalated, escalated_at: escalated ? new Date().toISOString() : null })
       .eq("phone_number", phone);
     if (error) {
-      toast.error("Failed to clear");
+      toast.error("Failed to update");
     } else {
-      toast.success("Escalation cleared — Lana will reply again");
+      toast.success(escalated ? "Auto-replies paused — you're handling this chat" : "Lana will reply again");
       load();
     }
+  };
+
+  const sendHuman = async () => {
+    if (!active || !draft.trim()) return;
+    setSending(true);
+    const { error } = await supabase.functions.invoke("whatsapp-send", {
+      body: { phone: active.phone_number, text: draft.trim(), pauseAi: true },
+    });
+    setSending(false);
+    if (error) {
+      toast.error("Failed to send: " + error.message);
+      return;
+    }
+    setDraft("");
+    toast.success("Message sent");
+    load();
   };
 
   const filtered = conversations.filter(c => {
