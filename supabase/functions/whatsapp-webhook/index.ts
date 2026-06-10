@@ -9,6 +9,8 @@ const VERIFY_TOKEN = Deno.env.get("WHATSAPP_VERIFY_TOKEN");
 const WA_TOKEN = Deno.env.get("WHATSAPP_ACCESS_TOKEN");
 const WA_PHONE_ID = Deno.env.get("WHATSAPP_PHONE_NUMBER_ID");
 const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
+const GEMINI_MODEL = Deno.env.get("GEMINI_MODEL") ?? "gemini-2.5-flash";
 
 const SYSTEM_PROMPT = `You are Lana, the friendly WhatsApp assistant for Lana Tutors — Kenya's trusted premium tutoring platform serving local and diaspora families.
 
