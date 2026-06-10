@@ -9,6 +9,8 @@ const VERIFY_TOKEN = Deno.env.get("WHATSAPP_VERIFY_TOKEN");
 const WA_TOKEN = Deno.env.get("WHATSAPP_ACCESS_TOKEN");
 const WA_PHONE_ID = Deno.env.get("WHATSAPP_PHONE_NUMBER_ID");
 const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
+const GEMINI_MODEL = Deno.env.get("GEMINI_MODEL") ?? "gemini-2.5-flash";
 
 const SYSTEM_PROMPT = `You are Lana, the friendly WhatsApp assistant for Lana Tutors — Kenya's trusted premium tutoring platform serving local and diaspora families.
 
@@ -49,7 +51,29 @@ async function sendWhatsAppMessage(to: string, text: string) {
   else console.log("WhatsApp send ok:", data);
 }
 
-async function getAiReply(userText: string, profileName?: string): Promise<string> {
+async function getAiReplyFromGemini(userText: string, profileName?: string): Promise<string | null> {
+  if (!GEMINI_API_KEY) return null;
+  const sys = SYSTEM_PROMPT + (profileName ? `\n\nThe user's WhatsApp profile name is "${profileName}".` : "");
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`;
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      systemInstruction: { parts: [{ text: sys }] },
+      contents: [{ role: "user", parts: [{ text: userText }] }],
+    }),
+  });
+  if (!res.ok) {
+    console.error("Gemini API error:", res.status, await res.text());
+    return null;
+  }
+  const data = await res.json();
+  const text = data?.candidates?.[0]?.content?.parts?.map((p: any) => p.text).filter(Boolean).join("").trim();
+  return text || null;
+}
+
+async function getAiReplyFromLovable(userText: string, profileName?: string): Promise<string | null> {
+  if (!LOVABLE_API_KEY) return null;
   const res = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
     method: "POST",
     headers: {
@@ -66,13 +90,22 @@ async function getAiReply(userText: string, profileName?: string): Promise<strin
     }),
   });
   if (!res.ok) {
-    const errTxt = await res.text();
-    console.error("AI gateway error:", res.status, errTxt);
-    return "Hi! Thanks for reaching out to Lana Tutors 💛 Our team will get back to you shortly. In the meantime, you can explore tutors at https://lanatutors.africa";
+    console.error("Lovable AI gateway error:", res.status, await res.text());
+    return null;
   }
   const data = await res.json();
-  return data.choices?.[0]?.message?.content?.trim() ||
-    "Thanks for your message! Our team will follow up shortly.";
+  return data.choices?.[0]?.message?.content?.trim() || null;
+}
+
+async function getAiReply(userText: string, profileName?: string): Promise<string> {
+  // Prefer direct Gemini if key present, fallback to Lovable AI Gateway
+  const reply =
+    (await getAiReplyFromGemini(userText, profileName)) ??
+    (await getAiReplyFromLovable(userText, profileName));
+  return (
+    reply ||
+    "Hi! Thanks for reaching out to Lana Tutors 💛 Our team will get back to you shortly. In the meantime, you can explore tutors at https://lanatutors.africa"
+  );
 }
 
 async function handleIncoming(body: any) {
