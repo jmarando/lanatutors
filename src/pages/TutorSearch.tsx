@@ -203,15 +203,38 @@ const TutorSearch = () => {
         <p>Loading tutors...</p>
       </div>;
   }
+  const tutorsFaqSchema = {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: [
+      { "@type": "Question", name: "How much do tutors in Kenya cost?", acceptedAnswer: { "@type": "Answer", text: "Online one-on-one tutoring on Lana ranges from KES 1,500 to KES 3,500 per hour depending on the curriculum (CBC, KCSE, IGCSE, IB) and the tutor's experience. Diaspora families can pay in USD, GBP, EUR or KES." } },
+      { "@type": "Question", name: "How do I find a private tutor in Kenya?", acceptedAnswer: { "@type": "Answer", text: "Browse verified tutors on this page, filter by curriculum, subject, level and location, then view a tutor's profile and book a session online. We match most families with the right tutor within 48 hours." } },
+      { "@type": "Question", name: "Do you offer online tutoring across Kenya and for the diaspora?", acceptedAnswer: { "@type": "Answer", text: "Yes. All our tutors offer online lessons over Google Meet, so students in Nairobi, Mombasa, Kisumu — or Kenyan families abroad in the UK, US, UAE and Australia — can learn from a verified Kenyan teacher." } },
+      { "@type": "Question", name: "Are Lana tutors verified?", acceptedAnswer: { "@type": "Answer", text: "Every tutor goes through ID verification, qualification checks and a subject-knowledge assessment before being listed. Most are practising teachers in top Kenyan schools." } },
+      { "@type": "Question", name: "Which curricula do your tutors cover?", acceptedAnswer: { "@type": "Answer", text: "We support CBC, KCSE (8-4-4), IGCSE (Cambridge), A-Levels, IB and American curricula across primary, secondary and exam-prep levels." } },
+    ],
+  };
+
   return <div className="min-h-screen bg-[image:var(--gradient-page)]">
-      <SEO title="Find Verified Tutors in Kenya" description="Browse 500+ verified tutors from top Kenyan schools. Filter by subject, curriculum (CBC, IGCSE, American), rating, and price. Book online or in-person tutoring sessions." keywords="find tutors Kenya, hire tutor Nairobi, CBC tutors, IGCSE tutors, American curriculum tutors, verified teachers Kenya" />
+      <SEO
+        title="Tutors in Kenya — Online One-on-One Tuition"
+        description="Hire verified online tutors in Kenya for KCSE, CBC, IGCSE, A-Level and IB. Filter by subject, curriculum and location. Book a private tutor in Nairobi or online from anywhere in 48 hours."
+        keywords="tutors in kenya, online tutor in kenya, private tutors in kenya, tutoring in kenya, kcse tutor, cbc tutor, igcse tutor, ib tutor, find a tutor kenya"
+        canonical="https://lanatutors.africa/tutors"
+        structuredData={tutorsFaqSchema}
+      />
       
       <div className="max-w-7xl mx-auto px-6 py-12">
         {/* Header */}
         <div className="mb-10">
           <div className="text-center mb-8">
-            <h1 className="text-5xl font-bold mb-3">Find Your Tutor</h1>
-            <p className="text-lg text-muted-foreground mb-6">Browse verified tutors or explore our specialized revision packages</p>
+            <h1 className="text-4xl md:text-5xl font-bold mb-3">Online Tutors in Kenya — Verified &amp; Vetted</h1>
+            <p className="text-lg text-muted-foreground mb-4 max-w-3xl mx-auto">
+              Find a private tutor in Kenya for KCSE, CBC, IGCSE, A-Level or IB. Every tutor on Lana is a verified teacher from a top Kenyan school — book one-on-one online tutoring from anywhere in Kenya, or from the diaspora.
+            </p>
+            <p className="text-sm text-muted-foreground mb-6 max-w-3xl mx-auto">
+              Rates from KES 1,500/hour. Available in USD, GBP and EUR for diaspora families. Most students matched with the right tutor within 48 hours.
+            </p>
             
             {/* How It Works Section */}
             <div className="max-w-4xl mx-auto mb-8">
