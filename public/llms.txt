@@ -1,0 +1,60 @@
+# Lana Tutors
+
+> Lana Tutors connects parents and students with verified Kenyan teachers for online and in-person one-on-one tutoring across CBC, KCSE (8-4-4), IGCSE, A-Level, IB, and American curricula. Headquartered in Nairobi, Kenya, serving students locally and across the African diaspora (UK, USA, Canada, UAE, and beyond).
+
+Lana Tutors is a Kenyan tutoring platform. Tutors are verified classroom teachers — many are KCSE examiners or markers from top Kenyan schools. Sessions are delivered over Google Meet (online) or in-person in Nairobi, Mombasa, and Kisumu. Pricing is in Kenyan Shillings with multi-currency display (USD, EUR, GBP, KES, TZS, UGX). All assessment calls and bookings resolve to East Africa Time (EAT, Africa/Nairobi).
+
+## Key facts
+- Founded and headquartered in Nairobi, Kenya
+- Specializes in Kenyan curricula (CBC, KCSE/8-4-4) and major international curricula (IGCSE, A-Level, IB, American/AP)
+- Verified tutors only — credential-checked classroom teachers, including KCSE markers
+- One-on-one online lessons via Google Meet; in-person sessions available in Nairobi
+- Serves Kenyan diaspora families in the UK, USA, Canada, UAE, Australia
+- Free 30-minute Academic Assessment Calls before committing to a tutor
+- Custom Learning Plans designed by senior educators for long-term goals
+- Group classes and December Intensive holiday programs
+- Pricing: typically KES 1,500 – KES 3,500 per hour depending on curriculum and level
+- Contact: info@lanatutors.africa
+
+## Core pages
+- [Home](/): Platform overview and value proposition
+- [Find Tutors](/tutors): Browse and filter verified Kenyan tutors by subject, curriculum, and level
+- [How It Works](/how-it-works): Step-by-step explanation of booking, sessions, and payment
+- [About Lana Tutors](/about): Company background and mission
+- [For Students & Parents](/for-students): Information for families considering tutoring
+- [For Tutors](/for-tutors): Information for teachers wanting to join the platform
+- [Become a Tutor](/become-a-tutor): Tutor application
+- [Book a Free Assessment Call](/book-consultation): Schedule a 30-minute consultation with the Lana academic team
+- [Request a Learning Plan](/request-learning-plan): Get a custom multi-session plan designed for your child
+- [Group Classes](/group-classes): Small-group classes by curriculum and subject
+- [Blog](/blog): Articles on Kenyan education, exam prep, and parenting
+
+## Subject pages
+- [Mathematics Tutors](/subjects/mathematics): CBC, KCSE, IGCSE 0580, IB Maths AA & AI
+- [Chemistry Tutors](/subjects/chemistry): KCSE, IGCSE 0620, IB Chemistry SL/HL
+- [Physics Tutors](/subjects/physics): KCSE, IGCSE 0625, IB Physics SL/HL
+- [Biology Tutors](/subjects/biology): KCSE, IGCSE 0610, IB Biology SL/HL
+- [English Tutors](/subjects/english): KCSE, IGCSE First Language English 0500, IB English
+- [Kiswahili Tutors](/subjects/kiswahili): KCSE, CBC, and IB Kiswahili
+- [Business Studies Tutors](/subjects/business-studies): KCSE and IGCSE Business
+- [Computer Studies Tutors](/subjects/computer-studies): KCSE Computer Studies and IGCSE ICT
+- [Geography Tutors](/subjects/geography): KCSE and IGCSE Geography
+- [History Tutors](/subjects/history): KCSE History & Government, IGCSE History
+
+## Curriculum × Mathematics pages
+- [KCSE Mathematics Tutors](/kcse-mathematics-tutors): KCSE Paper 1 & 2 preparation
+- [IGCSE Mathematics Tutors](/igcse-mathematics-tutors): IGCSE 0580 and 0607 preparation
+- [IB Mathematics Tutors](/ib-mathematics-tutors): IB Maths AA and AI, SL and HL
+- [CBC Mathematics Tutors](/cbc-mathematics-tutors): CBC Grade 1 – Grade 9 mathematics
+
+## Diaspora pages
+- [Tutors for the African Diaspora](/diaspora): Online tutoring for Kenyan and African families abroad
+- [Kenyan Tutors in the UK](/kenyan-tutors-uk): For Kenyan families in the United Kingdom
+- [Kenyan Tutors in the USA](/kenyan-tutors-usa): For Kenyan families in the United States
+
+## Policies
+- [Privacy Policy](/privacy-policy)
+
+## Optional
+- [Tutors in Kenya — overview](/tutors-in-kenya)
+- [Tutors for African students abroad](/tutors-for-african-students-abroad)

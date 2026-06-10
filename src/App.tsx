@@ -57,6 +57,7 @@ const TutorGuidePrintable = lazy(() => import("./pages/TutorGuidePrintable"));
 const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
 const TutorsInKenya = lazy(() => import("./pages/TutorsInKenya"));
 const SubjectLanding = lazy(() => import("./pages/SubjectLanding"));
+const CurriculumMathLanding = lazy(() => import("./pages/CurriculumMathLanding"));
 const Diaspora = lazy(() => import("./pages/Diaspora"));
 
 // School module
@@ -117,6 +118,10 @@ const AppContent = () => {
           <Route path="/privacy-policy" element={<PrivacyPolicy />} />
           <Route path="/tutors-in-kenya" element={<TutorsInKenya />} />
           <Route path="/subjects/:subject" element={<SubjectLanding />} />
+          <Route path="/kcse-mathematics-tutors" element={<CurriculumMathLanding slugOverride="kcse-mathematics-tutors" />} />
+          <Route path="/igcse-mathematics-tutors" element={<CurriculumMathLanding slugOverride="igcse-mathematics-tutors" />} />
+          <Route path="/ib-mathematics-tutors" element={<CurriculumMathLanding slugOverride="ib-mathematics-tutors" />} />
+          <Route path="/cbc-mathematics-tutors" element={<CurriculumMathLanding slugOverride="cbc-mathematics-tutors" />} />
           <Route path="/diaspora" element={<Diaspora />} />
           <Route path="/tutors-for-african-students-abroad" element={<Diaspora />} />
           <Route path="/kenyan-tutors-uk" element={<Diaspora />} />
