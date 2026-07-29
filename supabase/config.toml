@@ -158,3 +158,6 @@ verify_jwt = false
 
 [functions.send-consultation-reminder]
 verify_jwt = false
+
+[functions.unsubscribe-email]
+verify_jwt = false
