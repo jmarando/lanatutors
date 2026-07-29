@@ -1093,6 +1093,54 @@ export type Database = {
         }
         Relationships: []
       }
+      lana_knowledge: {
+        Row: {
+          active: boolean
+          added_by: string | null
+          canonical_answer: string
+          created_at: string
+          id: string
+          question_pattern: string
+          tags: string[]
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          added_by?: string | null
+          canonical_answer: string
+          created_at?: string
+          id?: string
+          question_pattern: string
+          tags?: string[]
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          added_by?: string | null
+          canonical_answer?: string
+          created_at?: string
+          id?: string
+          question_pattern?: string
+          tags?: string[]
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lana_knowledge_added_by_fkey"
+            columns: ["added_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lana_knowledge_added_by_fkey"
+            columns: ["added_by"]
+            isOneToOne: false
+            referencedRelation: "public_tutor_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       learning_plans: {
         Row: {
           created_at: string | null
@@ -1555,6 +1603,45 @@ export type Database = {
           subjects_struggling?: string[] | null
           timezone?: string | null
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      rate_card: {
+        Row: {
+          created_at: string
+          curriculum_band: string
+          default_rate_kes: number
+          id: string
+          level_band: string
+          max_rate_kes: number
+          min_rate_kes: number
+          notes: string | null
+          sort_order: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          curriculum_band: string
+          default_rate_kes: number
+          id?: string
+          level_band: string
+          max_rate_kes: number
+          min_rate_kes: number
+          notes?: string | null
+          sort_order?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          curriculum_band?: string
+          default_rate_kes?: number
+          id?: string
+          level_band?: string
+          max_rate_kes?: number
+          min_rate_kes?: number
+          notes?: string | null
+          sort_order?: number
+          updated_at?: string
         }
         Relationships: []
       }
@@ -2491,6 +2578,7 @@ export type Database = {
           hourly_rate: number | null
           id: string
           institution_years: number | null
+          is_listed: boolean
           profile_slug: string | null
           qualifications: string[] | null
           rating: number | null
@@ -2527,6 +2615,7 @@ export type Database = {
           hourly_rate?: number | null
           id?: string
           institution_years?: number | null
+          is_listed?: boolean
           profile_slug?: string | null
           qualifications?: string[] | null
           rating?: number | null
@@ -2563,6 +2652,7 @@ export type Database = {
           hourly_rate?: number | null
           id?: string
           institution_years?: number | null
+          is_listed?: boolean
           profile_slug?: string | null
           qualifications?: string[] | null
           rating?: number | null
