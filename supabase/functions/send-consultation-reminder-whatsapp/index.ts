@@ -78,7 +78,7 @@ Just a friendly reminder about your consultation for *${consultation.student_nam
 
 📅 *Date:* ${formattedDate}
 ⏰ *Time:* ${consultation.consultation_time}
-⏱️ *Duration:* 30 minutes
+⏱️ *Duration:* 20 minutes
 
 🔗 *Join here:*
 ${consultation.meeting_link || "Link will be shared shortly"}
@@ -101,7 +101,7 @@ Hi ${consultation.parent_name},
 Your consultation for *${consultation.student_name}* starts in about 1 hour!
 
 📅 *Time:* ${consultation.consultation_time}
-⏱️ *Duration:* 30 minutes
+⏱️ *Duration:* 20 minutes
 
 🔗 *Join here:*
 ${consultation.meeting_link || "Link will be shared shortly"}

@@ -52,11 +52,14 @@ const BUDGET_OPTIONS = [
   { value: "not_sure", label: "Not sure yet" },
 ];
 
-// 30-minute slots from 2pm to 7pm
+// 20-minute slots: 11:00 AM - 3:00 PM and 7:00 PM - 9:00 PM (EAT), Monday-Saturday
 const ALL_TIME_SLOTS = [
-  "02:00 PM", "02:30 PM", "03:00 PM", "03:30 PM", 
-  "04:00 PM", "04:30 PM", "05:00 PM", "05:30 PM", 
-  "06:00 PM", "06:30 PM", "07:00 PM"
+  "11:00 AM", "11:20 AM", "11:40 AM",
+  "12:00 PM", "12:20 PM", "12:40 PM",
+  "01:00 PM", "01:20 PM", "01:40 PM",
+  "02:00 PM", "02:20 PM", "02:40 PM",
+  "07:00 PM", "07:20 PM", "07:40 PM",
+  "08:00 PM", "08:20 PM", "08:40 PM"
 ];
 
 const BookConsultation = () => {
@@ -337,7 +340,7 @@ const BookConsultation = () => {
   return <div className="min-h-screen bg-[image:var(--gradient-page)] py-12 px-6">
       <SEO 
         title="Book Academic Assessment Call - Expert Tutor Matching" 
-        description="Schedule a 30-minute academic assessment call with Lana education experts. Get personalized tutor recommendations, custom learning plan, and expert guidance for your child's success." 
+        description="Schedule a 20-minute academic assessment call with Lana education experts. Get personalized tutor recommendations, custom learning plan, and expert guidance for your child's success." 
         keywords="academic assessment Kenya, tutoring consultation, education assessment, tutor matching Kenya, learning plan Kenya" 
       />
       
@@ -355,7 +358,7 @@ const BookConsultation = () => {
             </div>
             <CardTitle className="text-2xl text-center">Book Your Academic Assessment Call</CardTitle>
             <CardDescription className="text-sm text-center">
-              30-minute session with an education consultant
+              20-minute session with an education consultant
             </CardDescription>
           </CardHeader>
           <CardContent className="pt-0">
@@ -371,7 +374,7 @@ const BookConsultation = () => {
                       <div className="flex-1">
                         <h4 className="font-semibold text-lg mb-2">Academic Assessment Call</h4>
                         <p className="text-sm text-muted-foreground mb-4">
-                          A personalized 30-minute session to understand your child's needs and create a tailored learning plan
+                          A personalized 20-minute session to understand your child's needs and create a tailored learning plan
                         </p>
                       </div>
                     </div>

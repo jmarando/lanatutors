@@ -46,7 +46,7 @@ Your free consultation for *${studentName}* is confirmed! ✅
 
 📅 *Date:* ${formattedDate}
 ⏰ *Time:* ${consultationTime}
-⏱️ *Duration:* 30 minutes
+⏱️ *Duration:* 20 minutes
 
 🔗 *Join here:*
 ${meetingLink}
