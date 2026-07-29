@@ -340,7 +340,7 @@ const BookConsultation = () => {
   return <div className="min-h-screen bg-[image:var(--gradient-page)] py-12 px-6">
       <SEO 
         title="Book Academic Assessment Call - Expert Tutor Matching" 
-        description="Schedule a 30-minute academic assessment call with Lana education experts. Get personalized tutor recommendations, custom learning plan, and expert guidance for your child's success." 
+        description="Schedule a 20-minute academic assessment call with Lana education experts. Get personalized tutor recommendations, custom learning plan, and expert guidance for your child's success." 
         keywords="academic assessment Kenya, tutoring consultation, education assessment, tutor matching Kenya, learning plan Kenya" 
       />
       
@@ -358,7 +358,7 @@ const BookConsultation = () => {
             </div>
             <CardTitle className="text-2xl text-center">Book Your Academic Assessment Call</CardTitle>
             <CardDescription className="text-sm text-center">
-              30-minute session with an education consultant
+              20-minute session with an education consultant
             </CardDescription>
           </CardHeader>
           <CardContent className="pt-0">
@@ -374,7 +374,7 @@ const BookConsultation = () => {
                       <div className="flex-1">
                         <h4 className="font-semibold text-lg mb-2">Academic Assessment Call</h4>
                         <p className="text-sm text-muted-foreground mb-4">
-                          A personalized 30-minute session to understand your child's needs and create a tailored learning plan
+                          A personalized 20-minute session to understand your child's needs and create a tailored learning plan
                         </p>
                       </div>
                     </div>
