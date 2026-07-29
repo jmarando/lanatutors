@@ -295,7 +295,7 @@ const CurriculumMathLanding = ({ slugOverride }: { slugOverride?: string }) => {
             Get matched with a {data.curriculum} maths tutor
           </h2>
           <p className="mb-8 text-primary-foreground/90">
-            Book a free 30-minute assessment call. We'll diagnose where your child is and match them to the right verified tutor within 48 hours.
+            Book a free 20-minute assessment call. We'll diagnose where your child is and match them to the right verified tutor within 48 hours.
           </p>
           <Button asChild size="lg" variant="secondary">
             <Link to="/book-consultation">Book Free Assessment Call</Link>

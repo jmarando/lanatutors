@@ -347,7 +347,7 @@ const Home = () => {
               {
                 step: "1",
                 title: "Book a Consultation",
-                description: "Schedule a free 30-minute consultation with a Lana consultant to discuss your learning goals",
+                description: "Schedule a free 20-minute consultation with a Lana consultant to discuss your learning goals",
               },
               {
                 step: "2",

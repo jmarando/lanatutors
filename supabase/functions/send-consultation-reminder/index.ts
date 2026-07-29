@@ -160,7 +160,7 @@ const handler = async (req: Request): Promise<Response> => {
         const { hours, minutes } = parseTime(reminder.consultation_time);
         const startDateTime = new Date(reminder.consultation_date);
         startDateTime.setHours(hours, minutes, 0, 0);
-        const endDateTime = new Date(startDateTime.getTime() + 30 * 60000);
+        const endDateTime = new Date(startDateTime.getTime() + 20 * 60000);
 
         // Format for Google Calendar URL
         const formatGoogleDate = (date: Date) => {

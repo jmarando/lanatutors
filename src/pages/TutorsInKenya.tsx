@@ -257,7 +257,7 @@ const TutorsInKenya = () => {
           </h2>
           <ol className="space-y-6">
             {[
-              "Book a free 30-minute assessment call so we understand your child's level and goals.",
+              "Book a free 20-minute assessment call so we understand your child's level and goals.",
               "We match you with verified Kenyan tutors who teach the right curriculum and subject.",
               "Pick a time that works in your time zone and pay securely in your local currency.",
               "Meet your tutor on Google Meet — track progress in your parent dashboard.",
