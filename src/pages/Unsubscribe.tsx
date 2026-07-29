@@ -23,6 +23,9 @@ const Unsubscribe = () => {
   useEffect(() => {
     if (!initialEmail) return;
     let active = true;
+    const timer = setTimeout(() => {
+      if (active) setStatus((s) => (s === "loading" ? "confirm" : s));
+    }, 5000);
 
     (async () => {
       try {
@@ -40,6 +43,7 @@ const Unsubscribe = () => {
 
     return () => {
       active = false;
+      clearTimeout(timer);
     };
   }, [initialEmail]);
 
