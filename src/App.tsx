@@ -55,6 +55,7 @@ const TutorAvailability = lazy(() => import("./pages/TutorAvailability"));
 const TutorOnboardingGuide = lazy(() => import("./pages/TutorOnboardingGuide"));
 const TutorGuidePrintable = lazy(() => import("./pages/TutorGuidePrintable"));
 const PrivacyPolicy = lazy(() => import("./pages/PrivacyPolicy"));
+const Unsubscribe = lazy(() => import("./pages/Unsubscribe"));
 const TutorsInKenya = lazy(() => import("./pages/TutorsInKenya"));
 const SubjectLanding = lazy(() => import("./pages/SubjectLanding"));
 const CurriculumMathLanding = lazy(() => import("./pages/CurriculumMathLanding"));
@@ -116,6 +117,7 @@ const AppContent = () => {
           <Route path="/pay-balance" element={<PayBalance />} />
           <Route path="/invoice-preview" element={<InvoicePreview />} />
           <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+          <Route path="/unsubscribe" element={<Unsubscribe />} />
           <Route path="/tutors-in-kenya" element={<TutorsInKenya />} />
           <Route path="/subjects/:subject" element={<SubjectLanding />} />
           <Route path="/kcse-mathematics-tutors" element={<CurriculumMathLanding slugOverride="kcse-mathematics-tutors" />} />
