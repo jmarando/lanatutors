@@ -14,7 +14,7 @@ const Unsubscribe = () => {
   return (
     <div className="min-h-screen bg-background flex items-center justify-center px-6 py-12">
       <SEO
-        title="Unsubscribe | Lana Tutors"
+        title="Unsubscribe"
         description="Manage your Lana Tutors email preferences."
         canonical="/unsubscribe"
       />
