@@ -108,7 +108,7 @@ const ConsultationConfirmed = () => {
                   <Clock className="w-5 h-5 text-muted-foreground mt-0.5" />
                   <div>
                     <p className="text-sm text-muted-foreground">Duration</p>
-                    <p className="font-semibold">30 minutes</p>
+                    <p className="font-semibold">20 minutes</p>
                   </div>
                 </div>
 

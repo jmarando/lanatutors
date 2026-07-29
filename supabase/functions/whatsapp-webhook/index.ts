@@ -30,7 +30,7 @@ WHAT WE OFFER
 
 LINKS (use these, don't invent others)
 - Home / browse tutors: https://lanatutors.africa
-- Book an Academic Assessment Call (free, 30 min): https://lanatutors.africa/book-consultation
+- Book an Academic Assessment Call (free, 20 min): https://lanatutors.africa/book-consultation
 - Request a Learning Plan: https://lanatutors.africa/request-learning-plan
 - How it works: https://lanatutors.africa/how-it-works
 
@@ -371,7 +371,7 @@ function fallbackReply() {
     "2. Get a custom learning plan",
     "   Share your child's year/grade, curriculum (CBC, IGCSE, A-Levels, American, IB) and the subjects/goals you have in mind. We'll send back a tailored plan with recommended tutors and pricing.",
     "",
-    "3. Book a free 30-min Academic Assessment Call",
+    "3. Book a free 20-min Academic Assessment Call",
     "   https://lanatutors.africa/book-consultation",
     "",
     "Or just type your question and I'll do my best to help.",

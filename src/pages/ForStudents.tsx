@@ -101,7 +101,7 @@ const ForStudents = () => {
     {
       step: "1",
       title: "Book Free Consultation",
-      description: "Schedule a 30-minute call with our education consultant to discuss your goals and learning needs.",
+      description: "Schedule a 20-minute call with our education consultant to discuss your goals and learning needs.",
       icon: BookOpen,
     },
     {

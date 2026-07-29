@@ -10,7 +10,7 @@ Lana Tutors is a Kenyan tutoring platform. Tutors are verified classroom teacher
 - Verified tutors only — credential-checked classroom teachers, including KCSE markers
 - One-on-one online lessons via Google Meet; in-person sessions available in Nairobi
 - Serves Kenyan diaspora families in the UK, USA, Canada, UAE, Australia
-- Free 30-minute Academic Assessment Calls before committing to a tutor
+- Free 20-minute Academic Assessment Calls before committing to a tutor
 - Custom Learning Plans designed by senior educators for long-term goals
 - Group classes and December Intensive holiday programs
 - Pricing: typically KES 1,500 – KES 3,500 per hour depending on curriculum and level
@@ -24,7 +24,7 @@ Lana Tutors is a Kenyan tutoring platform. Tutors are verified classroom teacher
 - [For Students & Parents](/for-students): Information for families considering tutoring
 - [For Tutors](/for-tutors): Information for teachers wanting to join the platform
 - [Become a Tutor](/become-a-tutor): Tutor application
-- [Book a Free Assessment Call](/book-consultation): Schedule a 30-minute consultation with the Lana academic team
+- [Book a Free Assessment Call](/book-consultation): Schedule a 20-minute consultation with the Lana academic team
 - [Request a Learning Plan](/request-learning-plan): Get a custom multi-session plan designed for your child
 - [Group Classes](/group-classes): Small-group classes by curriculum and subject
 - [Blog](/blog): Articles on Kenyan education, exam prep, and parenting
