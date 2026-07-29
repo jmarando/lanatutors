@@ -225,7 +225,7 @@ const handler = async (req: Request): Promise<Response> => {
                                       <strong style="color: #FF6B35;">🕐 Time:</strong> ${reminder.consultation_time}
                                     </p>
                                     <p style="margin: 0; color: #1A1A1A; font-size: 14px;">
-                                      <strong style="color: #FF6B35;">⏱️ Duration:</strong> 30 minutes
+                                      <strong style="color: #FF6B35;">⏱️ Duration:</strong> 20 minutes
                                     </p>
                                   </td>
                                 </tr>

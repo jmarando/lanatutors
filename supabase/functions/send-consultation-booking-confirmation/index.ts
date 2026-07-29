@@ -61,7 +61,7 @@ const handler = async (req: Request): Promise<Response> => {
     const { hours, minutes } = parseTime(consultationTime);
     const startDateTime = new Date(consultationDate);
     startDateTime.setHours(hours, minutes, 0, 0);
-    const endDateTime = new Date(startDateTime.getTime() + 30 * 60000); // 30 minutes later
+    const endDateTime = new Date(startDateTime.getTime() + 30 * 60000); // 20 minutes later
 
     // Format for Google Calendar URL (YYYYMMDDTHHmmssZ format)
     const formatGoogleDate = (date: Date) => {
@@ -137,7 +137,7 @@ const handler = async (req: Request): Promise<Response> => {
               </div>
               <div class="detail-row">
                 <span class="detail-label">Duration:</span>
-                <span class="detail-value">30 minutes</span>
+                <span class="detail-value">20 minutes</span>
               </div>
             </div>
 
@@ -250,7 +250,7 @@ Your free consultation for *${studentName}* is confirmed! ✅
 
 📅 *Date:* ${formattedDate}
 ⏰ *Time:* ${consultationTime}
-⏱️ *Duration:* 30 minutes
+⏱️ *Duration:* 20 minutes
 
 🔗 *Join here:*
 ${meetingLink}
