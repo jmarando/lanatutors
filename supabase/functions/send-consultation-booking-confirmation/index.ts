@@ -61,7 +61,7 @@ const handler = async (req: Request): Promise<Response> => {
     const { hours, minutes } = parseTime(consultationTime);
     const startDateTime = new Date(consultationDate);
     startDateTime.setHours(hours, minutes, 0, 0);
-    const endDateTime = new Date(startDateTime.getTime() + 30 * 60000); // 20 minutes later
+    const endDateTime = new Date(startDateTime.getTime() + 20 * 60000); // 20 minutes later
 
     // Format for Google Calendar URL (YYYYMMDDTHHmmssZ format)
     const formatGoogleDate = (date: Date) => {
