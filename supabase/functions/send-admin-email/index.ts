@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -25,6 +26,25 @@ const handler = async (req: Request): Promise<Response> => {
     const { to, subject, html, message, recipientName, replyTo }: AdminEmailRequest = await req.json();
 
     console.log(`Sending admin email to ${to} with subject: ${subject}`);
+
+    // Honour the unsubscribe / suppression list
+    const admin = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+    );
+    const { data: suppressed } = await admin
+      .from("email_suppressions")
+      .select("email")
+      .eq("email", String(to).trim().toLowerCase())
+      .maybeSingle();
+
+    if (suppressed) {
+      console.log(`Skipped: ${to} is unsubscribed`);
+      return new Response(
+        JSON.stringify({ success: false, skipped: true, reason: "unsubscribed" }),
+        { status: 200, headers: { "Content-Type": "application/json", ...corsHeaders } },
+      );
+    }
 
     let emailHtml: string;
 
