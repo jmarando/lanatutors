@@ -423,13 +423,25 @@ async function handleIncoming(body: any) {
       return;
     }
 
-    const { text: reply, escalated } = await callGemini(history, profileName, convo.parent_id, from);
+    // Lana only sends ONE auto-reply per conversation. If she has already
+    // replied at any point, hand the thread to a human and stay silent
+    // until an admin clicks "Resume AI".
+    const alreadyReplied = history.some((m) => m.role === "model");
+    if (alreadyReplied) {
+      console.log(`First reply already sent for ${from} — handing to human.`);
+      await saveConversation(from, history, true);
+      return;
+    }
+
+    const { text: reply } = await callGemini(history, profileName, convo.parent_id, from);
 
     await sendWhatsAppMessage(from, reply);
     await logComm({ phone: from, parentId: convo.parent_id, direction: "outbound", content: reply });
 
     history.push({ role: "model", content: reply, ts: new Date().toISOString() });
-    await saveConversation(from, history, escalated);
+    // Always hand off after the first auto-reply.
+    await saveConversation(from, history, true);
+
   } catch (e) {
     console.error("handleIncoming error:", e);
   }
