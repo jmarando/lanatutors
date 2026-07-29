@@ -139,7 +139,7 @@ const handler = async (req: Request): Promise<Response> => {
     const { access_token } = await tokenResponse.json();
 
     const startDateTime = buildStartDateTime(consultationDate, consultationTime);
-    const endDateTime = new Date(startDateTime.getTime() + 30 * 60 * 1000); // 30 minutes
+    const endDateTime = new Date(startDateTime.getTime() + 20 * 60 * 1000); // 20 minutes
 
     const eventDescription = [
       "Free Consultation",
