@@ -180,13 +180,14 @@ const Login = () => {
       <div className="w-full max-w-md">
         <Link to="/" className="flex items-center justify-center gap-2 mb-8">
           <Award className="w-10 h-10 text-primary" />
-          <span className="text-3xl font-bold">Lana</span>
+          <span className="text-3xl font-bold">Lana Tutors</span>
         </Link>
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-2xl">Welcome Back</CardTitle>
-            <CardDescription>Sign in to your account to continue</CardDescription>
+            <CardTitle className="text-2xl">Log in to Lana Tutors</CardTitle>
+            <CardDescription>Sign in to your Lana Tutors account to continue</CardDescription>
+
           </CardHeader>
           <CardContent>
             <form onSubmit={handleLogin} className="space-y-4">
