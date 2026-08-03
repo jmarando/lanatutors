@@ -6,6 +6,22 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
 
+const ALLOWED_REDIRECT_ORIGINS = [
+  'https://lanatutors.africa',
+  'https://www.lanatutors.africa',
+  'https://lanatutors.lovable.app',
+]
+
+// Never redirect to an origin we do not control (prevents open redirect)
+function safeRedirectOrigin(stored: string | null | undefined): string {
+  const origin = (stored || '').replace(/\/+$/, '')
+  const ok =
+    ALLOWED_REDIRECT_ORIGINS.includes(origin) ||
+    /^https:\/\/[a-z0-9-]+\.lovable\.app$/.test(origin) ||
+    /^http:\/\/localhost(:\d+)?$/.test(origin)
+  return ok ? origin : ALLOWED_REDIRECT_ORIGINS[0]
+}
+
 const PESAPAL_BASE_URL = 'https://pay.pesapal.com/v3'
 
 serve(async (req) => {
@@ -60,7 +76,7 @@ serve(async (req) => {
           .eq('pesapal_order_tracking_id', OrderTrackingId)
           .single()
         
-        const appUrl = paymentRecord?.redirect_url || ''
+        const appUrl = safeRedirectOrigin(paymentRecord?.redirect_url)
         if (appUrl) {
           return new Response(null, {
             status: 302,
@@ -373,7 +389,7 @@ serve(async (req) => {
     // For GET requests (user redirect), redirect to the app's payment callback page
     if (req.method === 'GET') {
       // Use the stored app origin URL from the payment record
-      const appUrl = payment.redirect_url || ''
+      const appUrl = safeRedirectOrigin(payment.redirect_url)
       
       if (!appUrl) {
         console.error('No redirect URL stored for payment')
