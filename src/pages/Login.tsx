@@ -232,6 +232,24 @@ const Login = () => {
               <Button type="submit" className="w-full" disabled={isLoading}>
                 {isLoading ? "Signing in..." : "Sign In"}
               </Button>
+
+              <div className="relative py-1">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-card px-2 text-muted-foreground">or</span>
+                </div>
+              </div>
+
+              <GoogleSignInButton
+                onSignedIn={() => {
+                  const params = new URLSearchParams(window.location.search);
+                  const redirect = params.get("redirect");
+                  navigate(redirect ? decodeURIComponent(redirect) : "/student/dashboard");
+                }}
+              />
+
                 <div className="flex flex-col gap-3 text-sm">
                 <div className="flex justify-between items-center">
                   <p className="text-muted-foreground">
