@@ -48,8 +48,13 @@ export function trackMetaEvent(event: string, params?: Record<string, unknown>) 
   window.fbq?.("track", event, params);
 }
 
+const firedOnce = new Set<string>();
+
 /** Fired when a parent completes an assessment-call booking. */
 export function trackConsultationBooked(params?: Record<string, unknown>) {
+  const key = `schedule:${JSON.stringify(params ?? {})}`;
+  if (firedOnce.has(key)) return;
+  firedOnce.add(key);
   trackMetaEvent("Schedule", { content_name: "Assessment Call", ...params });
   trackMetaEvent("Lead", { content_name: "Assessment Call", ...params });
 }
