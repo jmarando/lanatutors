@@ -10,6 +10,8 @@ import { Award, Eye, EyeOff, User } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { analytics } from "@/utils/analytics";
+import GoogleSignInButton from "@/components/GoogleSignInButton";
+
 
 import { validateAndNormalizePhone } from "@/utils/phoneValidation";
 import { getCurriculums, getLevelsForCurriculum, getSubjectsForCurriculumLevel } from "@/utils/curriculumData";
