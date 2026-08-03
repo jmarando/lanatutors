@@ -40,10 +40,12 @@ const GoogleSignInButton = ({ label = "Continue with Google", onSignedIn }: Goog
       const { data: { user } } = await supabase.auth.getUser();
       if (user) await ensureUserBootstrap(user);
       onSignedIn?.();
-    } catch {
+    } catch (err) {
+      console.error("[GoogleSignIn] threw:", err);
       toast({
         title: "Google sign-in failed",
-        description: "Something went wrong. Please try again.",
+        description:
+          err instanceof Error ? err.message : "Something went wrong. Please try again.",
         variant: "destructive",
       });
     } finally {
