@@ -2939,6 +2939,34 @@ export type Database = {
         Args: { full_name: string; tutor_id: string }
         Returns: string
       }
+      get_learning_plan_by_share: {
+        Args: { _share_token?: string; _url_slug?: string }
+        Returns: {
+          created_at: string | null
+          discount_applied: number | null
+          expires_at: string | null
+          id: string
+          inquiry_id: string | null
+          notes: string | null
+          share_token: string | null
+          status: string | null
+          student_id: string | null
+          subjects: Json
+          title: string
+          total_price: number
+          total_sessions: number
+          tutor_id: string
+          updated_at: string | null
+          url_slug: string | null
+          validity_days: number | null
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "learning_plans"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       get_public_tutor_profiles: {
         Args: never
         Returns: {
