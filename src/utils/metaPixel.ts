@@ -4,7 +4,7 @@
  * Paste your Pixel ID below (Meta Events Manager -> Data sources -> your pixel).
  * Leaving it empty disables tracking safely.
  */
-export const META_PIXEL_ID = "";
+export const META_PIXEL_ID = "1806197037029344";
 
 declare global {
   interface Window {
