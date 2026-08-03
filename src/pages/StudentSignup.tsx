@@ -10,6 +10,8 @@ import { Award, Eye, EyeOff, User } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { analytics } from "@/utils/analytics";
+import GoogleSignInButton from "@/components/GoogleSignInButton";
+
 
 import { validateAndNormalizePhone } from "@/utils/phoneValidation";
 import { getCurriculums, getLevelsForCurriculum, getSubjectsForCurriculumLevel } from "@/utils/curriculumData";
@@ -232,7 +234,7 @@ const StudentSignup = () => {
       <div className="w-full max-w-2xl">
         <Link to="/" className="flex items-center justify-center gap-2 mb-8">
           <Award className="w-10 h-10 text-primary" />
-          <span className="text-3xl font-bold">Lana</span>
+          <span className="text-3xl font-bold">Lana Tutors</span>
         </Link>
 
         <Card>
@@ -246,6 +248,21 @@ const StudentSignup = () => {
             </CardDescription>
           </CardHeader>
           <CardContent>
+            <div className="mb-6 space-y-3">
+              <GoogleSignInButton
+                label="Sign up with Google"
+                onSignedIn={() => navigate("/student/dashboard")}
+              />
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-card px-2 text-muted-foreground">or sign up with email</span>
+                </div>
+              </div>
+            </div>
+
             <form onSubmit={handleSubmit} className="space-y-6">
               {/* Account Type Selection */}
               {!accountType && (

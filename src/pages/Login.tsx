@@ -10,6 +10,9 @@ import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { analytics } from "@/utils/analytics";
+import GoogleSignInButton from "@/components/GoogleSignInButton";
+import { ensureUserBootstrap } from "@/utils/ensureUserBootstrap";
+
 
 const Login = () => {
   const navigate = useNavigate();
@@ -133,12 +136,16 @@ const Login = () => {
       const { data: { session } } = await supabase.auth.getSession();
       
       if (session?.user) {
+        // Social sign-in users may not have a profile/role yet
+        await ensureUserBootstrap(session.user);
+
         // Check if password reset is required
         const { data: profile } = await supabase
           .from('profiles')
           .select('must_reset_password')
           .eq('id', session.user.id)
-          .single();
+          .maybeSingle();
+
 
         if (profile?.must_reset_password) {
           navigate('/force-password-change');
@@ -173,13 +180,14 @@ const Login = () => {
       <div className="w-full max-w-md">
         <Link to="/" className="flex items-center justify-center gap-2 mb-8">
           <Award className="w-10 h-10 text-primary" />
-          <span className="text-3xl font-bold">Lana</span>
+          <span className="text-3xl font-bold">Lana Tutors</span>
         </Link>
 
         <Card>
           <CardHeader>
-            <CardTitle className="text-2xl">Welcome Back</CardTitle>
-            <CardDescription>Sign in to your account to continue</CardDescription>
+            <CardTitle className="text-2xl">Log in to Lana Tutors</CardTitle>
+            <CardDescription>Sign in to your Lana Tutors account to continue</CardDescription>
+
           </CardHeader>
           <CardContent>
             <form onSubmit={handleLogin} className="space-y-4">
@@ -224,6 +232,24 @@ const Login = () => {
               <Button type="submit" className="w-full" disabled={isLoading}>
                 {isLoading ? "Signing in..." : "Sign In"}
               </Button>
+
+              <div className="relative py-1">
+                <div className="absolute inset-0 flex items-center">
+                  <span className="w-full border-t" />
+                </div>
+                <div className="relative flex justify-center text-xs uppercase">
+                  <span className="bg-card px-2 text-muted-foreground">or</span>
+                </div>
+              </div>
+
+              <GoogleSignInButton
+                onSignedIn={() => {
+                  const params = new URLSearchParams(window.location.search);
+                  const redirect = params.get("redirect");
+                  navigate(redirect ? decodeURIComponent(redirect) : "/student/dashboard");
+                }}
+              />
+
                 <div className="flex flex-col gap-3 text-sm">
                 <div className="flex justify-between items-center">
                   <p className="text-muted-foreground">
