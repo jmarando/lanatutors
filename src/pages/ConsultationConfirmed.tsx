@@ -25,8 +25,11 @@ const ConsultationConfirmed = () => {
   useEffect(() => {
     if (!consultationDate || !consultationTime) {
       navigate("/book-consultation");
+      return;
     }
+    trackConsultationBooked({ consultation_date: consultationDate });
   }, [consultationDate, consultationTime, navigate]);
+
 
   const formatDate = (dateStr: string) => {
     return new Date(dateStr).toLocaleDateString('en-US', {
