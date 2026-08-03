@@ -10,6 +10,9 @@ import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { analytics } from "@/utils/analytics";
+import GoogleSignInButton from "@/components/GoogleSignInButton";
+import { ensureUserBootstrap } from "@/utils/ensureUserBootstrap";
+
 
 const Login = () => {
   const navigate = useNavigate();
