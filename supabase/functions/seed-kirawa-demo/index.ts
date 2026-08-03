@@ -20,10 +20,13 @@ Deno.serve(async (req) => {
   const schoolId = "11111111-1111-1111-1111-111111111111";
 
   // Create demo users
+  // Password comes from a secret, or is randomly generated per run - never hardcoded
+  const demoPassword = Deno.env.get("DEMO_SEED_PASSWORD") ?? crypto.randomUUID();
+
   const demoUsers = [
-    { email: "admin@kirawa.demo", password: "demo1234", full_name: "Mrs. Sarah Kamau", role: "admin" },
-    { email: "teacher@kirawa.demo", password: "demo1234", full_name: "Mr. James Ochieng", role: "teacher" },
-    { email: "parent@kirawa.demo", password: "demo1234", full_name: "Mrs. Grace Wanjiku", role: "parent" },
+    { email: "admin@kirawa.demo", password: demoPassword, full_name: "Mrs. Sarah Kamau", role: "admin" },
+    { email: "teacher@kirawa.demo", password: demoPassword, full_name: "Mr. James Ochieng", role: "teacher" },
+    { email: "parent@kirawa.demo", password: demoPassword, full_name: "Mrs. Grace Wanjiku", role: "parent" },
   ];
 
   const memberIds: Record<string, string> = {};
