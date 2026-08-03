@@ -33,6 +33,31 @@ serve(async (req) => {
       isDeposit 
     } = await req.json()
 
+    if (!planId) {
+      return new Response(JSON.stringify({ error: 'planId is required' }), {
+        status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      })
+    }
+
+    // The plan must exist, and the caller must be its student or an admin
+    const { data: plan } = await supabase
+      .from('learning_plans')
+      .select('id, student_id, total_price')
+      .eq('id', planId)
+      .maybeSingle()
+
+    if (!plan) {
+      return new Response(JSON.stringify({ error: 'Learning plan not found' }), {
+        status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      })
+    }
+
+    if (!auth.isAdmin && plan.student_id !== auth.userId) {
+      return new Response(JSON.stringify({ error: 'Forbidden' }), {
+        status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      })
+    }
+
     console.log('Generating payment link - Amount:', amount, 'Plan:', planId, 'Deposit:', isDeposit)
 
     // Step 1: Get Pesapal access token

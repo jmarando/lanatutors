@@ -30,6 +30,27 @@ serve(async (req) => {
 
     console.log("Processing recurring slot blocking for package:", packagePurchaseId);
 
+    // Ownership guard: only the purchasing student or an admin may block slots
+    const { data: ownerCheck } = await supabaseClient
+      .from("package_purchases")
+      .select("student_id")
+      .eq("id", packagePurchaseId)
+      .maybeSingle();
+
+    if (!ownerCheck) {
+      return new Response(JSON.stringify({ error: "Not found" }), {
+        status: 404,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    if (!auth.isAdmin && ownerCheck.student_id !== auth.userId) {
+      return new Response(JSON.stringify({ error: "Forbidden" }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
     // Fetch the package purchase with metadata
     const { data: packagePurchase, error: packageError } = await supabaseClient
       .from("package_purchases")
