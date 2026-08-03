@@ -4,6 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { CheckCircle2, Calendar, Clock, Mail, Video, BookOpen, Lightbulb, ClipboardList, ArrowRight, User } from "lucide-react";
+import { trackConsultationBooked } from "@/utils/metaPixel";
+
 
 // Consultant info - can be expanded later to fetch from database
 const CONSULTANT = {
