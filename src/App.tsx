@@ -96,24 +96,24 @@ const AppContent = () => {
           <Route path="/student-signup" element={<StudentSignup />} />
           <Route path="/tutor-signup" element={<TutorSignup />} />
           <Route path="/become-a-tutor" element={<BecomeATutor />} />
-          <Route path="/student/dashboard" element={<RequireRole roles={{["student", "admin"]}}><UnifiedStudentDashboard /></RequireRole>} />
-          <Route path="/student/dashboard-old" element={<RequireRole roles={{["student", "admin"]}}><StudentDashboard /></RequireRole>} />
-          <Route path="/tutor/dashboard" element={<RequireRole roles={{["tutor", "admin"]}}><TutorDashboard /></RequireRole>} />
-          <Route path="/tutor/availability" element={<RequireRole roles={{["tutor", "admin"]}}><TutorAvailability /></RequireRole>} />
+          <Route path="/student/dashboard" element={<RequireRole roles={["student", "admin"]}><UnifiedStudentDashboard /></RequireRole>} />
+          <Route path="/student/dashboard-old" element={<RequireRole roles={["student", "admin"]}><StudentDashboard /></RequireRole>} />
+          <Route path="/tutor/dashboard" element={<RequireRole roles={["tutor", "admin"]}><TutorDashboard /></RequireRole>} />
+          <Route path="/tutor/availability" element={<RequireRole roles={["tutor", "admin"]}><TutorAvailability /></RequireRole>} />
           <Route path="/tutor-profile-setup" element={<TutorProfileSetup />} />
           <Route path="/tutor-profile-edit" element={<TutorProfileEdit />} />
           <Route path="/tutor-profile-submitted" element={<TutorProfileSubmitted />} />
           <Route path="/tutor-onboarding-guide" element={<TutorOnboardingGuide />} />
           <Route path="/tutor-guide-printable" element={<TutorGuidePrintable />} />
-          <Route path="/admin" element={<RequireRole roles={{["admin"]}}><AdminDashboardRedesigned /></RequireRole>} />
+          <Route path="/admin" element={<RequireRole roles={["admin"]}><AdminDashboardRedesigned /></RequireRole>} />
           <Route path="/book-consultation" element={<BookConsultation />} />
-          <Route path="/test-email" element={<RequireRole roles={{["admin"]}}><TestEmail /></RequireRole>} />
+          <Route path="/test-email" element={<RequireRole roles={["admin"]}><TestEmail /></RequireRole>} />
           <Route path="/booking-confirmed" element={<BookingConfirmed />} />
           <Route path="/package-confirmed" element={<PackageConfirmed />} />
           <Route path="/consultation-confirmed" element={<ConsultationConfirmed />} />
           <Route path="/setup-central-calendar" element={<SetupCentralCalendar />} />
           <Route path="/payment-callback" element={<PaymentCallback />} />
-          <Route path="/admin/holiday-packages" element={<RequireRole roles={{["admin"]}}><AdminHolidayPackages /></RequireRole>} />
+          <Route path="/admin/holiday-packages" element={<RequireRole roles={["admin"]}><AdminHolidayPackages /></RequireRole>} />
           <Route path="/multi-tutor-package" element={<MultiTutorPackage />} />
           <Route path="/pay-balance" element={<PayBalance />} />
           <Route path="/invoice-preview" element={<InvoicePreview />} />
