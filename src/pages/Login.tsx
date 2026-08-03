@@ -133,12 +133,16 @@ const Login = () => {
       const { data: { session } } = await supabase.auth.getSession();
       
       if (session?.user) {
+        // Social sign-in users may not have a profile/role yet
+        await ensureUserBootstrap(session.user);
+
         // Check if password reset is required
         const { data: profile } = await supabase
           .from('profiles')
           .select('must_reset_password')
           .eq('id', session.user.id)
-          .single();
+          .maybeSingle();
+
 
         if (profile?.must_reset_password) {
           navigate('/force-password-change');
