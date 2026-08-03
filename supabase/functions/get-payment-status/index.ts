@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
+import { authenticate } from "../_shared/auth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -16,6 +17,9 @@ serve(async (req) => {
   }
 
   try {
+    const auth = await authenticate(req, corsHeaders);
+    if (auth.error) return auth.error;
+
     const { orderTrackingId }: StatusRequest = await req.json();
 
     if (!orderTrackingId) {
@@ -29,11 +33,17 @@ serve(async (req) => {
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceKey);
 
-    const { data: payment, error } = await supabase
+    let query = supabase
       .from("payments")
       .select("reference_id, payment_type, status")
-      .eq("pesapal_order_tracking_id", orderTrackingId)
-      .maybeSingle();
+      .eq("pesapal_order_tracking_id", orderTrackingId);
+
+    // Non-admins may only look up their own payments
+    if (!auth.isAdmin) {
+      query = query.eq("user_id", auth.userId!);
+    }
+
+    const { data: payment, error } = await query.maybeSingle();
 
     if (error) {
       console.error("Error fetching payment status:", error);

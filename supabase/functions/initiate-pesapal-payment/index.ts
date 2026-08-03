@@ -34,6 +34,29 @@ serve(async (req) => {
 
     const { amount, description, referenceId, paymentType, callbackUrl, phoneNumber, currency, appOrigin } = await req.json()
 
+    // Only allow redirects back to known application origins
+    const ALLOWED_ORIGINS = [
+      'https://lanatutors.africa',
+      'https://www.lanatutors.africa',
+      'https://lanatutors.lovable.app',
+    ]
+    const isAllowedOrigin = (origin: string) =>
+      ALLOWED_ORIGINS.includes(origin) ||
+      /^https:\/\/[a-z0-9-]+\.lovable\.app$/.test(origin) ||
+      /^http:\/\/localhost(:\d+)?$/.test(origin)
+
+    let safeOrigin = ALLOWED_ORIGINS[0]
+    if (appOrigin) {
+      const trimmed = String(appOrigin).replace(/\/+$/, '')
+      if (!isAllowedOrigin(trimmed)) {
+        return new Response(
+          JSON.stringify({ success: false, error: 'Invalid redirect origin' }),
+          { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        )
+      }
+      safeOrigin = trimmed
+    }
+
     console.log('Initiating payment - Amount:', amount, 'Currency:', currency || 'KES', 'Type:', paymentType)
 
     // Validate phone number before processing payment
@@ -192,7 +215,7 @@ serve(async (req) => {
         phone_number: phoneNumber || '',
         pesapal_order_tracking_id: orderData.order_tracking_id,
         pesapal_merchant_reference: merchantReference,
-        redirect_url: appOrigin || '', // Store app origin for callback redirects
+        redirect_url: safeOrigin, // Validated app origin for callback redirects
       })
       .select()
       .single()

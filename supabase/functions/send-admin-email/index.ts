@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { requireAdmin } from "../_shared/auth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -23,6 +24,9 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
+    const auth = await requireAdmin(req, corsHeaders);
+    if (auth.error) return auth.error;
+
     const { to, subject, html, message, recipientName, replyTo }: AdminEmailRequest = await req.json();
 
     console.log(`Sending admin email to ${to} with subject: ${subject}`);

@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import { requireAdmin } from "../_shared/auth.ts";
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
 
@@ -18,6 +19,9 @@ serve(async (req) => {
   }
 
   try {
+    const auth = await requireAdmin(req, corsHeaders);
+    if (auth.error) return auth.error;
+
     const { to, name = "Friend" }: TestEmailRequest = await req.json();
 
     const html = `

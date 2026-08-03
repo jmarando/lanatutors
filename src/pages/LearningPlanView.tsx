@@ -31,37 +31,34 @@ const LearningPlanView = () => {
       // If planId looks like a UUID, also try by ID for backwards compatibility
       const isUUID = planId && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(planId);
       
-      let planData = null;
+      let planData: any = null;
       let isPublic = false;
 
-      // If share token is provided, fetch via share token (legacy support)
+      // If share token is provided, fetch via the scoped share lookup (legacy support)
       if (shareToken) {
-        const { data, error } = await supabase
-          .from("learning_plans")
-          .select("*")
-          .eq("share_token", shareToken)
-          .single();
+        const { data, error } = await supabase.rpc("get_learning_plan_by_share", {
+          _share_token: shareToken,
+          _url_slug: null,
+        });
 
         if (error) throw error;
-        planData = data;
+        planData = Array.isArray(data) ? data[0] : data;
         isPublic = true;
       } else if (planId) {
         // Try by url_slug first (for pretty URLs), then by ID
-        // Try by slug first (unless it's a UUID)
         if (!isUUID) {
-          const { data, error } = await supabase
-            .from("learning_plans")
-            .select("*")
-            .eq("url_slug", planId)
-            .single();
-          
+          const { data, error } = await supabase.rpc("get_learning_plan_by_share", {
+            _share_token: null,
+            _url_slug: planId,
+          });
+
           if (!error) {
-            planData = data;
+            planData = Array.isArray(data) ? data[0] : data;
             isPublic = true;
           }
         }
 
-        // If not found by slug (or is UUID), try by ID
+        // If not found by slug (or is UUID), try by ID (owner/admin access via RLS)
         if (!planData && isUUID) {
           const { data, error } = await supabase
             .from("learning_plans")
