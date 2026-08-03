@@ -171,7 +171,7 @@ const BecomeATutor = () => {
       
       // Upload CV
       const fileExt = cvFile.name.split('.').pop();
-      const filePath = `${tempId}/cv.${fileExt}`;
+      const filePath = `applications/${tempId}/cv.${fileExt}`;
       
       const { error: uploadError } = await supabase.storage
         .from('tutor-cvs')
