@@ -32,6 +32,7 @@ import { AdminLayout } from "@/components/admin/AdminLayout";
 import { AdminClassManagement } from "@/components/admin/AdminClassManagement";
 import { AdminReports } from "@/components/admin/AdminReports";
 import { WhatsAppInbox } from "@/components/admin/WhatsAppInbox";
+import AdminInvoices from "@/components/admin/AdminInvoices";
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -2389,6 +2390,8 @@ The Lana Tutors Team`
         return <AdminClassManagement />;
       case 'bookings':
         return renderBookingsContent();
+      case 'invoices':
+        return <AdminInvoices />;
       case 'tutor-signups':
         return <TutorSignupList />;
       case 'december-bootcamp':
