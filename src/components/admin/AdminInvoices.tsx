@@ -257,13 +257,51 @@ export default function AdminInvoices() {
   const handleCustomFieldChange = (field: keyof InvoiceData, value: any) => {
     setInvoiceData((prev) => {
       const next = { ...prev, [field]: value };
-      if (field === "totalAmount" || field === "paymentOption") {
-        const isDeposit = next.paymentOption === "deposit";
-        next.amountToPay = isDeposit ? next.totalAmount * 0.3 : next.totalAmount;
+      if (
+        field === "totalAmount" ||
+        field === "paymentOption" ||
+        field === "weeklyWeeks"
+      ) {
+        if (next.paymentOption === "deposit") {
+          next.amountToPay = next.totalAmount * 0.3;
+        } else if (next.paymentOption === "weekly") {
+          const weeks = Math.max(1, Number(next.weeklyWeeks) || 1);
+          next.amountToPay = Math.round(next.totalAmount / weeks);
+        } else {
+          next.amountToPay = next.totalAmount;
+        }
       }
       return next;
     });
   };
+
+  // Weekly payment plan: parents pay at the end of each week's sessions
+  const buildWeeklySchedule = (data: InvoiceData) => {
+    const weeks = Math.max(1, Number(data.weeklyWeeks) || 1);
+    const perWeek = Math.round(data.totalAmount / weeks);
+    const start = data.weeklyStartDate ? new Date(data.weeklyStartDate) : new Date();
+    const rows: { label: string; sessionsWeek: string; dueDate: string; amount: number }[] = [];
+    let allocated = 0;
+
+    for (let i = 0; i < weeks; i++) {
+      const weekStart = new Date(start);
+      weekStart.setDate(start.getDate() + i * 7);
+      const weekEnd = new Date(weekStart);
+      weekEnd.setDate(weekStart.getDate() + 6);
+      const isLast = i === weeks - 1;
+      const amount = isLast ? data.totalAmount - allocated : perWeek;
+      allocated += amount;
+      rows.push({
+        label: `Week ${i + 1}`,
+        sessionsWeek: `${format(weekStart, "d MMM")} – ${format(weekEnd, "d MMM yyyy")}`,
+        dueDate: format(weekEnd, "d MMM yyyy"),
+        amount,
+      });
+    }
+    return rows;
+  };
+
+
 
   const handleDownloadPDF = async () => {
     if (!invoiceRef.current) return;
