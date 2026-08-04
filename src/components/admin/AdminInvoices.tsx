@@ -1422,11 +1422,11 @@ export default function AdminInvoices() {
                     <div className="space-y-2">
                       <h3 className="font-semibold flex items-center gap-2">
                         <Calendar className="w-4 h-4" />
-                        Weekly Payment Schedule
+                        Weekly Payment Schedule (Paid in Advance)
                       </h3>
                       <p className="text-xs text-muted-foreground">
-                        Payment is due at the end of each week, after that week's sessions have been
-                        delivered
+                        Each week's fee is payable in advance, on or before the first day of that week,
+                        to confirm that week's sessions
                         {invoiceData.weeklySessionsPerWeek
                           ? ` (${invoiceData.weeklySessionsPerWeek} session${
                               invoiceData.weeklySessionsPerWeek > 1 ? "s" : ""
@@ -1440,7 +1440,7 @@ export default function AdminInvoices() {
                             <tr>
                               <th className="text-left px-2 py-1 font-medium">Week</th>
                               <th className="text-left px-2 py-1 font-medium">Sessions</th>
-                              <th className="text-left px-2 py-1 font-medium">Pay by</th>
+                              <th className="text-left px-2 py-1 font-medium">Pay on or before</th>
                               <th className="text-right px-2 py-1 font-medium">Amount</th>
                             </tr>
                           </thead>
