@@ -274,24 +274,54 @@ export default function AdminInvoices() {
         scale: 2,
         useCORS: true,
         logging: false,
+        backgroundColor: "#ffffff",
       });
 
-      const imgData = canvas.toDataURL("image/png");
-      const pdf = new jsPDF({
-        orientation: "portrait",
-        unit: "mm",
-        format: "a4",
-      });
+      const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const margin = 8;
+      const contentWidth = pageWidth - margin * 2;
+      const contentHeight = pageHeight - margin * 2;
 
-      const imgWidth = 210;
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      // Pixels of the source canvas that fit on one PDF page
+      const pxPerPage = Math.floor((contentHeight * canvas.width) / contentWidth);
+      const totalPages = Math.max(1, Math.ceil(canvas.height / pxPerPage));
 
-      pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight);
+      for (let page = 0; page < totalPages; page++) {
+        const sliceHeight = Math.min(pxPerPage, canvas.height - page * pxPerPage);
+
+        const pageCanvas = document.createElement("canvas");
+        pageCanvas.width = canvas.width;
+        pageCanvas.height = sliceHeight;
+        const ctx = pageCanvas.getContext("2d");
+        if (!ctx) continue;
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, pageCanvas.width, pageCanvas.height);
+        ctx.drawImage(
+          canvas,
+          0,
+          page * pxPerPage,
+          canvas.width,
+          sliceHeight,
+          0,
+          0,
+          canvas.width,
+          sliceHeight
+        );
+
+        const imgData = pageCanvas.toDataURL("image/png");
+        const imgHeight = (sliceHeight * contentWidth) / canvas.width;
+
+        if (page > 0) pdf.addPage();
+        pdf.addImage(imgData, "PNG", margin, margin, contentWidth, imgHeight);
+      }
+
       pdf.save(`lana-tutors-invoice-${invoiceData.invoiceNumber}.pdf`);
 
       toast({
         title: "Success",
-        description: "Invoice downloaded successfully",
+        description: `Invoice downloaded (${totalPages} page${totalPages > 1 ? "s" : ""})`,
       });
     } catch (error) {
       console.error("Error generating PDF:", error);
@@ -304,6 +334,7 @@ export default function AdminInvoices() {
       setDownloading(false);
     }
   };
+
 
   const handleSaveParentToSystem = async () => {
     if (!invoiceData.parentName || !invoiceData.parentPhone) {
