@@ -1123,7 +1123,7 @@ export default function AdminInvoices() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label>First week starts</Label>
+                    <Label>Classes start (Week 1)</Label>
                     <Input
                       type="date"
                       value={invoiceData.weeklyStartDate || ""}
@@ -1136,7 +1136,7 @@ export default function AdminInvoices() {
 
 
             <div className="space-y-2">
-              <Label>Due Date (optional)</Label>
+              <Label>Payment Due By (defaults to the day classes start)</Label>
               <Input
                 type="date"
                 value={invoiceData.dueDate || ""}
