@@ -532,19 +532,19 @@ export default function AdminInvoices() {
       const rows = [
         ["Invoice number", invoiceData.invoiceNumber],
         ["Invoice date", invoiceData.invoiceDate],
-        invoiceData.dueDate ? ["Due date", invoiceData.dueDate] : null,
+        invoiceData.dueDate ? ["Payment due by", invoiceData.dueDate] : null,
         invoiceData.studentName ? ["Student", invoiceData.studentName] : null,
         invoiceData.subject ? ["Subject / Service", invoiceData.subject] : null,
         ["Total", `${invoiceData.currency} ${invoiceData.totalAmount.toLocaleString()}`],
         isWeekly
-          ? ["Weekly instalment", `${invoiceData.currency} ${invoiceData.amountToPay.toLocaleString()}`]
+          ? ["Weekly instalment (paid in advance)", `${invoiceData.currency} ${invoiceData.amountToPay.toLocaleString()}`]
           : ["Amount due now", `${invoiceData.currency} ${invoiceData.amountToPay.toLocaleString()}`],
       ].filter(Boolean) as [string, string][];
 
       const scheduleHtml = isWeekly
         ? `
-          <tr><td style="padding:20px 0 8px;font-weight:bold;font-size:15px">Weekly payment plan</td></tr>
-          <tr><td style="padding:0 0 12px;color:#4b5563">Payment is made at the end of each week, after that week's sessions have been delivered${
+          <tr><td style="padding:20px 0 8px;font-weight:bold;font-size:15px">Weekly payment plan (paid in advance)</td></tr>
+          <tr><td style="padding:0 0 12px;color:#4b5563">Each week's fee is payable in advance, on or before the first day of that week, to confirm that week's sessions${
             invoiceData.weeklySessionsPerWeek
               ? ` (${invoiceData.weeklySessionsPerWeek} session${invoiceData.weeklySessionsPerWeek > 1 ? "s" : ""} per week)`
               : ""
@@ -554,7 +554,7 @@ export default function AdminInvoices() {
               <tr style="background:#fef5f4">
                 <td style="font-weight:bold">Week</td>
                 <td style="font-weight:bold">Sessions</td>
-                <td style="font-weight:bold">Pay by</td>
+                <td style="font-weight:bold">Pay on or before</td>
                 <td style="font-weight:bold;text-align:right">Amount</td>
               </tr>
               ${schedule
