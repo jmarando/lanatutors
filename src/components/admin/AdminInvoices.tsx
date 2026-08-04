@@ -414,10 +414,18 @@ export default function AdminInvoices() {
         );
 
         const imgData = pageCanvas.toDataURL("image/png");
-        const imgHeight = (sliceHeight * contentWidth) / canvas.width;
+        let drawWidth = contentWidth;
+        let drawHeight = (sliceHeight * contentWidth) / canvas.width;
+        if (drawHeight > contentHeight) {
+          const shrink = contentHeight / drawHeight;
+          drawHeight = contentHeight;
+          drawWidth = contentWidth * shrink;
+        }
+        const offsetX = margin + (contentWidth - drawWidth) / 2;
 
         if (page > 0) pdf.addPage();
-        pdf.addImage(imgData, "PNG", margin, margin, contentWidth, imgHeight);
+        pdf.addImage(imgData, "PNG", offsetX, margin, drawWidth, drawHeight);
+
       }
 
       pdf.save(`lana-tutors-invoice-${invoiceData.invoiceNumber}.pdf`);
