@@ -638,6 +638,160 @@ export default function AdminInvoices() {
     });
   };
 
+  const fetchSavedInvoices = async () => {
+    setSavedLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from("invoices")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(300);
+      if (error) throw error;
+      setSavedInvoices(data || []);
+    } catch (e: any) {
+      console.error("Error loading saved invoices:", e);
+      toast({
+        title: "Error",
+        description: e.message || "Failed to load saved invoices",
+        variant: "destructive",
+      });
+    } finally {
+      setSavedLoading(false);
+    }
+  };
+
+  const saveInvoice = async (status?: string, silent = false) => {
+    if (!invoiceData.parentName) {
+      if (!silent) {
+        toast({
+          title: "Missing details",
+          description: "Add at least a parent name before saving.",
+          variant: "destructive",
+        });
+      }
+      return;
+    }
+    if (!silent) setSaving(true);
+    try {
+      const { data: userData } = await supabase.auth.getUser();
+      const payload = {
+        invoice_number: invoiceData.invoiceNumber,
+        invoice_date: invoiceData.invoiceDate || format(new Date(), "yyyy-MM-dd"),
+        due_date: invoiceData.dueDate || null,
+        source: invoiceData.source,
+        parent_name: invoiceData.parentName,
+        parent_email: invoiceData.parentEmail || null,
+        parent_phone: invoiceData.parentPhone || null,
+        student_name: invoiceData.studentName || null,
+        tutor_name: invoiceData.tutorName || null,
+        subject: invoiceData.subject || null,
+        class_type: invoiceData.classType || null,
+        description: invoiceData.description || null,
+        currency: invoiceData.currency,
+        total_amount: invoiceData.totalAmount || 0,
+        amount_to_pay: invoiceData.amountToPay || invoiceData.totalAmount || 0,
+        payment_option: invoiceData.paymentOption || "full",
+        status: status || editingStatus || "draft",
+        notes: invoiceData.notes || null,
+        data: invoiceData as any,
+        created_by: userData?.user?.id || null,
+      };
+
+      const { data, error } = await supabase
+        .from("invoices")
+        .upsert(payload, { onConflict: "invoice_number" })
+        .select()
+        .maybeSingle();
+      if (error) throw error;
+
+      if (data) {
+        setEditingId(data.id);
+        setEditingStatus(data.status);
+      }
+      if (!silent) {
+        toast({ title: "Saved", description: `Invoice ${invoiceData.invoiceNumber} saved.` });
+      }
+      fetchSavedInvoices();
+    } catch (e: any) {
+      console.error("Error saving invoice:", e);
+      if (!silent) {
+        toast({
+          title: "Error",
+          description: e.message || "Failed to save invoice",
+          variant: "destructive",
+        });
+      }
+    } finally {
+      if (!silent) setSaving(false);
+    }
+  };
+
+  const loadSavedInvoice = (row: any) => {
+    const stored = (row.data || {}) as Partial<InvoiceData>;
+    setSource((stored.source as InvoiceSource) || (row.source as InvoiceSource) || "custom");
+    setSelectedBookingId("");
+    setSelectedPackageId("");
+    setEditingId(row.id);
+    setEditingStatus(row.status);
+    setInvoiceData({
+      invoiceNumber: row.invoice_number,
+      invoiceDate: row.invoice_date || format(new Date(), "yyyy-MM-dd"),
+      dueDate: row.due_date || "",
+      source: (row.source as InvoiceSource) || "custom",
+      parentName: row.parent_name || "",
+      parentEmail: row.parent_email || "",
+      parentPhone: row.parent_phone || "",
+      studentName: row.student_name || "",
+      tutorName: row.tutor_name || "",
+      subject: row.subject || "",
+      classType: row.class_type || "",
+      description: row.description || "",
+      totalAmount: Number(row.total_amount) || 0,
+      amountToPay: Number(row.amount_to_pay) || 0,
+      currency: row.currency || "KES",
+      paymentOption: (row.payment_option as any) || "full",
+      notes: row.notes || "",
+      ...stored,
+      invoiceNumber: row.invoice_number,
+    });
+    toast({ title: "Loaded", description: `Editing invoice ${row.invoice_number}` });
+  };
+
+  const updateInvoiceStatus = async (row: any, status: string) => {
+    try {
+      const { error } = await supabase.from("invoices").update({ status }).eq("id", row.id);
+      if (error) throw error;
+      if (editingId === row.id) setEditingStatus(status);
+      fetchSavedInvoices();
+    } catch (e: any) {
+      toast({
+        title: "Error",
+        description: e.message || "Failed to update status",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const deleteInvoice = async (row: any) => {
+    try {
+      const { error } = await supabase.from("invoices").delete().eq("id", row.id);
+      if (error) throw error;
+      if (editingId === row.id) {
+        setEditingId(null);
+        setEditingStatus("draft");
+      }
+      toast({ title: "Deleted", description: `Invoice ${row.invoice_number} removed.` });
+      fetchSavedInvoices();
+    } catch (e: any) {
+      toast({
+        title: "Error",
+        description: e.message || "Failed to delete invoice",
+        variant: "destructive",
+      });
+    }
+  };
+
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
