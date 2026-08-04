@@ -109,6 +109,7 @@ export default function AdminInvoices() {
 
   useEffect(() => {
     fetchBookingsAndPackages();
+    fetchSavedInvoices();
   }, []);
 
   useEffect(() => {
@@ -436,6 +437,7 @@ export default function AdminInvoices() {
       }
 
       pdf.save(`lana-tutors-invoice-${invoiceData.invoiceNumber}.pdf`);
+      await saveInvoice(undefined, true);
 
       toast({
         title: "Success",
@@ -603,6 +605,7 @@ export default function AdminInvoices() {
         },
       });
       if (error) throw error;
+      await saveInvoice("sent", true);
       toast({ title: "Invoice sent", description: `Emailed to ${invoiceData.parentEmail}` });
     } catch (e: any) {
       console.error("Error emailing invoice:", e);
@@ -618,6 +621,8 @@ export default function AdminInvoices() {
 
   const resetToCustom = () => {
 
+    setEditingId(null);
+    setEditingStatus("draft");
     setSelectedBookingId("");
     setSelectedPackageId("");
     setInvoiceData({
