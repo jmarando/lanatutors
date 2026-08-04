@@ -228,6 +228,14 @@ export default function AdminInvoices() {
     const depositRate = isSpecialTutor ? 0.01 : 0.3;
     const amountToPay = isDeposit ? booking.amount * depositRate : booking.amount;
 
+    let parentEmail = booking.parent_email || "";
+    if (!parentEmail && booking.student_id) {
+      const { data: emailData } = await supabase.rpc("get_user_email", {
+        _user_id: booking.student_id,
+      });
+      parentEmail = (emailData as string) || "";
+    }
+
     setInvoiceData({
       invoiceNumber: `INV-BK-${booking.id.slice(0, 8).toUpperCase()}`,
       invoiceDate: format(new Date(booking.created_at || new Date()), "yyyy-MM-dd"),
@@ -236,7 +244,8 @@ export default function AdminInvoices() {
         : "",
       source: "booking",
       parentName: booking.profiles?.full_name || "Parent",
-      parentEmail: booking.profiles?.email || "",
+      parentEmail,
+
       parentPhone: booking.profiles?.phone_number || "",
       studentName: booking.student_name || "",
       tutorName: booking.tutorName || "Tutor",
