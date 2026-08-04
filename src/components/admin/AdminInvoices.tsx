@@ -759,8 +759,8 @@ export default function AdminInvoices() {
       paymentOption: (row.payment_option as any) || "full",
       notes: row.notes || "",
       ...stored,
-      invoiceNumber: row.invoice_number,
     });
+
     toast({ title: "Loaded", description: `Editing invoice ${row.invoice_number}` });
   };
 
