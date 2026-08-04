@@ -1142,10 +1142,22 @@ export default function AdminInvoices() {
                       </>
                     )}
 
+                    {invoiceData.paymentOption === "weekly" && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Payment Plan</span>
+                        <span className="font-medium">
+                          Weekly over {invoiceData.weeklyWeeks || 1} week
+                          {(invoiceData.weeklyWeeks || 1) > 1 ? "s" : ""}
+                        </span>
+                      </div>
+                    )}
+
                     <Separator />
 
                     <div className="flex justify-between pt-2">
-                      <span className="font-semibold text-lg">Amount to Pay Now</span>
+                      <span className="font-semibold text-lg">
+                        {invoiceData.paymentOption === "weekly" ? "Weekly Instalment" : "Amount to Pay Now"}
+                      </span>
                       <span className="font-bold text-2xl text-primary">
                         {invoiceData.currency} {Math.round(invoiceData.amountToPay || invoiceData.totalAmount).toLocaleString()}
                       </span>
@@ -1153,12 +1165,80 @@ export default function AdminInvoices() {
                   </div>
                 </div>
 
-                <div className="bg-muted/50 p-4 rounded-lg text-sm space-y-2">
-                  <p className="font-medium">Payment Method: M-Pesa / Card</p>
-                  <p className="text-muted-foreground text-xs">
-                    Payment can be made via Pesapal. Contact info@lanatutors.africa if you need assistance.
+                {invoiceData.paymentOption === "weekly" && invoiceData.totalAmount > 0 && (
+                  <>
+                    <Separator />
+                    <div className="space-y-3">
+                      <h3 className="font-semibold flex items-center gap-2">
+                        <Calendar className="w-4 h-4" />
+                        Weekly Payment Schedule
+                      </h3>
+                      <p className="text-xs text-muted-foreground">
+                        Payment is due at the end of each week, after that week's sessions have been
+                        delivered
+                        {invoiceData.weeklySessionsPerWeek
+                          ? ` (${invoiceData.weeklySessionsPerWeek} session${
+                              invoiceData.weeklySessionsPerWeek > 1 ? "s" : ""
+                            } per week)`
+                          : ""}
+                        .
+                      </p>
+                      <div className="border rounded-lg overflow-hidden">
+                        <table className="w-full text-sm">
+                          <thead className="bg-muted">
+                            <tr>
+                              <th className="text-left p-2 font-medium">Week</th>
+                              <th className="text-left p-2 font-medium">Sessions</th>
+                              <th className="text-left p-2 font-medium">Pay by</th>
+                              <th className="text-right p-2 font-medium">Amount</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {buildWeeklySchedule(invoiceData).map((row) => (
+                              <tr key={row.label} className="border-t">
+                                <td className="p-2 font-medium">{row.label}</td>
+                                <td className="p-2 text-muted-foreground">{row.sessionsWeek}</td>
+                                <td className="p-2 text-muted-foreground">{row.dueDate}</td>
+                                <td className="p-2 text-right font-medium">
+                                  {invoiceData.currency} {row.amount.toLocaleString()}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                <Separator />
+
+                {/* Payment Details */}
+                <div className="space-y-3">
+                  <h3 className="font-semibold flex items-center gap-2">
+                    <CreditCard className="w-4 h-4" />
+                    How to Pay (M-Pesa)
+                  </h3>
+                  <div className="border rounded-lg divide-y text-sm">
+                    <div className="flex justify-between p-3">
+                      <span className="text-muted-foreground">NCBA Paybill</span>
+                      <span className="font-bold">880100</span>
+                    </div>
+                    <div className="flex justify-between p-3">
+                      <span className="text-muted-foreground">Account Number</span>
+                      <span className="font-bold">1006114657</span>
+                    </div>
+                    <div className="flex justify-between p-3">
+                      <span className="text-muted-foreground">Recipient</span>
+                      <span className="font-bold">Lana Bespoke Limited</span>
+                    </div>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Card and mobile money payments can also be made via Pesapal. After paying, send your
+                    M-Pesa confirmation to info@lanatutors.africa or WhatsApp +254 117 512316.
                   </p>
                 </div>
+
 
                 {invoiceData.notes && (
                   <div className="text-sm">
