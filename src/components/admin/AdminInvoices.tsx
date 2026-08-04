@@ -817,7 +817,7 @@ export default function AdminInvoices() {
                 <Label>Payment Option</Label>
                 <Select
                   value={invoiceData.paymentOption}
-                  onValueChange={(value: "full" | "deposit") => handleCustomFieldChange("paymentOption", value)}
+                  onValueChange={(value: "full" | "deposit" | "weekly") => handleCustomFieldChange("paymentOption", value)}
                 >
                   <SelectTrigger>
                     <SelectValue />
@@ -825,10 +825,53 @@ export default function AdminInvoices() {
                   <SelectContent>
                     <SelectItem value="full">Full Payment</SelectItem>
                     <SelectItem value="deposit">30% Deposit</SelectItem>
+                    <SelectItem value="weekly">Weekly (pay after each week)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             </div>
+
+            {invoiceData.paymentOption === "weekly" && (
+              <div className="rounded-lg border border-border bg-muted/30 p-4 space-y-3">
+                <div>
+                  <p className="text-sm font-medium">Weekly payment plan</p>
+                  <p className="text-xs text-muted-foreground">
+                    Parents pay at the end of each week, after that week's sessions have been delivered.
+                  </p>
+                </div>
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label>Number of weeks</Label>
+                    <Input
+                      type="number"
+                      min={1}
+                      value={invoiceData.weeklyWeeks ?? 1}
+                      onChange={(e) => handleCustomFieldChange("weeklyWeeks", Number(e.target.value))}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Sessions per week</Label>
+                    <Input
+                      type="number"
+                      min={1}
+                      value={invoiceData.weeklySessionsPerWeek ?? 1}
+                      onChange={(e) =>
+                        handleCustomFieldChange("weeklySessionsPerWeek", Number(e.target.value))
+                      }
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>First week starts</Label>
+                    <Input
+                      type="date"
+                      value={invoiceData.weeklyStartDate || ""}
+                      onChange={(e) => handleCustomFieldChange("weeklyStartDate", e.target.value)}
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
 
             <div className="space-y-2">
               <Label>Due Date (optional)</Label>
