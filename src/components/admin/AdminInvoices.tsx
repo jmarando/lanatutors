@@ -324,13 +324,6 @@ export default function AdminInvoices() {
     });
   };
 
-  const filteredBookings = bookings.filter((b) =>
-    [b.subject, b.profiles?.full_name, b.student_name]
-      .filter(Boolean)
-      .join(" ")
-      .toLowerCase()
-  );
-
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
