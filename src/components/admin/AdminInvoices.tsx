@@ -50,7 +50,11 @@ interface InvoiceData {
   amountPaid?: number;
   balanceDue?: number;
   amountToPay: number;
-  paymentOption?: "full" | "deposit";
+  paymentOption?: "full" | "deposit" | "weekly";
+  weeklyWeeks?: number;
+  weeklySessionsPerWeek?: number;
+  weeklyStartDate?: string;
+
   currency: string;
   notes?: string;
   referenceId?: string;
