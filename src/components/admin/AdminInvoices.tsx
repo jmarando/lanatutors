@@ -986,39 +986,28 @@ export default function AdminInvoices() {
           <h3 className="text-lg font-semibold">Preview</h3>
           <Card className="overflow-hidden">
             <div ref={invoiceRef} className="bg-white text-slate-900">
-              <CardHeader className="text-center border-b bg-gradient-to-b from-background to-muted/20">
-                <div className="flex flex-col items-center py-8">
-                  <img
-                    src={lanaLogo}
-                    alt="Lana Tutors"
-                    className="h-20 mb-6"
-                  />
-                  <div className="text-center space-y-2 max-w-lg">
-                    <p className="text-sm text-muted-foreground leading-relaxed">
-                      Expert tutoring for CBC, IGCSE, A-Levels & more
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      info@lanatutors.africa
-                    </p>
+              <CardHeader className="border-b bg-gradient-to-b from-background to-muted/20 py-4">
+                <div className="flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    <img src={lanaLogo} alt="Lana Tutors" className="h-10" />
+                    <div className="text-left leading-tight">
+                      <p className="text-xs text-muted-foreground">
+                        Expert tutoring for CBC, IGCSE, A-Levels & more
+                      </p>
+                      <p className="text-xs text-muted-foreground">info@lanatutors.africa</p>
+                    </div>
                   </div>
-                </div>
-
-                <Separator className="my-6" />
-
-                <div className="flex flex-col items-center gap-4 pb-6">
-                  <div className="w-14 h-14 bg-primary/10 rounded-full flex items-center justify-center">
-                    <FileText className="w-7 h-7 text-primary" />
-                  </div>
-                  <div className="space-y-2">
-                    <CardTitle className="text-3xl font-bold">Payment Invoice</CardTitle>
-                    <CardDescription className="text-base">
+                  <div className="text-right">
+                    <CardTitle className="text-xl font-bold">Payment Invoice</CardTitle>
+                    <CardDescription className="text-xs">
                       Invoice #{invoiceData.invoiceNumber}
                     </CardDescription>
                   </div>
                 </div>
               </CardHeader>
 
-              <CardContent className="space-y-6 pt-6">
+              <CardContent className="space-y-3 pt-4 pb-4">
+
                 {/* Billed To */}
                 <div className="space-y-3">
                   <h3 className="font-semibold flex items-center gap-2">
