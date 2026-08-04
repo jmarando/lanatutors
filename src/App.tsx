@@ -22,6 +22,8 @@ const ForTutors = lazy(() => import("./pages/ForTutors"));
 const TutorSearch = lazy(() => import("./pages/TutorSearch"));
 const TutorProfile = lazy(() => import("./pages/TutorProfile"));
 const Login = lazy(() => import("./pages/Login"));
+const AuthCallback = lazy(() => import("./pages/AuthCallback"));
+
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const StudentSignup = lazy(() => import("./pages/StudentSignup"));
 const TutorSignup = lazy(() => import("./pages/TutorSignup"));
