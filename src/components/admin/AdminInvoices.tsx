@@ -806,14 +806,36 @@ export default function AdminInvoices() {
 
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="text-2xl font-bold">Invoices</h2>
           <p className="text-sm text-muted-foreground">
-            Create and download invoices for parents.
+            {editingId
+              ? `Editing saved invoice ${invoiceData.invoiceNumber} (${editingStatus})`
+              : "Create, save, download and revisit invoices for parents."}
           </p>
         </div>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={resetToCustom}>
+            <Plus className="mr-2 h-4 w-4" />
+            New invoice
+          </Button>
+          <Button onClick={() => saveInvoice()} disabled={saving}>
+            {saving ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Saving...
+              </>
+            ) : (
+              <>
+                <FileText className="mr-2 h-4 w-4" />
+                {editingId ? "Save changes" : "Save invoice"}
+              </>
+            )}
+          </Button>
+        </div>
       </div>
+
 
       <div className="grid lg:grid-cols-2 gap-6 items-start">
         {/* Form */}
