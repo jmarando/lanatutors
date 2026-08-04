@@ -74,6 +74,13 @@ export default function AdminInvoices() {
   const [emailing, setEmailing] = useState(false);
   const [newStudentGrade, setNewStudentGrade] = useState("");
   const [newStudentCurriculum, setNewStudentCurriculum] = useState("");
+  const [savedInvoices, setSavedInvoices] = useState<any[]>([]);
+  const [savedLoading, setSavedLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingStatus, setEditingStatus] = useState<string>("draft");
+  const [savedSearch, setSavedSearch] = useState("");
+
 
 
   const [invoiceData, setInvoiceData] = useState<InvoiceData>({
