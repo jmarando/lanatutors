@@ -1087,7 +1087,7 @@ export default function AdminInvoices() {
                   <SelectContent>
                     <SelectItem value="full">Full Payment</SelectItem>
                     <SelectItem value="deposit">30% Deposit</SelectItem>
-                    <SelectItem value="weekly">Weekly (pay after each week)</SelectItem>
+                    <SelectItem value="weekly">Weekly (paid in advance each week)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
