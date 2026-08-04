@@ -1500,7 +1500,7 @@ export default function AdminInvoices() {
 
                 <div className="text-xs text-muted-foreground text-center pt-2">
                   <p>Invoice Date: {invoiceData.invoiceDate ? format(new Date(invoiceData.invoiceDate), "PPP") : format(new Date(), "PPP")}</p>
-                  {invoiceData.dueDate && <p>Due Date: {format(new Date(invoiceData.dueDate), "PPP")}</p>}
+                  {invoiceData.dueDate && <p>Payment Due By: {format(new Date(invoiceData.dueDate), "PPP")}</p>}
                 </div>
               </CardContent>
             </div>
