@@ -94,6 +94,8 @@ const AppContent = () => {
           <Route path="/tutors/:id" element={<TutorProfile />} />
           <Route path="/tutor-profile/:id" element={<TutorProfile />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/auth/callback" element={<AuthCallback />} />
+
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/student-signup" element={<StudentSignup />} />
           <Route path="/tutor-signup" element={<TutorSignup />} />
