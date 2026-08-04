@@ -66,6 +66,11 @@ export default function AdminInvoices() {
   const [packages, setPackages] = useState<any[]>([]);
   const [selectedBookingId, setSelectedBookingId] = useState("");
   const [selectedPackageId, setSelectedPackageId] = useState("");
+  const [savingParent, setSavingParent] = useState(false);
+  const [emailing, setEmailing] = useState(false);
+  const [newStudentGrade, setNewStudentGrade] = useState("");
+  const [newStudentCurriculum, setNewStudentCurriculum] = useState("");
+
 
   const [invoiceData, setInvoiceData] = useState<InvoiceData>({
     invoiceNumber: `INV-${Date.now().toString().slice(-6)}`,
