@@ -443,6 +443,9 @@ export default function AdminInvoices() {
     }
     setEmailing(true);
     try {
+      const isWeekly = invoiceData.paymentOption === "weekly";
+      const schedule = isWeekly ? buildWeeklySchedule(invoiceData) : [];
+
       const rows = [
         ["Invoice number", invoiceData.invoiceNumber],
         ["Invoice date", invoiceData.invoiceDate],
@@ -450,8 +453,47 @@ export default function AdminInvoices() {
         invoiceData.studentName ? ["Student", invoiceData.studentName] : null,
         invoiceData.subject ? ["Subject / Service", invoiceData.subject] : null,
         ["Total", `${invoiceData.currency} ${invoiceData.totalAmount.toLocaleString()}`],
-        ["Amount due now", `${invoiceData.currency} ${invoiceData.amountToPay.toLocaleString()}`],
+        isWeekly
+          ? ["Weekly instalment", `${invoiceData.currency} ${invoiceData.amountToPay.toLocaleString()}`]
+          : ["Amount due now", `${invoiceData.currency} ${invoiceData.amountToPay.toLocaleString()}`],
       ].filter(Boolean) as [string, string][];
+
+      const scheduleHtml = isWeekly
+        ? `
+          <tr><td style="padding:20px 0 8px;font-weight:bold;font-size:15px">Weekly payment plan</td></tr>
+          <tr><td style="padding:0 0 12px;color:#4b5563">Payment is made at the end of each week, after that week's sessions have been delivered${
+            invoiceData.weeklySessionsPerWeek
+              ? ` (${invoiceData.weeklySessionsPerWeek} session${invoiceData.weeklySessionsPerWeek > 1 ? "s" : ""} per week)`
+              : ""
+          }.</td></tr>
+          <tr><td>
+            <table role="presentation" width="100%" cellpadding="8" cellspacing="0" style="border:1px solid #f1d5d1;border-radius:8px">
+              <tr style="background:#fef5f4">
+                <td style="font-weight:bold">Week</td>
+                <td style="font-weight:bold">Sessions</td>
+                <td style="font-weight:bold">Pay by</td>
+                <td style="font-weight:bold;text-align:right">Amount</td>
+              </tr>
+              ${schedule
+                .map(
+                  (r) =>
+                    `<tr><td>${r.label}</td><td style="color:#6b7280">${r.sessionsWeek}</td><td style="color:#6b7280">${r.dueDate}</td><td style="text-align:right;font-weight:bold">${invoiceData.currency} ${r.amount.toLocaleString()}</td></tr>`
+                )
+                .join("")}
+            </table>
+          </td></tr>`
+        : "";
+
+      const paybillHtml = `
+        <tr><td style="padding:24px 0 8px;font-weight:bold;font-size:15px">How to pay (M-Pesa)</td></tr>
+        <tr><td>
+          <table role="presentation" width="100%" cellpadding="8" cellspacing="0" style="border:1px solid #e5e7eb;border-radius:8px;background:#f9fafb">
+            <tr><td style="color:#6b7280">NCBA Paybill</td><td style="text-align:right;font-weight:bold">880100</td></tr>
+            <tr><td style="color:#6b7280">Account Number</td><td style="text-align:right;font-weight:bold">1006114657</td></tr>
+            <tr><td style="color:#6b7280">Recipient</td><td style="text-align:right;font-weight:bold">Lana Bespoke Limited</td></tr>
+          </table>
+        </td></tr>
+        <tr><td style="padding:10px 0 0;color:#6b7280;font-size:13px">After paying, send your M-Pesa confirmation to info@lanatutors.africa or WhatsApp +254 117 512316.</td></tr>`;
 
       const html = `
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-family:Arial,Helvetica,sans-serif;color:#1f2937">
@@ -469,6 +511,8 @@ export default function AdminInvoices() {
                 .join("")}
             </table>
           </td></tr>
+          ${scheduleHtml}
+          ${paybillHtml}
           ${
             invoiceData.notes
               ? `<tr><td style="padding:16px 0 0;color:#4b5563">${invoiceData.notes}</td></tr>`
@@ -476,6 +520,7 @@ export default function AdminInvoices() {
           }
           <tr><td style="padding:20px 0 0;color:#4b5563">Reply to this email if anything needs adjusting and we'll sort it out.</td></tr>
         </table>`;
+
 
       const { error } = await supabase.functions.invoke("send-admin-email", {
         body: {
