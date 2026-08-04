@@ -300,7 +300,125 @@ export default function AdminInvoices() {
     }
   };
 
+  const handleSaveParentToSystem = async () => {
+    if (!invoiceData.parentName || !invoiceData.parentPhone) {
+      toast({
+        title: "Missing details",
+        description: "Parent name and phone are required to create an account.",
+        variant: "destructive",
+      });
+      return;
+    }
+    setSavingParent(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("create-parent-profile", {
+        body: {
+          fullName: invoiceData.parentName,
+          phoneNumber: invoiceData.parentPhone,
+          email: invoiceData.parentEmail || undefined,
+        },
+      });
+      if (error) throw error;
+      if (data?.error) throw new Error(data.error);
+      const parentId = data?.userId;
+      if (!parentId) throw new Error("No parent account returned");
+
+      if (invoiceData.studentName) {
+        await supabase.from("students").insert({
+          parent_id: parentId,
+          full_name: invoiceData.studentName,
+          grade_level: newStudentGrade || "Not specified",
+          curriculum: newStudentCurriculum || "Not specified",
+        });
+      }
+
+      toast({
+        title: "Parent added",
+        description: invoiceData.studentName
+          ? "Parent account and student profile created."
+          : "Parent account created.",
+      });
+    } catch (e: any) {
+      console.error("Error creating parent:", e);
+      toast({
+        title: "Error",
+        description: e.message || "Failed to create parent account",
+        variant: "destructive",
+      });
+    } finally {
+      setSavingParent(false);
+    }
+  };
+
+  const handleEmailInvoice = async () => {
+    if (!invoiceData.parentEmail) {
+      toast({
+        title: "No email",
+        description: "Add the parent's email address first.",
+        variant: "destructive",
+      });
+      return;
+    }
+    setEmailing(true);
+    try {
+      const rows = [
+        ["Invoice number", invoiceData.invoiceNumber],
+        ["Invoice date", invoiceData.invoiceDate],
+        invoiceData.dueDate ? ["Due date", invoiceData.dueDate] : null,
+        invoiceData.studentName ? ["Student", invoiceData.studentName] : null,
+        invoiceData.subject ? ["Subject / Service", invoiceData.subject] : null,
+        ["Total", `${invoiceData.currency} ${invoiceData.totalAmount.toLocaleString()}`],
+        ["Amount due now", `${invoiceData.currency} ${invoiceData.amountToPay.toLocaleString()}`],
+      ].filter(Boolean) as [string, string][];
+
+      const html = `
+        <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-family:Arial,Helvetica,sans-serif;color:#1f2937">
+          <tr><td style="padding:0 0 16px">
+            <p style="margin:0 0 12px">Hi ${invoiceData.parentName || "there"},</p>
+            <p style="margin:0 0 16px">Please find your Lana Tutors invoice summary below.</p>
+          </td></tr>
+          <tr><td>
+            <table role="presentation" width="100%" cellpadding="8" cellspacing="0" style="border:1px solid #f1d5d1;border-radius:8px">
+              ${rows
+                .map(
+                  ([k, v]) =>
+                    `<tr><td style="color:#6b7280">${k}</td><td style="text-align:right;font-weight:bold">${v}</td></tr>`
+                )
+                .join("")}
+            </table>
+          </td></tr>
+          ${
+            invoiceData.notes
+              ? `<tr><td style="padding:16px 0 0;color:#4b5563">${invoiceData.notes}</td></tr>`
+              : ""
+          }
+          <tr><td style="padding:20px 0 0;color:#4b5563">Reply to this email if anything needs adjusting and we'll sort it out.</td></tr>
+        </table>`;
+
+      const { error } = await supabase.functions.invoke("send-admin-email", {
+        body: {
+          to: invoiceData.parentEmail,
+          recipientName: invoiceData.parentName,
+          subject: `Lana Tutors invoice ${invoiceData.invoiceNumber}`,
+          html,
+        },
+      });
+      if (error) throw error;
+      toast({ title: "Invoice sent", description: `Emailed to ${invoiceData.parentEmail}` });
+    } catch (e: any) {
+      console.error("Error emailing invoice:", e);
+      toast({
+        title: "Error",
+        description: e.message || "Failed to send invoice email",
+        variant: "destructive",
+      });
+    } finally {
+      setEmailing(false);
+    }
+  };
+
   const resetToCustom = () => {
+
     setSelectedBookingId("");
     setSelectedPackageId("");
     setInvoiceData({
