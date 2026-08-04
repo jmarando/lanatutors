@@ -1096,9 +1096,9 @@ export default function AdminInvoices() {
             {invoiceData.paymentOption === "weekly" && (
               <div className="rounded-lg border border-border bg-muted/30 p-4 space-y-3">
                 <div>
-                  <p className="text-sm font-medium">Weekly payment plan</p>
+                  <p className="text-sm font-medium">Weekly payment plan (paid in advance)</p>
                   <p className="text-xs text-muted-foreground">
-                    Parents pay at the end of each week, after that week's sessions have been delivered.
+                    Each week's fee is paid upfront, on or before the first day of that week, to confirm that week's sessions.
                   </p>
                 </div>
                 <div className="grid grid-cols-3 gap-4">
