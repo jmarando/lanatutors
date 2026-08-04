@@ -740,6 +740,27 @@ export default function AdminInvoices() {
                 </>
               )}
             </Button>
+
+            <Button
+              variant="outline"
+              onClick={handleEmailInvoice}
+              disabled={emailing}
+              className="w-full"
+              size="lg"
+            >
+              {emailing ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Sending...
+                </>
+              ) : (
+                <>
+                  <Mail className="mr-2 h-4 w-4" />
+                  Email Invoice to Parent
+                </>
+              )}
+            </Button>
+
           </CardContent>
         </Card>
 
