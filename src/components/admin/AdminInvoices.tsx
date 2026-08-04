@@ -50,7 +50,11 @@ interface InvoiceData {
   amountPaid?: number;
   balanceDue?: number;
   amountToPay: number;
-  paymentOption?: "full" | "deposit";
+  paymentOption?: "full" | "deposit" | "weekly";
+  weeklyWeeks?: number;
+  weeklySessionsPerWeek?: number;
+  weeklyStartDate?: string;
+
   currency: string;
   notes?: string;
   referenceId?: string;
@@ -89,7 +93,11 @@ export default function AdminInvoices() {
     amountToPay: 0,
     currency: "KES",
     paymentOption: "full",
+    weeklyWeeks: 4,
+    weeklySessionsPerWeek: 2,
+    weeklyStartDate: format(new Date(), "yyyy-MM-dd"),
     notes: "",
+
   });
 
   useEffect(() => {
@@ -249,13 +257,51 @@ export default function AdminInvoices() {
   const handleCustomFieldChange = (field: keyof InvoiceData, value: any) => {
     setInvoiceData((prev) => {
       const next = { ...prev, [field]: value };
-      if (field === "totalAmount" || field === "paymentOption") {
-        const isDeposit = next.paymentOption === "deposit";
-        next.amountToPay = isDeposit ? next.totalAmount * 0.3 : next.totalAmount;
+      if (
+        field === "totalAmount" ||
+        field === "paymentOption" ||
+        field === "weeklyWeeks"
+      ) {
+        if (next.paymentOption === "deposit") {
+          next.amountToPay = next.totalAmount * 0.3;
+        } else if (next.paymentOption === "weekly") {
+          const weeks = Math.max(1, Number(next.weeklyWeeks) || 1);
+          next.amountToPay = Math.round(next.totalAmount / weeks);
+        } else {
+          next.amountToPay = next.totalAmount;
+        }
       }
       return next;
     });
   };
+
+  // Weekly payment plan: parents pay at the end of each week's sessions
+  const buildWeeklySchedule = (data: InvoiceData) => {
+    const weeks = Math.max(1, Number(data.weeklyWeeks) || 1);
+    const perWeek = Math.round(data.totalAmount / weeks);
+    const start = data.weeklyStartDate ? new Date(data.weeklyStartDate) : new Date();
+    const rows: { label: string; sessionsWeek: string; dueDate: string; amount: number }[] = [];
+    let allocated = 0;
+
+    for (let i = 0; i < weeks; i++) {
+      const weekStart = new Date(start);
+      weekStart.setDate(start.getDate() + i * 7);
+      const weekEnd = new Date(weekStart);
+      weekEnd.setDate(weekStart.getDate() + 6);
+      const isLast = i === weeks - 1;
+      const amount = isLast ? data.totalAmount - allocated : perWeek;
+      allocated += amount;
+      rows.push({
+        label: `Week ${i + 1}`,
+        sessionsWeek: `${format(weekStart, "d MMM")} – ${format(weekEnd, "d MMM yyyy")}`,
+        dueDate: format(weekEnd, "d MMM yyyy"),
+        amount,
+      });
+    }
+    return rows;
+  };
+
+
 
   const handleDownloadPDF = async () => {
     if (!invoiceRef.current) return;
@@ -274,24 +320,54 @@ export default function AdminInvoices() {
         scale: 2,
         useCORS: true,
         logging: false,
+        backgroundColor: "#ffffff",
       });
 
-      const imgData = canvas.toDataURL("image/png");
-      const pdf = new jsPDF({
-        orientation: "portrait",
-        unit: "mm",
-        format: "a4",
-      });
+      const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const margin = 8;
+      const contentWidth = pageWidth - margin * 2;
+      const contentHeight = pageHeight - margin * 2;
 
-      const imgWidth = 210;
-      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      // Pixels of the source canvas that fit on one PDF page
+      const pxPerPage = Math.floor((contentHeight * canvas.width) / contentWidth);
+      const totalPages = Math.max(1, Math.ceil(canvas.height / pxPerPage));
 
-      pdf.addImage(imgData, "PNG", 0, 0, imgWidth, imgHeight);
+      for (let page = 0; page < totalPages; page++) {
+        const sliceHeight = Math.min(pxPerPage, canvas.height - page * pxPerPage);
+
+        const pageCanvas = document.createElement("canvas");
+        pageCanvas.width = canvas.width;
+        pageCanvas.height = sliceHeight;
+        const ctx = pageCanvas.getContext("2d");
+        if (!ctx) continue;
+        ctx.fillStyle = "#ffffff";
+        ctx.fillRect(0, 0, pageCanvas.width, pageCanvas.height);
+        ctx.drawImage(
+          canvas,
+          0,
+          page * pxPerPage,
+          canvas.width,
+          sliceHeight,
+          0,
+          0,
+          canvas.width,
+          sliceHeight
+        );
+
+        const imgData = pageCanvas.toDataURL("image/png");
+        const imgHeight = (sliceHeight * contentWidth) / canvas.width;
+
+        if (page > 0) pdf.addPage();
+        pdf.addImage(imgData, "PNG", margin, margin, contentWidth, imgHeight);
+      }
+
       pdf.save(`lana-tutors-invoice-${invoiceData.invoiceNumber}.pdf`);
 
       toast({
         title: "Success",
-        description: "Invoice downloaded successfully",
+        description: `Invoice downloaded (${totalPages} page${totalPages > 1 ? "s" : ""})`,
       });
     } catch (error) {
       console.error("Error generating PDF:", error);
@@ -304,6 +380,7 @@ export default function AdminInvoices() {
       setDownloading(false);
     }
   };
+
 
   const handleSaveParentToSystem = async () => {
     if (!invoiceData.parentName || !invoiceData.parentPhone) {
@@ -366,6 +443,9 @@ export default function AdminInvoices() {
     }
     setEmailing(true);
     try {
+      const isWeekly = invoiceData.paymentOption === "weekly";
+      const schedule = isWeekly ? buildWeeklySchedule(invoiceData) : [];
+
       const rows = [
         ["Invoice number", invoiceData.invoiceNumber],
         ["Invoice date", invoiceData.invoiceDate],
@@ -373,8 +453,47 @@ export default function AdminInvoices() {
         invoiceData.studentName ? ["Student", invoiceData.studentName] : null,
         invoiceData.subject ? ["Subject / Service", invoiceData.subject] : null,
         ["Total", `${invoiceData.currency} ${invoiceData.totalAmount.toLocaleString()}`],
-        ["Amount due now", `${invoiceData.currency} ${invoiceData.amountToPay.toLocaleString()}`],
+        isWeekly
+          ? ["Weekly instalment", `${invoiceData.currency} ${invoiceData.amountToPay.toLocaleString()}`]
+          : ["Amount due now", `${invoiceData.currency} ${invoiceData.amountToPay.toLocaleString()}`],
       ].filter(Boolean) as [string, string][];
+
+      const scheduleHtml = isWeekly
+        ? `
+          <tr><td style="padding:20px 0 8px;font-weight:bold;font-size:15px">Weekly payment plan</td></tr>
+          <tr><td style="padding:0 0 12px;color:#4b5563">Payment is made at the end of each week, after that week's sessions have been delivered${
+            invoiceData.weeklySessionsPerWeek
+              ? ` (${invoiceData.weeklySessionsPerWeek} session${invoiceData.weeklySessionsPerWeek > 1 ? "s" : ""} per week)`
+              : ""
+          }.</td></tr>
+          <tr><td>
+            <table role="presentation" width="100%" cellpadding="8" cellspacing="0" style="border:1px solid #f1d5d1;border-radius:8px">
+              <tr style="background:#fef5f4">
+                <td style="font-weight:bold">Week</td>
+                <td style="font-weight:bold">Sessions</td>
+                <td style="font-weight:bold">Pay by</td>
+                <td style="font-weight:bold;text-align:right">Amount</td>
+              </tr>
+              ${schedule
+                .map(
+                  (r) =>
+                    `<tr><td>${r.label}</td><td style="color:#6b7280">${r.sessionsWeek}</td><td style="color:#6b7280">${r.dueDate}</td><td style="text-align:right;font-weight:bold">${invoiceData.currency} ${r.amount.toLocaleString()}</td></tr>`
+                )
+                .join("")}
+            </table>
+          </td></tr>`
+        : "";
+
+      const paybillHtml = `
+        <tr><td style="padding:24px 0 8px;font-weight:bold;font-size:15px">How to pay (M-Pesa)</td></tr>
+        <tr><td>
+          <table role="presentation" width="100%" cellpadding="8" cellspacing="0" style="border:1px solid #e5e7eb;border-radius:8px;background:#f9fafb">
+            <tr><td style="color:#6b7280">NCBA Paybill</td><td style="text-align:right;font-weight:bold">880100</td></tr>
+            <tr><td style="color:#6b7280">Account Number</td><td style="text-align:right;font-weight:bold">1006114657</td></tr>
+            <tr><td style="color:#6b7280">Recipient</td><td style="text-align:right;font-weight:bold">Lana Bespoke Limited</td></tr>
+          </table>
+        </td></tr>
+        <tr><td style="padding:10px 0 0;color:#6b7280;font-size:13px">After paying, send your M-Pesa confirmation to info@lanatutors.africa or WhatsApp +254 117 512316.</td></tr>`;
 
       const html = `
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-family:Arial,Helvetica,sans-serif;color:#1f2937">
@@ -392,6 +511,8 @@ export default function AdminInvoices() {
                 .join("")}
             </table>
           </td></tr>
+          ${scheduleHtml}
+          ${paybillHtml}
           ${
             invoiceData.notes
               ? `<tr><td style="padding:16px 0 0;color:#4b5563">${invoiceData.notes}</td></tr>`
@@ -399,6 +520,7 @@ export default function AdminInvoices() {
           }
           <tr><td style="padding:20px 0 0;color:#4b5563">Reply to this email if anything needs adjusting and we'll sort it out.</td></tr>
         </table>`;
+
 
       const { error } = await supabase.functions.invoke("send-admin-email", {
         body: {
@@ -443,7 +565,11 @@ export default function AdminInvoices() {
       amountToPay: 0,
       currency: "KES",
       paymentOption: "full",
+      weeklyWeeks: 4,
+      weeklySessionsPerWeek: 2,
+      weeklyStartDate: format(new Date(), "yyyy-MM-dd"),
       notes: "",
+
     });
   };
 
@@ -691,7 +817,7 @@ export default function AdminInvoices() {
                 <Label>Payment Option</Label>
                 <Select
                   value={invoiceData.paymentOption}
-                  onValueChange={(value: "full" | "deposit") => handleCustomFieldChange("paymentOption", value)}
+                  onValueChange={(value: "full" | "deposit" | "weekly") => handleCustomFieldChange("paymentOption", value)}
                 >
                   <SelectTrigger>
                     <SelectValue />
@@ -699,10 +825,53 @@ export default function AdminInvoices() {
                   <SelectContent>
                     <SelectItem value="full">Full Payment</SelectItem>
                     <SelectItem value="deposit">30% Deposit</SelectItem>
+                    <SelectItem value="weekly">Weekly (pay after each week)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             </div>
+
+            {invoiceData.paymentOption === "weekly" && (
+              <div className="rounded-lg border border-border bg-muted/30 p-4 space-y-3">
+                <div>
+                  <p className="text-sm font-medium">Weekly payment plan</p>
+                  <p className="text-xs text-muted-foreground">
+                    Parents pay at the end of each week, after that week's sessions have been delivered.
+                  </p>
+                </div>
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="space-y-2">
+                    <Label>Number of weeks</Label>
+                    <Input
+                      type="number"
+                      min={1}
+                      value={invoiceData.weeklyWeeks ?? 1}
+                      onChange={(e) => handleCustomFieldChange("weeklyWeeks", Number(e.target.value))}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Sessions per week</Label>
+                    <Input
+                      type="number"
+                      min={1}
+                      value={invoiceData.weeklySessionsPerWeek ?? 1}
+                      onChange={(e) =>
+                        handleCustomFieldChange("weeklySessionsPerWeek", Number(e.target.value))
+                      }
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>First week starts</Label>
+                    <Input
+                      type="date"
+                      value={invoiceData.weeklyStartDate || ""}
+                      onChange={(e) => handleCustomFieldChange("weeklyStartDate", e.target.value)}
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
 
             <div className="space-y-2">
               <Label>Due Date (optional)</Label>
@@ -973,10 +1142,22 @@ export default function AdminInvoices() {
                       </>
                     )}
 
+                    {invoiceData.paymentOption === "weekly" && (
+                      <div className="flex justify-between text-sm">
+                        <span className="text-muted-foreground">Payment Plan</span>
+                        <span className="font-medium">
+                          Weekly over {invoiceData.weeklyWeeks || 1} week
+                          {(invoiceData.weeklyWeeks || 1) > 1 ? "s" : ""}
+                        </span>
+                      </div>
+                    )}
+
                     <Separator />
 
                     <div className="flex justify-between pt-2">
-                      <span className="font-semibold text-lg">Amount to Pay Now</span>
+                      <span className="font-semibold text-lg">
+                        {invoiceData.paymentOption === "weekly" ? "Weekly Instalment" : "Amount to Pay Now"}
+                      </span>
                       <span className="font-bold text-2xl text-primary">
                         {invoiceData.currency} {Math.round(invoiceData.amountToPay || invoiceData.totalAmount).toLocaleString()}
                       </span>
@@ -984,12 +1165,80 @@ export default function AdminInvoices() {
                   </div>
                 </div>
 
-                <div className="bg-muted/50 p-4 rounded-lg text-sm space-y-2">
-                  <p className="font-medium">Payment Method: M-Pesa / Card</p>
-                  <p className="text-muted-foreground text-xs">
-                    Payment can be made via Pesapal. Contact info@lanatutors.africa if you need assistance.
+                {invoiceData.paymentOption === "weekly" && invoiceData.totalAmount > 0 && (
+                  <>
+                    <Separator />
+                    <div className="space-y-3">
+                      <h3 className="font-semibold flex items-center gap-2">
+                        <Calendar className="w-4 h-4" />
+                        Weekly Payment Schedule
+                      </h3>
+                      <p className="text-xs text-muted-foreground">
+                        Payment is due at the end of each week, after that week's sessions have been
+                        delivered
+                        {invoiceData.weeklySessionsPerWeek
+                          ? ` (${invoiceData.weeklySessionsPerWeek} session${
+                              invoiceData.weeklySessionsPerWeek > 1 ? "s" : ""
+                            } per week)`
+                          : ""}
+                        .
+                      </p>
+                      <div className="border rounded-lg overflow-hidden">
+                        <table className="w-full text-sm">
+                          <thead className="bg-muted">
+                            <tr>
+                              <th className="text-left p-2 font-medium">Week</th>
+                              <th className="text-left p-2 font-medium">Sessions</th>
+                              <th className="text-left p-2 font-medium">Pay by</th>
+                              <th className="text-right p-2 font-medium">Amount</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {buildWeeklySchedule(invoiceData).map((row) => (
+                              <tr key={row.label} className="border-t">
+                                <td className="p-2 font-medium">{row.label}</td>
+                                <td className="p-2 text-muted-foreground">{row.sessionsWeek}</td>
+                                <td className="p-2 text-muted-foreground">{row.dueDate}</td>
+                                <td className="p-2 text-right font-medium">
+                                  {invoiceData.currency} {row.amount.toLocaleString()}
+                                </td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  </>
+                )}
+
+                <Separator />
+
+                {/* Payment Details */}
+                <div className="space-y-3">
+                  <h3 className="font-semibold flex items-center gap-2">
+                    <CreditCard className="w-4 h-4" />
+                    How to Pay (M-Pesa)
+                  </h3>
+                  <div className="border rounded-lg divide-y text-sm">
+                    <div className="flex justify-between p-3">
+                      <span className="text-muted-foreground">NCBA Paybill</span>
+                      <span className="font-bold">880100</span>
+                    </div>
+                    <div className="flex justify-between p-3">
+                      <span className="text-muted-foreground">Account Number</span>
+                      <span className="font-bold">1006114657</span>
+                    </div>
+                    <div className="flex justify-between p-3">
+                      <span className="text-muted-foreground">Recipient</span>
+                      <span className="font-bold">Lana Bespoke Limited</span>
+                    </div>
+                  </div>
+                  <p className="text-xs text-muted-foreground">
+                    Card and mobile money payments can also be made via Pesapal. After paying, send your
+                    M-Pesa confirmation to info@lanatutors.africa or WhatsApp +254 117 512316.
                   </p>
                 </div>
+
 
                 {invoiceData.notes && (
                   <div className="text-sm">
