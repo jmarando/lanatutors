@@ -117,11 +117,7 @@ export default function AdminInvoices() {
     try {
       const { data: bookingsData, error: bookingsError } = await supabase
         .from("bookings")
-        .select(`
-          *,
-          tutor_availability(start_time, end_time),
-          profiles:student_id(full_name, email, phone_number)
-        `)
+        .select("*")
         .order("created_at", { ascending: false })
         .limit(200);
 
@@ -129,42 +125,83 @@ export default function AdminInvoices() {
 
       const { data: packagesData, error: packagesError } = await supabase
         .from("package_purchases")
-        .select(`
-          *,
-          tutor:tutor_id(id, user_id)
-        `)
+        .select("*")
         .order("created_at", { ascending: false })
         .limit(200);
 
       if (packagesError) throw packagesError;
 
-      // Enrich bookings with tutor names
-      const bookingsWithTutors = await Promise.all(
-        (bookingsData || []).map(async (booking) => {
-          const { data: tutorProfile } = await supabase
-            .from("profiles")
-            .select("full_name")
-            .eq("id", booking.tutor_id)
-            .single();
-          return { ...booking, tutorName: tutorProfile?.full_name || "Tutor" };
-        })
-      );
+      const bookingRows = bookingsData || [];
+      const packageRows = packagesData || [];
 
-      // Enrich packages with tutor names
-      const packagesWithTutors = await Promise.all(
-        (packagesData || []).map(async (pkg) => {
-          let tutorName = "Multiple Tutors";
-          if (pkg.tutor?.user_id) {
-            const { data: tutorProfile } = await supabase
-              .from("profiles")
-              .select("full_name")
-              .eq("id", pkg.tutor.user_id)
-              .single();
-            tutorName = tutorProfile?.full_name || tutorName;
-          }
-          return { ...pkg, tutorName };
-        })
+      // Availability slots for booking dates
+      const slotIds = Array.from(
+        new Set(bookingRows.map((b: any) => b.availability_slot_id).filter(Boolean))
       );
+      const slotMap = new Map<string, any>();
+      if (slotIds.length) {
+        const { data: slots } = await supabase
+          .from("tutor_availability")
+          .select("id, start_time, end_time")
+          .in("id", slotIds as string[]);
+        (slots || []).forEach((s: any) => slotMap.set(s.id, s));
+      }
+
+      // Profiles for parents (student_id) and tutors (tutor_id)
+      const profileIds = Array.from(
+        new Set(
+          [
+            ...bookingRows.map((b: any) => b.student_id),
+            ...bookingRows.map((b: any) => b.tutor_id),
+          ].filter(Boolean)
+        )
+      );
+      const profileMap = new Map<string, any>();
+      if (profileIds.length) {
+        const { data: profileRows } = await supabase
+          .from("profiles")
+          .select("id, full_name, phone_number")
+          .in("id", profileIds as string[]);
+        (profileRows || []).forEach((p: any) => profileMap.set(p.id, p));
+      }
+
+      const bookingsWithTutors = bookingRows.map((booking: any) => ({
+        ...booking,
+        tutor_availability: booking.availability_slot_id
+          ? slotMap.get(booking.availability_slot_id) || null
+          : null,
+        profiles: profileMap.get(booking.student_id) || null,
+        tutorName: profileMap.get(booking.tutor_id)?.full_name || "Tutor",
+      }));
+
+      // Tutor names for packages (package_purchases.tutor_id -> tutor_profiles.id)
+      const pkgTutorIds = Array.from(
+        new Set(packageRows.map((p: any) => p.tutor_id).filter(Boolean))
+      );
+      const pkgTutorNameMap = new Map<string, string>();
+      if (pkgTutorIds.length) {
+        const { data: tutorProfiles } = await supabase
+          .from("tutor_profiles")
+          .select("id, user_id")
+          .in("id", pkgTutorIds as string[]);
+        const userIds = (tutorProfiles || []).map((t: any) => t.user_id).filter(Boolean);
+        const nameMap = new Map<string, string>();
+        if (userIds.length) {
+          const { data: tutorNameRows } = await supabase
+            .from("profiles")
+            .select("id, full_name")
+            .in("id", userIds);
+          (tutorNameRows || []).forEach((p: any) => nameMap.set(p.id, p.full_name));
+        }
+        (tutorProfiles || []).forEach((t: any) => {
+          pkgTutorNameMap.set(t.id, nameMap.get(t.user_id) || "Multiple Tutors");
+        });
+      }
+
+      const packagesWithTutors = packageRows.map((pkg: any) => ({
+        ...pkg,
+        tutorName: pkgTutorNameMap.get(pkg.tutor_id) || "Multiple Tutors",
+      }));
 
       setBookings(bookingsWithTutors);
       setPackages(packagesWithTutors);
@@ -172,13 +209,15 @@ export default function AdminInvoices() {
       console.error("Error fetching bookings/packages:", error);
       toast({
         title: "Error",
-        description: "Failed to load bookings and packages",
+        description:
+          error instanceof Error ? error.message : "Failed to load bookings and packages",
         variant: "destructive",
       });
     } finally {
       setLoading(false);
     }
   };
+
 
   const loadBookingInvoice = async (bookingId: string) => {
     const booking = bookings.find((b) => b.id === bookingId);
@@ -189,6 +228,14 @@ export default function AdminInvoices() {
     const depositRate = isSpecialTutor ? 0.01 : 0.3;
     const amountToPay = isDeposit ? booking.amount * depositRate : booking.amount;
 
+    let parentEmail = booking.parent_email || "";
+    if (!parentEmail && booking.student_id) {
+      const { data: emailData } = await supabase.rpc("get_user_email", {
+        _user_id: booking.student_id,
+      });
+      parentEmail = (emailData as string) || "";
+    }
+
     setInvoiceData({
       invoiceNumber: `INV-BK-${booking.id.slice(0, 8).toUpperCase()}`,
       invoiceDate: format(new Date(booking.created_at || new Date()), "yyyy-MM-dd"),
@@ -197,7 +244,8 @@ export default function AdminInvoices() {
         : "",
       source: "booking",
       parentName: booking.profiles?.full_name || "Parent",
-      parentEmail: booking.profiles?.email || "",
+      parentEmail,
+
       parentPhone: booking.profiles?.phone_number || "",
       studentName: booking.student_name || "",
       tutorName: booking.tutorName || "Tutor",
