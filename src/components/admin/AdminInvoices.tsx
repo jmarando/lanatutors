@@ -23,8 +23,7 @@ import {
   User, 
   Mail, 
   Phone,
-  Plus,
-  Search
+  Plus
 } from "lucide-react";
 
 type InvoiceSource = "custom" | "booking" | "package";
