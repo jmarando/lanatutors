@@ -327,11 +327,18 @@ export default function AdminInvoices() {
           next.amountToPay = next.totalAmount;
         }
       }
+      // Default due date = the day classes start
+      if (field === "weeklyStartDate" && value) {
+        next.dueDate = value;
+      }
+      if (field === "paymentOption" && value === "weekly" && !next.dueDate) {
+        next.dueDate = next.weeklyStartDate || next.dueDate;
+      }
       return next;
     });
   };
 
-  // Weekly payment plan: parents pay at the end of each week's sessions
+  // Weekly payment plan: parents pay upfront at the start of each week, before that week's sessions
   const buildWeeklySchedule = (data: InvoiceData) => {
     const weeks = Math.max(1, Number(data.weeklyWeeks) || 1);
     const perWeek = Math.round(data.totalAmount / weeks);
@@ -350,12 +357,14 @@ export default function AdminInvoices() {
       rows.push({
         label: `Week ${i + 1}`,
         sessionsWeek: `${format(weekStart, "d MMM")} – ${format(weekEnd, "d MMM yyyy")}`,
-        dueDate: format(weekEnd, "d MMM yyyy"),
+        // Paid in advance: on or before the first day of that week
+        dueDate: format(weekStart, "d MMM yyyy"),
         amount,
       });
     }
     return rows;
   };
+
 
 
 
