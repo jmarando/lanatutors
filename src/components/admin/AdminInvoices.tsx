@@ -1407,7 +1407,7 @@ export default function AdminInvoices() {
 
                     <div className="flex justify-between pt-1">
                       <span className="font-semibold text-lg">
-                        {invoiceData.paymentOption === "weekly" ? "Weekly Instalment" : "Amount to Pay Now"}
+                        {invoiceData.paymentOption === "weekly" ? "Week 1 Payment Due Now" : "Amount to Pay Now"}
                       </span>
                       <span className="font-bold text-2xl text-primary">
                         {invoiceData.currency} {Math.round(invoiceData.amountToPay || invoiceData.totalAmount).toLocaleString()}
