@@ -565,7 +565,11 @@ export default function AdminInvoices() {
       amountToPay: 0,
       currency: "KES",
       paymentOption: "full",
+      weeklyWeeks: 4,
+      weeklySessionsPerWeek: 2,
+      weeklyStartDate: format(new Date(), "yyyy-MM-dd"),
       notes: "",
+
     });
   };
 
