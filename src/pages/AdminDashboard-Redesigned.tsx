@@ -2390,6 +2390,8 @@ The Lana Tutors Team`
         return <AdminClassManagement />;
       case 'bookings':
         return renderBookingsContent();
+      case 'invoices':
+        return <AdminInvoices />;
       case 'tutor-signups':
         return <TutorSignupList />;
       case 'december-bootcamp':
