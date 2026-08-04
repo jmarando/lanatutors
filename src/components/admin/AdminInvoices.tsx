@@ -74,6 +74,13 @@ export default function AdminInvoices() {
   const [emailing, setEmailing] = useState(false);
   const [newStudentGrade, setNewStudentGrade] = useState("");
   const [newStudentCurriculum, setNewStudentCurriculum] = useState("");
+  const [savedInvoices, setSavedInvoices] = useState<any[]>([]);
+  const [savedLoading, setSavedLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingStatus, setEditingStatus] = useState<string>("draft");
+  const [savedSearch, setSavedSearch] = useState("");
+
 
 
   const [invoiceData, setInvoiceData] = useState<InvoiceData>({
@@ -102,6 +109,7 @@ export default function AdminInvoices() {
 
   useEffect(() => {
     fetchBookingsAndPackages();
+    fetchSavedInvoices();
   }, []);
 
   useEffect(() => {
@@ -429,6 +437,7 @@ export default function AdminInvoices() {
       }
 
       pdf.save(`lana-tutors-invoice-${invoiceData.invoiceNumber}.pdf`);
+      await saveInvoice(undefined, true);
 
       toast({
         title: "Success",
@@ -596,6 +605,7 @@ export default function AdminInvoices() {
         },
       });
       if (error) throw error;
+      await saveInvoice("sent", true);
       toast({ title: "Invoice sent", description: `Emailed to ${invoiceData.parentEmail}` });
     } catch (e: any) {
       console.error("Error emailing invoice:", e);
@@ -611,6 +621,8 @@ export default function AdminInvoices() {
 
   const resetToCustom = () => {
 
+    setEditingId(null);
+    setEditingStatus("draft");
     setSelectedBookingId("");
     setSelectedPackageId("");
     setInvoiceData({
@@ -638,16 +650,192 @@ export default function AdminInvoices() {
     });
   };
 
+  const fetchSavedInvoices = async () => {
+    setSavedLoading(true);
+    try {
+      const { data, error } = await supabase
+        .from("invoices")
+        .select("*")
+        .order("created_at", { ascending: false })
+        .limit(300);
+      if (error) throw error;
+      setSavedInvoices(data || []);
+    } catch (e: any) {
+      console.error("Error loading saved invoices:", e);
+      toast({
+        title: "Error",
+        description: e.message || "Failed to load saved invoices",
+        variant: "destructive",
+      });
+    } finally {
+      setSavedLoading(false);
+    }
+  };
+
+  const saveInvoice = async (status?: string, silent = false) => {
+    if (!invoiceData.parentName) {
+      if (!silent) {
+        toast({
+          title: "Missing details",
+          description: "Add at least a parent name before saving.",
+          variant: "destructive",
+        });
+      }
+      return;
+    }
+    if (!silent) setSaving(true);
+    try {
+      const { data: userData } = await supabase.auth.getUser();
+      const payload = {
+        invoice_number: invoiceData.invoiceNumber,
+        invoice_date: invoiceData.invoiceDate || format(new Date(), "yyyy-MM-dd"),
+        due_date: invoiceData.dueDate || null,
+        source: invoiceData.source,
+        parent_name: invoiceData.parentName,
+        parent_email: invoiceData.parentEmail || null,
+        parent_phone: invoiceData.parentPhone || null,
+        student_name: invoiceData.studentName || null,
+        tutor_name: invoiceData.tutorName || null,
+        subject: invoiceData.subject || null,
+        class_type: invoiceData.classType || null,
+        description: invoiceData.description || null,
+        currency: invoiceData.currency,
+        total_amount: invoiceData.totalAmount || 0,
+        amount_to_pay: invoiceData.amountToPay || invoiceData.totalAmount || 0,
+        payment_option: invoiceData.paymentOption || "full",
+        status: status || editingStatus || "draft",
+        notes: invoiceData.notes || null,
+        data: invoiceData as any,
+        created_by: userData?.user?.id || null,
+      };
+
+      const { data, error } = await supabase
+        .from("invoices")
+        .upsert(payload, { onConflict: "invoice_number" })
+        .select()
+        .maybeSingle();
+      if (error) throw error;
+
+      if (data) {
+        setEditingId(data.id);
+        setEditingStatus(data.status);
+      }
+      if (!silent) {
+        toast({ title: "Saved", description: `Invoice ${invoiceData.invoiceNumber} saved.` });
+      }
+      fetchSavedInvoices();
+    } catch (e: any) {
+      console.error("Error saving invoice:", e);
+      if (!silent) {
+        toast({
+          title: "Error",
+          description: e.message || "Failed to save invoice",
+          variant: "destructive",
+        });
+      }
+    } finally {
+      if (!silent) setSaving(false);
+    }
+  };
+
+  const loadSavedInvoice = (row: any) => {
+    const stored = (row.data || {}) as Partial<InvoiceData>;
+    setSource((stored.source as InvoiceSource) || (row.source as InvoiceSource) || "custom");
+    setSelectedBookingId("");
+    setSelectedPackageId("");
+    setEditingId(row.id);
+    setEditingStatus(row.status);
+    setInvoiceData({
+      invoiceNumber: row.invoice_number,
+      invoiceDate: row.invoice_date || format(new Date(), "yyyy-MM-dd"),
+      dueDate: row.due_date || "",
+      source: (row.source as InvoiceSource) || "custom",
+      parentName: row.parent_name || "",
+      parentEmail: row.parent_email || "",
+      parentPhone: row.parent_phone || "",
+      studentName: row.student_name || "",
+      tutorName: row.tutor_name || "",
+      subject: row.subject || "",
+      classType: row.class_type || "",
+      description: row.description || "",
+      totalAmount: Number(row.total_amount) || 0,
+      amountToPay: Number(row.amount_to_pay) || 0,
+      currency: row.currency || "KES",
+      paymentOption: (row.payment_option as any) || "full",
+      notes: row.notes || "",
+      ...stored,
+    });
+
+    toast({ title: "Loaded", description: `Editing invoice ${row.invoice_number}` });
+  };
+
+  const updateInvoiceStatus = async (row: any, status: string) => {
+    try {
+      const { error } = await supabase.from("invoices").update({ status }).eq("id", row.id);
+      if (error) throw error;
+      if (editingId === row.id) setEditingStatus(status);
+      fetchSavedInvoices();
+    } catch (e: any) {
+      toast({
+        title: "Error",
+        description: e.message || "Failed to update status",
+        variant: "destructive",
+      });
+    }
+  };
+
+  const deleteInvoice = async (row: any) => {
+    try {
+      const { error } = await supabase.from("invoices").delete().eq("id", row.id);
+      if (error) throw error;
+      if (editingId === row.id) {
+        setEditingId(null);
+        setEditingStatus("draft");
+      }
+      toast({ title: "Deleted", description: `Invoice ${row.invoice_number} removed.` });
+      fetchSavedInvoices();
+    } catch (e: any) {
+      toast({
+        title: "Error",
+        description: e.message || "Failed to delete invoice",
+        variant: "destructive",
+      });
+    }
+  };
+
+
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="text-2xl font-bold">Invoices</h2>
           <p className="text-sm text-muted-foreground">
-            Create and download invoices for parents.
+            {editingId
+              ? `Editing saved invoice ${invoiceData.invoiceNumber} (${editingStatus})`
+              : "Create, save, download and revisit invoices for parents."}
           </p>
         </div>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={resetToCustom}>
+            <Plus className="mr-2 h-4 w-4" />
+            New invoice
+          </Button>
+          <Button onClick={() => saveInvoice()} disabled={saving}>
+            {saving ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Saving...
+              </>
+            ) : (
+              <>
+                <FileText className="mr-2 h-4 w-4" />
+                {editingId ? "Save changes" : "Save invoice"}
+              </>
+            )}
+          </Button>
+        </div>
       </div>
+
 
       <div className="grid lg:grid-cols-2 gap-6 items-start">
         {/* Form */}
@@ -1310,6 +1498,116 @@ export default function AdminInvoices() {
           </Card>
         </div>
       </div>
+
+      {/* Saved invoices */}
+      <Card>
+        <CardHeader>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <FileText className="h-5 w-5" />
+                Past invoices
+              </CardTitle>
+              <CardDescription>
+                Every saved, downloaded or emailed invoice. Open one to amend and re-send it.
+              </CardDescription>
+            </div>
+            <div className="flex items-center gap-2">
+              <Input
+                placeholder="Search name, number, student..."
+                value={savedSearch}
+                onChange={(e) => setSavedSearch(e.target.value)}
+                className="w-56"
+              />
+              <Button variant="outline" size="sm" onClick={fetchSavedInvoices} disabled={savedLoading}>
+                {savedLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Refresh"}
+              </Button>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {savedInvoices.length === 0 ? (
+            <p className="text-sm text-muted-foreground py-6 text-center">
+              No invoices saved yet. Create one above and hit Save invoice.
+            </p>
+          ) : (
+            <div className="border rounded-lg overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-muted">
+                  <tr>
+                    <th className="text-left px-3 py-2 font-medium">Invoice</th>
+                    <th className="text-left px-3 py-2 font-medium">Parent</th>
+                    <th className="text-left px-3 py-2 font-medium">Student</th>
+                    <th className="text-left px-3 py-2 font-medium">Date</th>
+                    <th className="text-right px-3 py-2 font-medium">Amount</th>
+                    <th className="text-left px-3 py-2 font-medium">Status</th>
+                    <th className="text-right px-3 py-2 font-medium">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {savedInvoices
+                    .filter((row) => {
+                      const q = savedSearch.trim().toLowerCase();
+                      if (!q) return true;
+                      return [
+                        row.invoice_number,
+                        row.parent_name,
+                        row.parent_email,
+                        row.student_name,
+                        row.subject,
+                      ]
+                        .filter(Boolean)
+                        .some((v: string) => v.toLowerCase().includes(q));
+                    })
+                    .map((row) => (
+                      <tr key={row.id} className="border-t">
+                        <td className="px-3 py-2 font-medium">{row.invoice_number}</td>
+                        <td className="px-3 py-2">{row.parent_name}</td>
+                        <td className="px-3 py-2 text-muted-foreground">{row.student_name || "—"}</td>
+                        <td className="px-3 py-2 text-muted-foreground">
+                          {row.invoice_date ? format(new Date(row.invoice_date), "d MMM yyyy") : "—"}
+                        </td>
+                        <td className="px-3 py-2 text-right">
+                          {row.currency} {Number(row.total_amount).toLocaleString()}
+                        </td>
+                        <td className="px-3 py-2">
+                          <Select
+                            value={row.status}
+                            onValueChange={(value) => updateInvoiceStatus(row, value)}
+                          >
+                            <SelectTrigger className="h-8 w-28">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="draft">Draft</SelectItem>
+                              <SelectItem value="sent">Sent</SelectItem>
+                              <SelectItem value="paid">Paid</SelectItem>
+                              <SelectItem value="cancelled">Cancelled</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </td>
+                        <td className="px-3 py-2 text-right whitespace-nowrap">
+                          <Button size="sm" variant="outline" onClick={() => loadSavedInvoice(row)}>
+                            Open
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="ml-2 text-destructive"
+                            onClick={() => deleteInvoice(row)}
+                          >
+                            Delete
+                          </Button>
+                        </td>
+                      </tr>
+                    ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
+
 }

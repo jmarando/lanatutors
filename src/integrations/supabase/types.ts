@@ -1120,6 +1120,84 @@ export type Database = {
         }
         Relationships: []
       }
+      invoices: {
+        Row: {
+          amount_to_pay: number
+          class_type: string | null
+          created_at: string
+          created_by: string | null
+          currency: string
+          data: Json
+          description: string | null
+          due_date: string | null
+          id: string
+          invoice_date: string
+          invoice_number: string
+          notes: string | null
+          parent_email: string | null
+          parent_name: string
+          parent_phone: string | null
+          payment_option: string
+          source: string
+          status: string
+          student_name: string | null
+          subject: string | null
+          total_amount: number
+          tutor_name: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount_to_pay?: number
+          class_type?: string | null
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          data?: Json
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          invoice_date?: string
+          invoice_number: string
+          notes?: string | null
+          parent_email?: string | null
+          parent_name: string
+          parent_phone?: string | null
+          payment_option?: string
+          source?: string
+          status?: string
+          student_name?: string | null
+          subject?: string | null
+          total_amount?: number
+          tutor_name?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount_to_pay?: number
+          class_type?: string | null
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          data?: Json
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          invoice_date?: string
+          invoice_number?: string
+          notes?: string | null
+          parent_email?: string | null
+          parent_name?: string
+          parent_phone?: string | null
+          payment_option?: string
+          source?: string
+          status?: string
+          student_name?: string | null
+          subject?: string | null
+          total_amount?: number
+          tutor_name?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       lana_knowledge: {
         Row: {
           active: boolean
