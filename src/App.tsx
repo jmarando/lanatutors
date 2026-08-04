@@ -22,6 +22,8 @@ const ForTutors = lazy(() => import("./pages/ForTutors"));
 const TutorSearch = lazy(() => import("./pages/TutorSearch"));
 const TutorProfile = lazy(() => import("./pages/TutorProfile"));
 const Login = lazy(() => import("./pages/Login"));
+const AuthCallback = lazy(() => import("./pages/AuthCallback"));
+
 const ResetPassword = lazy(() => import("./pages/ResetPassword"));
 const StudentSignup = lazy(() => import("./pages/StudentSignup"));
 const TutorSignup = lazy(() => import("./pages/TutorSignup"));
@@ -92,6 +94,8 @@ const AppContent = () => {
           <Route path="/tutors/:id" element={<TutorProfile />} />
           <Route path="/tutor-profile/:id" element={<TutorProfile />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/auth/callback" element={<AuthCallback />} />
+
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/student-signup" element={<StudentSignup />} />
           <Route path="/tutor-signup" element={<TutorSignup />} />

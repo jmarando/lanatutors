@@ -19,9 +19,20 @@ const GoogleSignInButton = ({ label = "Continue with Google", onSignedIn }: Goog
   const handleClick = async () => {
     setLoading(true);
     try {
+      // Remember where the user wanted to land (same-origin path only)
+      const params = new URLSearchParams(window.location.search);
+      const redirect = params.get("redirect");
+      const intended = redirect ? decodeURIComponent(redirect) : null;
+      if (intended && intended.startsWith("/") && !intended.startsWith("//")) {
+        localStorage.setItem("lana_post_auth_redirect", intended);
+      } else {
+        localStorage.removeItem("lana_post_auth_redirect");
+      }
+
       const result = await lovable.auth.signInWithOAuth("google", {
-        redirect_uri: window.location.origin,
+        redirect_uri: `${window.location.origin}/auth/callback`,
       });
+
 
       if (result.error) {
         console.error("[GoogleSignIn] OAuth error:", result.error);
