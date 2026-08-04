@@ -379,8 +379,17 @@ export default function AdminInvoices() {
       const contentHeight = pageHeight - margin * 2;
 
       // Pixels of the source canvas that fit on one PDF page
-      const pxPerPage = Math.floor((contentHeight * canvas.width) / contentWidth);
+      let pxPerPage = Math.floor((contentHeight * canvas.width) / contentWidth);
+
+      // If the content only slightly overflows a page boundary, shrink it a
+      // little so we never end up with a nearly-empty trailing page.
+      const rawPages = canvas.height / pxPerPage;
+      const targetPages = rawPages <= 1.25 ? 1 : rawPages <= 2.3 ? 2 : Math.ceil(rawPages);
+      if (targetPages < Math.ceil(rawPages)) {
+        pxPerPage = Math.ceil(canvas.height / targetPages);
+      }
       const totalPages = Math.max(1, Math.ceil(canvas.height / pxPerPage));
+
 
       for (let page = 0; page < totalPages; page++) {
         const sliceHeight = Math.min(pxPerPage, canvas.height - page * pxPerPage);
@@ -405,10 +414,18 @@ export default function AdminInvoices() {
         );
 
         const imgData = pageCanvas.toDataURL("image/png");
-        const imgHeight = (sliceHeight * contentWidth) / canvas.width;
+        let drawWidth = contentWidth;
+        let drawHeight = (sliceHeight * contentWidth) / canvas.width;
+        if (drawHeight > contentHeight) {
+          const shrink = contentHeight / drawHeight;
+          drawHeight = contentHeight;
+          drawWidth = contentWidth * shrink;
+        }
+        const offsetX = margin + (contentWidth - drawWidth) / 2;
 
         if (page > 0) pdf.addPage();
-        pdf.addImage(imgData, "PNG", margin, margin, contentWidth, imgHeight);
+        pdf.addImage(imgData, "PNG", offsetX, margin, drawWidth, drawHeight);
+
       }
 
       pdf.save(`lana-tutors-invoice-${invoiceData.invoiceNumber}.pdf`);
@@ -986,46 +1003,35 @@ export default function AdminInvoices() {
           <h3 className="text-lg font-semibold">Preview</h3>
           <Card className="overflow-hidden">
             <div ref={invoiceRef} className="bg-white text-slate-900">
-              <CardHeader className="text-center border-b bg-gradient-to-b from-background to-muted/20">
-                <div className="flex flex-col items-center py-8">
-                  <img
-                    src={lanaLogo}
-                    alt="Lana Tutors"
-                    className="h-20 mb-6"
-                  />
-                  <div className="text-center space-y-2 max-w-lg">
-                    <p className="text-sm text-muted-foreground leading-relaxed">
-                      Expert tutoring for CBC, IGCSE, A-Levels & more
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      info@lanatutors.africa
-                    </p>
+              <CardHeader className="border-b bg-gradient-to-b from-background to-muted/20 py-4">
+                <div className="flex items-center justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    <img src={lanaLogo} alt="Lana Tutors" className="h-10" />
+                    <div className="text-left leading-tight">
+                      <p className="text-xs text-muted-foreground">
+                        Expert tutoring for CBC, IGCSE, A-Levels & more
+                      </p>
+                      <p className="text-xs text-muted-foreground">info@lanatutors.africa</p>
+                    </div>
                   </div>
-                </div>
-
-                <Separator className="my-6" />
-
-                <div className="flex flex-col items-center gap-4 pb-6">
-                  <div className="w-14 h-14 bg-primary/10 rounded-full flex items-center justify-center">
-                    <FileText className="w-7 h-7 text-primary" />
-                  </div>
-                  <div className="space-y-2">
-                    <CardTitle className="text-3xl font-bold">Payment Invoice</CardTitle>
-                    <CardDescription className="text-base">
+                  <div className="text-right">
+                    <CardTitle className="text-xl font-bold">Payment Invoice</CardTitle>
+                    <CardDescription className="text-xs">
                       Invoice #{invoiceData.invoiceNumber}
                     </CardDescription>
                   </div>
                 </div>
               </CardHeader>
 
-              <CardContent className="space-y-6 pt-6">
+              <CardContent className="space-y-3 pt-4 pb-4">
+
                 {/* Billed To */}
-                <div className="space-y-3">
+                <div className="space-y-2">
                   <h3 className="font-semibold flex items-center gap-2">
                     <User className="w-4 h-4" />
                     Billed To
                   </h3>
-                  <div className="grid grid-cols-2 gap-3 text-sm">
+                  <div className="grid grid-cols-2 gap-2 text-sm">
                     <div>
                       <span className="text-muted-foreground">Parent / Customer:</span>
                       <p className="font-medium">{invoiceData.parentName || "—"}</p>
@@ -1060,12 +1066,12 @@ export default function AdminInvoices() {
                 <Separator />
 
                 {/* Service Details */}
-                <div className="space-y-3">
+                <div className="space-y-2">
                   <h3 className="font-semibold flex items-center gap-2">
                     <Book className="w-4 h-4" />
                     Service Details
                   </h3>
-                  <div className="grid grid-cols-2 gap-3 text-sm">
+                  <div className="grid grid-cols-2 gap-2 text-sm">
                     {invoiceData.tutorName && (
                       <div>
                         <span className="text-muted-foreground">Tutor:</span>
@@ -1139,7 +1145,7 @@ export default function AdminInvoices() {
                 <Separator />
 
                 {/* Payment Summary */}
-                <div className="space-y-3">
+                <div className="space-y-2">
                   <h3 className="font-semibold flex items-center gap-2">
                     <CreditCard className="w-4 h-4" />
                     Payment Summary
@@ -1202,7 +1208,7 @@ export default function AdminInvoices() {
 
                     <Separator />
 
-                    <div className="flex justify-between pt-2">
+                    <div className="flex justify-between pt-1">
                       <span className="font-semibold text-lg">
                         {invoiceData.paymentOption === "weekly" ? "Weekly Instalment" : "Amount to Pay Now"}
                       </span>
@@ -1216,7 +1222,7 @@ export default function AdminInvoices() {
                 {invoiceData.paymentOption === "weekly" && invoiceData.totalAmount > 0 && (
                   <>
                     <Separator />
-                    <div className="space-y-3">
+                    <div className="space-y-2">
                       <h3 className="font-semibold flex items-center gap-2">
                         <Calendar className="w-4 h-4" />
                         Weekly Payment Schedule
@@ -1235,19 +1241,19 @@ export default function AdminInvoices() {
                         <table className="w-full text-sm">
                           <thead className="bg-muted">
                             <tr>
-                              <th className="text-left p-2 font-medium">Week</th>
-                              <th className="text-left p-2 font-medium">Sessions</th>
-                              <th className="text-left p-2 font-medium">Pay by</th>
-                              <th className="text-right p-2 font-medium">Amount</th>
+                              <th className="text-left px-2 py-1 font-medium">Week</th>
+                              <th className="text-left px-2 py-1 font-medium">Sessions</th>
+                              <th className="text-left px-2 py-1 font-medium">Pay by</th>
+                              <th className="text-right px-2 py-1 font-medium">Amount</th>
                             </tr>
                           </thead>
                           <tbody>
                             {buildWeeklySchedule(invoiceData).map((row) => (
                               <tr key={row.label} className="border-t">
-                                <td className="p-2 font-medium">{row.label}</td>
-                                <td className="p-2 text-muted-foreground">{row.sessionsWeek}</td>
-                                <td className="p-2 text-muted-foreground">{row.dueDate}</td>
-                                <td className="p-2 text-right font-medium">
+                                <td className="px-2 py-1 font-medium">{row.label}</td>
+                                <td className="px-2 py-1 text-muted-foreground">{row.sessionsWeek}</td>
+                                <td className="px-2 py-1 text-muted-foreground">{row.dueDate}</td>
+                                <td className="px-2 py-1 text-right font-medium">
                                   {invoiceData.currency} {row.amount.toLocaleString()}
                                 </td>
                               </tr>
@@ -1262,21 +1268,21 @@ export default function AdminInvoices() {
                 <Separator />
 
                 {/* Payment Details */}
-                <div className="space-y-3">
+                <div className="space-y-2">
                   <h3 className="font-semibold flex items-center gap-2">
                     <CreditCard className="w-4 h-4" />
                     How to Pay (M-Pesa)
                   </h3>
                   <div className="border rounded-lg divide-y text-sm">
-                    <div className="flex justify-between p-3">
+                    <div className="flex justify-between px-3 py-1.5">
                       <span className="text-muted-foreground">NCBA Paybill</span>
                       <span className="font-bold">880100</span>
                     </div>
-                    <div className="flex justify-between p-3">
+                    <div className="flex justify-between px-3 py-1.5">
                       <span className="text-muted-foreground">Account Number</span>
                       <span className="font-bold">1006114657</span>
                     </div>
-                    <div className="flex justify-between p-3">
+                    <div className="flex justify-between px-3 py-1.5">
                       <span className="text-muted-foreground">Recipient</span>
                       <span className="font-bold">Lana Bespoke Limited</span>
                     </div>
@@ -1295,7 +1301,7 @@ export default function AdminInvoices() {
                   </div>
                 )}
 
-                <div className="text-xs text-muted-foreground text-center pt-4">
+                <div className="text-xs text-muted-foreground text-center pt-2">
                   <p>Invoice Date: {invoiceData.invoiceDate ? format(new Date(invoiceData.invoiceDate), "PPP") : format(new Date(), "PPP")}</p>
                   {invoiceData.dueDate && <p>Due Date: {format(new Date(invoiceData.dueDate), "PPP")}</p>}
                 </div>
