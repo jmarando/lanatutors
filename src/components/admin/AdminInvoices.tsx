@@ -327,11 +327,18 @@ export default function AdminInvoices() {
           next.amountToPay = next.totalAmount;
         }
       }
+      // Default due date = the day classes start
+      if (field === "weeklyStartDate" && value) {
+        next.dueDate = value;
+      }
+      if (field === "paymentOption" && value === "weekly" && !next.dueDate) {
+        next.dueDate = next.weeklyStartDate || next.dueDate;
+      }
       return next;
     });
   };
 
-  // Weekly payment plan: parents pay at the end of each week's sessions
+  // Weekly payment plan: parents pay upfront at the start of each week, before that week's sessions
   const buildWeeklySchedule = (data: InvoiceData) => {
     const weeks = Math.max(1, Number(data.weeklyWeeks) || 1);
     const perWeek = Math.round(data.totalAmount / weeks);
@@ -350,12 +357,14 @@ export default function AdminInvoices() {
       rows.push({
         label: `Week ${i + 1}`,
         sessionsWeek: `${format(weekStart, "d MMM")} – ${format(weekEnd, "d MMM yyyy")}`,
-        dueDate: format(weekEnd, "d MMM yyyy"),
+        // Paid in advance: on or before the first day of that week
+        dueDate: format(weekStart, "d MMM yyyy"),
         amount,
       });
     }
     return rows;
   };
+
 
 
 
@@ -523,19 +532,19 @@ export default function AdminInvoices() {
       const rows = [
         ["Invoice number", invoiceData.invoiceNumber],
         ["Invoice date", invoiceData.invoiceDate],
-        invoiceData.dueDate ? ["Due date", invoiceData.dueDate] : null,
+        invoiceData.dueDate ? ["Payment due by", invoiceData.dueDate] : null,
         invoiceData.studentName ? ["Student", invoiceData.studentName] : null,
         invoiceData.subject ? ["Subject / Service", invoiceData.subject] : null,
         ["Total", `${invoiceData.currency} ${invoiceData.totalAmount.toLocaleString()}`],
         isWeekly
-          ? ["Weekly instalment", `${invoiceData.currency} ${invoiceData.amountToPay.toLocaleString()}`]
+          ? ["Weekly instalment (paid in advance)", `${invoiceData.currency} ${invoiceData.amountToPay.toLocaleString()}`]
           : ["Amount due now", `${invoiceData.currency} ${invoiceData.amountToPay.toLocaleString()}`],
       ].filter(Boolean) as [string, string][];
 
       const scheduleHtml = isWeekly
         ? `
-          <tr><td style="padding:20px 0 8px;font-weight:bold;font-size:15px">Weekly payment plan</td></tr>
-          <tr><td style="padding:0 0 12px;color:#4b5563">Payment is made at the end of each week, after that week's sessions have been delivered${
+          <tr><td style="padding:20px 0 8px;font-weight:bold;font-size:15px">Weekly payment plan (paid in advance)</td></tr>
+          <tr><td style="padding:0 0 12px;color:#4b5563">Each week's fee is payable in advance, on or before the first day of that week, to confirm that week's sessions${
             invoiceData.weeklySessionsPerWeek
               ? ` (${invoiceData.weeklySessionsPerWeek} session${invoiceData.weeklySessionsPerWeek > 1 ? "s" : ""} per week)`
               : ""
@@ -545,7 +554,7 @@ export default function AdminInvoices() {
               <tr style="background:#fef5f4">
                 <td style="font-weight:bold">Week</td>
                 <td style="font-weight:bold">Sessions</td>
-                <td style="font-weight:bold">Pay by</td>
+                <td style="font-weight:bold">Pay on or before</td>
                 <td style="font-weight:bold;text-align:right">Amount</td>
               </tr>
               ${schedule
@@ -1078,7 +1087,7 @@ export default function AdminInvoices() {
                   <SelectContent>
                     <SelectItem value="full">Full Payment</SelectItem>
                     <SelectItem value="deposit">30% Deposit</SelectItem>
-                    <SelectItem value="weekly">Weekly (pay after each week)</SelectItem>
+                    <SelectItem value="weekly">Weekly (paid in advance each week)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -1087,9 +1096,9 @@ export default function AdminInvoices() {
             {invoiceData.paymentOption === "weekly" && (
               <div className="rounded-lg border border-border bg-muted/30 p-4 space-y-3">
                 <div>
-                  <p className="text-sm font-medium">Weekly payment plan</p>
+                  <p className="text-sm font-medium">Weekly payment plan (paid in advance)</p>
                   <p className="text-xs text-muted-foreground">
-                    Parents pay at the end of each week, after that week's sessions have been delivered.
+                    Each week's fee is paid upfront, on or before the first day of that week, to confirm that week's sessions.
                   </p>
                 </div>
                 <div className="grid grid-cols-3 gap-4">
@@ -1114,7 +1123,7 @@ export default function AdminInvoices() {
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label>First week starts</Label>
+                    <Label>Classes start (Week 1)</Label>
                     <Input
                       type="date"
                       value={invoiceData.weeklyStartDate || ""}
@@ -1127,7 +1136,7 @@ export default function AdminInvoices() {
 
 
             <div className="space-y-2">
-              <Label>Due Date (optional)</Label>
+              <Label>Payment Due By (defaults to the day classes start)</Label>
               <Input
                 type="date"
                 value={invoiceData.dueDate || ""}
@@ -1398,7 +1407,7 @@ export default function AdminInvoices() {
 
                     <div className="flex justify-between pt-1">
                       <span className="font-semibold text-lg">
-                        {invoiceData.paymentOption === "weekly" ? "Weekly Instalment" : "Amount to Pay Now"}
+                        {invoiceData.paymentOption === "weekly" ? "Week 1 Payment Due Now" : "Amount to Pay Now"}
                       </span>
                       <span className="font-bold text-2xl text-primary">
                         {invoiceData.currency} {Math.round(invoiceData.amountToPay || invoiceData.totalAmount).toLocaleString()}
@@ -1413,11 +1422,11 @@ export default function AdminInvoices() {
                     <div className="space-y-2">
                       <h3 className="font-semibold flex items-center gap-2">
                         <Calendar className="w-4 h-4" />
-                        Weekly Payment Schedule
+                        Weekly Payment Schedule (Paid in Advance)
                       </h3>
                       <p className="text-xs text-muted-foreground">
-                        Payment is due at the end of each week, after that week's sessions have been
-                        delivered
+                        Each week's fee is payable in advance, on or before the first day of that week,
+                        to confirm that week's sessions
                         {invoiceData.weeklySessionsPerWeek
                           ? ` (${invoiceData.weeklySessionsPerWeek} session${
                               invoiceData.weeklySessionsPerWeek > 1 ? "s" : ""
@@ -1431,7 +1440,7 @@ export default function AdminInvoices() {
                             <tr>
                               <th className="text-left px-2 py-1 font-medium">Week</th>
                               <th className="text-left px-2 py-1 font-medium">Sessions</th>
-                              <th className="text-left px-2 py-1 font-medium">Pay by</th>
+                              <th className="text-left px-2 py-1 font-medium">Pay on or before</th>
                               <th className="text-right px-2 py-1 font-medium">Amount</th>
                             </tr>
                           </thead>
@@ -1491,7 +1500,7 @@ export default function AdminInvoices() {
 
                 <div className="text-xs text-muted-foreground text-center pt-2">
                   <p>Invoice Date: {invoiceData.invoiceDate ? format(new Date(invoiceData.invoiceDate), "PPP") : format(new Date(), "PPP")}</p>
-                  {invoiceData.dueDate && <p>Due Date: {format(new Date(invoiceData.dueDate), "PPP")}</p>}
+                  {invoiceData.dueDate && <p>Payment Due By: {format(new Date(invoiceData.dueDate), "PPP")}</p>}
                 </div>
               </CardContent>
             </div>
