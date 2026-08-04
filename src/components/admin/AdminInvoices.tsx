@@ -586,6 +586,48 @@ export default function AdminInvoices() {
               />
             </div>
 
+            {source === "custom" && (
+              <div className="rounded-lg border border-border bg-muted/30 p-4 space-y-3">
+                <div>
+                  <p className="text-sm font-medium">New parent (spoke on the phone?)</p>
+                  <p className="text-xs text-muted-foreground">
+                    Create an account for this parent so they show up in Parents, Sessions and Packages.
+                  </p>
+                </div>
+                <div className="grid grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>Student Grade / Level</Label>
+                    <Input
+                      value={newStudentGrade}
+                      onChange={(e) => setNewStudentGrade(e.target.value)}
+                      placeholder="e.g. Grade 7"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Curriculum</Label>
+                    <Input
+                      value={newStudentCurriculum}
+                      onChange={(e) => setNewStudentCurriculum(e.target.value)}
+                      placeholder="e.g. CBC, British, American"
+                    />
+                  </div>
+                </div>
+                <Button
+                  variant="outline"
+                  onClick={handleSaveParentToSystem}
+                  disabled={savingParent}
+                >
+                  {savingParent ? (
+                    <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                  ) : (
+                    <User className="h-4 w-4 mr-2" />
+                  )}
+                  Add parent to system
+                </Button>
+              </div>
+            )}
+
+
             {(source === "custom" || source === "booking") && (
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
