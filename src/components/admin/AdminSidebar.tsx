@@ -140,6 +140,11 @@ export function AdminSidebar({ activeTab, onTabChange, counts }: AdminSidebarPro
           badgeClass: "bg-indigo-600"
         },
         { 
+          id: "invoices", 
+          label: "Invoices", 
+          icon: FileText 
+        },
+        { 
           id: "learning-plans", 
           label: "Create Plans", 
           icon: Edit 
