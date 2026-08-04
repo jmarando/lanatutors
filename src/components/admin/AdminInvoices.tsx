@@ -379,7 +379,7 @@ export default function AdminInvoices() {
                     <SelectValue placeholder="Choose a booking..." />
                   </SelectTrigger>
                   <SelectContent className="max-h-72">
-                    {filteredBookings.map((booking) => (
+                    {bookings.map((booking) => (
                       <SelectItem key={booking.id} value={booking.id}>
                         {booking.subject} — {booking.profiles?.full_name || "Unknown"} — KES {booking.amount?.toLocaleString()}
                       </SelectItem>
