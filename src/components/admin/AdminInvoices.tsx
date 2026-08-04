@@ -1498,6 +1498,116 @@ export default function AdminInvoices() {
           </Card>
         </div>
       </div>
+
+      {/* Saved invoices */}
+      <Card>
+        <CardHeader>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <CardTitle className="flex items-center gap-2">
+                <FileText className="h-5 w-5" />
+                Past invoices
+              </CardTitle>
+              <CardDescription>
+                Every saved, downloaded or emailed invoice. Open one to amend and re-send it.
+              </CardDescription>
+            </div>
+            <div className="flex items-center gap-2">
+              <Input
+                placeholder="Search name, number, student..."
+                value={savedSearch}
+                onChange={(e) => setSavedSearch(e.target.value)}
+                className="w-56"
+              />
+              <Button variant="outline" size="sm" onClick={fetchSavedInvoices} disabled={savedLoading}>
+                {savedLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : "Refresh"}
+              </Button>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent>
+          {savedInvoices.length === 0 ? (
+            <p className="text-sm text-muted-foreground py-6 text-center">
+              No invoices saved yet. Create one above and hit Save invoice.
+            </p>
+          ) : (
+            <div className="border rounded-lg overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-muted">
+                  <tr>
+                    <th className="text-left px-3 py-2 font-medium">Invoice</th>
+                    <th className="text-left px-3 py-2 font-medium">Parent</th>
+                    <th className="text-left px-3 py-2 font-medium">Student</th>
+                    <th className="text-left px-3 py-2 font-medium">Date</th>
+                    <th className="text-right px-3 py-2 font-medium">Amount</th>
+                    <th className="text-left px-3 py-2 font-medium">Status</th>
+                    <th className="text-right px-3 py-2 font-medium">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {savedInvoices
+                    .filter((row) => {
+                      const q = savedSearch.trim().toLowerCase();
+                      if (!q) return true;
+                      return [
+                        row.invoice_number,
+                        row.parent_name,
+                        row.parent_email,
+                        row.student_name,
+                        row.subject,
+                      ]
+                        .filter(Boolean)
+                        .some((v: string) => v.toLowerCase().includes(q));
+                    })
+                    .map((row) => (
+                      <tr key={row.id} className="border-t">
+                        <td className="px-3 py-2 font-medium">{row.invoice_number}</td>
+                        <td className="px-3 py-2">{row.parent_name}</td>
+                        <td className="px-3 py-2 text-muted-foreground">{row.student_name || "—"}</td>
+                        <td className="px-3 py-2 text-muted-foreground">
+                          {row.invoice_date ? format(new Date(row.invoice_date), "d MMM yyyy") : "—"}
+                        </td>
+                        <td className="px-3 py-2 text-right">
+                          {row.currency} {Number(row.total_amount).toLocaleString()}
+                        </td>
+                        <td className="px-3 py-2">
+                          <Select
+                            value={row.status}
+                            onValueChange={(value) => updateInvoiceStatus(row, value)}
+                          >
+                            <SelectTrigger className="h-8 w-28">
+                              <SelectValue />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="draft">Draft</SelectItem>
+                              <SelectItem value="sent">Sent</SelectItem>
+                              <SelectItem value="paid">Paid</SelectItem>
+                              <SelectItem value="cancelled">Cancelled</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </td>
+                        <td className="px-3 py-2 text-right whitespace-nowrap">
+                          <Button size="sm" variant="outline" onClick={() => loadSavedInvoice(row)}>
+                            Open
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="ml-2 text-destructive"
+                            onClick={() => deleteInvoice(row)}
+                          >
+                            Delete
+                          </Button>
+                        </td>
+                      </tr>
+                    ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
+
 }
