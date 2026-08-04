@@ -1009,12 +1009,12 @@ export default function AdminInvoices() {
               <CardContent className="space-y-3 pt-4 pb-4">
 
                 {/* Billed To */}
-                <div className="space-y-3">
+                <div className="space-y-2">
                   <h3 className="font-semibold flex items-center gap-2">
                     <User className="w-4 h-4" />
                     Billed To
                   </h3>
-                  <div className="grid grid-cols-2 gap-3 text-sm">
+                  <div className="grid grid-cols-2 gap-2 text-sm">
                     <div>
                       <span className="text-muted-foreground">Parent / Customer:</span>
                       <p className="font-medium">{invoiceData.parentName || "—"}</p>
@@ -1049,12 +1049,12 @@ export default function AdminInvoices() {
                 <Separator />
 
                 {/* Service Details */}
-                <div className="space-y-3">
+                <div className="space-y-2">
                   <h3 className="font-semibold flex items-center gap-2">
                     <Book className="w-4 h-4" />
                     Service Details
                   </h3>
-                  <div className="grid grid-cols-2 gap-3 text-sm">
+                  <div className="grid grid-cols-2 gap-2 text-sm">
                     {invoiceData.tutorName && (
                       <div>
                         <span className="text-muted-foreground">Tutor:</span>
@@ -1128,7 +1128,7 @@ export default function AdminInvoices() {
                 <Separator />
 
                 {/* Payment Summary */}
-                <div className="space-y-3">
+                <div className="space-y-2">
                   <h3 className="font-semibold flex items-center gap-2">
                     <CreditCard className="w-4 h-4" />
                     Payment Summary
@@ -1191,7 +1191,7 @@ export default function AdminInvoices() {
 
                     <Separator />
 
-                    <div className="flex justify-between pt-2">
+                    <div className="flex justify-between pt-1">
                       <span className="font-semibold text-lg">
                         {invoiceData.paymentOption === "weekly" ? "Weekly Instalment" : "Amount to Pay Now"}
                       </span>
@@ -1205,7 +1205,7 @@ export default function AdminInvoices() {
                 {invoiceData.paymentOption === "weekly" && invoiceData.totalAmount > 0 && (
                   <>
                     <Separator />
-                    <div className="space-y-3">
+                    <div className="space-y-2">
                       <h3 className="font-semibold flex items-center gap-2">
                         <Calendar className="w-4 h-4" />
                         Weekly Payment Schedule
@@ -1224,19 +1224,19 @@ export default function AdminInvoices() {
                         <table className="w-full text-sm">
                           <thead className="bg-muted">
                             <tr>
-                              <th className="text-left p-2 font-medium">Week</th>
-                              <th className="text-left p-2 font-medium">Sessions</th>
-                              <th className="text-left p-2 font-medium">Pay by</th>
-                              <th className="text-right p-2 font-medium">Amount</th>
+                              <th className="text-left px-2 py-1 font-medium">Week</th>
+                              <th className="text-left px-2 py-1 font-medium">Sessions</th>
+                              <th className="text-left px-2 py-1 font-medium">Pay by</th>
+                              <th className="text-right px-2 py-1 font-medium">Amount</th>
                             </tr>
                           </thead>
                           <tbody>
                             {buildWeeklySchedule(invoiceData).map((row) => (
                               <tr key={row.label} className="border-t">
-                                <td className="p-2 font-medium">{row.label}</td>
-                                <td className="p-2 text-muted-foreground">{row.sessionsWeek}</td>
-                                <td className="p-2 text-muted-foreground">{row.dueDate}</td>
-                                <td className="p-2 text-right font-medium">
+                                <td className="px-2 py-1 font-medium">{row.label}</td>
+                                <td className="px-2 py-1 text-muted-foreground">{row.sessionsWeek}</td>
+                                <td className="px-2 py-1 text-muted-foreground">{row.dueDate}</td>
+                                <td className="px-2 py-1 text-right font-medium">
                                   {invoiceData.currency} {row.amount.toLocaleString()}
                                 </td>
                               </tr>
@@ -1251,21 +1251,21 @@ export default function AdminInvoices() {
                 <Separator />
 
                 {/* Payment Details */}
-                <div className="space-y-3">
+                <div className="space-y-2">
                   <h3 className="font-semibold flex items-center gap-2">
                     <CreditCard className="w-4 h-4" />
                     How to Pay (M-Pesa)
                   </h3>
                   <div className="border rounded-lg divide-y text-sm">
-                    <div className="flex justify-between p-3">
+                    <div className="flex justify-between px-3 py-1.5">
                       <span className="text-muted-foreground">NCBA Paybill</span>
                       <span className="font-bold">880100</span>
                     </div>
-                    <div className="flex justify-between p-3">
+                    <div className="flex justify-between px-3 py-1.5">
                       <span className="text-muted-foreground">Account Number</span>
                       <span className="font-bold">1006114657</span>
                     </div>
-                    <div className="flex justify-between p-3">
+                    <div className="flex justify-between px-3 py-1.5">
                       <span className="text-muted-foreground">Recipient</span>
                       <span className="font-bold">Lana Bespoke Limited</span>
                     </div>
@@ -1284,7 +1284,7 @@ export default function AdminInvoices() {
                   </div>
                 )}
 
-                <div className="text-xs text-muted-foreground text-center pt-4">
+                <div className="text-xs text-muted-foreground text-center pt-2">
                   <p>Invoice Date: {invoiceData.invoiceDate ? format(new Date(invoiceData.invoiceDate), "PPP") : format(new Date(), "PPP")}</p>
                   {invoiceData.dueDate && <p>Due Date: {format(new Date(invoiceData.dueDate), "PPP")}</p>}
                 </div>
