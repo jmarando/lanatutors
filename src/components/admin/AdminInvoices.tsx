@@ -379,8 +379,17 @@ export default function AdminInvoices() {
       const contentHeight = pageHeight - margin * 2;
 
       // Pixels of the source canvas that fit on one PDF page
-      const pxPerPage = Math.floor((contentHeight * canvas.width) / contentWidth);
+      let pxPerPage = Math.floor((contentHeight * canvas.width) / contentWidth);
+
+      // If the content only slightly overflows a page boundary, shrink it a
+      // little so we never end up with a nearly-empty trailing page.
+      const rawPages = canvas.height / pxPerPage;
+      const targetPages = rawPages <= 1.25 ? 1 : rawPages <= 2.3 ? 2 : Math.ceil(rawPages);
+      if (targetPages < Math.ceil(rawPages)) {
+        pxPerPage = Math.ceil(canvas.height / targetPages);
+      }
       const totalPages = Math.max(1, Math.ceil(canvas.height / pxPerPage));
+
 
       for (let page = 0; page < totalPages; page++) {
         const sliceHeight = Math.min(pxPerPage, canvas.height - page * pxPerPage);
