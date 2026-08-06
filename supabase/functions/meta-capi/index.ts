@@ -54,6 +54,24 @@ serve(async (req: Request) => {
     const eventSourceUrl = typeof body?.event_source_url === "string" ? body.event_source_url : undefined;
     const customData = typeof body?.custom_data === "object" && body.custom_data ? body.custom_data : {};
 
+    // CRM / offline events: action_source "system_generated" plus a lead_event_source label.
+    const allowedSources = ["website", "system_generated", "phone_call", "chat", "email", "business_messaging", "other"];
+    const actionSource =
+      typeof body?.action_source === "string" && allowedSources.includes(body.action_source)
+        ? body.action_source
+        : "website";
+    const leadEventSource =
+      typeof body?.lead_event_source === "string" && body.lead_event_source
+        ? body.lead_event_source
+        : actionSource === "system_generated"
+        ? "Lana Tutors CRM"
+        : undefined;
+    const eventTime =
+      typeof body?.event_time === "number" && body.event_time > 0
+        ? Math.floor(body.event_time)
+        : Math.floor(Date.now() / 1000);
+
+
     const userData: Record<string, unknown> = {};
     if (typeof body?.email === "string" && body.email.includes("@")) {
       userData.em = [await sha256(body.email)];
