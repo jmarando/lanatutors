@@ -29,7 +29,10 @@ const ConsultationConfirmed = () => {
       navigate("/book-consultation");
       return;
     }
-    trackConsultationBooked({ consultation_date: consultationDate });
+    trackConsultationBooked(
+      { consultation_date: consultationDate },
+      { email, firstName: parentName.split(" ")[0], lastName: parentName.split(" ").slice(1).join(" ") },
+    );
   }, [consultationDate, consultationTime, navigate]);
 
 
