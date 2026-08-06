@@ -22,6 +22,7 @@ import { TutorEmailList } from "@/components/admin/TutorEmailList";
 import { AdminIntensivePrograms } from "@/components/admin/AdminIntensivePrograms";
 import { AdminTutorProfileEdit } from "@/components/admin/AdminTutorProfileEdit";
 import { AdminStudentHub } from "@/components/admin/AdminStudentHub";
+import { AdminCrm } from "@/components/admin/AdminCrm";
 import { DailyOperationsCard } from "@/components/admin/DailyOperationsCard";
 import { BootcampEnrollments } from "@/components/admin/BootcampEnrollments";
 import { EmailComposer } from "@/components/admin/EmailComposer";
@@ -2400,6 +2401,8 @@ The Lana Tutors Team`
         return <BlogManagement />;
       case 'edit-tutors':
         return <AdminTutorProfileEdit />;
+      case 'crm':
+        return <AdminCrm />;
       case 'student-hub':
         return <AdminStudentHub />;
       case 'bootcamp-enrollments':
