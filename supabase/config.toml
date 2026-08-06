@@ -161,3 +161,6 @@ verify_jwt = false
 
 [functions.unsubscribe-email]
 verify_jwt = false
+
+[functions.meta-capi]
+verify_jwt = false
