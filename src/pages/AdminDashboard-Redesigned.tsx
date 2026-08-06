@@ -1210,7 +1210,20 @@ The Lana Team`;
 
       if (error) throw error;
 
+      const stage = stageFromFollowUpStatus(status);
+      if (stage) {
+        const booking = consultationBookings.find((b) => b.id === bookingId);
+        void sendCrmEvent(stage, {
+          recordId: bookingId,
+          email: booking?.email,
+          phone: booking?.phone_number,
+          ...splitName(booking?.parent_name),
+          customData: { student_name: booking?.student_name },
+        });
+      }
+
       toast.success("Status updated successfully!");
+
       fetchConsultationBookings();
     } catch (error: any) {
       toast.error("Failed to update status: " + error.message);
