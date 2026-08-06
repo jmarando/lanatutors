@@ -54,6 +54,24 @@ serve(async (req: Request) => {
     const eventSourceUrl = typeof body?.event_source_url === "string" ? body.event_source_url : undefined;
     const customData = typeof body?.custom_data === "object" && body.custom_data ? body.custom_data : {};
 
+    // CRM / offline events: action_source "system_generated" plus a lead_event_source label.
+    const allowedSources = ["website", "system_generated", "phone_call", "chat", "email", "business_messaging", "other"];
+    const actionSource =
+      typeof body?.action_source === "string" && allowedSources.includes(body.action_source)
+        ? body.action_source
+        : "website";
+    const leadEventSource =
+      typeof body?.lead_event_source === "string" && body.lead_event_source
+        ? body.lead_event_source
+        : actionSource === "system_generated"
+        ? "Lana Tutors CRM"
+        : undefined;
+    const eventTime =
+      typeof body?.event_time === "number" && body.event_time > 0
+        ? Math.floor(body.event_time)
+        : Math.floor(Date.now() / 1000);
+
+
     const userData: Record<string, unknown> = {};
     if (typeof body?.email === "string" && body.email.includes("@")) {
       userData.em = [await sha256(body.email)];
@@ -69,28 +87,38 @@ serve(async (req: Request) => {
     }
     if (typeof body?.fbp === "string" && body.fbp) userData.fbp = body.fbp;
     if (typeof body?.fbc === "string" && body.fbc) userData.fbc = body.fbc;
+    // Meta lead ads CRM: the lead_id ties CRM stage updates back to the original ad lead.
+    if (body?.lead_id) userData.lead_id = Number(body.lead_id) || body.lead_id;
+    if (typeof body?.external_id === "string" && body.external_id) {
+      userData.external_id = [await sha256(body.external_id)];
+    }
 
     const ip =
       req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ??
       req.headers.get("cf-connecting-ip") ??
       undefined;
-    if (ip) userData.client_ip_address = ip;
-    const ua = req.headers.get("user-agent");
-    if (ua) userData.client_user_agent = ua;
+    // Server/CRM events have no real browser context — only send these for website events.
+    if (actionSource === "website") {
+      if (ip) userData.client_ip_address = ip;
+      const ua = req.headers.get("user-agent");
+      if (ua) userData.client_user_agent = ua;
+    }
 
     const payload: Record<string, unknown> = {
       data: [
         {
           event_name: eventName,
-          event_time: Math.floor(Date.now() / 1000),
+          event_time: eventTime,
           event_id: eventId,
-          action_source: "website",
-          ...(eventSourceUrl ? { event_source_url: eventSourceUrl } : {}),
+          action_source: actionSource,
+          ...(leadEventSource ? { lead_event_source: leadEventSource } : {}),
+          ...(eventSourceUrl && actionSource === "website" ? { event_source_url: eventSourceUrl } : {}),
           user_data: userData,
           custom_data: customData,
         },
       ],
     };
+
     if (TEST_EVENT_CODE) payload.test_event_code = TEST_EVENT_CODE;
 
     const res = await fetch(

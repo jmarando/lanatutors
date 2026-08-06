@@ -33,6 +33,8 @@ import { AdminClassManagement } from "@/components/admin/AdminClassManagement";
 import { AdminReports } from "@/components/admin/AdminReports";
 import { WhatsAppInbox } from "@/components/admin/WhatsAppInbox";
 import AdminInvoices from "@/components/admin/AdminInvoices";
+import { sendCrmEvent, splitName, stageFromFollowUpStatus } from "@/utils/metaCrm";
+
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -1118,6 +1120,14 @@ The Lana Team`;
 
       if (updateError) throw updateError;
 
+      void sendCrmEvent("contacted", {
+        recordId: selectedBooking.id,
+        email: selectedBooking.email,
+        phone: selectedBooking.phone_number,
+        ...splitName(selectedBooking.parent_name),
+        customData: { student_name: selectedBooking.student_name },
+      });
+
       toast.success("Follow-up email sent successfully!");
       setFollowUpDialog(false);
       fetchConsultationBookings();
@@ -1140,12 +1150,22 @@ The Lana Team`;
 
       if (error) throw error;
 
+      const booking = consultationBookings.find((b) => b.id === bookingId);
+      void sendCrmEvent("converted", {
+        recordId: bookingId,
+        email: booking?.email,
+        phone: booking?.phone_number,
+        ...splitName(booking?.parent_name),
+        customData: { student_name: booking?.student_name },
+      });
+
       toast.success("Marked as converted! 🎉");
       fetchConsultationBookings();
     } catch (error: any) {
       toast.error("Failed to update status: " + error.message);
     }
   };
+
 
   const fetchConsultationNotes = async (consultationId: string) => {
     const { data, error } = await supabase
@@ -1190,7 +1210,20 @@ The Lana Team`;
 
       if (error) throw error;
 
+      const stage = stageFromFollowUpStatus(status);
+      if (stage) {
+        const booking = consultationBookings.find((b) => b.id === bookingId);
+        void sendCrmEvent(stage, {
+          recordId: bookingId,
+          email: booking?.email,
+          phone: booking?.phone_number,
+          ...splitName(booking?.parent_name),
+          customData: { student_name: booking?.student_name },
+        });
+      }
+
       toast.success("Status updated successfully!");
+
       fetchConsultationBookings();
     } catch (error: any) {
       toast.error("Failed to update status: " + error.message);
