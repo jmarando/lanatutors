@@ -33,6 +33,8 @@ import { AdminClassManagement } from "@/components/admin/AdminClassManagement";
 import { AdminReports } from "@/components/admin/AdminReports";
 import { WhatsAppInbox } from "@/components/admin/WhatsAppInbox";
 import AdminInvoices from "@/components/admin/AdminInvoices";
+import { sendCrmEvent, splitName, stageFromFollowUpStatus } from "@/utils/metaCrm";
+
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
