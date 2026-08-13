@@ -133,6 +133,30 @@ async function logComm(args: {
   }
 }
 
+async function suppressWhatsAppNumber(phone: string, source: string) {
+  try {
+    await admin.from("whatsapp_suppressions").upsert({
+      phone_number: normalizePhone(phone),
+      reason: "opt_out",
+      source,
+    }, { onConflict: "phone_number" });
+  } catch (e) {
+    console.error("suppressWhatsAppNumber failed:", e);
+  }
+}
+
+function normalizePhone(phone: string) {
+  let p = phone.replace(/[\s+()-]/g, "");
+  if (p.startsWith("0")) p = "254" + p.slice(1);
+  if (p.length === 9) p = "254" + p;
+  return p;
+}
+
+function isOptOutMessage(text: string) {
+  const t = text.trim().toLowerCase();
+  return ["stop", "unsubscribe", "opt out", "cancel", "dont message me", "don't message me"].includes(t);
+}
+
 async function loadConversation(phone: string, profileName?: string) {
   const { data } = await admin
     .from("whatsapp_conversations")
