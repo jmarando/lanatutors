@@ -2437,6 +2437,8 @@ The Lana Tutors Team`
         return <AdminReports />;
       case 'whatsapp-inbox':
         return <WhatsAppInbox />;
+      case 'whatsapp-campaigns':
+        return <WhatsAppCampaigns />;
       default:
         return renderDashboardContent();
     }
