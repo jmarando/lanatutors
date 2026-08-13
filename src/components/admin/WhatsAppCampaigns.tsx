@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
@@ -30,6 +31,7 @@ export function WhatsAppCampaigns() {
   const [sending, setSending] = useState(false);
   const [result, setResult] = useState<any>(null);
   const [suppressions, setSuppressions] = useState<string[]>([]);
+  const [greetingMode, setGreetingMode] = useState<"fixed" | "generic" | "personal">("generic");
 
   useEffect(() => {
     loadSuppressions();
@@ -47,6 +49,12 @@ export function WhatsAppCampaigns() {
     return p;
   };
 
+  const greetingComponents = (name?: string) => {
+    if (greetingMode === "fixed") return undefined;
+    const greeting = greetingMode === "personal" && name ? name : "there";
+    return [{ type: "body", parameters: [{ type: "text", text: greeting }] }];
+  };
+
   const buildAudience = async () => {
     setLoadingAudience(true);
     const contacts: CampaignContact[] = [];
@@ -57,7 +65,7 @@ export function WhatsAppCampaigns() {
         .map((p) => p.trim())
         .filter(Boolean)
         .forEach((phone) => {
-          contacts.push({ phone: normalizePhone(phone), source: "manual" });
+          contacts.push({ phone: normalizePhone(phone), source: "manual", components: greetingComponents() });
         });
     } else if (audienceSource === "consultations") {
       const { data } = await supabase
@@ -65,7 +73,7 @@ export function WhatsAppCampaigns() {
         .select("phone_number, parent_name")
         .not("phone_number", "is", null);
       (data || []).forEach((b: any) => {
-        contacts.push({ phone: normalizePhone(b.phone_number), name: b.parent_name, source: "consultation" });
+        contacts.push({ phone: normalizePhone(b.phone_number), name: b.parent_name, source: "consultation", components: greetingComponents(b.parent_name) });
       });
     } else if (audienceSource === "inquiries") {
       const { data } = await supabase
@@ -73,7 +81,7 @@ export function WhatsAppCampaigns() {
         .select("parent_phone, parent_name")
         .not("parent_phone", "is", null);
       (data || []).forEach((i: any) => {
-        contacts.push({ phone: normalizePhone(i.parent_phone), name: i.parent_name, source: "inquiry" });
+        contacts.push({ phone: normalizePhone(i.parent_phone), name: i.parent_name, source: "inquiry", components: greetingComponents(i.parent_name) });
       });
     } else if (audienceSource === "bookings") {
       const { data } = await supabase
@@ -90,7 +98,7 @@ export function WhatsAppCampaigns() {
           .in("id", studentIds);
         (students || []).forEach((s: any) => {
           if (s.parent?.phone_number) {
-            contacts.push({ phone: normalizePhone(s.parent.phone_number), name: s.full_name, source: "booking" });
+            contacts.push({ phone: normalizePhone(s.parent.phone_number), name: s.full_name, source: "booking", components: greetingComponents(s.full_name) });
           }
         });
       }
@@ -217,6 +225,33 @@ export function WhatsAppCampaigns() {
                     placeholder="en_US"
                   />
                 </div>
+              </div>
+              <div className="space-y-2 pt-2 border-t">
+                <Label htmlFor="greetingMode">Greeting style</Label>
+                <Select
+                  value={greetingMode}
+                  onValueChange={(v: any) => {
+                    const mode = v as "fixed" | "generic" | "personal";
+                    setGreetingMode(mode);
+                    setAudience((prev) =>
+                      prev.map((c) => ({ ...c, components: greetingComponents(c.name) }))
+                    );
+                    setPreview(null);
+                    setResult(null);
+                  }}
+                >
+                  <SelectTrigger id="greetingMode">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="fixed">Template has fixed text (no variables)</SelectItem>
+                    <SelectItem value="generic">Use “Hi there” (requires {"{{1}}"} body variable)</SelectItem>
+                    <SelectItem value="personal">Use “Hi [Name]” (requires {"{{1}}"} body variable)</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  Choose the greeting that matches your approved Meta template. If your template already says “Hi there!” with no variable, pick the first option.
+                </p>
               </div>
             </CardContent>
           </Card>
