@@ -436,6 +436,25 @@ async function handleIncoming(body: any) {
     // Log inbound
     await logComm({ phone: from, parentId: convo.parent_id, direction: "inbound", content: text });
 
+    // Handle opt-out requests immediately
+    if (isOptOutMessage(text)) {
+      await suppressWhatsAppNumber(from, "inbound_reply");
+      const confirmation = [
+        "You've been removed from our WhatsApp marketing list.",
+        "",
+        "You'll still receive replies related to any active tutoring sessions or consultations.",
+        "",
+        "If you ever want to hear from us again, just send us a message."
+      ].join("\n");
+      await sendWhatsAppMessage(from, confirmation);
+      await logComm({ phone: from, parentId: convo.parent_id, direction: "outbound", content: confirmation });
+      const history: Msg[] = Array.isArray(convo.messages) ? convo.messages : [];
+      history.push({ role: "user", content: text, ts: new Date().toISOString() });
+      history.push({ role: "model", content: confirmation, ts: new Date().toISOString() });
+      await saveConversation(from, history, true);
+      return;
+    }
+
     const history: Msg[] = Array.isArray(convo.messages) ? convo.messages : [];
     history.push({ role: "user", content: text, ts: new Date().toISOString() });
 
