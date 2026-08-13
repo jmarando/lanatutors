@@ -127,6 +127,11 @@ export function AdminSidebar({ activeTab, onTabChange, counts }: AdminSidebarPro
           label: "WhatsApp Inbox", 
           icon: MessageSquare
         },
+        { 
+          id: "whatsapp-campaigns", 
+          label: "WhatsApp Campaigns", 
+          icon: Megaphone
+        },
       ],
     },
     {
