@@ -226,25 +226,32 @@ export function WhatsAppCampaigns() {
                   />
                 </div>
               </div>
-              <div className="flex items-center justify-between gap-4 pt-2 border-t">
-                <div className="space-y-0.5">
-                  <Label htmlFor="personalizeGreeting">Personalize greeting</Label>
-                  <p className="text-xs text-muted-foreground">
-                    Off = “Hi there”. On = “Hi [Name]”. Your Meta template must use {"{{1}}"} in the body.
-                  </p>
-                </div>
-                <Switch
-                  id="personalizeGreeting"
-                  checked={personalizeGreeting}
-                  onCheckedChange={(checked) => {
-                    setPersonalizeGreeting(checked);
+              <div className="space-y-2 pt-2 border-t">
+                <Label htmlFor="greetingMode">Greeting style</Label>
+                <Select
+                  value={greetingMode}
+                  onValueChange={(v: any) => {
+                    const mode = v as "fixed" | "generic" | "personal";
+                    setGreetingMode(mode);
                     setAudience((prev) =>
-                      prev.map((c) => ({ ...c, components: greetingComponents(checked ? c.name : undefined) }))
+                      prev.map((c) => ({ ...c, components: greetingComponents(c.name) }))
                     );
                     setPreview(null);
                     setResult(null);
                   }}
-                />
+                >
+                  <SelectTrigger id="greetingMode">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="fixed">Template has fixed text (no variables)</SelectItem>
+                    <SelectItem value="generic">Use “Hi there” (requires {{1}} body variable)</SelectItem>
+                    <SelectItem value="personal">Use “Hi [Name]” (requires {{1}} body variable)</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  Choose the greeting that matches your approved Meta template. If your template already says “Hi there!” with no variable, pick the first option.
+                </p>
               </div>
             </CardContent>
           </Card>
