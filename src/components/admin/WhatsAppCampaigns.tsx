@@ -263,6 +263,25 @@ export function WhatsAppCampaigns() {
                   Choose the greeting that matches your approved Meta template. If your template already says “Hi there!” with no variable, pick the first option.
                 </p>
               </div>
+              <div className="space-y-2 pt-2 border-t">
+                <Label htmlFor="headerImageUrl">Header image URL (required if template header is an image)</Label>
+                <Input
+                  id="headerImageUrl"
+                  value={headerImageUrl}
+                  onChange={(e) => {
+                    setHeaderImageUrl(e.target.value);
+                    setPreview(null);
+                    setResult(null);
+                  }}
+                  onBlur={() =>
+                    setAudience((prev) => prev.map((c) => ({ ...c, components: greetingComponents(c.name) })))
+                  }
+                  placeholder="https://lanatutors.africa/campaign-header.jpg"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Leave empty for text-only templates. Must be a public https JPG/PNG link.
+                </p>
+              </div>
             </CardContent>
           </Card>
 
