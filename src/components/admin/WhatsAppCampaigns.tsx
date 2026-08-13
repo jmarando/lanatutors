@@ -21,7 +21,7 @@ interface CampaignContact {
 
 export function WhatsAppCampaigns() {
   const [templateName, setTemplateName] = useState("");
-  const [languageCode, setLanguageCode] = useState("en_US");
+  const [languageCode, setLanguageCode] = useState("en");
   const [audienceSource, setAudienceSource] = useState<"manual" | "consultations" | "inquiries" | "bookings">("manual");
   const [manualPhones, setManualPhones] = useState("");
   const [audience, setAudience] = useState<CampaignContact[]>([]);
