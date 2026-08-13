@@ -31,7 +31,7 @@ export function WhatsAppCampaigns() {
   const [sending, setSending] = useState(false);
   const [result, setResult] = useState<any>(null);
   const [suppressions, setSuppressions] = useState<string[]>([]);
-  const [personalizeGreeting, setPersonalizeGreeting] = useState(false);
+  const [greetingMode, setGreetingMode] = useState<"fixed" | "generic" | "personal">("generic");
 
   useEffect(() => {
     loadSuppressions();
