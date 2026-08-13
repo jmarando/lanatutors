@@ -31,7 +31,8 @@ export function WhatsAppCampaigns() {
   const [sending, setSending] = useState(false);
   const [result, setResult] = useState<any>(null);
   const [suppressions, setSuppressions] = useState<string[]>([]);
-  const [greetingMode, setGreetingMode] = useState<"fixed" | "generic" | "personal">("generic");
+  const [greetingMode, setGreetingMode] = useState<"fixed" | "generic" | "personal">("fixed");
+  const [headerImageUrl, setHeaderImageUrl] = useState("");
 
   useEffect(() => {
     loadSuppressions();
@@ -50,9 +51,18 @@ export function WhatsAppCampaigns() {
   };
 
   const greetingComponents = (name?: string) => {
-    if (greetingMode === "fixed") return undefined;
-    const greeting = greetingMode === "personal" && name ? name : "there";
-    return [{ type: "body", parameters: [{ type: "text", text: greeting }] }];
+    const components: any[] = [];
+    if (headerImageUrl.trim()) {
+      components.push({
+        type: "header",
+        parameters: [{ type: "image", image: { link: headerImageUrl.trim() } }],
+      });
+    }
+    if (greetingMode !== "fixed") {
+      const greeting = greetingMode === "personal" && name ? name : "there";
+      components.push({ type: "body", parameters: [{ type: "text", text: greeting }] });
+    }
+    return components.length ? components : undefined;
   };
 
   const buildAudience = async () => {
@@ -251,6 +261,25 @@ export function WhatsAppCampaigns() {
                 </Select>
                 <p className="text-xs text-muted-foreground">
                   Choose the greeting that matches your approved Meta template. If your template already says “Hi there!” with no variable, pick the first option.
+                </p>
+              </div>
+              <div className="space-y-2 pt-2 border-t">
+                <Label htmlFor="headerImageUrl">Header image URL (required if template header is an image)</Label>
+                <Input
+                  id="headerImageUrl"
+                  value={headerImageUrl}
+                  onChange={(e) => {
+                    setHeaderImageUrl(e.target.value);
+                    setPreview(null);
+                    setResult(null);
+                  }}
+                  onBlur={() =>
+                    setAudience((prev) => prev.map((c) => ({ ...c, components: greetingComponents(c.name) })))
+                  }
+                  placeholder="https://lanatutors.africa/campaign-header.jpg"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Leave empty for text-only templates. Must be a public https JPG/PNG link.
                 </p>
               </div>
             </CardContent>
