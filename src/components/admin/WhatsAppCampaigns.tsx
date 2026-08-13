@@ -278,7 +278,7 @@ export function WhatsAppCampaigns() {
                   onBlur={() =>
                     setAudience((prev) => prev.map((c) => ({ ...c, components: greetingComponents(c.name) })))
                   }
-                  placeholder="https://lanatutors.africa/campaign-header.jpg"
+                  placeholder="https://iccemuiqcdumgxiwxzdq.supabase.co/storage/v1/object/public/blog-images/campaign-header.jpg"
                 />
                 <p className="text-xs text-muted-foreground">
                   Leave empty for text-only templates. Must be a public https JPG/PNG link.
