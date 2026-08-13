@@ -50,7 +50,8 @@ export function WhatsAppCampaigns() {
   };
 
   const greetingComponents = (name?: string) => {
-    const greeting = personalizeGreeting && name ? name : "there";
+    if (greetingMode === "fixed") return undefined;
+    const greeting = greetingMode === "personal" && name ? name : "there";
     return [{ type: "body", parameters: [{ type: "text", text: greeting }] }];
   };
 
