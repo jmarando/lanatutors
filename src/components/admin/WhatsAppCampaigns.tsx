@@ -32,7 +32,9 @@ export function WhatsAppCampaigns() {
   const [result, setResult] = useState<any>(null);
   const [suppressions, setSuppressions] = useState<string[]>([]);
   const [greetingMode, setGreetingMode] = useState<"fixed" | "generic" | "personal">("fixed");
-  const [headerImageUrl, setHeaderImageUrl] = useState("https://lanatutors.africa/campaign-header.jpg");
+  const [headerImageUrl, setHeaderImageUrl] = useState(
+    "https://iccemuiqcdumgxiwxzdq.supabase.co/storage/v1/object/public/blog-images/campaign-header.jpg"
+  );
 
   useEffect(() => {
     loadSuppressions();
