@@ -36,13 +36,24 @@ serve(async (req: Request) => {
     const { data: isAdmin } = await admin.rpc("has_role", { _user_id: user.id, _role: "admin" });
     if (!isAdmin) return json({ error: "Forbidden" }, 403);
 
-    const phoneRes = await fetch(
-      `https://graph.facebook.com/v21.0/${WA_PHONE_ID}?fields=whatsapp_business_account{id,name}`,
-      { headers: { Authorization: `Bearer ${WA_TOKEN}` } },
-    );
-    const phoneData = await phoneRes.json();
-    const wabaId = phoneData?.whatsapp_business_account?.id;
-    if (!wabaId) return json({ error: "Could not resolve WABA", detail: phoneData }, 502);
+    const url = new URL(req.url);
+    let wabaId = url.searchParams.get("waba");
+
+    const probes: Record<string, unknown> = {};
+    if (!wabaId) {
+      const g = async (p: string) => {
+        const r = await fetch(`https://graph.facebook.com/v21.0/${p}`, {
+          headers: { Authorization: `Bearer ${WA_TOKEN}` },
+        });
+        return await r.json();
+      };
+      probes.debug = await g(`debug_token?input_token=${WA_TOKEN}`);
+      probes.phone = await g(`${WA_PHONE_ID}?fields=id,display_phone_number,verified_name`);
+      const granular = (probes.debug as any)?.data?.granular_scopes as any[] | undefined;
+      const waScope = granular?.find((s) => String(s.scope).includes("whatsapp_business_messag"));
+      wabaId = waScope?.target_ids?.[0] ?? null;
+      if (!wabaId) return json({ error: "Could not resolve WABA", probes }, 502);
+    }
 
     const tplRes = await fetch(
       `https://graph.facebook.com/v21.0/${wabaId}/message_templates?limit=50&fields=name,status,language,category,components`,
