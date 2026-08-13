@@ -51,9 +51,18 @@ export function WhatsAppCampaigns() {
   };
 
   const greetingComponents = (name?: string) => {
-    if (greetingMode === "fixed") return undefined;
-    const greeting = greetingMode === "personal" && name ? name : "there";
-    return [{ type: "body", parameters: [{ type: "text", text: greeting }] }];
+    const components: any[] = [];
+    if (headerImageUrl.trim()) {
+      components.push({
+        type: "header",
+        parameters: [{ type: "image", image: { link: headerImageUrl.trim() } }],
+      });
+    }
+    if (greetingMode !== "fixed") {
+      const greeting = greetingMode === "personal" && name ? name : "there";
+      components.push({ type: "body", parameters: [{ type: "text", text: greeting }] });
+    }
+    return components.length ? components : undefined;
   };
 
   const buildAudience = async () => {
