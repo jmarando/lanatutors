@@ -133,6 +133,30 @@ async function logComm(args: {
   }
 }
 
+async function suppressWhatsAppNumber(phone: string, source: string) {
+  try {
+    await admin.from("whatsapp_suppressions").upsert({
+      phone_number: normalizePhone(phone),
+      reason: "opt_out",
+      source,
+    }, { onConflict: "phone_number" });
+  } catch (e) {
+    console.error("suppressWhatsAppNumber failed:", e);
+  }
+}
+
+function normalizePhone(phone: string) {
+  let p = phone.replace(/[\s+()-]/g, "");
+  if (p.startsWith("0")) p = "254" + p.slice(1);
+  if (p.length === 9) p = "254" + p;
+  return p;
+}
+
+function isOptOutMessage(text: string) {
+  const t = text.trim().toLowerCase();
+  return ["stop", "unsubscribe", "opt out", "cancel", "dont message me", "don't message me"].includes(t);
+}
+
 async function loadConversation(phone: string, profileName?: string) {
   const { data } = await admin
     .from("whatsapp_conversations")
@@ -411,6 +435,25 @@ async function handleIncoming(body: any) {
 
     // Log inbound
     await logComm({ phone: from, parentId: convo.parent_id, direction: "inbound", content: text });
+
+    // Handle opt-out requests immediately
+    if (isOptOutMessage(text)) {
+      await suppressWhatsAppNumber(from, "inbound_reply");
+      const confirmation = [
+        "You've been removed from our WhatsApp marketing list.",
+        "",
+        "You'll still receive replies related to any active tutoring sessions or consultations.",
+        "",
+        "If you ever want to hear from us again, just send us a message."
+      ].join("\n");
+      await sendWhatsAppMessage(from, confirmation);
+      await logComm({ phone: from, parentId: convo.parent_id, direction: "outbound", content: confirmation });
+      const history: Msg[] = Array.isArray(convo.messages) ? convo.messages : [];
+      history.push({ role: "user", content: text, ts: new Date().toISOString() });
+      history.push({ role: "model", content: confirmation, ts: new Date().toISOString() });
+      await saveConversation(from, history, true);
+      return;
+    }
 
     const history: Msg[] = Array.isArray(convo.messages) ? convo.messages : [];
     history.push({ role: "user", content: text, ts: new Date().toISOString() });

@@ -14,7 +14,8 @@ import {
   UserPlus,
   CalendarClock,
   BarChart3,
-  Send
+  Send,
+  Megaphone
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -125,6 +126,11 @@ export function AdminSidebar({ activeTab, onTabChange, counts }: AdminSidebarPro
           id: "whatsapp-inbox", 
           label: "WhatsApp Inbox", 
           icon: MessageSquare
+        },
+        { 
+          id: "whatsapp-campaigns", 
+          label: "WhatsApp Campaigns", 
+          icon: Megaphone
         },
       ],
     },

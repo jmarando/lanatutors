@@ -2899,6 +2899,27 @@ export type Database = {
         }
         Relationships: []
       }
+      whatsapp_suppressions: {
+        Row: {
+          created_at: string
+          phone_number: string
+          reason: string
+          source: string | null
+        }
+        Insert: {
+          created_at?: string
+          phone_number: string
+          reason?: string
+          source?: string | null
+        }
+        Update: {
+          created_at?: string
+          phone_number?: string
+          reason?: string
+          source?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       public_tutor_profiles: {

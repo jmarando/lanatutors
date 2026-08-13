@@ -33,6 +33,7 @@ import { AdminLayout } from "@/components/admin/AdminLayout";
 import { AdminClassManagement } from "@/components/admin/AdminClassManagement";
 import { AdminReports } from "@/components/admin/AdminReports";
 import { WhatsAppInbox } from "@/components/admin/WhatsAppInbox";
+import { WhatsAppCampaigns } from "@/components/admin/WhatsAppCampaigns";
 import AdminInvoices from "@/components/admin/AdminInvoices";
 import { sendCrmEvent, splitName, stageFromFollowUpStatus } from "@/utils/metaCrm";
 
@@ -2436,6 +2437,8 @@ The Lana Tutors Team`
         return <AdminReports />;
       case 'whatsapp-inbox':
         return <WhatsAppInbox />;
+      case 'whatsapp-campaigns':
+        return <WhatsAppCampaigns />;
       default:
         return renderDashboardContent();
     }
