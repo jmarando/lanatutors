@@ -47,11 +47,13 @@ serve(async (req: Request) => {
         });
         return await r.json();
       };
-      probes.debug = await g(`debug_token?input_token=${WA_TOKEN}`);
-      probes.phone = await g(`${WA_PHONE_ID}?fields=id,display_phone_number,verified_name`);
-      const granular = (probes.debug as any)?.data?.granular_scopes as any[] | undefined;
-      const waScope = granular?.find((s) => String(s.scope).includes("whatsapp_business_messag"));
-      wabaId = waScope?.target_ids?.[0] ?? null;
+      const businessId = url.searchParams.get("business") || "1677017563198023";
+      probes.owned = await g(`${businessId}/owned_whatsapp_business_accounts?limit=25`);
+      probes.client = await g(`${businessId}/client_whatsapp_business_accounts?limit=25`);
+      wabaId =
+        (probes.owned as any)?.data?.[0]?.id ??
+        (probes.client as any)?.data?.[0]?.id ??
+        null;
       if (!wabaId) return json({ error: "Could not resolve WABA", probes }, 502);
     }
 
