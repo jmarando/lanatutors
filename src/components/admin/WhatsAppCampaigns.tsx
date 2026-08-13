@@ -225,6 +225,26 @@ export function WhatsAppCampaigns() {
                   />
                 </div>
               </div>
+              <div className="flex items-center justify-between gap-4 pt-2 border-t">
+                <div className="space-y-0.5">
+                  <Label htmlFor="personalizeGreeting">Personalize greeting</Label>
+                  <p className="text-xs text-muted-foreground">
+                    Off = “Hi there”. On = “Hi [Name]”. Your Meta template must use {"{{1}}"} in the body.
+                  </p>
+                </div>
+                <Switch
+                  id="personalizeGreeting"
+                  checked={personalizeGreeting}
+                  onCheckedChange={(checked) => {
+                    setPersonalizeGreeting(checked);
+                    setAudience((prev) =>
+                      prev.map((c) => ({ ...c, components: greetingComponents(checked ? c.name : undefined) }))
+                    );
+                    setPreview(null);
+                    setResult(null);
+                  }}
+                />
+              </div>
             </CardContent>
           </Card>
 
