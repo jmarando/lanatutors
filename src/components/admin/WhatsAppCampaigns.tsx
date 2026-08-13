@@ -245,8 +245,8 @@ export function WhatsAppCampaigns() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="fixed">Template has fixed text (no variables)</SelectItem>
-                    <SelectItem value="generic">Use “Hi there” (requires {{1}} body variable)</SelectItem>
-                    <SelectItem value="personal">Use “Hi [Name]” (requires {{1}} body variable)</SelectItem>
+                    <SelectItem value="generic">Use “Hi there” (requires {"{{1}}"} body variable)</SelectItem>
+                    <SelectItem value="personal">Use “Hi [Name]” (requires {"{{1}}"} body variable)</SelectItem>
                   </SelectContent>
                 </Select>
                 <p className="text-xs text-muted-foreground">
