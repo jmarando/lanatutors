@@ -30,6 +30,7 @@ export function WhatsAppCampaigns() {
   const [sending, setSending] = useState(false);
   const [result, setResult] = useState<any>(null);
   const [suppressions, setSuppressions] = useState<string[]>([]);
+  const [personalizeGreeting, setPersonalizeGreeting] = useState(false);
 
   useEffect(() => {
     loadSuppressions();
