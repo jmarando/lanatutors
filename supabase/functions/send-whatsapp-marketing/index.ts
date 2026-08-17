@@ -88,35 +88,33 @@ serve(async (req: Request) => {
       });
     }
 
-    const results: Array<{
+    type SendResult = {
       phone: string;
       status: string;
       messageId?: string;
       error?: string;
-    }> = [];
+    };
 
-    for (const recipient of audience) {
+    const logs: Array<Record<string, unknown>> = [];
+
+    const sendOne = async (recipient: any): Promise<SendResult> => {
       const phone = normalizePhone(recipient.phone || recipient.phone_number);
-      if (suppressedSet.has(phone)) {
-        results.push({ phone, status: "suppressed" });
-        continue;
-      }
+      if (suppressedSet.has(phone)) return { phone, status: "suppressed" };
 
-      const payload = buildPayload(templateName, languageCode, recipient);
-      const res = await fetch(`https://graph.facebook.com/v21.0/${WA_PHONE_ID}/messages`, {
-        method: "POST",
-        headers: {
-          Authorization: `Bearer ${WA_TOKEN}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(payload),
-      });
-      const data = await res.json();
-      const status = res.ok ? "sent" : "failed";
-
-      // Log outbound
       try {
-        await admin.from("communication_logs").insert({
+        const payload = buildPayload(templateName, languageCode, recipient);
+        const res = await fetch(`https://graph.facebook.com/v21.0/${WA_PHONE_ID}/messages`, {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${WA_TOKEN}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(payload),
+        });
+        const data = await res.json();
+        const status = res.ok ? "sent" : "failed";
+
+        logs.push({
           channel: "whatsapp",
           direction: "outbound",
           content: `Template: ${templateName}`,
@@ -129,17 +127,37 @@ serve(async (req: Request) => {
             sent_by: user.id,
           },
         });
-      } catch (e) {
-        console.error("logComm failed:", e);
-      }
 
-      results.push({
-        phone,
-        status,
-        messageId: data.messages?.[0]?.id,
-        error: data.error?.message || (res.ok ? undefined : "Unknown error"),
-      });
+        return {
+          phone,
+          status,
+          messageId: data.messages?.[0]?.id,
+          error: data.error?.message || (res.ok ? undefined : "Unknown error"),
+        };
+      } catch (e) {
+        return { phone, status: "failed", error: String(e) };
+      }
+    };
+
+    // Send with limited concurrency so large batches finish well inside the timeout
+    const CONCURRENCY = 15;
+    const results: SendResult[] = [];
+    for (let i = 0; i < audience.length; i += CONCURRENCY) {
+      const chunk = audience.slice(i, i + CONCURRENCY);
+      results.push(...(await Promise.all(chunk.map(sendOne))));
     }
+
+    // Bulk-log outbound messages
+    if (logs.length) {
+      for (let i = 0; i < logs.length; i += 200) {
+        try {
+          await admin.from("communication_logs").insert(logs.slice(i, i + 200) as any);
+        } catch (e) {
+          console.error("logComm failed:", e);
+        }
+      }
+    }
+
 
     return json({
       success: true,
