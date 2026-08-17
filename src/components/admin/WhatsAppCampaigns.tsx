@@ -199,18 +199,26 @@ export function WhatsAppCampaigns() {
     setSending(true);
     setProgress({ done: 0, total: activeAudience.length });
 
-    const batchSize = 200;
+    const batchSize = 100;
     const totals = { sent: 0, failed: 0, suppressed: 0, total: 0, results: [] as any[] };
 
     for (let i = 0; i < activeAudience.length; i += batchSize) {
       const batch = activeAudience.slice(i, i + batchSize);
-      const { data, error } = await supabase.functions.invoke("send-whatsapp-marketing", {
-        body: { templateName, languageCode, audience: batch },
-      });
-      if (error) {
-        toast.error(`Batch ${Math.floor(i / batchSize) + 1} failed: ${error.message}`);
-        break;
+      let data: any = null;
+      let lastError: any = null;
+      // retry a batch once before giving up, and keep going with the rest
+      for (let attempt = 0; attempt < 2 && !data; attempt++) {
+        const res = await supabase.functions.invoke("send-whatsapp-marketing", {
+          body: { templateName, languageCode, audience: batch },
+        });
+        if (res.error) lastError = res.error;
+        else data = res.data;
       }
+      if (!data) {
+        toast.error(`Batch ${Math.floor(i / batchSize) + 1} failed: ${lastError?.message || "unknown"} — continuing`);
+        continue;
+      }
+
       totals.sent += data?.sent || 0;
       totals.failed += data?.failed || 0;
       totals.suppressed += data?.suppressed || 0;
