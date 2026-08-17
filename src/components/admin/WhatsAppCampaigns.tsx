@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { Send, Eye, Users, PhoneOff, Loader2, CheckCircle2, XCircle, AlertCircle } from "lucide-react";
+import { HOLIDAY_CAMPAIGN_NUMBERS } from "@/data/holidayCampaignList";
 
 interface CampaignContact {
   phone: string;
@@ -31,6 +32,9 @@ export function WhatsAppCampaigns() {
   const [sending, setSending] = useState(false);
   const [result, setResult] = useState<any>(null);
   const [suppressions, setSuppressions] = useState<string[]>([]);
+  const [skipAlreadySent, setSkipAlreadySent] = useState(true);
+  const [alreadySentCount, setAlreadySentCount] = useState(0);
+  const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
   const [greetingMode, setGreetingMode] = useState<"fixed" | "generic" | "personal">("fixed");
   const [headerImageUrl, setHeaderImageUrl] = useState(
     "https://iccemuiqcdumgxiwxzdq.supabase.co/storage/v1/object/public/blog-images/campaign-header.jpg"
@@ -118,16 +122,47 @@ export function WhatsAppCampaigns() {
 
     // Deduplicate by phone
     const seen = new Set<string>();
-    const deduped = contacts.filter((c) => {
+    let deduped = contacts.filter((c) => {
       if (seen.has(c.phone)) return false;
       seen.add(c.phone);
       return true;
     });
 
+    let skipped = 0;
+    if (skipAlreadySent && templateName.trim()) {
+      const sentSet = await loadAlreadySent(templateName.trim());
+      const before = deduped.length;
+      deduped = deduped.filter((c) => !sentSet.has(c.phone));
+      skipped = before - deduped.length;
+    }
+    setAlreadySentCount(skipped);
+
     setAudience(deduped);
     setLoadingAudience(false);
     setResult(null);
     setPreview(null);
+    setProgress(null);
+  };
+
+  const loadAlreadySent = async (template: string) => {
+    const sent = new Set<string>();
+    const pageSize = 1000;
+    for (let page = 0; page < 30; page++) {
+      const { data, error } = await supabase
+        .from("communication_logs")
+        .select("metadata")
+        .eq("channel", "whatsapp")
+        .eq("status", "sent")
+        .filter("metadata->>template_name", "eq", template)
+        .range(page * pageSize, page * pageSize + pageSize - 1);
+      if (error || !data?.length) break;
+      data.forEach((row: any) => {
+        const phone = row?.metadata?.phone;
+        if (phone) sent.add(normalizePhone(String(phone)));
+      });
+      if (data.length < pageSize) break;
+    }
+    return sent;
   };
 
   const activeAudience = useMemo(() => {
@@ -162,20 +197,32 @@ export function WhatsAppCampaigns() {
       return;
     }
     setSending(true);
-    const { data, error } = await supabase.functions.invoke("send-whatsapp-marketing", {
-      body: {
-        templateName,
-        languageCode,
-        audience: activeAudience,
-      },
-    });
-    setSending(false);
-    if (error) {
-      toast.error("Send failed: " + error.message);
-      return;
+    setProgress({ done: 0, total: activeAudience.length });
+
+    const batchSize = 200;
+    const totals = { sent: 0, failed: 0, suppressed: 0, total: 0, results: [] as any[] };
+
+    for (let i = 0; i < activeAudience.length; i += batchSize) {
+      const batch = activeAudience.slice(i, i + batchSize);
+      const { data, error } = await supabase.functions.invoke("send-whatsapp-marketing", {
+        body: { templateName, languageCode, audience: batch },
+      });
+      if (error) {
+        toast.error(`Batch ${Math.floor(i / batchSize) + 1} failed: ${error.message}`);
+        break;
+      }
+      totals.sent += data?.sent || 0;
+      totals.failed += data?.failed || 0;
+      totals.suppressed += data?.suppressed || 0;
+      totals.total += data?.total || batch.length;
+      totals.results.push(...(data?.results || []));
+      setProgress({ done: Math.min(i + batchSize, activeAudience.length), total: activeAudience.length });
+      setResult({ ...totals });
     }
-    setResult(data);
-    toast.success(`Sent ${data.sent} messages`);
+
+    setSending(false);
+    setResult({ ...totals });
+    toast.success(`Sent ${totals.sent} messages`);
   };
 
   const addSuppression = async (phone: string) => {
@@ -314,8 +361,32 @@ export function WhatsAppCampaigns() {
                     placeholder="254712345678&#10;254723456789"
                     rows={5}
                   />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setManualPhones(HOLIDAY_CAMPAIGN_NUMBERS.join("\n"));
+                      toast.success(`Loaded ${HOLIDAY_CAMPAIGN_NUMBERS.length} numbers from the holiday master list`);
+                    }}
+                  >
+                    Load holiday master list ({HOLIDAY_CAMPAIGN_NUMBERS.length})
+                  </Button>
                 </div>
               )}
+
+              <div className="flex items-center gap-2 rounded-md border p-3">
+                <input
+                  id="skipSent"
+                  type="checkbox"
+                  className="h-4 w-4"
+                  checked={skipAlreadySent}
+                  onChange={(e) => setSkipAlreadySent(e.target.checked)}
+                />
+                <Label htmlFor="skipSent" className="text-sm font-normal">
+                  Skip numbers that already received this template (recommended for resuming a batch)
+                </Label>
+              </div>
 
               <Button onClick={buildAudience} disabled={loadingAudience} variant="secondary">
                 {loadingAudience ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Users className="h-4 w-4 mr-2" />}
@@ -328,6 +399,11 @@ export function WhatsAppCampaigns() {
                   <Badge variant="outline" className="text-muted-foreground">
                     {audience.length - activeAudience.length} suppressed
                   </Badge>
+                  {alreadySentCount > 0 && (
+                    <Badge variant="outline" className="text-muted-foreground">
+                      {alreadySentCount} already sent (skipped)
+                    </Badge>
+                  )}
                   <Badge variant="default" className="bg-green-600">
                     {activeAudience.length} will receive
                   </Badge>
@@ -352,6 +428,13 @@ export function WhatsAppCampaigns() {
                     Send to {activeAudience.length} contacts
                   </Button>
                 </div>
+
+                {progress && (
+                  <p className="text-sm text-muted-foreground">
+                    Batch progress: {progress.done} / {progress.total} processed (sending 200 at a time). Keep this tab
+                    open until it finishes.
+                  </p>
+                )}
 
                 {preview && (
                   <div className="bg-muted p-4 rounded-lg text-sm font-mono overflow-auto">
