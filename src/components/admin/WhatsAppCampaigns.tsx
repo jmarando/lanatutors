@@ -314,8 +314,32 @@ export function WhatsAppCampaigns() {
                     placeholder="254712345678&#10;254723456789"
                     rows={5}
                   />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setManualPhones(HOLIDAY_CAMPAIGN_NUMBERS.join("\n"));
+                      toast.success(`Loaded ${HOLIDAY_CAMPAIGN_NUMBERS.length} numbers from the holiday master list`);
+                    }}
+                  >
+                    Load holiday master list ({HOLIDAY_CAMPAIGN_NUMBERS.length})
+                  </Button>
                 </div>
               )}
+
+              <div className="flex items-center gap-2 rounded-md border p-3">
+                <input
+                  id="skipSent"
+                  type="checkbox"
+                  className="h-4 w-4"
+                  checked={skipAlreadySent}
+                  onChange={(e) => setSkipAlreadySent(e.target.checked)}
+                />
+                <Label htmlFor="skipSent" className="text-sm font-normal">
+                  Skip numbers that already received this template (recommended for resuming a batch)
+                </Label>
+              </div>
 
               <Button onClick={buildAudience} disabled={loadingAudience} variant="secondary">
                 {loadingAudience ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Users className="h-4 w-4 mr-2" />}
@@ -328,6 +352,11 @@ export function WhatsAppCampaigns() {
                   <Badge variant="outline" className="text-muted-foreground">
                     {audience.length - activeAudience.length} suppressed
                   </Badge>
+                  {alreadySentCount > 0 && (
+                    <Badge variant="outline" className="text-muted-foreground">
+                      {alreadySentCount} already sent (skipped)
+                    </Badge>
+                  )}
                   <Badge variant="default" className="bg-green-600">
                     {activeAudience.length} will receive
                   </Badge>
