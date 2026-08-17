@@ -429,6 +429,13 @@ export function WhatsAppCampaigns() {
                   </Button>
                 </div>
 
+                {progress && (
+                  <p className="text-sm text-muted-foreground">
+                    Batch progress: {progress.done} / {progress.total} processed (sending 200 at a time). Keep this tab
+                    open until it finishes.
+                  </p>
+                )}
+
                 {preview && (
                   <div className="bg-muted p-4 rounded-lg text-sm font-mono overflow-auto">
                     <p className="text-xs text-muted-foreground mb-2">Payload preview</p>
