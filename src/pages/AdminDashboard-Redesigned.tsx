@@ -663,45 +663,45 @@ Reply with A, B, or C!
   };
 
   const fetchPendingReviews = async () => {
-    const { data, error } = await supabase
+    const { data: reviewData, error } = await supabase
       .from("tutor_reviews")
-      .select(`
-        *,
-        tutor_profiles!inner(id),
-        profiles!tutor_reviews_student_id_fkey(full_name)
-      `)
+      .select("*")
       .eq("is_moderated", false)
       .order("created_at", { ascending: false });
 
     if (error) {
       console.error("Error fetching pending reviews:", error);
-      const { data: reviewData } = await supabase
-        .from("tutor_reviews")
-        .select("*")
-        .eq("is_moderated", false)
-        .order("created_at", { ascending: false });
-      
-      if (reviewData) {
-        const enriched = await Promise.all(
-          reviewData.map(async (review) => {
-            const { data: profile } = await supabase
-              .from("profiles")
-              .select("full_name")
-              .eq("id", review.student_id)
-              .single();
-            const { data: tutorProfile } = await supabase
-              .from("tutor_profiles")
-              .select("id")
-              .eq("id", review.tutor_id)
-              .single();
-            return { ...review, profiles: profile, tutor_profiles: tutorProfile };
-          })
-        );
-        setPendingReviews(enriched);
-      }
-    } else {
-      setPendingReviews(data || []);
+      setPendingReviews([]);
+      return;
     }
+
+    if (!reviewData?.length) {
+      setPendingReviews([]);
+      return;
+    }
+
+    const studentIds = [...new Set(reviewData.map((r: any) => r.student_id).filter(Boolean))];
+    const tutorIds = [...new Set(reviewData.map((r: any) => r.tutor_id).filter(Boolean))];
+
+    const [{ data: profiles }, { data: tutors }] = await Promise.all([
+      studentIds.length
+        ? supabase.from("profiles").select("id, full_name").in("id", studentIds)
+        : Promise.resolve({ data: [] as any[] }),
+      tutorIds.length
+        ? supabase.from("tutor_profiles").select("id").in("id", tutorIds)
+        : Promise.resolve({ data: [] as any[] }),
+    ]);
+
+    const profileMap = new Map((profiles || []).map((p: any) => [p.id, p]));
+    const tutorMap = new Map((tutors || []).map((t: any) => [t.id, t]));
+
+    setPendingReviews(
+      reviewData.map((review: any) => ({
+        ...review,
+        profiles: profileMap.get(review.student_id) || null,
+        tutor_profiles: tutorMap.get(review.tutor_id) || null,
+      }))
+    );
   };
 
   const handleApplicationReview = async (
