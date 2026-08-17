@@ -11,6 +11,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "sonner";
 import { Send, Eye, Users, PhoneOff, Loader2, CheckCircle2, XCircle, AlertCircle } from "lucide-react";
+import { HOLIDAY_CAMPAIGN_NUMBERS } from "@/data/holidayCampaignList";
 
 interface CampaignContact {
   phone: string;
