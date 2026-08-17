@@ -32,6 +32,9 @@ export function WhatsAppCampaigns() {
   const [sending, setSending] = useState(false);
   const [result, setResult] = useState<any>(null);
   const [suppressions, setSuppressions] = useState<string[]>([]);
+  const [skipAlreadySent, setSkipAlreadySent] = useState(true);
+  const [alreadySentCount, setAlreadySentCount] = useState(0);
+  const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
   const [greetingMode, setGreetingMode] = useState<"fixed" | "generic" | "personal">("fixed");
   const [headerImageUrl, setHeaderImageUrl] = useState(
     "https://iccemuiqcdumgxiwxzdq.supabase.co/storage/v1/object/public/blog-images/campaign-header.jpg"
