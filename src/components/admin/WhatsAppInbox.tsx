@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { MessageCircle, RefreshCw, Search, AlertCircle, CheckCircle2, Send, Hand, Bot } from "lucide-react";
+import { MessageCircle, RefreshCw, Search, AlertCircle, CheckCircle2, Send, Hand, Bot, VolumeX } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { toast } from "sonner";
 
@@ -207,6 +207,15 @@ export function WhatsAppInbox() {
                       Open in WhatsApp
                     </a>
                   </Button>
+                  {suppressedPhones.has(active.phone_number) ? (
+                    <Badge variant="outline" className="gap-1">
+                      <CheckCircle2 className="h-3 w-3" /> Unsubscribed
+                    </Badge>
+                  ) : (
+                    <Button size="sm" variant="outline" onClick={() => suppressPhone(active.phone_number)}>
+                      <VolumeX className="h-4 w-4 mr-1" /> Unsubscribe
+                    </Button>
+                  )}
                 </div>
               </div>
               <ScrollArea className="flex-1 p-4 bg-muted/20">
