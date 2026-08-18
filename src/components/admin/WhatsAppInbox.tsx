@@ -100,6 +100,20 @@ export function WhatsAppInbox() {
     return (c.profile_name?.toLowerCase().includes(q)) || c.phone_number.includes(q);
   });
 
+  const suppressPhone = async (phone: string) => {
+    const { error } = await supabase.from("whatsapp_suppressions").insert({
+      phone_number: phone,
+      reason: "manual_opt_out",
+      source: "admin_inbox",
+    });
+    if (error) {
+      toast.error("Failed to unsubscribe: " + error.message);
+    } else {
+      setSuppressedPhones(prev => new Set(prev).add(phone));
+      toast.success("Number unsubscribed from marketing");
+    }
+  };
+
   const messages = Array.isArray(active?.messages) ? active!.messages : [];
 
   return (
@@ -141,7 +155,10 @@ export function WhatsAppInbox() {
               >
                 <div className="flex items-center justify-between gap-2">
                   <span className="font-medium truncate">{c.profile_name || c.phone_number}</span>
-                  {c.escalated && <Badge variant="destructive" className="text-[10px]">Escalated</Badge>}
+                  <div className="flex gap-1 shrink-0">
+                    {c.escalated && <Badge variant="destructive" className="text-[10px]">Escalated</Badge>}
+                    {suppressedPhones.has(c.phone_number) && <Badge variant="outline" className="text-[10px]">Unsubscribed</Badge>}
+                  </div>
                 </div>
                 <div className="text-xs text-muted-foreground flex justify-between mt-0.5">
                   <span className="truncate">+{c.phone_number}</span>
