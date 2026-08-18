@@ -26,25 +26,32 @@ export function WhatsAppInbox() {
   const [search, setSearch] = useState("");
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
+  const [suppressedPhones, setSuppressedPhones] = useState<Set<string>>(new Set());
 
   const load = async () => {
     setLoading(true);
-    const { data, error } = await supabase
-      .from("whatsapp_conversations")
-      .select("*")
-      .order("last_message_at", { ascending: false })
-      .limit(200);
-    if (error) {
+    const [convRes, suppRes] = await Promise.all([
+      supabase
+        .from("whatsapp_conversations")
+        .select("*")
+        .order("last_message_at", { ascending: false })
+        .limit(200),
+      supabase.from("whatsapp_suppressions").select("phone_number"),
+    ]);
+    if (convRes.error) {
       toast.error("Failed to load conversations");
-      console.error(error);
+      console.error(convRes.error);
     } else {
-      const list = (data as Conversation[]) || [];
+      const list = (convRes.data as Conversation[]) || [];
       setConversations(list);
       if (list.length && !active) setActive(list[0]);
       else if (active) {
         const refreshed = list.find(c => c.phone_number === active.phone_number);
         if (refreshed) setActive(refreshed);
       }
+    }
+    if (!suppRes.error) {
+      setSuppressedPhones(new Set((suppRes.data || []).map((s: any) => s.phone_number)));
     }
     setLoading(false);
   };
