@@ -456,8 +456,6 @@ async function handleIncoming(body: any) {
       const confirmation = [
         "Understood. We've removed you from our WhatsApp marketing list, so you won't get any more promotional messages.",
         "",
-        "Service updates for any active sessions or consultations will still come through.",
-        "",
         "If you need help with anything, please reach us at info@lanatutors.africa."
       ].join("\n");
       await sendWhatsAppMessage(from, confirmation);
