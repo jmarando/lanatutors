@@ -97,13 +97,12 @@ const BookConsultation = () => {
       
       const dateStr = format(selectedDate, 'yyyy-MM-dd');
       const { data, error } = await supabase
-        .from("consultation_bookings")
-        .select("consultation_time")
-        .eq("consultation_date", dateStr)
-        .neq("status", "cancelled");
-      
+        .rpc("get_booked_consultation_times", { _date: dateStr });
+
       if (!error && data) {
-        setBookedSlots(data.map(b => b.consultation_time));
+        setBookedSlots((data as { consultation_time: string }[]).map(b => b.consultation_time));
+      } else if (error) {
+        console.error("Error loading booked slots:", error);
       }
     };
     
