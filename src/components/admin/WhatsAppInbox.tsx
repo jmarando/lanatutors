@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { MessageCircle, RefreshCw, Search, AlertCircle, CheckCircle2, Send, Hand, Bot } from "lucide-react";
+import { MessageCircle, RefreshCw, Search, AlertCircle, CheckCircle2, Send, Hand, Bot, VolumeX } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { toast } from "sonner";
 
@@ -26,25 +26,32 @@ export function WhatsAppInbox() {
   const [search, setSearch] = useState("");
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
+  const [suppressedPhones, setSuppressedPhones] = useState<Set<string>>(new Set());
 
   const load = async () => {
     setLoading(true);
-    const { data, error } = await supabase
-      .from("whatsapp_conversations")
-      .select("*")
-      .order("last_message_at", { ascending: false })
-      .limit(200);
-    if (error) {
+    const [convRes, suppRes] = await Promise.all([
+      supabase
+        .from("whatsapp_conversations")
+        .select("*")
+        .order("last_message_at", { ascending: false })
+        .limit(200),
+      supabase.from("whatsapp_suppressions").select("phone_number"),
+    ]);
+    if (convRes.error) {
       toast.error("Failed to load conversations");
-      console.error(error);
+      console.error(convRes.error);
     } else {
-      const list = (data as Conversation[]) || [];
+      const list = (convRes.data as Conversation[]) || [];
       setConversations(list);
       if (list.length && !active) setActive(list[0]);
       else if (active) {
         const refreshed = list.find(c => c.phone_number === active.phone_number);
         if (refreshed) setActive(refreshed);
       }
+    }
+    if (!suppRes.error) {
+      setSuppressedPhones(new Set((suppRes.data || []).map((s: any) => s.phone_number)));
     }
     setLoading(false);
   };
@@ -93,6 +100,20 @@ export function WhatsAppInbox() {
     return (c.profile_name?.toLowerCase().includes(q)) || c.phone_number.includes(q);
   });
 
+  const suppressPhone = async (phone: string) => {
+    const { error } = await supabase.from("whatsapp_suppressions").insert({
+      phone_number: phone,
+      reason: "manual_opt_out",
+      source: "admin_inbox",
+    });
+    if (error) {
+      toast.error("Failed to unsubscribe: " + error.message);
+    } else {
+      setSuppressedPhones(prev => new Set(prev).add(phone));
+      toast.success("Number unsubscribed from marketing");
+    }
+  };
+
   const messages = Array.isArray(active?.messages) ? active!.messages : [];
 
   return (
@@ -134,7 +155,10 @@ export function WhatsAppInbox() {
               >
                 <div className="flex items-center justify-between gap-2">
                   <span className="font-medium truncate">{c.profile_name || c.phone_number}</span>
-                  {c.escalated && <Badge variant="destructive" className="text-[10px]">Escalated</Badge>}
+                  <div className="flex gap-1 shrink-0">
+                    {c.escalated && <Badge variant="destructive" className="text-[10px]">Escalated</Badge>}
+                    {suppressedPhones.has(c.phone_number) && <Badge variant="outline" className="text-[10px]">Unsubscribed</Badge>}
+                  </div>
                 </div>
                 <div className="text-xs text-muted-foreground flex justify-between mt-0.5">
                   <span className="truncate">+{c.phone_number}</span>
@@ -183,6 +207,15 @@ export function WhatsAppInbox() {
                       Open in WhatsApp
                     </a>
                   </Button>
+                  {suppressedPhones.has(active.phone_number) ? (
+                    <Badge variant="outline" className="gap-1">
+                      <CheckCircle2 className="h-3 w-3" /> Unsubscribed
+                    </Badge>
+                  ) : (
+                    <Button size="sm" variant="outline" onClick={() => suppressPhone(active.phone_number)}>
+                      <VolumeX className="h-4 w-4 mr-1" /> Unsubscribe
+                    </Button>
+                  )}
                 </div>
               </div>
               <ScrollArea className="flex-1 p-4 bg-muted/20">

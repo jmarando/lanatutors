@@ -152,9 +152,23 @@ function normalizePhone(phone: string) {
   return p;
 }
 
-function isOptOutMessage(text: string) {
+const OPT_OUT_KEYWORDS = [
+  "stop", "unsubscribe", "opt out", "opt-out", "cancel",
+  "dont message me", "don't message me", "no more messages",
+  "remove me", "take me off", "unsubscribe me"
+];
+
+const ABUSIVE_KEYWORDS = [
+  "fuck", "fuck you", "fuck u", "fuck off", "bitch",
+  "asshole", "shit", "bastard", "idiot", "stupid",
+  "nonsense", "rubbish", "go away", "leave me alone",
+  "piss off", "screw you", "damn you", "shut up"
+];
+
+function isOptOutOrAbusiveMessage(text: string) {
   const t = text.trim().toLowerCase();
-  return ["stop", "unsubscribe", "opt out", "cancel", "dont message me", "don't message me"].includes(t);
+  if (OPT_OUT_KEYWORDS.includes(t)) return true;
+  return ABUSIVE_KEYWORDS.some((k) => t.includes(k));
 }
 
 async function loadConversation(phone: string, profileName?: string) {
@@ -436,15 +450,15 @@ async function handleIncoming(body: any) {
     // Log inbound
     await logComm({ phone: from, parentId: convo.parent_id, direction: "inbound", content: text });
 
-    // Handle opt-out requests immediately
-    if (isOptOutMessage(text)) {
+    // Handle opt-out or abusive replies immediately (works even if escalated)
+    if (isOptOutOrAbusiveMessage(text)) {
       await suppressWhatsAppNumber(from, "inbound_reply");
       const confirmation = [
-        "You've been removed from our WhatsApp marketing list.",
+        "Understood. We've removed you from our WhatsApp marketing list, so you won't get any more promotional messages.",
         "",
-        "You'll still receive replies related to any active tutoring sessions or consultations.",
+        "Service updates for any active sessions or consultations will still come through.",
         "",
-        "If you ever want to hear from us again, just send us a message."
+        "If you need help with anything, please reach us at info@lanatutors.africa."
       ].join("\n");
       await sendWhatsAppMessage(from, confirmation);
       await logComm({ phone: from, parentId: convo.parent_id, direction: "outbound", content: confirmation });
