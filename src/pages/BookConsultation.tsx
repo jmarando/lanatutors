@@ -228,29 +228,19 @@ const BookConsultation = () => {
       const consultationDateStr = format(selectedDate!, 'yyyy-MM-dd');
       
       // Check if slot is still available
-      const { data: existingBooking, error: checkError } = await supabase
-        .from("consultation_bookings")
-        .select("id")
-        .eq("consultation_date", consultationDateStr)
-        .eq("consultation_time", selectedTime)
-        .neq("status", "cancelled")
-        .maybeSingle();
-      
+      const { data: bookedNow, error: checkError } = await supabase
+        .rpc("get_booked_consultation_times", { _date: consultationDateStr });
+
       if (checkError) {
         console.error("Error checking slot availability:", checkError);
         throw new Error("Failed to verify slot availability");
       }
-      
-      if (existingBooking) {
+
+      const bookedTimes = (bookedNow as { consultation_time: string }[] | null)?.map(b => b.consultation_time) ?? [];
+
+      if (bookedTimes.includes(selectedTime)) {
         toast.error("This time slot was just booked by someone else. Please select a different time.");
-        const { data: updatedBookings } = await supabase
-          .from("consultation_bookings")
-          .select("consultation_time")
-          .eq("consultation_date", consultationDateStr)
-          .neq("status", "cancelled");
-        if (updatedBookings) {
-          setBookedSlots(updatedBookings.map(b => b.consultation_time));
-        }
+        setBookedSlots(bookedTimes);
         setSelectedTime("");
         setLoading(false);
         return;
