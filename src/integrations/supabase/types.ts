@@ -3038,6 +3038,12 @@ export type Database = {
         Args: { full_name: string; tutor_id: string }
         Returns: string
       }
+      get_booked_consultation_times: {
+        Args: { _date: string }
+        Returns: {
+          consultation_time: string
+        }[]
+      }
       get_learning_plan_by_share: {
         Args: { _share_token?: string; _url_slug?: string }
         Returns: {
