@@ -53,6 +53,7 @@ interface InvoiceData {
   balanceDue?: number;
   amountToPay: number;
   paymentOption?: "full" | "deposit" | "weekly";
+  depositPercentage?: number;
   weeklyWeeks?: number;
   weeklySessionsPerWeek?: number;
   weeklyStartDate?: string;
@@ -103,6 +104,7 @@ export default function AdminInvoices() {
     amountToPay: 0,
     currency: "KES",
     paymentOption: "full",
+    depositPercentage: depositPercentage,
     weeklyWeeks: 4,
     weeklySessionsPerWeek: 2,
     weeklyStartDate: format(new Date(), "yyyy-MM-dd"),
@@ -236,7 +238,8 @@ export default function AdminInvoices() {
 
     const isDeposit = booking.payment_option === "deposit";
     const isSpecialTutor = booking.tutor_id === "4d9426d7-7294-492a-a2e9-4b1642ba1954";
-    const depositRate = isSpecialTutor ? 0.01 : globalDepositRate;
+    const depositPct = isSpecialTutor ? 1 : (booking.deposit_percentage ?? depositPercentage);
+    const depositRate = depositPct / 100;
     const amountToPay = isDeposit ? booking.amount * depositRate : booking.amount;
 
     let parentEmail = booking.parent_email || "";
@@ -270,6 +273,7 @@ export default function AdminInvoices() {
       balanceDue: booking.balance_due || 0,
       amountToPay: amountToPay || 0,
       paymentOption: booking.payment_option || "full",
+      depositPercentage: depositPct,
       currency: booking.currency || "KES",
       notes: "",
       referenceId: booking.id,
@@ -283,7 +287,8 @@ export default function AdminInvoices() {
     const metadata = (pkg.metadata as any) || {};
     const isDeposit = metadata.paymentOption === "deposit";
     const isSpecialTutor = pkg.tutor_id === "4d9426d7-7294-492a-a2e9-4b1642ba1954";
-    const depositRate = isSpecialTutor ? 0.01 : globalDepositRate;
+    const depositPct = isSpecialTutor ? 1 : (metadata.depositPercentage ?? depositPercentage);
+    const depositRate = depositPct / 100;
     const amountToPay = isDeposit ? pkg.total_amount * depositRate : pkg.total_amount;
 
     setInvoiceData({
@@ -307,6 +312,7 @@ export default function AdminInvoices() {
       balanceDue: (pkg.total_amount || 0) - (pkg.amount_paid || 0),
       amountToPay: amountToPay || 0,
       paymentOption: metadata.paymentOption || "full",
+      depositPercentage: depositPct,
       currency: pkg.currency || "KES",
       notes: "",
       referenceId: pkg.id,
@@ -319,10 +325,13 @@ export default function AdminInvoices() {
       if (
         field === "totalAmount" ||
         field === "paymentOption" ||
-        field === "weeklyWeeks"
+        field === "weeklyWeeks" ||
+        field === "depositPercentage"
       ) {
         if (next.paymentOption === "deposit") {
-          next.amountToPay = next.totalAmount * globalDepositRate;
+          const pct = Math.max(1, Math.min(100, Number(next.depositPercentage) || depositPercentage));
+          next.depositPercentage = pct;
+          next.amountToPay = next.totalAmount * (pct / 100);
         } else if (next.paymentOption === "weekly") {
           const weeks = Math.max(1, Number(next.weeklyWeeks) || 1);
           next.amountToPay = Math.round(next.totalAmount / weeks);
@@ -532,6 +541,7 @@ export default function AdminInvoices() {
       const isWeekly = invoiceData.paymentOption === "weekly";
       const schedule = isWeekly ? buildWeeklySchedule(invoiceData) : [];
 
+      const isDeposit = invoiceData.paymentOption === "deposit";
       const rows = [
         ["Invoice number", invoiceData.invoiceNumber],
         ["Invoice date", invoiceData.invoiceDate],
@@ -539,6 +549,12 @@ export default function AdminInvoices() {
         invoiceData.studentName ? ["Student", invoiceData.studentName] : null,
         invoiceData.subject ? ["Subject / Service", invoiceData.subject] : null,
         ["Total", `${invoiceData.currency} ${invoiceData.totalAmount.toLocaleString()}`],
+        isDeposit
+          ? ["Deposit percentage", `${invoiceData.depositPercentage ?? depositPercentage}%`]
+          : null,
+        isDeposit
+          ? ["Balance due", `${invoiceData.currency} ${(invoiceData.totalAmount - invoiceData.amountToPay).toLocaleString()}`]
+          : null,
         isWeekly
           ? ["Weekly instalment (paid in advance)", `${invoiceData.currency} ${invoiceData.amountToPay.toLocaleString()}`]
           : ["Amount due now", `${invoiceData.currency} ${invoiceData.amountToPay.toLocaleString()}`],
@@ -637,29 +653,30 @@ export default function AdminInvoices() {
     setEditingStatus("draft");
     setSelectedBookingId("");
     setSelectedPackageId("");
-    setInvoiceData({
-      invoiceNumber: `INV-${Date.now().toString().slice(-6)}`,
-      invoiceDate: format(new Date(), "yyyy-MM-dd"),
-      dueDate: "",
-      source: "custom",
-      parentName: "",
-      parentEmail: "",
-      parentPhone: "",
-      studentName: "",
-      tutorName: "",
-      subject: "",
-      classType: "",
-      description: "",
-      totalAmount: 0,
-      amountToPay: 0,
-      currency: "KES",
-      paymentOption: "full",
-      weeklyWeeks: 4,
-      weeklySessionsPerWeek: 2,
-      weeklyStartDate: format(new Date(), "yyyy-MM-dd"),
-      notes: "",
+      setInvoiceData({
+        invoiceNumber: `INV-${Date.now().toString().slice(-6)}`,
+        invoiceDate: format(new Date(), "yyyy-MM-dd"),
+        dueDate: "",
+        source: "custom",
+        parentName: "",
+        parentEmail: "",
+        parentPhone: "",
+        studentName: "",
+        tutorName: "",
+        subject: "",
+        classType: "",
+        description: "",
+        totalAmount: 0,
+        amountToPay: 0,
+        currency: "KES",
+        paymentOption: "full",
+        depositPercentage: depositPercentage,
+        weeklyWeeks: 4,
+        weeklySessionsPerWeek: 2,
+        weeklyStartDate: format(new Date(), "yyyy-MM-dd"),
+        notes: "",
 
-    });
+      });
   };
 
   const fetchSavedInvoices = async () => {
@@ -715,6 +732,7 @@ export default function AdminInvoices() {
         total_amount: invoiceData.totalAmount || 0,
         amount_to_pay: invoiceData.amountToPay || invoiceData.totalAmount || 0,
         payment_option: invoiceData.paymentOption || "full",
+        deposit_percentage: invoiceData.depositPercentage ?? null,
         status: status || editingStatus || "draft",
         notes: invoiceData.notes || null,
         data: invoiceData as any,
@@ -771,9 +789,12 @@ export default function AdminInvoices() {
       classType: row.class_type || "",
       description: row.description || "",
       totalAmount: Number(row.total_amount) || 0,
+      amountPaid: Number(row.amount_paid) || 0,
+      balanceDue: Number(row.balance_due) || 0,
       amountToPay: Number(row.amount_to_pay) || 0,
-      currency: row.currency || "KES",
       paymentOption: (row.payment_option as any) || "full",
+      depositPercentage: row.deposit_percentage ?? depositPercentage,
+      currency: row.currency || "KES",
       notes: row.notes || "",
       ...stored,
     });
@@ -1090,12 +1111,41 @@ export default function AdminInvoices() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="full">Full Payment</SelectItem>
-                    <SelectItem value="deposit">{depositPercentage}% Deposit</SelectItem>
+                    <SelectItem value="deposit">{(invoiceData.depositPercentage ?? depositPercentage)}% Deposit</SelectItem>
                     <SelectItem value="weekly">Weekly (paid in advance each week)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             </div>
+
+            {invoiceData.paymentOption === "deposit" && (
+              <div className="grid grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="invoice-deposit-pct">Deposit percentage (%)</Label>
+                  <Input
+                    id="invoice-deposit-pct"
+                    type="number"
+                    min={1}
+                    max={100}
+                    value={invoiceData.depositPercentage ?? depositPercentage}
+                    onChange={(e) => handleCustomFieldChange("depositPercentage", Number(e.target.value))}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Deposit amount</Label>
+                  <p className="text-sm pt-2 font-medium">
+                    {invoiceData.currency} {Math.round(invoiceData.totalAmount * ((invoiceData.depositPercentage ?? depositPercentage) / 100)).toLocaleString()}
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <Label>Balance due</Label>
+                  <p className="text-sm pt-2 text-muted-foreground">
+                    {invoiceData.currency} {Math.round(invoiceData.totalAmount * (1 - (invoiceData.depositPercentage ?? depositPercentage) / 100)).toLocaleString()}
+                  </p>
+                </div>
+              </div>
+            )}
+
 
             {invoiceData.paymentOption === "weekly" && (
               <div className="rounded-lg border border-border bg-muted/30 p-4 space-y-3">
@@ -1363,18 +1413,18 @@ export default function AdminInvoices() {
                       <>
                         <div className="flex justify-between text-sm">
                           <span className="text-muted-foreground">Payment Option</span>
-                          <span className="font-medium">{depositPercentage}% Deposit</span>
+                          <span className="font-medium">{(invoiceData.depositPercentage ?? depositPercentage)}% Deposit</span>
                         </div>
                         <div className="flex justify-between text-sm text-green-600">
-                          <span>Deposit ({depositPercentage}%)</span>
+                          <span>Deposit ({(invoiceData.depositPercentage ?? depositPercentage)}%)</span>
                           <span className="font-medium">
-                            {invoiceData.currency} {Math.round(invoiceData.totalAmount * globalDepositRate).toLocaleString()}
+                            {invoiceData.currency} {Math.round(invoiceData.totalAmount * ((invoiceData.depositPercentage ?? depositPercentage) / 100)).toLocaleString()}
                           </span>
                         </div>
                         <div className="flex justify-between text-sm text-muted-foreground">
                           <span>Balance Due Later</span>
                           <span>
-                            {invoiceData.currency} {Math.round(invoiceData.totalAmount * (1 - globalDepositRate)).toLocaleString()}
+                            {invoiceData.currency} {Math.round(invoiceData.totalAmount * (1 - (invoiceData.depositPercentage ?? depositPercentage) / 100)).toLocaleString()}
                           </span>
                         </div>
                       </>
