@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Loader2, CheckCircle, FileText, Share2, Copy, Check, Phone, Mail, Building2, Smartphone } from "lucide-react";
 import { toast } from "sonner";
+import { useDepositPercentage } from "@/hooks/useDepositPercentage";
 import { SEO } from "@/components/SEO";
 import { analytics } from "@/utils/analytics";
 import lanaLogo from "@/assets/lana-tutors-logo.png";
@@ -137,7 +138,8 @@ const LearningPlanView = () => {
     }
   };
 
-  const depositAmount = plan ? Math.round(plan.total_price * 0.3) : 0;
+  const { depositPercentage } = useDepositPercentage((plan as any)?.deposit_percentage);
+  const depositAmount = plan ? Math.round(plan.total_price * (depositPercentage / 100)) : 0;
   const balanceAfterDeposit = plan ? plan.total_price - depositAmount : 0;
 
   // Extract student name from title (e.g., "Learning Plan for Ibrahim" -> "Ibrahim")
@@ -423,9 +425,9 @@ const LearningPlanView = () => {
                       </p>
                     </div>
                     
-                    {/* 30% Deposit */}
+                    {/* Deposit */}
                     <div className="p-4 rounded-xl bg-gradient-to-br from-blue-50 to-white border-2 border-blue-200/50">
-                      <p className="text-sm text-gray-500 mb-1">Or Pay 30% Deposit</p>
+                      <p className="text-sm text-gray-500 mb-1">Or Pay {depositPercentage}% Deposit</p>
                       <p className="text-2xl font-bold text-blue-600">
                         KES {depositAmount.toLocaleString()}
                       </p>
