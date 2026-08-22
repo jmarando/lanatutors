@@ -1104,7 +1104,7 @@ export default function AdminInvoices() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="full">Full Payment</SelectItem>
-                    <SelectItem value="deposit">Deposit</SelectItem>
+                    <SelectItem value="deposit">{(invoiceData.depositPercentage ?? depositPercentage)}% Deposit</SelectItem>
                     <SelectItem value="weekly">Weekly (paid in advance each week)</SelectItem>
                   </SelectContent>
                 </Select>
