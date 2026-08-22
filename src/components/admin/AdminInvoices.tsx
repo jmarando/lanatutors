@@ -53,6 +53,7 @@ interface InvoiceData {
   balanceDue?: number;
   amountToPay: number;
   paymentOption?: "full" | "deposit" | "weekly";
+  depositPercentage?: number;
   weeklyWeeks?: number;
   weeklySessionsPerWeek?: number;
   weeklyStartDate?: string;
