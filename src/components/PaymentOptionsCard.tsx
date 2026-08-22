@@ -2,6 +2,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Check, CreditCard, Package, Zap } from "lucide-react";
+import { useDepositPercentage } from "@/hooks/useDepositPercentage";
 
 interface PackageOffer {
   id: string;
@@ -132,7 +133,7 @@ export const PaymentOptionsCard = ({
                 </div>
                 <div>
                   <div className="font-semibold flex items-center gap-2">
-                    Pay Deposit ({depositPercentage})
+                    Pay Deposit ({depositPercentageLabel})
                     {paymentOption === 'deposit' && (
                       <Check className="w-4 h-4 text-primary" />
                     )}
