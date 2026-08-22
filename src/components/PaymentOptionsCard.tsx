@@ -50,7 +50,11 @@ export const PaymentOptionsCard = ({
   disabled = false,
   tutorId
 }: PaymentOptionsCardProps) => {
-  const depositPercentage = '30%';
+  const { depositPercentage } = useDepositPercentage();
+  const computedPct = totalAmount > 0
+    ? Math.round((depositAmount / totalAmount) * 100)
+    : depositPercentage;
+  const depositPercentageLabel = `${computedPct}%`;
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
