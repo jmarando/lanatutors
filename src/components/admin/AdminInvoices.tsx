@@ -1099,12 +1099,41 @@ export default function AdminInvoices() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="full">Full Payment</SelectItem>
-                    <SelectItem value="deposit">{depositPercentage}% Deposit</SelectItem>
+                    <SelectItem value="deposit">Deposit</SelectItem>
                     <SelectItem value="weekly">Weekly (paid in advance each week)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             </div>
+
+            {invoiceData.paymentOption === "deposit" && (
+              <div className="grid grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="invoice-deposit-pct">Deposit percentage (%)</Label>
+                  <Input
+                    id="invoice-deposit-pct"
+                    type="number"
+                    min={1}
+                    max={100}
+                    value={invoiceData.depositPercentage ?? depositPercentage}
+                    onChange={(e) => handleCustomFieldChange("depositPercentage", Number(e.target.value))}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Deposit amount</Label>
+                  <p className="text-sm pt-2 font-medium">
+                    {invoiceData.currency} {Math.round(invoiceData.totalAmount * ((invoiceData.depositPercentage ?? depositPercentage) / 100)).toLocaleString()}
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <Label>Balance due</Label>
+                  <p className="text-sm pt-2 text-muted-foreground">
+                    {invoiceData.currency} {Math.round(invoiceData.totalAmount * (1 - (invoiceData.depositPercentage ?? depositPercentage) / 100)).toLocaleString()}
+                  </p>
+                </div>
+              </div>
+            )}
+
 
             {invoiceData.paymentOption === "weekly" && (
               <div className="rounded-lg border border-border bg-muted/30 p-4 space-y-3">
