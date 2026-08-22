@@ -1401,18 +1401,18 @@ export default function AdminInvoices() {
                       <>
                         <div className="flex justify-between text-sm">
                           <span className="text-muted-foreground">Payment Option</span>
-                          <span className="font-medium">{depositPercentage}% Deposit</span>
+                          <span className="font-medium">{(invoiceData.depositPercentage ?? depositPercentage)}% Deposit</span>
                         </div>
                         <div className="flex justify-between text-sm text-green-600">
-                          <span>Deposit ({depositPercentage}%)</span>
+                          <span>Deposit ({(invoiceData.depositPercentage ?? depositPercentage)}%)</span>
                           <span className="font-medium">
-                            {invoiceData.currency} {Math.round(invoiceData.totalAmount * globalDepositRate).toLocaleString()}
+                            {invoiceData.currency} {Math.round(invoiceData.totalAmount * ((invoiceData.depositPercentage ?? depositPercentage) / 100)).toLocaleString()}
                           </span>
                         </div>
                         <div className="flex justify-between text-sm text-muted-foreground">
                           <span>Balance Due Later</span>
                           <span>
-                            {invoiceData.currency} {Math.round(invoiceData.totalAmount * (1 - globalDepositRate)).toLocaleString()}
+                            {invoiceData.currency} {Math.round(invoiceData.totalAmount * (1 - (invoiceData.depositPercentage ?? depositPercentage) / 100)).toLocaleString()}
                           </span>
                         </div>
                       </>
