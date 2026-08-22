@@ -12,6 +12,7 @@ import { format } from "date-fns";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import lanaLogo from "@/assets/lana-tutors-invoice-logo.png";
+import { useDepositPercentage } from "@/hooks/useDepositPercentage";
 import { 
   FileText, 
   Download, 
@@ -62,6 +63,7 @@ interface InvoiceData {
 
 export default function AdminInvoices() {
   const { toast } = useToast();
+  const { depositPercentage, depositRate: globalDepositRate } = useDepositPercentage();
   const invoiceRef = useRef<HTMLDivElement>(null);
   const [source, setSource] = useState<InvoiceSource>("custom");
   const [loading, setLoading] = useState(false);
@@ -233,7 +235,7 @@ export default function AdminInvoices() {
 
     const isDeposit = booking.payment_option === "deposit";
     const isSpecialTutor = booking.tutor_id === "4d9426d7-7294-492a-a2e9-4b1642ba1954";
-    const depositRate = isSpecialTutor ? 0.01 : 0.3;
+    const depositRate = isSpecialTutor ? 0.01 : globalDepositRate;
     const amountToPay = isDeposit ? booking.amount * depositRate : booking.amount;
 
     let parentEmail = booking.parent_email || "";
@@ -280,7 +282,7 @@ export default function AdminInvoices() {
     const metadata = (pkg.metadata as any) || {};
     const isDeposit = metadata.paymentOption === "deposit";
     const isSpecialTutor = pkg.tutor_id === "4d9426d7-7294-492a-a2e9-4b1642ba1954";
-    const depositRate = isSpecialTutor ? 0.01 : 0.3;
+    const depositRate = isSpecialTutor ? 0.01 : globalDepositRate;
     const amountToPay = isDeposit ? pkg.total_amount * depositRate : pkg.total_amount;
 
     setInvoiceData({
@@ -319,7 +321,7 @@ export default function AdminInvoices() {
         field === "weeklyWeeks"
       ) {
         if (next.paymentOption === "deposit") {
-          next.amountToPay = next.totalAmount * 0.3;
+          next.amountToPay = next.totalAmount * globalDepositRate;
         } else if (next.paymentOption === "weekly") {
           const weeks = Math.max(1, Number(next.weeklyWeeks) || 1);
           next.amountToPay = Math.round(next.totalAmount / weeks);
@@ -1086,7 +1088,7 @@ export default function AdminInvoices() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="full">Full Payment</SelectItem>
-                    <SelectItem value="deposit">30% Deposit</SelectItem>
+                    <SelectItem value="deposit">{depositPercentage}% Deposit</SelectItem>
                     <SelectItem value="weekly">Weekly (paid in advance each week)</SelectItem>
                   </SelectContent>
                 </Select>
@@ -1359,18 +1361,18 @@ export default function AdminInvoices() {
                       <>
                         <div className="flex justify-between text-sm">
                           <span className="text-muted-foreground">Payment Option</span>
-                          <span className="font-medium">30% Deposit</span>
+                          <span className="font-medium">{depositPercentage}% Deposit</span>
                         </div>
                         <div className="flex justify-between text-sm text-green-600">
-                          <span>Deposit (30%)</span>
+                          <span>Deposit ({depositPercentage}%)</span>
                           <span className="font-medium">
-                            {invoiceData.currency} {Math.round(invoiceData.totalAmount * 0.3).toLocaleString()}
+                            {invoiceData.currency} {Math.round(invoiceData.totalAmount * globalDepositRate).toLocaleString()}
                           </span>
                         </div>
                         <div className="flex justify-between text-sm text-muted-foreground">
                           <span>Balance Due Later</span>
                           <span>
-                            {invoiceData.currency} {Math.round(invoiceData.totalAmount * 0.7).toLocaleString()}
+                            {invoiceData.currency} {Math.round(invoiceData.totalAmount * (1 - globalDepositRate)).toLocaleString()}
                           </span>
                         </div>
                       </>
