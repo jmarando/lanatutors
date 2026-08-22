@@ -7,6 +7,7 @@ import { X, Plus, ShoppingCart, CreditCard, UserPlus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useNavigate, useLocation } from "react-router-dom";
+import { useDepositPercentage } from "@/hooks/useDepositPercentage";
 
 interface CartItem {
   id: string;
@@ -26,6 +27,7 @@ export const MultiTutorPackageBuilder = () => {
   const [loading, setLoading] = useState(false);
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [paymentOption, setPaymentOption] = useState<'full' | 'deposit'>('full');
+  const { depositPercentage, depositRate: globalDepositRate } = useDepositPercentage();
 
   useEffect(() => {
     fetchCurrentUser();
@@ -105,7 +107,7 @@ export const MultiTutorPackageBuilder = () => {
     const discount = calculateDiscount(totalSessions);
     const discountPercentage = Math.round(discount * 100);
     const total = Math.round(subtotal * (1 - discount));
-    const deposit = Math.round(total * 0.3);
+    const deposit = Math.round(total * globalDepositRate);
     const balance = total - deposit;
 
     return { totalSessions, subtotal, discount, discountPercentage, total, deposit, balance };
@@ -438,7 +440,7 @@ export const MultiTutorPackageBuilder = () => {
                         : "border-border hover:border-primary/30"
                     }`}
                   >
-                    <div className="text-sm font-medium">30% Deposit</div>
+                    <div className="text-sm font-medium">{depositPercentage}% Deposit</div>
                     <div className="text-xs text-muted-foreground">
                       Pay KES {totals.deposit.toLocaleString()} now
                     </div>
