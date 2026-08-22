@@ -431,7 +431,7 @@ Lana Tutors Team`;
                 parentEmail,
                 parentPhone,
                 studentName: student.name,
-                description: `30% Deposit - ${title}`,
+                description: `${depositPercent}% Deposit - ${title}`,
                 isDeposit: true,
               },
             }),
