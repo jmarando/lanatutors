@@ -1128,6 +1128,7 @@ export type Database = {
           created_by: string | null
           currency: string
           data: Json
+          deposit_percentage: number | null
           description: string | null
           due_date: string | null
           id: string
@@ -1153,6 +1154,7 @@ export type Database = {
           created_by?: string | null
           currency?: string
           data?: Json
+          deposit_percentage?: number | null
           description?: string | null
           due_date?: string | null
           id?: string
@@ -1178,6 +1180,7 @@ export type Database = {
           created_by?: string | null
           currency?: string
           data?: Json
+          deposit_percentage?: number | null
           description?: string | null
           due_date?: string | null
           id?: string
