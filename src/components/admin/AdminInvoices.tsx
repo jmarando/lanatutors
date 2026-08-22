@@ -725,6 +725,7 @@ export default function AdminInvoices() {
         total_amount: invoiceData.totalAmount || 0,
         amount_to_pay: invoiceData.amountToPay || invoiceData.totalAmount || 0,
         payment_option: invoiceData.paymentOption || "full",
+        deposit_percentage: invoiceData.depositPercentage ?? null,
         status: status || editingStatus || "draft",
         notes: invoiceData.notes || null,
         data: invoiceData as any,
