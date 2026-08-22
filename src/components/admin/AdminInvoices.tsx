@@ -781,9 +781,12 @@ export default function AdminInvoices() {
       classType: row.class_type || "",
       description: row.description || "",
       totalAmount: Number(row.total_amount) || 0,
+      amountPaid: Number(row.amount_paid) || 0,
+      balanceDue: Number(row.balance_due) || 0,
       amountToPay: Number(row.amount_to_pay) || 0,
-      currency: row.currency || "KES",
       paymentOption: (row.payment_option as any) || "full",
+      depositPercentage: row.deposit_percentage ?? depositPercentage,
+      currency: row.currency || "KES",
       notes: row.notes || "",
       ...stored,
     });
