@@ -646,29 +646,30 @@ export default function AdminInvoices() {
     setEditingStatus("draft");
     setSelectedBookingId("");
     setSelectedPackageId("");
-    setInvoiceData({
-      invoiceNumber: `INV-${Date.now().toString().slice(-6)}`,
-      invoiceDate: format(new Date(), "yyyy-MM-dd"),
-      dueDate: "",
-      source: "custom",
-      parentName: "",
-      parentEmail: "",
-      parentPhone: "",
-      studentName: "",
-      tutorName: "",
-      subject: "",
-      classType: "",
-      description: "",
-      totalAmount: 0,
-      amountToPay: 0,
-      currency: "KES",
-      paymentOption: "full",
-      weeklyWeeks: 4,
-      weeklySessionsPerWeek: 2,
-      weeklyStartDate: format(new Date(), "yyyy-MM-dd"),
-      notes: "",
+      setInvoiceData({
+        invoiceNumber: `INV-${Date.now().toString().slice(-6)}`,
+        invoiceDate: format(new Date(), "yyyy-MM-dd"),
+        dueDate: "",
+        source: "custom",
+        parentName: "",
+        parentEmail: "",
+        parentPhone: "",
+        studentName: "",
+        tutorName: "",
+        subject: "",
+        classType: "",
+        description: "",
+        totalAmount: 0,
+        amountToPay: 0,
+        currency: "KES",
+        paymentOption: "full",
+        depositPercentage: depositPercentage,
+        weeklyWeeks: 4,
+        weeklySessionsPerWeek: 2,
+        weeklyStartDate: format(new Date(), "yyyy-MM-dd"),
+        notes: "",
 
-    });
+      });
   };
 
   const fetchSavedInvoices = async () => {
