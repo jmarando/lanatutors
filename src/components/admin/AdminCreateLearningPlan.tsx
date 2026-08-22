@@ -25,6 +25,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
+import { useDepositPercentage } from "@/hooks/useDepositPercentage";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -1029,7 +1030,28 @@ Lana Tutors Team`;
                 <span className="font-semibold text-primary">KES {grandTotals.depositAmount.toLocaleString()}</span>
               </div>
             </RadioGroup>
-            
+
+            {paymentOption === "deposit" && (
+              <div className="mt-4 flex flex-wrap items-end gap-3 rounded-lg border bg-muted/30 p-3">
+                <div className="space-y-2">
+                  <Label htmlFor="plan-deposit-pct">Deposit for this plan (%)</Label>
+                  <Input
+                    id="plan-deposit-pct"
+                    type="number"
+                    min={1}
+                    max={100}
+                    value={depositPercent}
+                    onChange={(e) => setDepositPercent(Number(e.target.value))}
+                    className="w-28"
+                  />
+                </div>
+                <p className="pb-2 text-sm text-muted-foreground">
+                  Platform default is {platformDepositPercentage}%. Balance: KES{" "}
+                  {(grandTotals.totalPrice - grandTotals.depositAmount).toLocaleString()}
+                </p>
+              </div>
+            )}
+
             {/* Class Type */}
             <div className="pt-4 border-t mt-4">
               <Label className="text-base mb-3 block">Session Type</Label>
