@@ -1249,6 +1249,7 @@ export type Database = {
       learning_plans: {
         Row: {
           created_at: string | null
+          deposit_percentage: number | null
           discount_applied: number | null
           expires_at: string | null
           id: string
@@ -1268,6 +1269,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string | null
+          deposit_percentage?: number | null
           discount_applied?: number | null
           expires_at?: string | null
           id?: string
@@ -1287,6 +1289,7 @@ export type Database = {
         }
         Update: {
           created_at?: string | null
+          deposit_percentage?: number | null
           discount_applied?: number | null
           expires_at?: string | null
           id?: string
@@ -1651,6 +1654,27 @@ export type Database = {
           status?: Database["public"]["Enums"]["payment_status"] | null
           updated_at?: string | null
           user_id?: string
+        }
+        Relationships: []
+      }
+      platform_settings: {
+        Row: {
+          created_at: string
+          deposit_percentage: number
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          deposit_percentage?: number
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          deposit_percentage?: number
+          id?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -3048,6 +3072,7 @@ export type Database = {
         Args: { _share_token?: string; _url_slug?: string }
         Returns: {
           created_at: string | null
+          deposit_percentage: number | null
           discount_applied: number | null
           expires_at: string | null
           id: string
