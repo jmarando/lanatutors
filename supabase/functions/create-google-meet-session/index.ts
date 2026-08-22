@@ -190,28 +190,42 @@ serve(async (req) => {
       },
     };
 
+    const createEvent = (token: string) =>
+      fetch(
+        `https://www.googleapis.com/calendar/v3/calendars/primary/events?conferenceDataVersion=1&sendUpdates=all`,
+        {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(event),
+        }
+      );
+
     // Create event in primary calendar
-    const calendarResponse = await fetch(
-      `https://www.googleapis.com/calendar/v3/calendars/primary/events?conferenceDataVersion=1&sendUpdates=all`,
-      {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${accessToken}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(event),
+    let calendarResponse = await createEvent(accessToken);
+
+    // If the stored OAuth token is stale/revoked, retry once with the service account
+    if (!calendarResponse.ok) {
+      console.error('Calendar event creation failed:', await calendarResponse.text());
+      const saToken = await getServiceAccountToken();
+      if (saToken && saToken !== accessToken) {
+        console.log('Retrying calendar event creation with service account');
+        calendarResponse = await createEvent(saToken);
       }
-    );
+    }
 
     if (!calendarResponse.ok) {
       const error = await calendarResponse.text();
-      console.error('Calendar event creation failed:', error);
+      console.error('Calendar event creation failed (after fallback):', error);
       // Don't fail the whole request – return a soft error
       return new Response(
         JSON.stringify({ message: 'calendar_event_creation_failed' }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+
 
     const calendarEvent = await calendarResponse.json();
     const meetLink = calendarEvent.hangoutLink || calendarEvent.conferenceData?.entryPoints?.[0]?.uri;
