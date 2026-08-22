@@ -25,6 +25,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
+import { useDepositPercentage } from "@/hooks/useDepositPercentage";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
@@ -98,6 +99,14 @@ export const AdminCreateLearningPlan = () => {
   
   // Payment option
   const [paymentOption, setPaymentOption] = useState<"full" | "deposit">("full");
+
+  // Deposit percentage for this plan (defaults to the platform setting)
+  const { depositPercentage: platformDepositPercentage } = useDepositPercentage();
+  const [depositPercent, setDepositPercent] = useState<number>(platformDepositPercentage);
+
+  useEffect(() => {
+    setDepositPercent(platformDepositPercentage);
+  }, [platformDepositPercentage]);
   
   // Class type
   const [classType, setClassType] = useState<"online" | "physical">("online");
@@ -294,7 +303,7 @@ Lana Tutors Team`;
     const subtotal = student.subjects.reduce((sum, s) => sum + (Number(s.sessions) * Number(s.rate)), 0);
     const discountAmount = subtotal * (Number(discount) / 100);
     const totalPrice = subtotal - discountAmount;
-    const depositAmount = Math.ceil(totalPrice * 0.3);
+    const depositAmount = Math.ceil(totalPrice * (Number(depositPercent) / 100));
     return { totalSessions, subtotal, discountAmount, totalPrice, depositAmount };
   };
 
@@ -311,7 +320,7 @@ Lana Tutors Team`;
     
     const discountAmount = grandSubtotal * (Number(discount) / 100);
     const totalPrice = grandSubtotal - discountAmount;
-    const depositAmount = Math.ceil(totalPrice * 0.3);
+    const depositAmount = Math.ceil(totalPrice * (Number(depositPercent) / 100));
     
     return { totalSessions: grandTotalSessions, subtotal: grandSubtotal, discountAmount, totalPrice, depositAmount };
   };
@@ -390,6 +399,7 @@ Lana Tutors Team`;
             validity_days: validityDays,
             notes: `Curriculum: ${student.curriculum} | Grade: ${student.gradeLevel} | Class Type: ${classType === 'physical' ? 'Physical (In-Person)' : 'Online'} | Payment Option: ${paymentOption} | Tutors: ${assignedTutors.map(t => t.full_name).join(", ")}\n\n${notes}`,
             status: "proposed",
+            deposit_percentage: Number(depositPercent),
           })
           .select()
           .single();
@@ -421,7 +431,7 @@ Lana Tutors Team`;
                 parentEmail,
                 parentPhone,
                 studentName: student.name,
-                description: `30% Deposit - ${title}`,
+                description: `${depositPercent}% Deposit - ${title}`,
                 isDeposit: true,
               },
             }),
@@ -1012,13 +1022,36 @@ Lana Tutors Team`;
               <div className="flex items-center space-x-3 p-3 border rounded-lg hover:bg-muted/50 transition-colors">
                 <RadioGroupItem value="deposit" id="deposit" />
                 <Label htmlFor="deposit" className="flex-1 cursor-pointer">
-                  <p className="font-medium">30% Deposit</p>
-                  <p className="text-sm text-muted-foreground">Pay 30% now, balance before sessions complete</p>
+                  <p className="font-medium">{depositPercent}% Deposit</p>
+                  <p className="text-sm text-muted-foreground">
+                    Pay {depositPercent}% now, balance before sessions complete
+                  </p>
                 </Label>
                 <span className="font-semibold text-primary">KES {grandTotals.depositAmount.toLocaleString()}</span>
               </div>
             </RadioGroup>
-            
+
+            {paymentOption === "deposit" && (
+              <div className="mt-4 flex flex-wrap items-end gap-3 rounded-lg border bg-muted/30 p-3">
+                <div className="space-y-2">
+                  <Label htmlFor="plan-deposit-pct">Deposit for this plan (%)</Label>
+                  <Input
+                    id="plan-deposit-pct"
+                    type="number"
+                    min={1}
+                    max={100}
+                    value={depositPercent}
+                    onChange={(e) => setDepositPercent(Number(e.target.value))}
+                    className="w-28"
+                  />
+                </div>
+                <p className="pb-2 text-sm text-muted-foreground">
+                  Platform default is {platformDepositPercentage}%. Balance: KES{" "}
+                  {(grandTotals.totalPrice - grandTotals.depositAmount).toLocaleString()}
+                </p>
+              </div>
+            )}
+
             {/* Class Type */}
             <div className="pt-4 border-t mt-4">
               <Label className="text-base mb-3 block">Session Type</Label>

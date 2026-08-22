@@ -13,6 +13,7 @@ import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import lanaLogo from "@/assets/lana-tutors-invoice-logo.png";
 import { useDepositPercentage } from "@/hooks/useDepositPercentage";
+import { DepositSettingsCard } from "@/components/admin/DepositSettingsCard";
 import { 
   FileText, 
   Download, 
@@ -817,6 +818,7 @@ export default function AdminInvoices() {
 
   return (
     <div className="space-y-6">
+      <DepositSettingsCard />
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="text-2xl font-bold">Invoices</h2>
