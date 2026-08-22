@@ -321,10 +321,13 @@ export default function AdminInvoices() {
       if (
         field === "totalAmount" ||
         field === "paymentOption" ||
-        field === "weeklyWeeks"
+        field === "weeklyWeeks" ||
+        field === "depositPercentage"
       ) {
         if (next.paymentOption === "deposit") {
-          next.amountToPay = next.totalAmount * globalDepositRate;
+          const pct = Math.max(1, Math.min(100, Number(next.depositPercentage) || depositPercentage));
+          next.depositPercentage = pct;
+          next.amountToPay = next.totalAmount * (pct / 100);
         } else if (next.paymentOption === "weekly") {
           const weeks = Math.max(1, Number(next.weeklyWeeks) || 1);
           next.amountToPay = Math.round(next.totalAmount / weeks);
