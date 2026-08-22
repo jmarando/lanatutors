@@ -238,7 +238,8 @@ export default function AdminInvoices() {
 
     const isDeposit = booking.payment_option === "deposit";
     const isSpecialTutor = booking.tutor_id === "4d9426d7-7294-492a-a2e9-4b1642ba1954";
-    const depositRate = isSpecialTutor ? 0.01 : globalDepositRate;
+    const depositPct = isSpecialTutor ? 1 : (booking.deposit_percentage ?? depositPercentage);
+    const depositRate = depositPct / 100;
     const amountToPay = isDeposit ? booking.amount * depositRate : booking.amount;
 
     let parentEmail = booking.parent_email || "";
@@ -272,6 +273,7 @@ export default function AdminInvoices() {
       balanceDue: booking.balance_due || 0,
       amountToPay: amountToPay || 0,
       paymentOption: booking.payment_option || "full",
+      depositPercentage: depositPct,
       currency: booking.currency || "KES",
       notes: "",
       referenceId: booking.id,
