@@ -32,11 +32,13 @@ import tutor4 from "@/assets/tutor-4.jpg";
 import tutor5 from "@/assets/tutor-5.jpg";
 import tutor6 from "@/assets/tutor-6.jpg";
 import calvinProfilePhoto from "@/assets/calvin-profile.png";
+import { useDepositPercentage } from "@/hooks/useDepositPercentage";
 
 const TutorProfile = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const [isBookingOpen, setIsBookingOpen] = useState(false);
+  const { depositPercentage, depositRate: globalDepositRate } = useDepositPercentage();
   const [isPackagePurchaseOpen, setIsPackagePurchaseOpen] = useState(false);
   
   const [isLearningPlanOpen, setIsLearningPlanOpen] = useState(false);
@@ -1022,7 +1024,7 @@ const TutorProfile = () => {
               {(() => {
                 const originalPrice = currentRate * selectedPackage.session_count;
                 const discountedPrice = originalPrice * (1 - selectedPackage.discount_percentage / 100);
-                const depositRate = selectedPackage.tutor_id === '4d9426d7-7294-492a-a2e9-4b1642ba1954' ? 0.01 : 0.3;
+                const depositRate = selectedPackage.tutor_id === '4d9426d7-7294-492a-a2e9-4b1642ba1954' ? 0.01 : globalDepositRate;
                 const depositAmount = Math.round(discountedPrice * depositRate);
                 const balanceDue = Math.round(discountedPrice - depositAmount);
 
@@ -1172,7 +1174,7 @@ const TutorProfile = () => {
                                   : "border-border hover:border-primary/30"
                               )}
                             >
-                              <div className="text-sm font-medium">{selectedPackage.tutor_id === '4d9426d7-7294-492a-a2e9-4b1642ba1954' ? '1%' : '30%'} Deposit</div>
+                              <div className="text-sm font-medium">{selectedPackage.tutor_id === '4d9426d7-7294-492a-a2e9-4b1642ba1954' ? 1 : depositPercentage}% Deposit</div>
                               <div className="text-xs text-muted-foreground mt-1">
                                 Pay KES {depositAmount.toLocaleString()} now
                               </div>
@@ -1205,7 +1207,7 @@ const TutorProfile = () => {
                                 <span className="font-medium">KES {Math.round(discountedPrice).toLocaleString()}</span>
                               </div>
                               <div className="flex justify-between">
-                                <span className="text-sm text-muted-foreground">Deposit ({depositRate === 0.01 ? '1%' : '30%'}):</span>
+                                <span className="text-sm text-muted-foreground">Deposit ({depositRate === 0.01 ? 1 : depositPercentage}%):</span>
                                 <span className="font-medium">KES {depositAmount.toLocaleString()}</span>
                               </div>
                               <div className="flex justify-between items-baseline">

@@ -21,6 +21,7 @@ import { StudentPicker } from "./StudentPicker";
 import { Student } from "@/hooks/useStudents";
 import { PriceDisplay } from "@/components/PriceDisplay";
 import { analytics } from "@/utils/analytics";
+import { useDepositPercentage } from "@/hooks/useDepositPercentage";
 
 interface AvailabilitySlot {
   id: string;
@@ -84,6 +85,7 @@ export const BookingCalendar = ({
   redeemPackageId,
 }: BookingCalendarProps) => {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
+  const { depositPercentage, depositRate: globalDepositRate } = useDepositPercentage();
   const [availableSlots, setAvailableSlots] = useState<AvailabilitySlot[]>([]);
   const [monthSlots, setMonthSlots] = useState<any[]>([]);
   const [selectedSlot, setSelectedSlot] = useState<AvailabilitySlot | null>(null);
@@ -423,7 +425,7 @@ export const BookingCalendar = ({
         totalAmount = duration * rate;
         
         // Handle different payment options
-        const depositRate = 0.3;
+        const depositRate = tutorId === '4d9426d7-7294-492a-a2e9-4b1642ba1954' ? 0.01 : globalDepositRate;
         
         if (paymentOption === 'deposit') {
           depositAmount = totalAmount * depositRate;
@@ -1096,7 +1098,7 @@ export const BookingCalendar = ({
                     // Apply 5% discount for double lessons (2 hours)
                     const rate = sessionDuration === 2 ? baseRate * 0.95 : baseRate;
                     const total = duration * rate;
-                    const depositRate = tutorId === '4d9426d7-7294-492a-a2e9-4b1642ba1954' ? 0.01 : 0.3;
+                    const depositRate = tutorId === '4d9426d7-7294-492a-a2e9-4b1642ba1954' ? 0.01 : globalDepositRate;
                     const deposit = total * depositRate;
                     const balance = total - deposit;
 
@@ -1185,7 +1187,7 @@ export const BookingCalendar = ({
                                 onClick={() => !paymentInitiated && setPaymentOption('deposit')}
                                 disabled={paymentInitiated}
                               >
-                                <div className="font-semibold mb-1">{tutorId === '4d9426d7-7294-492a-a2e9-4b1642ba1954' ? '1%' : '30%'} Deposit</div>
+                                <div className="font-semibold mb-1">{tutorId === '4d9426d7-7294-492a-a2e9-4b1642ba1954' ? 1 : depositPercentage}% Deposit</div>
                                 <div className="text-sm text-muted-foreground mb-2">
                                   Pay KES {deposit.toFixed(0)} now
                                 </div>
@@ -1306,7 +1308,7 @@ export const BookingCalendar = ({
                     </>
                   ) : (
                     <>
-                      <p>• Pay only {tutorId === '4d9426d7-7294-492a-a2e9-4b1642ba1954' ? '1%' : '30%'} deposit now to secure your booking</p>
+                      <p>• Pay only {tutorId === '4d9426d7-7294-492a-a2e9-4b1642ba1954' ? 1 : depositPercentage}% deposit now to secure your booking</p>
                       <p>• Balance due before the session starts</p>
                       <p>• Choose M-Pesa, Card, or other payment methods on the next page</p>
                     </>
