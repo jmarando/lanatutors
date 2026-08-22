@@ -12,6 +12,7 @@ import jsPDF from "jspdf";
 import lanaLogo from "@/assets/lana-tutors-invoice-logo.png";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useDepositPercentage } from "@/hooks/useDepositPercentage";
 
 export default function InvoicePreview() {
   const [searchParams] = useSearchParams();
@@ -23,6 +24,7 @@ export default function InvoicePreview() {
   const type = searchParams.get("type"); // 'booking', 'package', 'balance'
   
   const [loading, setLoading] = useState(true);
+  const { depositPercentage, depositRate: globalDepositRate } = useDepositPercentage();
   const [processing, setProcessing] = useState(false);
   const [downloading, setDownloading] = useState(false);
   const [invoiceData, setInvoiceData] = useState<any>(null);
@@ -93,7 +95,7 @@ export default function InvoicePreview() {
           balanceDue: booking.balance_due || 0,
           paymentOption: booking.payment_option,
           currency: booking.currency || "KES",
-          amountToPay: type === "balance" ? booking.balance_due : (booking.payment_option === "full" ? booking.amount : booking.amount * (booking.tutor_id === '4d9426d7-7294-492a-a2e9-4b1642ba1954' ? 0.01 : 0.3)),
+          amountToPay: type === "balance" ? booking.balance_due : (booking.payment_option === "full" ? booking.amount : booking.amount * (booking.tutor_id === '4d9426d7-7294-492a-a2e9-4b1642ba1954' ? 0.01 : globalDepositRate)),
         });
       } else if (type === "package") {
         // Fetch package details
@@ -136,7 +138,7 @@ export default function InvoicePreview() {
           amountPaid: packagePurchase.amount_paid || 0,
           paymentOption: metadata?.paymentOption || "full",
           currency: packagePurchase.currency || "KES",
-          amountToPay: metadata?.paymentOption === "deposit" ? packagePurchase.total_amount * (packagePurchase.tutor_id === '4d9426d7-7294-492a-a2e9-4b1642ba1954' ? 0.01 : 0.3) : packagePurchase.total_amount,
+          amountToPay: metadata?.paymentOption === "deposit" ? packagePurchase.total_amount * (packagePurchase.tutor_id === '4d9426d7-7294-492a-a2e9-4b1642ba1954' ? 0.01 : globalDepositRate) : packagePurchase.total_amount,
           expiresAt: packagePurchase.expires_at,
         });
       }
@@ -434,18 +436,18 @@ export default function InvoicePreview() {
                 <>
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Payment Option</span>
-                    <span className="font-medium">{invoiceData.tutorId === '4d9426d7-7294-492a-a2e9-4b1642ba1954' ? '1%' : '30%'} Deposit</span>
+                    <span className="font-medium">{invoiceData.tutorId === '4d9426d7-7294-492a-a2e9-4b1642ba1954' ? 1 : depositPercentage}% Deposit</span>
                   </div>
                   <div className="flex justify-between text-sm text-green-600">
-                    <span>Deposit ({invoiceData.tutorId === '4d9426d7-7294-492a-a2e9-4b1642ba1954' ? '1%' : '30%'})</span>
+                    <span>Deposit ({invoiceData.tutorId === '4d9426d7-7294-492a-a2e9-4b1642ba1954' ? 1 : depositPercentage}%)</span>
                     <span className="font-medium">
-                      {invoiceData.currency} {(invoiceData.totalAmount * (invoiceData.tutorId === '4d9426d7-7294-492a-a2e9-4b1642ba1954' ? 0.01 : 0.3)).toLocaleString()}
+                      {invoiceData.currency} {(invoiceData.totalAmount * (invoiceData.tutorId === '4d9426d7-7294-492a-a2e9-4b1642ba1954' ? 0.01 : globalDepositRate)).toLocaleString()}
                     </span>
                   </div>
                   <div className="flex justify-between text-sm text-muted-foreground">
                     <span>Balance Due Later</span>
                     <span>
-                      {invoiceData.currency} {(invoiceData.totalAmount * 0.7).toLocaleString()}
+                      {invoiceData.currency} {(invoiceData.totalAmount * (1 - globalDepositRate)).toLocaleString()}
                     </span>
                   </div>
                 </>

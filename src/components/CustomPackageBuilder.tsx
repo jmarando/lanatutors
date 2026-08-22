@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { RecurringScheduleBuilder } from "./RecurringScheduleBuilder";
 import { PriceDisplay } from "@/components/PriceDisplay";
+import { useDepositPercentage } from "@/hooks/useDepositPercentage";
 
 interface CustomPackageBuilderProps {
   tutorId: string; // tutor_profiles.id for package ownership
@@ -46,6 +47,7 @@ export const CustomPackageBuilder = ({
   const navigate = useNavigate();
   const [loading, setLoading] = useState(false);
   const [paymentOption, setPaymentOption] = useState<'full' | 'deposit'>('full');
+  const { depositPercentage, depositRate: globalDepositRate } = useDepositPercentage();
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [recurringSchedule, setRecurringSchedule] = useState<RecurringScheduleItem[]>([]);
 
@@ -90,7 +92,7 @@ export const CustomPackageBuilder = ({
   };
 
   const totalPrice = calculatePrice();
-  const depositAmount = Math.round(totalPrice * 0.3);
+  const depositAmount = Math.round(totalPrice * globalDepositRate);
   const balanceDue = totalPrice - depositAmount;
   const discountPercentage = totalSessions >= 10 ? 15 : totalSessions >= 5 ? 10 : totalSessions >= 2 ? 5 : 0;
 
@@ -391,7 +393,7 @@ export const CustomPackageBuilder = ({
                     : "border-border hover:border-primary/30"
                 }`}
               >
-                <div className="text-sm font-medium">30% Deposit</div>
+                <div className="text-sm font-medium">{depositPercentage}% Deposit</div>
                 <div className="text-xs text-muted-foreground mt-1">
                   Pay KES {depositAmount.toLocaleString()} now
                 </div>
@@ -440,7 +442,7 @@ export const CustomPackageBuilder = ({
 
           {/* Payment Info Bullets */}
           <ul className="text-sm text-muted-foreground space-y-1 px-2">
-            <li>• {paymentOption === 'deposit' ? 'Pay 30% deposit' : 'Pay full amount'} to secure your package</li>
+            <li>• {paymentOption === 'deposit' ? `Pay ${depositPercentage}% deposit` : 'Pay full amount'} to secure your package</li>
             {paymentOption === 'deposit' && <li>• Balance due before booking sessions</li>}
             <li>• Choose M-Pesa, Card, or other payment methods via PesaPal</li>
           </ul>
