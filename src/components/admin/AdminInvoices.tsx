@@ -837,7 +837,6 @@ export default function AdminInvoices() {
 
   return (
     <div className="space-y-6">
-      <DepositSettingsCard />
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div>
           <h2 className="text-2xl font-bold">Invoices</h2>
@@ -1109,7 +1108,7 @@ export default function AdminInvoices() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="full">Full Payment</SelectItem>
-                    <SelectItem value="deposit">{(invoiceData.depositPercentage ?? depositPercentage)}% Deposit</SelectItem>
+                    <SelectItem value="deposit">Deposit (custom %)</SelectItem>
                     <SelectItem value="weekly">Weekly (paid in advance each week)</SelectItem>
                   </SelectContent>
                 </Select>
