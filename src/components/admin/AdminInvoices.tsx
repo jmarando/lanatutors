@@ -287,7 +287,8 @@ export default function AdminInvoices() {
     const metadata = (pkg.metadata as any) || {};
     const isDeposit = metadata.paymentOption === "deposit";
     const isSpecialTutor = pkg.tutor_id === "4d9426d7-7294-492a-a2e9-4b1642ba1954";
-    const depositRate = isSpecialTutor ? 0.01 : globalDepositRate;
+    const depositPct = isSpecialTutor ? 1 : (metadata.depositPercentage ?? depositPercentage);
+    const depositRate = depositPct / 100;
     const amountToPay = isDeposit ? pkg.total_amount * depositRate : pkg.total_amount;
 
     setInvoiceData({
@@ -311,6 +312,7 @@ export default function AdminInvoices() {
       balanceDue: (pkg.total_amount || 0) - (pkg.amount_paid || 0),
       amountToPay: amountToPay || 0,
       paymentOption: metadata.paymentOption || "full",
+      depositPercentage: depositPct,
       currency: pkg.currency || "KES",
       notes: "",
       referenceId: pkg.id,
