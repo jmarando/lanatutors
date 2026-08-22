@@ -65,7 +65,7 @@ interface InvoiceData {
 
 export default function AdminInvoices() {
   const { toast } = useToast();
-  const { depositPercentage, depositRate: globalDepositRate } = useDepositPercentage();
+  const depositPercentage = 50; // default suggestion only; editable per invoice
   const invoiceRef = useRef<HTMLDivElement>(null);
   const [source, setSource] = useState<InvoiceSource>("custom");
   const [loading, setLoading] = useState(false);
