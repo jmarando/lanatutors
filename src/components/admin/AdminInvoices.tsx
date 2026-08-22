@@ -541,6 +541,7 @@ export default function AdminInvoices() {
       const isWeekly = invoiceData.paymentOption === "weekly";
       const schedule = isWeekly ? buildWeeklySchedule(invoiceData) : [];
 
+      const isDeposit = invoiceData.paymentOption === "deposit";
       const rows = [
         ["Invoice number", invoiceData.invoiceNumber],
         ["Invoice date", invoiceData.invoiceDate],
@@ -548,6 +549,12 @@ export default function AdminInvoices() {
         invoiceData.studentName ? ["Student", invoiceData.studentName] : null,
         invoiceData.subject ? ["Subject / Service", invoiceData.subject] : null,
         ["Total", `${invoiceData.currency} ${invoiceData.totalAmount.toLocaleString()}`],
+        isDeposit
+          ? ["Deposit percentage", `${invoiceData.depositPercentage ?? depositPercentage}%`]
+          : null,
+        isDeposit
+          ? ["Balance due", `${invoiceData.currency} ${(invoiceData.totalAmount - invoiceData.amountToPay).toLocaleString()}`]
+          : null,
         isWeekly
           ? ["Weekly instalment (paid in advance)", `${invoiceData.currency} ${invoiceData.amountToPay.toLocaleString()}`]
           : ["Amount due now", `${invoiceData.currency} ${invoiceData.amountToPay.toLocaleString()}`],
