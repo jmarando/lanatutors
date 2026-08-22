@@ -98,6 +98,14 @@ export const AdminCreateLearningPlan = () => {
   
   // Payment option
   const [paymentOption, setPaymentOption] = useState<"full" | "deposit">("full");
+
+  // Deposit percentage for this plan (defaults to the platform setting)
+  const { depositPercentage: platformDepositPercentage } = useDepositPercentage();
+  const [depositPercent, setDepositPercent] = useState<number>(platformDepositPercentage);
+
+  useEffect(() => {
+    setDepositPercent(platformDepositPercentage);
+  }, [platformDepositPercentage]);
   
   // Class type
   const [classType, setClassType] = useState<"online" | "physical">("online");
@@ -294,7 +302,7 @@ Lana Tutors Team`;
     const subtotal = student.subjects.reduce((sum, s) => sum + (Number(s.sessions) * Number(s.rate)), 0);
     const discountAmount = subtotal * (Number(discount) / 100);
     const totalPrice = subtotal - discountAmount;
-    const depositAmount = Math.ceil(totalPrice * 0.3);
+    const depositAmount = Math.ceil(totalPrice * (Number(depositPercent) / 100));
     return { totalSessions, subtotal, discountAmount, totalPrice, depositAmount };
   };
 
@@ -311,7 +319,7 @@ Lana Tutors Team`;
     
     const discountAmount = grandSubtotal * (Number(discount) / 100);
     const totalPrice = grandSubtotal - discountAmount;
-    const depositAmount = Math.ceil(totalPrice * 0.3);
+    const depositAmount = Math.ceil(totalPrice * (Number(depositPercent) / 100));
     
     return { totalSessions: grandTotalSessions, subtotal: grandSubtotal, discountAmount, totalPrice, depositAmount };
   };
@@ -390,6 +398,7 @@ Lana Tutors Team`;
             validity_days: validityDays,
             notes: `Curriculum: ${student.curriculum} | Grade: ${student.gradeLevel} | Class Type: ${classType === 'physical' ? 'Physical (In-Person)' : 'Online'} | Payment Option: ${paymentOption} | Tutors: ${assignedTutors.map(t => t.full_name).join(", ")}\n\n${notes}`,
             status: "proposed",
+            deposit_percentage: Number(depositPercent),
           })
           .select()
           .single();
@@ -1012,8 +1021,10 @@ Lana Tutors Team`;
               <div className="flex items-center space-x-3 p-3 border rounded-lg hover:bg-muted/50 transition-colors">
                 <RadioGroupItem value="deposit" id="deposit" />
                 <Label htmlFor="deposit" className="flex-1 cursor-pointer">
-                  <p className="font-medium">30% Deposit</p>
-                  <p className="text-sm text-muted-foreground">Pay 30% now, balance before sessions complete</p>
+                  <p className="font-medium">{depositPercent}% Deposit</p>
+                  <p className="text-sm text-muted-foreground">
+                    Pay {depositPercent}% now, balance before sessions complete
+                  </p>
                 </Label>
                 <span className="font-semibold text-primary">KES {grandTotals.depositAmount.toLocaleString()}</span>
               </div>
