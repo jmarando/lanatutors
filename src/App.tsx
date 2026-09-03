@@ -155,6 +155,10 @@ const App = () => {
     defaultOptions: {
       queries: {
         refetchOnWindowFocus: false,
+        refetchOnReconnect: false,
+        refetchOnMount: false,
+        staleTime: 5 * 60 * 1000,
+        gcTime: 30 * 60 * 1000,
         retry: 1,
       },
     },
