@@ -220,7 +220,7 @@ const Home = () => {
           <img 
             src={heroImage} 
             alt="" 
-            fetchPriority="high"
+            {...{ fetchpriority: "high" }}
             decoding="async"
             className="w-full h-full object-cover opacity-20"
           />
