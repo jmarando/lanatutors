@@ -55,8 +55,10 @@ const Navigation = () => {
           variant: "destructive"
         });
       } else {
-        // Refresh the page to apply currency changes
-        window.location.reload();
+        // Notify price displays instead of reloading the whole page
+        window.dispatchEvent(new CustomEvent('lana-currency-changed', {
+          detail: currency
+        }));
       }
     }
   };
