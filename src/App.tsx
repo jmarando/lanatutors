@@ -147,7 +147,11 @@ const AppContent = () => {
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Suspense>
-      {!isSchoolRoute && <WhatsAppChatButton />}
+      {!isSchoolRoute && (
+        <Suspense fallback={null}>
+          <WhatsAppChatButton />
+        </Suspense>
+      )}
     </>
   );
 };
