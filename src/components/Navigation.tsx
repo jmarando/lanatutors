@@ -101,7 +101,7 @@ const Navigation = () => {
           <div className="overflow-hidden" style={{
           clipPath: 'inset(0 0 0 2px)'
         }}>
-            <img src={lanaLogo} alt="Lana Tutors - Your Trusted Tutoring Partner" className="block h-12 sm:h-14 md:h-16 w-auto border-0 outline-none object-fill" />
+            <img src={lanaLogo} alt="Lana Tutors - Your Trusted Tutoring Partner" decoding="async" className="block h-12 sm:h-14 md:h-16 w-auto border-0 outline-none object-fill" />
           </div>
         </Link>
 
