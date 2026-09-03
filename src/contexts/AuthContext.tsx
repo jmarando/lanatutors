@@ -23,12 +23,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     const apply = (newSession: Session | null) => {
       const nextId = newSession?.user?.id ?? null;
-      // Always keep the raw session fresh (tokens matter for API calls)...
-      setSession(newSession);
-      // ...but only swap the user object when the actual user changes.
+      // Only commit new objects when the signed-in user actually changes.
+      // Background token refreshes fire on every tab focus; re-committing them
+      // would change object identity and cascade refetches app-wide.
       if (nextId !== lastUserIdRef.current) {
         lastUserIdRef.current = nextId;
         setUser(newSession?.user ?? null);
+        setSession(newSession);
       }
     };
 
