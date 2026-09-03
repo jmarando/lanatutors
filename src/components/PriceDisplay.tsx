@@ -16,9 +16,24 @@ export const PriceDisplay = ({ amountKES, className = "", showOriginal = false }
   const [convertedAmount, setConvertedAmount] = useState<number>(amountKES);
   const [isLoading, setIsLoading] = useState(true);
 
+  const userId = user?.id;
+
   useEffect(() => {
+    let cancelled = false;
+
+    const applyCurrency = async (currency: Currency) => {
+      if (cancelled) return;
+      setPreferredCurrency(currency);
+      if (currency !== 'KES') {
+        const { amount } = await convertFromKES(amountKES, currency);
+        if (!cancelled) setConvertedAmount(amount);
+      } else {
+        setConvertedAmount(amountKES);
+      }
+    };
+
     const fetchCurrency = async () => {
-      if (!user) {
+      if (!userId) {
         setIsLoading(false);
         return;
       }
@@ -26,23 +41,29 @@ export const PriceDisplay = ({ amountKES, className = "", showOriginal = false }
       const { data } = await supabase
         .from('profiles')
         .select('preferred_currency')
-        .eq('id', user.id)
+        .eq('id', userId)
         .single();
 
       if (data?.preferred_currency) {
-        setPreferredCurrency(data.preferred_currency as Currency);
-        
-        if (data.preferred_currency !== 'KES') {
-          const { amount } = await convertFromKES(amountKES, data.preferred_currency as Currency);
-          setConvertedAmount(amount);
-        }
+        await applyCurrency(data.preferred_currency as Currency);
       }
-      
-      setIsLoading(false);
+
+      if (!cancelled) setIsLoading(false);
     };
 
     fetchCurrency();
-  }, [user, amountKES]);
+
+    const onCurrencyChanged = (e: Event) => {
+      const next = (e as CustomEvent).detail as Currency;
+      if (next) applyCurrency(next);
+    };
+    window.addEventListener('lana-currency-changed', onCurrencyChanged);
+
+    return () => {
+      cancelled = true;
+      window.removeEventListener('lana-currency-changed', onCurrencyChanged);
+    };
+  }, [userId, amountKES]);
 
   if (isLoading) {
     return <Skeleton className="h-6 w-20" />;
