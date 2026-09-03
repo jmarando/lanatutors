@@ -7,8 +7,10 @@ import { lazy, Suspense, useMemo } from "react";
 import Navigation from "./components/Navigation";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
-import WhatsAppChatButton from "./components/WhatsAppChatButton";
 import RequireRole from "./components/RequireRole";
+
+// Deferred: floating chat widget is not needed for first paint
+const WhatsAppChatButton = lazy(() => import("./components/WhatsAppChatButton"));
 
 // Lazy load pages for code splitting
 const Home = lazy(() => import("./pages/Home"));
