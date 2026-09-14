@@ -213,38 +213,19 @@ async function saveConversation(phone: string, messages: Msg[], escalated?: bool
 
 // ---------------- TOOLS ----------------
 
-async function toolLookupTutors(args: { subject?: string; curriculum?: string }) {
-  try {
-    const { data } = await admin.rpc("get_public_tutor_profiles");
-    if (!data) return { results: [] };
-    let list = data as any[];
-    if (args.subject) {
-      const s = args.subject.toLowerCase();
-      list = list.filter((t) =>
-        (t.subjects ?? []).some((x: string) => x.toLowerCase().includes(s))
-      );
-    }
-    if (args.curriculum) {
-      const c = args.curriculum.toLowerCase();
-      list = list.filter((t) =>
-        (t.curriculum ?? []).some((x: string) => x.toLowerCase().includes(c))
-      );
-    }
-    const top = list.slice(0, 3).map((t) => ({
-      name: t.full_name,
-      subjects: (t.subjects ?? []).slice(0, 4),
-      curriculum: (t.curriculum ?? []).slice(0, 3),
-      experience_years: t.experience_years,
-      bio: (t.bio ?? "").slice(0, 180),
-      profile_url: t.profile_slug
-        ? `https://lanatutors.africa/tutor/${t.profile_slug}`
-        : "https://lanatutors.africa",
-    }));
-    return { count: top.length, results: top };
-  } catch (e) {
-    console.error("lookup_tutors error:", e);
-    return { results: [], error: "lookup failed" };
+// Safety net: Lana must never send tutor profile links or name individual
+// tutors. If a reply slips through with one, swap in the coordinator hand-off.
+function sanitizeReply(text: string): string {
+  if (/lanatutors\.africa\/tutor\//i.test(text)) {
+    console.warn("Blocked tutor link in AI reply — replaced with coordinator hand-off.");
+    return [
+      "Thanks for sharing that. Tutor matching is handled personally by our Learning Coordinator, who'll find the right fit for your child and confirm the rate.",
+      "",
+      "Would you like a quick call back? Tell me a good time — or you can book a free 20-minute assessment call here:",
+      "https://lanatutors.africa/book-consultation",
+    ].join("\n");
   }
+  return text;
 }
 
 function toolGetBookingLink(args: { type: string }) {
@@ -367,9 +348,7 @@ async function callGemini(
       const name = c.functionCall.name;
       const args = c.functionCall.args ?? {};
       let result: unknown = { ok: true };
-      if (name === "lookup_tutors") {
-        result = await toolLookupTutors(args);
-      } else if (name === "get_booking_link") {
+      if (name === "get_booking_link") {
         result = toolGetBookingLink(args);
       } else if (name === "escalate_to_team") {
         escalated = true;
