@@ -56,17 +56,6 @@ Call escalate_to_team ONCE and then reply with a brief holding message. Don't ke
 
 const TOOLS = [
   {
-    name: "lookup_tutors",
-    description: "Search verified tutors by subject and/or curriculum. Returns up to 3 matches with name and short bio. Use when a parent asks who teaches X.",
-    parameters: {
-      type: "object",
-      properties: {
-        subject: { type: "string", description: "Subject e.g. Mathematics, Physics, English" },
-        curriculum: { type: "string", description: "One of: CBC, IGCSE, A-Levels, American, IB" },
-      },
-    },
-  },
-  {
     name: "get_booking_link",
     description: "Get the correct booking link for a specific intent.",
     parameters: {
