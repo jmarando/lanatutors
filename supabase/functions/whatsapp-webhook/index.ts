@@ -35,11 +35,11 @@ HOW TO HANDLE A PARENT
    https://lanatutors.africa/book-consultation
 4. Once you have their need and a preference, call escalate_to_team so the coordinator picks it up, and reply with a short confirmation that the coordinator will be in touch.
 
-WHAT NOT TO DO
-- Never recommend or list individual tutors, and never send tutor profile links. Tutor matching is the Learning Coordinator's job — say "our Learning Coordinator will match [child] with the right tutor".
-- Never quote or estimate prices. Rates depend on curriculum, level and subject and are shared after the assessment. Say that, then offer the coordinator.
+WHAT NOT TO DO (these are hard rules — breaking them is a critical failure)
+- NEVER recommend, name or list individual tutors, and NEVER send tutor profile links or lanatutors.africa/tutor/... URLs. You have no access to tutor information and must never imply you do. Tutor matching is the Learning Coordinator's job — say "our Learning Coordinator will match your child with the right tutor".
+- NEVER quote, estimate or hint at prices. Rates depend on curriculum, level and subject and are shared after the assessment. Say that, then offer the coordinator.
 - Never dump a menu of options or a wall of links. One link at a time, only when it's the natural next step.
-- Never invent availability, tutor names or timelines.
+- Never invent availability, tutor names or timelines. If you don't know something, the Learning Coordinator will confirm it.
 
 STYLE
 - Warm, human, conversational. 2-3 short sentences max — WhatsApp users skim.
@@ -51,7 +51,7 @@ STYLE
 TOOLS
 - get_booking_link: to fetch the correct link when booking is the next step.
 - escalate_to_team: to hand the parent to the Learning Coordinator — use this as soon as you know roughly what they need, or if they want a call back, or for any complaint/payment issue.
-Do not use tutor lookup to recommend tutors; the coordinator handles matching.
+You have NO tutor lookup tool and NO knowledge of individual tutors. If asked about tutors, say the Learning Coordinator handles matching.
 Call escalate_to_team ONCE and then reply with a brief holding message. Don't keep auto-replying after escalation.`;
 
 const TOOLS = [
@@ -213,38 +213,19 @@ async function saveConversation(phone: string, messages: Msg[], escalated?: bool
 
 // ---------------- TOOLS ----------------
 
-async function toolLookupTutors(args: { subject?: string; curriculum?: string }) {
-  try {
-    const { data } = await admin.rpc("get_public_tutor_profiles");
-    if (!data) return { results: [] };
-    let list = data as any[];
-    if (args.subject) {
-      const s = args.subject.toLowerCase();
-      list = list.filter((t) =>
-        (t.subjects ?? []).some((x: string) => x.toLowerCase().includes(s))
-      );
-    }
-    if (args.curriculum) {
-      const c = args.curriculum.toLowerCase();
-      list = list.filter((t) =>
-        (t.curriculum ?? []).some((x: string) => x.toLowerCase().includes(c))
-      );
-    }
-    const top = list.slice(0, 3).map((t) => ({
-      name: t.full_name,
-      subjects: (t.subjects ?? []).slice(0, 4),
-      curriculum: (t.curriculum ?? []).slice(0, 3),
-      experience_years: t.experience_years,
-      bio: (t.bio ?? "").slice(0, 180),
-      profile_url: t.profile_slug
-        ? `https://lanatutors.africa/tutor/${t.profile_slug}`
-        : "https://lanatutors.africa",
-    }));
-    return { count: top.length, results: top };
-  } catch (e) {
-    console.error("lookup_tutors error:", e);
-    return { results: [], error: "lookup failed" };
+// Safety net: Lana must never send tutor profile links or name individual
+// tutors. If a reply slips through with one, swap in the coordinator hand-off.
+function sanitizeReply(text: string): string {
+  if (/lanatutors\.africa\/tutor\//i.test(text)) {
+    console.warn("Blocked tutor link in AI reply — replaced with coordinator hand-off.");
+    return [
+      "Thanks for sharing that. Tutor matching is handled personally by our Learning Coordinator, who'll find the right fit for your child and confirm the rate.",
+      "",
+      "Would you like a quick call back? Tell me a good time — or you can book a free 20-minute assessment call here:",
+      "https://lanatutors.africa/book-consultation",
+    ].join("\n");
   }
+  return text;
 }
 
 function toolGetBookingLink(args: { type: string }) {
@@ -367,9 +348,7 @@ async function callGemini(
       const name = c.functionCall.name;
       const args = c.functionCall.args ?? {};
       let result: unknown = { ok: true };
-      if (name === "lookup_tutors") {
-        result = await toolLookupTutors(args);
-      } else if (name === "get_booking_link") {
+      if (name === "get_booking_link") {
         result = toolGetBookingLink(args);
       } else if (name === "escalate_to_team") {
         escalated = true;
@@ -472,7 +451,8 @@ async function handleIncoming(body: any) {
       return;
     }
 
-    const { text: reply } = await callGemini(history, profileName, convo.parent_id, from);
+    const { text: rawReply } = await callGemini(history, profileName, convo.parent_id, from);
+    const reply = sanitizeReply(rawReply);
 
     await sendWhatsAppMessage(from, reply);
     await logComm({ phone: from, parentId: convo.parent_id, direction: "outbound", content: reply });
