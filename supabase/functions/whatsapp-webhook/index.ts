@@ -451,7 +451,8 @@ async function handleIncoming(body: any) {
       return;
     }
 
-    const { text: reply } = await callGemini(history, profileName, convo.parent_id, from);
+    const { text: rawReply } = await callGemini(history, profileName, convo.parent_id, from);
+    const reply = sanitizeReply(rawReply);
 
     await sendWhatsAppMessage(from, reply);
     await logComm({ phone: from, parentId: convo.parent_id, direction: "outbound", content: reply });
