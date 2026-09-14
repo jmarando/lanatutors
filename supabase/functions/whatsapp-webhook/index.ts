@@ -393,18 +393,10 @@ async function callGemini(
 
 function fallbackReply() {
   return [
-    "Hi, thanks for messaging Lana Tutors. I'm not 100% sure how best to help just yet — pick whichever of these works for you and we'll take it from there:",
+    "Hi, thanks for reaching out to Lana Tutors. So I point you the right way — what grade or year is your child in, which curriculum, and which subjects are giving trouble?",
     "",
-    "1. Have a tutor call you back",
-    "   Reply with the best time to ring and the number to use.",
-    "",
-    "2. Get a custom learning plan",
-    "   Share your child's year/grade, curriculum (CBC, IGCSE, A-Levels, American, IB) and the subjects/goals you have in mind. We'll send back a tailored plan with recommended tutors and pricing.",
-    "",
-    "3. Book a free 20-min Academic Assessment Call",
-    "   https://lanatutors.africa/book-consultation",
-    "",
-    "Or just type your question and I'll do my best to help.",
+    "Our Learning Coordinator will then match your child with the right tutor and share the rate. If it's easier, tell me a good time to call you, or book a free 20-minute assessment call here:",
+    "https://lanatutors.africa/book-consultation",
   ].join("\n");
 }
 
