@@ -1041,10 +1041,13 @@ useEffect(() => {
 
         // Send confirmation email
         try {
-          const { data: slugData } = await supabase.rpc('generate_tutor_slug', {
-            full_name: formData.fullName,
-            tutor_id: tutorProfileId
-          });
+          const { data: slugRow } = await supabase
+            .from('tutor_profiles')
+            .select('profile_slug')
+            .eq('id', tutorProfileId)
+            .maybeSingle();
+          const slugData = slugRow?.profile_slug;
+
 
           await supabase.functions.invoke('send-tutor-submission-confirmation', {
             body: {
