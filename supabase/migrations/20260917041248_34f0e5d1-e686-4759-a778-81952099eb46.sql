@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.set_tutor_profile_slug() FROM PUBLIC, anon, authenticated;
