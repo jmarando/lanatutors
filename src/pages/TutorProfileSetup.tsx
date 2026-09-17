@@ -863,23 +863,13 @@ useEffect(() => {
            gender: formData.gender || null,
            email: formData.email,  // Add email to tutor profile
            verified: false // Requires admin approval
-         }).select('id').single();
-        if (tutorError) throw tutorError;
+          }).select('id').single();
+         if (tutorError) throw tutorError;
 
         tutorProfileId = newTutorProfile.id;
-
-        // Generate and update slug for new profile
-        const { data: slugData } = await supabase.rpc('generate_tutor_slug', {
-          full_name: formData.fullName,
-          tutor_id: tutorProfileId
-        });
-        
-        if (slugData) {
-          await supabase.from('tutor_profiles')
-            .update({ profile_slug: slugData })
-            .eq('id', tutorProfileId);
-        }
+        // profile_slug is generated automatically by a database trigger
       }
+
 
       // Create pricing tiers - one per curriculum-level combination, only for positive rates
       const tierInserts = Object.entries(curriculumLevels).flatMap(([curriculum, levels]) =>
