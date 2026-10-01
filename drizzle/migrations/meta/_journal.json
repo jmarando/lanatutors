@@ -1,0 +1,13 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1790861966226,
+      "tag": "0000_allow_signed_in_cv_upload",
+      "breakpoints": true
+    }
+  ]
+}
