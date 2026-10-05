@@ -15,6 +15,13 @@
       "when": 1791198861487,
       "tag": "0001_crm_grants",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1791198971975,
+      "tag": "0002_fix_auth_users_policies",
+      "breakpoints": true
     }
   ]
 }
