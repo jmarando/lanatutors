@@ -21,6 +21,7 @@ import {
 import { Users, Search, RefreshCw, Download, Mail, Phone, TrendingUp, UserCheck } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { CrmNotesPanel } from "./CrmNotesPanel";
 
 type Stage = "lead" | "contacted" | "qualified" | "customer" | "lost";
 
@@ -604,6 +605,8 @@ export function AdminCrm() {
                 <div><span className="text-muted-foreground">First seen: </span>{format(new Date(selected.firstSeen), "dd MMM yyyy")}</div>
                 <div><span className="text-muted-foreground">Last activity: </span>{format(new Date(selected.lastActivity), "dd MMM yyyy")}</div>
               </div>
+
+              <CrmNotesPanel contactKey={selected.key} contactName={selected.name} />
 
               <div>
                 <p className="mb-2 text-sm font-medium">Activity timeline</p>
