@@ -429,6 +429,42 @@ export type Database = {
           },
         ]
       }
+      crm_notes: {
+        Row: {
+          contact_key: string
+          contact_name: string | null
+          created_at: string
+          created_by: string | null
+          created_by_name: string | null
+          follow_up_date: string | null
+          id: string
+          note: string
+          note_type: string
+        }
+        Insert: {
+          contact_key: string
+          contact_name?: string | null
+          created_at?: string
+          created_by?: string | null
+          created_by_name?: string | null
+          follow_up_date?: string | null
+          id?: string
+          note: string
+          note_type?: string
+        }
+        Update: {
+          contact_key?: string
+          contact_name?: string | null
+          created_at?: string
+          created_by?: string | null
+          created_by_name?: string | null
+          follow_up_date?: string | null
+          id?: string
+          note?: string
+          note_type?: string
+        }
+        Relationships: []
+      }
       curriculum_level_tier_assignments: {
         Row: {
           created_at: string

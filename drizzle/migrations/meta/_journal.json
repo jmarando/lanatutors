@@ -22,6 +22,13 @@
       "when": 1791198971975,
       "tag": "0002_fix_auth_users_policies",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1791201150711,
+      "tag": "0003_crm_notes",
+      "breakpoints": true
     }
   ]
 }
