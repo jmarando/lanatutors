@@ -8,6 +8,13 @@
       "when": 1790861966226,
       "tag": "0000_allow_signed_in_cv_upload",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1791198861487,
+      "tag": "0001_crm_grants",
+      "breakpoints": true
     }
   ]
 }
