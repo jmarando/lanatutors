@@ -33,6 +33,17 @@ serve(async (req) => {
 
     console.log('Creating Google Meet session for booking:', bookingId);
 
+    // Reuse the same link for this student + tutor + subject if one exists
+    const existingLink = await findExistingMeetLink(supabaseClient, bookingId);
+    if (existingLink) {
+      await supabaseClient.from('bookings').update({ meeting_link: existingLink }).eq('id', bookingId);
+      console.log('Reusing existing Meet link:', existingLink);
+      return new Response(
+        JSON.stringify({ meetLink: existingLink, reused: true }),
+        { headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
     // Service-account access token (fallback / primary when OAuth tokens are stale)
     const getServiceAccountToken = async (): Promise<string | null> => {
       try {

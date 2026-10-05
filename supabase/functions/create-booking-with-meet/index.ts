@@ -40,9 +40,17 @@ serve(async (req) => {
     }
 
     let meetingLink = "Will be shared soon";
+
+    // Reuse the same link for this student + tutor + subject if one exists
+    const existingLink = await findExistingMeetLink(supabase, bookingId);
+    if (existingLink) {
+      meetingLink = existingLink;
+      await supabase.from("bookings").update({ meeting_link: meetingLink }).eq("id", bookingId);
+      console.log("Reusing existing Meet link:", meetingLink);
+    }
     
     // Try to create Google Meet link using service account, but don't fail if it doesn't work
-    try {
+    if (!existingLink) try {
       const googleServiceAccount = Deno.env.get("GOOGLE_SERVICE_ACCOUNT_JSON");
       if (!googleServiceAccount) {
         console.log("Google service account not configured, skipping Meet creation");
