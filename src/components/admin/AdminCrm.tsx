@@ -354,6 +354,40 @@ export function AdminCrm() {
         });
       });
 
+      // WhatsApp conversations
+      const [wa, inv] = await Promise.all([
+        supabase.from("whatsapp_conversations").select("phone_number, profile_name, escalated, last_message_at, created_at"),
+        supabase.from("invoices").select("id, parent_name, parent_email, parent_phone, student_name, subject, status, amount_to_pay, created_at"),
+      ]);
+      if (wa.error) console.error("CRM whatsapp load", wa.error);
+      if (inv.error) console.error("CRM invoices load", inv.error);
+      (wa.data ?? []).forEach((w: any) => {
+        upsert({
+          phone: w.phone_number,
+          name: w.profile_name,
+          fallback: `wa-${w.phone_number}`,
+          source: "WhatsApp",
+          stage: "contacted",
+          at: w.last_message_at ?? w.created_at,
+          activity: { type: "whatsapp", label: `WhatsApp chat${w.escalated ? " (human handling)" : ""}`, at: w.last_message_at ?? w.created_at },
+        });
+      });
+      (inv.data ?? []).forEach((i: any) => {
+        upsert({
+          email: i.parent_email,
+          phone: i.parent_phone,
+          name: i.parent_name,
+          fallback: `inv-${i.id}`,
+          source: "Invoice",
+          stage: i.status === "paid" ? "customer" : "qualified",
+          at: i.created_at,
+          student: i.student_name,
+          subjects: i.subject ? [i.subject] : [],
+          paid: i.status === "paid" ? Number(i.amount_to_pay ?? 0) : 0,
+          activity: { type: "invoice", label: `Invoice (${i.status})`, at: i.created_at, amount: i.amount_to_pay },
+        });
+      });
+
       void profileEmails;
       void parentKeyFor;
       void studentToParent;
