@@ -1,6 +1,7 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { create } from "https://deno.land/x/djwt@v2.8/mod.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.57.2";
+import { findExistingMeetLink } from "../_shared/meetLink.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
