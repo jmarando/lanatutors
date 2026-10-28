@@ -105,8 +105,8 @@ const TutorsInKenya = () => {
   return (
     <div className="min-h-screen bg-background">
       <SEO
-        title="Online Tutors in Kenya — Verified Kenyan Teachers"
-        description="Hire verified online tutors in Kenya for CBC, KCSE, IGCSE and IB. One-on-one lessons with qualified Kenyan teachers. Book a free assessment call today."
+        title="Online Tutors in Kenya from KES 1,500 an Hour"
+        description="Verified Kenyan teachers for CBC, KCSE, IGCSE and IB, one-on-one online from KES 1,500 an hour. Book a free assessment call and get matched in 48 hours."
         keywords="tutors in kenya, online tutors kenya, kenyan tutors, cbc tutors, kcse tutors, igcse tutors kenya, ib tutors nairobi, online tutoring kenya"
         canonical={canonical}
         structuredData={structuredData}

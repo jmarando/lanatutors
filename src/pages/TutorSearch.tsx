@@ -217,8 +217,8 @@ const TutorSearch = () => {
 
   return <div className="min-h-screen bg-[image:var(--gradient-page)]">
       <SEO
-        title="Tutors in Kenya — Online One-on-One Tuition"
-        description="Hire verified online tutors in Kenya for KCSE, CBC, IGCSE, A-Level and IB. Filter by subject, curriculum and location. Book a private tutor in Nairobi or online from anywhere in 48 hours."
+        title="Tuition in Kenya: Browse Verified Tutors"
+        description="Filter verified tutors for CBC, KCSE, IGCSE, A-Level and IB by subject, curriculum and location. One-on-one tuition online or in Nairobi from KES 1,500/hr."
         keywords="tutors in kenya, online tutor in kenya, private tutors in kenya, tutoring in kenya, kcse tutor, cbc tutor, igcse tutor, ib tutor, find a tutor kenya"
         canonical="https://lanatutors.africa/tutors"
         structuredData={tutorsFaqSchema}

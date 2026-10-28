@@ -20,9 +20,9 @@ const SUBJECTS: Record<string, SubjectContent> = {
   mathematics: {
     slug: "mathematics",
     name: "Mathematics",
-    title: "Mathematics Tutors in Kenya — CBC, KCSE, IGCSE & IB",
+    title: "Mathematics Tutors in Kenya from KES 1,500/hr",
     description:
-      "Verified Kenyan mathematics tutors for CBC, KCSE, IGCSE and IB students. Online one-on-one lessons from qualified maths teachers.",
+      "Verified Kenyan maths tutors for CBC, KCSE, IGCSE and IB, including KCSE markers. One-on-one online lessons from KES 1,500 an hour. Free assessment call.",
     intro:
       "Whether your child is preparing for KCSE Paper 1 and 2, sitting IGCSE Mathematics (0580), tackling IB Maths AA/AI, or building number fluency in CBC — Lana matches you with verified Kenyan maths tutors who teach the curriculum your child sits.",
     curricula: ["CBC Mathematics", "KCSE Mathematics (8-4-4)", "IGCSE Mathematics 0580 / 0607", "IB Mathematics AA & AI"],
@@ -54,7 +54,7 @@ const SUBJECTS: Record<string, SubjectContent> = {
   chemistry: {
     slug: "chemistry",
     name: "Chemistry",
-    title: "Chemistry Tutors in Kenya — KCSE, IGCSE & IB Chemistry",
+    title: "Chemistry Tutors in Kenya — KCSE, IGCSE & IB",
     description:
       "Online chemistry tutors in Kenya for KCSE, IGCSE 0620, and IB Chemistry. Verified Kenyan teachers offering one-on-one lessons.",
     intro:
@@ -84,7 +84,7 @@ const SUBJECTS: Record<string, SubjectContent> = {
   physics: {
     slug: "physics",
     name: "Physics",
-    title: "Physics Tutors in Kenya — KCSE, IGCSE & IB Physics",
+    title: "Physics Tutors in Kenya — KCSE, IGCSE & IB",
     description:
       "Find verified Kenyan physics tutors for KCSE, IGCSE 0625, and IB Physics. Online one-on-one tutoring with qualified teachers.",
     intro:
@@ -110,7 +110,7 @@ const SUBJECTS: Record<string, SubjectContent> = {
   biology: {
     slug: "biology",
     name: "Biology",
-    title: "Biology Tutors in Kenya — KCSE, IGCSE & IB Biology",
+    title: "Biology Tutors in Kenya — KCSE, IGCSE & IB",
     description:
       "Online biology tutors in Kenya for KCSE, IGCSE 0610, and IB Biology. Verified Kenyan teachers, one-on-one lessons.",
     intro:
@@ -136,7 +136,7 @@ const SUBJECTS: Record<string, SubjectContent> = {
   english: {
     slug: "english",
     name: "English",
-    title: "English Tutors in Kenya — KCSE, IGCSE & IB English",
+    title: "English Tutors in Kenya — KCSE, IGCSE & IB",
     description:
       "Verified Kenyan English tutors for KCSE, IGCSE First Language English, and IB English. Online one-on-one lessons.",
     intro:
@@ -167,7 +167,7 @@ const SUBJECTS: Record<string, SubjectContent> = {
   kiswahili: {
     slug: "kiswahili",
     name: "Kiswahili",
-    title: "Kiswahili Tutors in Kenya — KCSE, CBC & IB Kiswahili",
+    title: "Kiswahili Tutors in Kenya — KCSE, CBC & IB",
     description:
       "Verified Kenyan Kiswahili tutors for KCSE, CBC, IGCSE and IB. Online one-on-one Kiswahili lessons with qualified teachers.",
     intro:
@@ -182,7 +182,7 @@ const SUBJECTS: Record<string, SubjectContent> = {
   "business-studies": {
     slug: "business-studies",
     name: "Business Studies",
-    title: "Business Studies Tutors in Kenya — KCSE & IGCSE Business",
+    title: "KCSE & IGCSE Business Studies Tutors in Kenya",
     description:
       "Online Business Studies tutors in Kenya for KCSE and IGCSE Business. Verified Kenyan teachers, one-on-one lessons.",
     intro:
@@ -196,7 +196,7 @@ const SUBJECTS: Record<string, SubjectContent> = {
   "computer-studies": {
     slug: "computer-studies",
     name: "Computer Studies",
-    title: "Computer Studies Tutors in Kenya — KCSE Computer Studies & IGCSE ICT",
+    title: "Computer Studies & ICT Tutors in Kenya",
     description:
       "Verified Kenyan Computer Studies and ICT tutors for KCSE, IGCSE and CBC. Online one-on-one lessons.",
     intro:
@@ -210,7 +210,7 @@ const SUBJECTS: Record<string, SubjectContent> = {
   geography: {
     slug: "geography",
     name: "Geography",
-    title: "Geography Tutors in Kenya — KCSE & IGCSE Geography",
+    title: "Geography Tutors in Kenya — KCSE, IGCSE & IB",
     description:
       "Online Geography tutors in Kenya for KCSE, IGCSE 0460, and IB Geography. Verified Kenyan teachers offering one-on-one lessons.",
     intro:
@@ -224,7 +224,7 @@ const SUBJECTS: Record<string, SubjectContent> = {
   history: {
     slug: "history",
     name: "History",
-    title: "History Tutors in Kenya — KCSE History & Government, IGCSE History",
+    title: "History Tutors in Kenya — KCSE, IGCSE & IB",
     description:
       "Verified Kenyan History tutors for KCSE History & Government, IGCSE and IB History. Online one-on-one lessons.",
     intro:

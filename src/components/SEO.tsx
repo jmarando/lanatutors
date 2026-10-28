@@ -1,4 +1,7 @@
 import { Helmet } from 'react-helmet-async';
+import { useLocation } from 'react-router-dom';
+
+const SITE_URL = 'https://lanatutors.africa';
 
 interface SEOProps {
   title: string;
@@ -17,7 +20,10 @@ export const SEO = ({
   structuredData,
   canonical
 }: SEOProps) => {
+  const { pathname } = useLocation();
   const fullTitle = `${title} | Lana Tutors`;
+  // Pages that don't pass a canonical point at their own path, not at the homepage default in index.html.
+  const canonicalUrl = canonical ?? `${SITE_URL}${pathname.replace(/\/+$/, '') || '/'}`;
   
   return (
     <Helmet>
@@ -25,9 +31,10 @@ export const SEO = ({
       <meta name="description" content={description} />
       <meta name="keywords" content={keywords} />
       
-      {canonical && <link rel="canonical" href={canonical} />}
+      <link rel="canonical" href={canonicalUrl} />
       
       <meta property="og:title" content={fullTitle} />
+      <meta property="og:url" content={canonicalUrl} />
       <meta property="og:description" content={description} />
       <meta property="og:image" content={ogImage} />
       <meta property="og:type" content="website" />

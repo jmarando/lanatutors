@@ -208,8 +208,8 @@ const Home = () => {
   return (
     <div className="min-h-screen bg-[image:var(--gradient-page)]">
       <SEO 
-        title="Your Trusted Tutoring Partner"
-        description="Connect with verified teachers from top Kenyan schools for safe, convenient one-on-one tutoring. Master KCSE, KCPE, CBC, IGCSE, and American curriculum from home with Lana Tutors."
+        title="Private Tutors in Kenya, Online or in Nairobi"
+        description="Verified teachers from Kenya's top schools for CBC, KCSE, IGCSE and A-Level. One-on-one, online or in Nairobi, from KES 1,500 an hour. Free assessment call."
         structuredData={organizationSchema}
       />
       

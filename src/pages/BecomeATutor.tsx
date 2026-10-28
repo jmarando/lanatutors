@@ -233,8 +233,8 @@ const BecomeATutor = () => {
   return (
     <div className="min-h-screen bg-[image:var(--gradient-page)] flex items-center justify-center p-6">
       <SEO
-        title="Become a Tutor - Share Your Knowledge, Earn Income"
-        description="Join Lana as a tutor and help Kenyan students excel. Earn competitive rates, set your own schedule, and make an impact. Apply today if you're a qualified teacher."
+        title="Become a Tutor in Kenya and Keep 70% of Fees"
+        description="Teach CBC, KCSE, IGCSE and IB one-on-one, on your own schedule. Keep 70% of every session fee, paid monthly. Qualified Kenyan teachers can apply today."
         keywords="become tutor Kenya, online teaching jobs Kenya, tutoring opportunities, earn teaching Kenya, KCSE tutor jobs"
       />
       
