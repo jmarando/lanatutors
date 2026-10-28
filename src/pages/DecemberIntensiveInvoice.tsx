@@ -4,6 +4,7 @@ import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
+import { useDepositPercentage } from "@/hooks/useDepositPercentage";
 import { useAuth } from "@/contexts/AuthContext";
 import { toast } from "sonner";
 import { Loader2, ArrowLeft, FileText, CreditCard } from "lucide-react";
@@ -33,6 +34,7 @@ const DecemberIntensiveInvoice = () => {
   const parentPhone = searchParams.get("phone") || "";
   const parentEmail = searchParams.get("email") || "";
   const paymentOption = searchParams.get("option") as "deposit" | "full" || "deposit";
+  const { depositPercentage } = useDepositPercentage();
 
   useEffect(() => {
     if (!user) {
@@ -104,7 +106,7 @@ const DecemberIntensiveInvoice = () => {
             email: parentEmail,
             paymentType: "intensive_enrollment",
             referenceId: enrollment.id,
-            description: `December Holiday Bootcamp - ${cartItems.length} subject(s) for ${studentName}${paymentOption === "deposit" ? " (30% Deposit)" : ""}`,
+            description: `December Holiday Bootcamp - ${cartItems.length} subject(s) for ${studentName}${paymentOption === "deposit" ? ` (${depositPercentage}% Deposit)` : ""}`,
             studentNames: studentName,
             paymentOption: paymentOption,
             totalAmount: totalAmount,
@@ -219,7 +221,7 @@ const DecemberIntensiveInvoice = () => {
               {paymentOption === "deposit" && (
                 <>
                   <div className="flex justify-between text-muted-foreground">
-                    <span>30% Deposit</span>
+                    <span>{depositPercentage}% Deposit</span>
                     <span>KES {depositAmount.toLocaleString()}</span>
                   </div>
                   <div className="flex justify-between text-muted-foreground">

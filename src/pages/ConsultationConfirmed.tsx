@@ -4,6 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { CheckCircle2, Calendar, Clock, Mail, Video, BookOpen, Lightbulb, ClipboardList, ArrowRight, User } from "lucide-react";
+import { trackConsultationBooked } from "@/utils/metaPixel";
+
 
 // Consultant info - can be expanded later to fetch from database
 const CONSULTANT = {
@@ -25,8 +27,14 @@ const ConsultationConfirmed = () => {
   useEffect(() => {
     if (!consultationDate || !consultationTime) {
       navigate("/book-consultation");
+      return;
     }
+    trackConsultationBooked(
+      { consultation_date: consultationDate },
+      { email, firstName: parentName.split(" ")[0], lastName: parentName.split(" ").slice(1).join(" ") },
+    );
   }, [consultationDate, consultationTime, navigate]);
+
 
   const formatDate = (dateStr: string) => {
     return new Date(dateStr).toLocaleDateString('en-US', {

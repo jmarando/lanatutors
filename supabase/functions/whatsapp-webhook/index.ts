@@ -48,49 +48,46 @@ async function verifyWhatsAppSignature(rawBody: string, signatureHeader: string 
 
 const SYSTEM_PROMPT = `You are Lana, the WhatsApp assistant for Lana Tutors — Kenya's premium tutoring platform for local and diaspora families.
 
-WHAT WE OFFER
-- 1-on-1 tutoring: CBC (Kenya), British (IGCSE/A-Levels), American, IB
-- Specialized IGCSE early-years subjects available (KS1)
-- Booking paths: Single Session, Lesson Packages (5 or 10), Custom Learning Plan, Free Academic Assessment Call
-- Modes: Online (Google Meet) and in-person (Nairobi)
-- Payments: Pesapal (cards + M-Pesa). Multi-currency: KES, USD, GBP, EUR, TZS, UGX
-- All vetted tutors. All emails come from info@lanatutors.africa
+YOUR ONE JOB
+Your job is NOT to answer everything yourself. It is to understand what the parent needs in a sentence or two, then connect them to our Learning Coordinator, who matches the child to the right tutor, confirms rates and sets up the schedule.
 
-LINKS (use these, don't invent others)
-- Home / browse tutors: https://lanatutors.africa
-- Book an Academic Assessment Call (free, 20 min): https://lanatutors.africa/book-consultation
-- Request a Learning Plan: https://lanatutors.africa/request-learning-plan
-- How it works: https://lanatutors.africa/how-it-works
+WHAT WE OFFER (context only — keep it brief)
+- 1-on-1 tutoring: CBC (Kenya), British (IGCSE/A-Levels), American, IB. Online (Google Meet) or in-person in Nairobi.
+- Single sessions, lesson packages, or a custom learning plan.
+- Vetted tutors. All emails come from info@lanatutors.africa.
+
+HOW TO HANDLE A PARENT
+1. Warm one-line acknowledgement, using their first name if known.
+2. Ask at most ONE or TWO short questions to understand the need: child's grade/year and curriculum, and the subject(s) they're struggling with.
+3. Then hand them to the Learning Coordinator: offer either a quick call back from the coordinator (ask for the best time to call) OR a free 20-minute Academic Assessment Call they can book themselves:
+   https://lanatutors.africa/book-consultation
+4. Once you have their need and a preference, call escalate_to_team so the coordinator picks it up, and reply with a short confirmation that the coordinator will be in touch.
+
+WHAT NOT TO DO (these are hard rules — breaking them is a critical failure)
+- NEVER recommend, name or list individual tutors, and NEVER send tutor profile links or lanatutors.africa/tutor/... URLs. You have no access to tutor information and must never imply you do. Tutor matching is the Learning Coordinator's job — say "our Learning Coordinator will match your child with the right tutor".
+- NEVER quote, estimate or hint at prices. Rates depend on curriculum, level and subject and are shared after the assessment. Say that, then offer the coordinator.
+- Never dump a menu of options or a wall of links. One link at a time, only when it's the natural next step.
+- Never invent availability, tutor names or timelines. If you don't know something, the Learning Coordinator will confirm it.
 
 STYLE
-- Warm, concise, professional. 2–4 short sentences max — WhatsApp users skim.
-- Use the parent's first name when known.
-- Do NOT use emojis, smileys or emoticons anywhere in your replies. Plain text only.
-- Do NOT sign off with "— Lana", "Lana", or any signature. Just end the message naturally.
-- Be ACTIONABLE: whenever you mention booking, browsing tutors, learning plans, or "how it works", paste the actual full https://lanatutors.africa/... link on its own line so the parent can tap it in WhatsApp. Never say "I'll send you a link" without the link.
-- Never invent prices, tutor names, or availability. If unsure say "let me have the team confirm".
-- If asked about pricing: explain it depends on curriculum, level and subject; offer the free Academic Assessment Call and paste https://lanatutors.africa/book-consultation.
-- For complex/payment/complaint issues: empathize and tell them a team member from info@lanatutors.africa will follow up shortly.
+- Warm, human, conversational. 2-3 short sentences max — WhatsApp users skim.
+- No emojis, smileys or emoticons. Plain text only.
+- No sign-off, no "— Lana", no signature.
+- When you do share a link, paste the full https://lanatutors.africa/... on its own line.
+- For complaints, payments or account issues: empathize briefly, escalate, and say our Learning Coordinator will call them back to sort it out.
+- NEVER tell parents to email info@lanatutors.africa or expect an email from us. The next step is always a call back from the Learning Coordinator (or the assessment call booking link when they prefer to pick a time).
 
 TOOLS
-You have tools available. Use them when relevant:
-- lookup_tutors: when a parent asks about tutors for a specific subject/curriculum
-- get_booking_link: when they want to book something specific
-- escalate_to_team: when they're upset, ask for a human, or have a complex billing/account issue
-Call escalate_to_team ONCE and then reply with a brief holding message. Don't keep auto-replying after escalation.`;
+- get_booking_link: to fetch the correct link when booking is the next step.
+- escalate_to_team: to hand the parent to the Learning Coordinator — use this as soon as you know roughly what they need, or if they want a call back, or for any complaint/payment issue.
+You have NO tutor lookup tool and NO knowledge of individual tutors. If asked about tutors, say the Learning Coordinator handles matching.
+Call escalate_to_team ONCE and then reply with a brief holding message. Don't keep auto-replying after escalation.
+
+CALL-BACK PREFERENCE
+- When a parent wants help choosing, rates, or anything you can't answer, the default next step is: "Can our Learning Coordinator call you back? What's a good time?"
+- Only share the assessment call booking link if they'd rather pick a time themselves. Never offer email as an option.`;
 
 const TOOLS = [
-  {
-    name: "lookup_tutors",
-    description: "Search verified tutors by subject and/or curriculum. Returns up to 3 matches with name and short bio. Use when a parent asks who teaches X.",
-    parameters: {
-      type: "object",
-      properties: {
-        subject: { type: "string", description: "Subject e.g. Mathematics, Physics, English" },
-        curriculum: { type: "string", description: "One of: CBC, IGCSE, A-Levels, American, IB" },
-      },
-    },
-  },
   {
     name: "get_booking_link",
     description: "Get the correct booking link for a specific intent.",
@@ -161,6 +158,44 @@ async function logComm(args: {
   }
 }
 
+async function suppressWhatsAppNumber(phone: string, source: string) {
+  try {
+    await admin.from("whatsapp_suppressions").upsert({
+      phone_number: normalizePhone(phone),
+      reason: "opt_out",
+      source,
+    }, { onConflict: "phone_number" });
+  } catch (e) {
+    console.error("suppressWhatsAppNumber failed:", e);
+  }
+}
+
+function normalizePhone(phone: string) {
+  let p = phone.replace(/[\s+()-]/g, "");
+  if (p.startsWith("0")) p = "254" + p.slice(1);
+  if (p.length === 9) p = "254" + p;
+  return p;
+}
+
+const OPT_OUT_KEYWORDS = [
+  "stop", "unsubscribe", "opt out", "opt-out", "cancel",
+  "dont message me", "don't message me", "no more messages",
+  "remove me", "take me off", "unsubscribe me"
+];
+
+const ABUSIVE_KEYWORDS = [
+  "fuck", "fuck you", "fuck u", "fuck off", "bitch",
+  "asshole", "shit", "bastard", "idiot", "stupid",
+  "nonsense", "rubbish", "go away", "leave me alone",
+  "piss off", "screw you", "damn you", "shut up"
+];
+
+function isOptOutOrAbusiveMessage(text: string) {
+  const t = text.trim().toLowerCase();
+  if (OPT_OUT_KEYWORDS.includes(t)) return true;
+  return ABUSIVE_KEYWORDS.some((k) => t.includes(k));
+}
+
 async function loadConversation(phone: string, profileName?: string) {
   const { data } = await admin
     .from("whatsapp_conversations")
@@ -211,38 +246,19 @@ async function saveConversation(phone: string, messages: Msg[], escalated?: bool
 
 // ---------------- TOOLS ----------------
 
-async function toolLookupTutors(args: { subject?: string; curriculum?: string }) {
-  try {
-    const { data } = await admin.rpc("get_public_tutor_profiles");
-    if (!data) return { results: [] };
-    let list = data as any[];
-    if (args.subject) {
-      const s = args.subject.toLowerCase();
-      list = list.filter((t) =>
-        (t.subjects ?? []).some((x: string) => x.toLowerCase().includes(s))
-      );
-    }
-    if (args.curriculum) {
-      const c = args.curriculum.toLowerCase();
-      list = list.filter((t) =>
-        (t.curriculum ?? []).some((x: string) => x.toLowerCase().includes(c))
-      );
-    }
-    const top = list.slice(0, 3).map((t) => ({
-      name: t.full_name,
-      subjects: (t.subjects ?? []).slice(0, 4),
-      curriculum: (t.curriculum ?? []).slice(0, 3),
-      experience_years: t.experience_years,
-      bio: (t.bio ?? "").slice(0, 180),
-      profile_url: t.profile_slug
-        ? `https://lanatutors.africa/tutor/${t.profile_slug}`
-        : "https://lanatutors.africa",
-    }));
-    return { count: top.length, results: top };
-  } catch (e) {
-    console.error("lookup_tutors error:", e);
-    return { results: [], error: "lookup failed" };
+// Safety net: Lana must never send tutor profile links or name individual
+// tutors. If a reply slips through with one, swap in the coordinator hand-off.
+function sanitizeReply(text: string): string {
+  if (/lanatutors\.africa\/tutor\//i.test(text)) {
+    console.warn("Blocked tutor link in AI reply — replaced with coordinator hand-off.");
+    return [
+      "Thanks for sharing that. Tutor matching is handled personally by our Learning Coordinator, who'll find the right fit for your child and confirm the rate.",
+      "",
+      "Would you like a quick call back? Tell me a good time — or you can book a free 20-minute assessment call here:",
+      "https://lanatutors.africa/book-consultation",
+    ].join("\n");
   }
+  return text;
 }
 
 function toolGetBookingLink(args: { type: string }) {
@@ -365,9 +381,7 @@ async function callGemini(
       const name = c.functionCall.name;
       const args = c.functionCall.args ?? {};
       let result: unknown = { ok: true };
-      if (name === "lookup_tutors") {
-        result = await toolLookupTutors(args);
-      } else if (name === "get_booking_link") {
+      if (name === "get_booking_link") {
         result = toolGetBookingLink(args);
       } else if (name === "escalate_to_team") {
         escalated = true;
@@ -391,18 +405,10 @@ async function callGemini(
 
 function fallbackReply() {
   return [
-    "Hi, thanks for messaging Lana Tutors. I'm not 100% sure how best to help just yet — pick whichever of these works for you and we'll take it from there:",
+    "Hi, thanks for reaching out to Lana Tutors. So I point you the right way — what grade or year is your child in, which curriculum, and which subjects are giving trouble?",
     "",
-    "1. Have a tutor call you back",
-    "   Reply with the best time to ring and the number to use.",
-    "",
-    "2. Get a custom learning plan",
-    "   Share your child's year/grade, curriculum (CBC, IGCSE, A-Levels, American, IB) and the subjects/goals you have in mind. We'll send back a tailored plan with recommended tutors and pricing.",
-    "",
-    "3. Book a free 20-min Academic Assessment Call",
-    "   https://lanatutors.africa/book-consultation",
-    "",
-    "Or just type your question and I'll do my best to help.",
+    "Our Learning Coordinator will then match your child with the right tutor and share the rate. If it's easier, tell me a good time to call you, or book a free 20-minute assessment call here:",
+    "https://lanatutors.africa/book-consultation",
   ].join("\n");
 }
 
@@ -440,6 +446,23 @@ async function handleIncoming(body: any) {
     // Log inbound
     await logComm({ phone: from, parentId: convo.parent_id, direction: "inbound", content: text });
 
+    // Handle opt-out or abusive replies immediately (works even if escalated)
+    if (isOptOutOrAbusiveMessage(text)) {
+      await suppressWhatsAppNumber(from, "inbound_reply");
+      const confirmation = [
+        "Understood. We've removed you from our WhatsApp marketing list, so you won't get any more promotional messages.",
+        "",
+        "If you need help with anything, please reach us at info@lanatutors.africa."
+      ].join("\n");
+      await sendWhatsAppMessage(from, confirmation);
+      await logComm({ phone: from, parentId: convo.parent_id, direction: "outbound", content: confirmation });
+      const history: Msg[] = Array.isArray(convo.messages) ? convo.messages : [];
+      history.push({ role: "user", content: text, ts: new Date().toISOString() });
+      history.push({ role: "model", content: confirmation, ts: new Date().toISOString() });
+      await saveConversation(from, history, true);
+      return;
+    }
+
     const history: Msg[] = Array.isArray(convo.messages) ? convo.messages : [];
     history.push({ role: "user", content: text, ts: new Date().toISOString() });
 
@@ -451,13 +474,26 @@ async function handleIncoming(body: any) {
       return;
     }
 
-    const { text: reply, escalated } = await callGemini(history, profileName, convo.parent_id, from);
+    // Lana only sends ONE auto-reply per conversation. If she has already
+    // replied at any point, hand the thread to a human and stay silent
+    // until an admin clicks "Resume AI".
+    const alreadyReplied = history.some((m) => m.role === "model");
+    if (alreadyReplied) {
+      console.log(`First reply already sent for ${from} — handing to human.`);
+      await saveConversation(from, history, true);
+      return;
+    }
+
+    const { text: rawReply } = await callGemini(history, profileName, convo.parent_id, from);
+    const reply = sanitizeReply(rawReply);
 
     await sendWhatsAppMessage(from, reply);
     await logComm({ phone: from, parentId: convo.parent_id, direction: "outbound", content: reply });
 
     history.push({ role: "model", content: reply, ts: new Date().toISOString() });
-    await saveConversation(from, history, escalated);
+    // Always hand off after the first auto-reply.
+    await saveConversation(from, history, true);
+
   } catch (e) {
     console.error("handleIncoming error:", e);
   }

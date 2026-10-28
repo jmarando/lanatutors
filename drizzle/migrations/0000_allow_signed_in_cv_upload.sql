@@ -1,0 +1,1 @@
+CREATE POLICY "Signed-in applicants can upload CVs to scoped folder" ON storage.objects FOR INSERT TO authenticated WITH CHECK ((bucket_id = 'tutor-cvs') AND ((storage.foldername(name))[1] = 'applications') AND ((storage.foldername(name))[2] ~ '^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$') AND (array_length(storage.foldername(name), 1) = 2));

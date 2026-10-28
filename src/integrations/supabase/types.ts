@@ -429,6 +429,42 @@ export type Database = {
           },
         ]
       }
+      crm_notes: {
+        Row: {
+          contact_key: string
+          contact_name: string | null
+          created_at: string
+          created_by: string | null
+          created_by_name: string | null
+          follow_up_date: string | null
+          id: string
+          note: string
+          note_type: string
+        }
+        Insert: {
+          contact_key: string
+          contact_name?: string | null
+          created_at?: string
+          created_by?: string | null
+          created_by_name?: string | null
+          follow_up_date?: string | null
+          id?: string
+          note: string
+          note_type?: string
+        }
+        Update: {
+          contact_key?: string
+          contact_name?: string | null
+          created_at?: string
+          created_by?: string | null
+          created_by_name?: string | null
+          follow_up_date?: string | null
+          id?: string
+          note?: string
+          note_type?: string
+        }
+        Relationships: []
+      }
       curriculum_level_tier_assignments: {
         Row: {
           created_at: string
@@ -1120,6 +1156,87 @@ export type Database = {
         }
         Relationships: []
       }
+      invoices: {
+        Row: {
+          amount_to_pay: number
+          class_type: string | null
+          created_at: string
+          created_by: string | null
+          currency: string
+          data: Json
+          deposit_percentage: number | null
+          description: string | null
+          due_date: string | null
+          id: string
+          invoice_date: string
+          invoice_number: string
+          notes: string | null
+          parent_email: string | null
+          parent_name: string
+          parent_phone: string | null
+          payment_option: string
+          source: string
+          status: string
+          student_name: string | null
+          subject: string | null
+          total_amount: number
+          tutor_name: string | null
+          updated_at: string
+        }
+        Insert: {
+          amount_to_pay?: number
+          class_type?: string | null
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          data?: Json
+          deposit_percentage?: number | null
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          invoice_date?: string
+          invoice_number: string
+          notes?: string | null
+          parent_email?: string | null
+          parent_name: string
+          parent_phone?: string | null
+          payment_option?: string
+          source?: string
+          status?: string
+          student_name?: string | null
+          subject?: string | null
+          total_amount?: number
+          tutor_name?: string | null
+          updated_at?: string
+        }
+        Update: {
+          amount_to_pay?: number
+          class_type?: string | null
+          created_at?: string
+          created_by?: string | null
+          currency?: string
+          data?: Json
+          deposit_percentage?: number | null
+          description?: string | null
+          due_date?: string | null
+          id?: string
+          invoice_date?: string
+          invoice_number?: string
+          notes?: string | null
+          parent_email?: string | null
+          parent_name?: string
+          parent_phone?: string | null
+          payment_option?: string
+          source?: string
+          status?: string
+          student_name?: string | null
+          subject?: string | null
+          total_amount?: number
+          tutor_name?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       lana_knowledge: {
         Row: {
           active: boolean
@@ -1171,6 +1288,7 @@ export type Database = {
       learning_plans: {
         Row: {
           created_at: string | null
+          deposit_percentage: number | null
           discount_applied: number | null
           expires_at: string | null
           id: string
@@ -1190,6 +1308,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string | null
+          deposit_percentage?: number | null
           discount_applied?: number | null
           expires_at?: string | null
           id?: string
@@ -1209,6 +1328,7 @@ export type Database = {
         }
         Update: {
           created_at?: string | null
+          deposit_percentage?: number | null
           discount_applied?: number | null
           expires_at?: string | null
           id?: string
@@ -1573,6 +1693,27 @@ export type Database = {
           status?: Database["public"]["Enums"]["payment_status"] | null
           updated_at?: string | null
           user_id?: string
+        }
+        Relationships: []
+      }
+      platform_settings: {
+        Row: {
+          created_at: string
+          deposit_percentage: number
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          deposit_percentage?: number
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          deposit_percentage?: number
+          id?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -2821,6 +2962,27 @@ export type Database = {
         }
         Relationships: []
       }
+      whatsapp_suppressions: {
+        Row: {
+          created_at: string
+          phone_number: string
+          reason: string
+          source: string | null
+        }
+        Insert: {
+          created_at?: string
+          phone_number: string
+          reason?: string
+          source?: string | null
+        }
+        Update: {
+          created_at?: string
+          phone_number?: string
+          reason?: string
+          source?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       public_tutor_profiles: {
@@ -2939,6 +3101,41 @@ export type Database = {
         Args: { full_name: string; tutor_id: string }
         Returns: string
       }
+      get_booked_consultation_times: {
+        Args: { _date: string }
+        Returns: {
+          consultation_time: string
+        }[]
+      }
+      get_learning_plan_by_share: {
+        Args: { _share_token?: string; _url_slug?: string }
+        Returns: {
+          created_at: string | null
+          deposit_percentage: number | null
+          discount_applied: number | null
+          expires_at: string | null
+          id: string
+          inquiry_id: string | null
+          notes: string | null
+          share_token: string | null
+          status: string | null
+          student_id: string | null
+          subjects: Json
+          title: string
+          total_price: number
+          total_sessions: number
+          tutor_id: string
+          updated_at: string | null
+          url_slug: string | null
+          validity_days: number | null
+        }[]
+        SetofOptions: {
+          from: "*"
+          to: "learning_plans"
+          isOneToOne: false
+          isSetofReturn: true
+        }
+      }
       get_public_tutor_profiles: {
         Args: never
         Returns: {
@@ -3019,12 +3216,12 @@ export type Tables<
   DefaultSchemaTableNameOrOptions extends
     | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
         DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -3048,11 +3245,11 @@ export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -3073,11 +3270,11 @@ export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
     | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
-  TableName extends DefaultSchemaTableNameOrOptions extends {
+  TableName extends (DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -3098,11 +3295,11 @@ export type Enums<
   DefaultSchemaEnumNameOrOptions extends
     | keyof DefaultSchema["Enums"]
     | { schema: keyof DatabaseWithoutInternals },
-  EnumName extends DefaultSchemaEnumNameOrOptions extends {
+  EnumName extends (DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
-    : never = never,
+    : never) = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
@@ -3115,11 +3312,11 @@ export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
     | keyof DefaultSchema["CompositeTypes"]
     | { schema: keyof DatabaseWithoutInternals },
-  CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
+  CompositeTypeName extends (PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
     ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
-    : never = never,
+    : never) = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }

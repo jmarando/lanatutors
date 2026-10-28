@@ -1,6 +1,7 @@
 import { guardInternal } from "../_shared/auth-guard.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
+import { authenticate } from "../_shared/auth.ts";
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -24,6 +25,9 @@ serve(async (req) => {
   }
 
   try {
+    const auth = await authenticate(req, corsHeaders);
+    if (auth.error) return auth.error;
+
     const supabase = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
@@ -38,6 +42,31 @@ serve(async (req) => {
       description,
       isDeposit 
     } = await req.json()
+
+    if (!planId) {
+      return new Response(JSON.stringify({ error: 'planId is required' }), {
+        status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      })
+    }
+
+    // The plan must exist, and the caller must be its student or an admin
+    const { data: plan } = await supabase
+      .from('learning_plans')
+      .select('id, student_id, total_price')
+      .eq('id', planId)
+      .maybeSingle()
+
+    if (!plan) {
+      return new Response(JSON.stringify({ error: 'Learning plan not found' }), {
+        status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      })
+    }
+
+    if (!auth.isAdmin && plan.student_id !== auth.userId) {
+      return new Response(JSON.stringify({ error: 'Forbidden' }), {
+        status: 403, headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+      })
+    }
 
     console.log('Generating payment link - Amount:', amount, 'Plan:', planId, 'Deposit:', isDeposit)
 

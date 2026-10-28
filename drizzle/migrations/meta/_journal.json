@@ -1,0 +1,34 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1790861966226,
+      "tag": "0000_allow_signed_in_cv_upload",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1791198861487,
+      "tag": "0001_crm_grants",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1791198971975,
+      "tag": "0002_fix_auth_users_policies",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1791201150711,
+      "tag": "0003_crm_notes",
+      "breakpoints": true
+    }
+  ]
+}

@@ -13,6 +13,7 @@ import { StudentPicker } from "@/components/StudentPicker";
 import { Student } from "@/hooks/useStudents";
 import { PriceDisplay } from "@/components/PriceDisplay";
 import { analytics } from "@/utils/analytics";
+import { useDepositPercentage } from "@/hooks/useDepositPercentage";
 
 interface CartItem {
   id: string;
@@ -47,6 +48,7 @@ const DecemberIntensiveEnrollment = () => {
   const [parentEmail, setParentEmail] = useState("");
   const [programId, setProgramId] = useState<string | null>(null);
   const [paymentOption, setPaymentOption] = useState<PaymentOption>('deposit');
+  const { depositPercentage, depositRate: globalDepositRate } = useDepositPercentage();
 
   useEffect(() => {
     // Redirect to login if not authenticated
@@ -114,8 +116,8 @@ const DecemberIntensiveEnrollment = () => {
     return sum + getPricePerSubject(item.curriculum);
   }, 0);
 
-  // Calculate deposit (30%) and balance (70%)
-  const depositAmount = Math.round(totalAmount * 0.3);
+  // Calculate deposit and balance using the configurable deposit percentage
+  const depositAmount = Math.round(totalAmount * globalDepositRate);
   const balanceDue = totalAmount - depositAmount;
   const amountToPay = paymentOption === 'deposit' ? depositAmount : totalAmount;
 
@@ -194,7 +196,7 @@ const DecemberIntensiveEnrollment = () => {
             email: parentEmail,
             paymentType: "intensive_enrollment",
             referenceId: enrollment.id,
-            description: `December Holiday Bootcamp - ${cartItems.length} subject(s) for ${studentName}${paymentOption === 'deposit' ? ' (30% Deposit)' : ''}`,
+            description: `December Holiday Bootcamp - ${cartItems.length} subject(s) for ${studentName}${paymentOption === 'deposit' ? ` (${depositPercentage}% Deposit)` : ''}`,
             studentNames: studentName,
             paymentOption: paymentOption,
             totalAmount: totalAmount,
@@ -404,7 +406,7 @@ const DecemberIntensiveEnrollment = () => {
                 <div className="space-y-3">
                   <Label className="text-sm font-medium">Payment Option *</Label>
                   
-                  {/* 30% Deposit Option */}
+                  {/* Deposit Option */}
                   <Card 
                     className={`cursor-pointer transition-all ${
                       paymentOption === 'deposit' 
@@ -421,7 +423,7 @@ const DecemberIntensiveEnrollment = () => {
                           </div>
                           <div>
                             <div className="font-semibold flex items-center gap-2 text-sm">
-                              30% Deposit
+                              {depositPercentage}% Deposit
                               {paymentOption === 'deposit' && (
                                 <Check className="w-4 h-4 text-primary" />
                               )}
@@ -507,7 +509,7 @@ const DecemberIntensiveEnrollment = () => {
                 </Button>
 
                 <div className="text-xs text-muted-foreground space-y-1">
-                  <p>• Pay only 30% deposit now to secure your booking</p>
+                  <p>• Pay only {depositPercentage}% deposit now to secure your booking</p>
                   <p>• Balance due before the program starts</p>
                   <p>• Choose M-Pesa, Card, or other payment methods on the next page</p>
                 </div>

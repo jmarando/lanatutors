@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Loader2, CheckCircle, FileText, Share2, Copy, Check, Phone, Mail, Building2, Smartphone } from "lucide-react";
 import { toast } from "sonner";
+import { useDepositPercentage } from "@/hooks/useDepositPercentage";
 import { SEO } from "@/components/SEO";
 import { analytics } from "@/utils/analytics";
 import lanaLogo from "@/assets/lana-tutors-logo.png";
@@ -31,37 +32,34 @@ const LearningPlanView = () => {
       // If planId looks like a UUID, also try by ID for backwards compatibility
       const isUUID = planId && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(planId);
       
-      let planData = null;
+      let planData: any = null;
       let isPublic = false;
 
-      // If share token is provided, fetch via share token (legacy support)
+      // If share token is provided, fetch via the scoped share lookup (legacy support)
       if (shareToken) {
-        const { data, error } = await supabase
-          .from("learning_plans")
-          .select("*")
-          .eq("share_token", shareToken)
-          .single();
+        const { data, error } = await supabase.rpc("get_learning_plan_by_share", {
+          _share_token: shareToken,
+          _url_slug: null,
+        });
 
         if (error) throw error;
-        planData = data;
+        planData = Array.isArray(data) ? data[0] : data;
         isPublic = true;
       } else if (planId) {
         // Try by url_slug first (for pretty URLs), then by ID
-        // Try by slug first (unless it's a UUID)
         if (!isUUID) {
-          const { data, error } = await supabase
-            .from("learning_plans")
-            .select("*")
-            .eq("url_slug", planId)
-            .single();
-          
+          const { data, error } = await supabase.rpc("get_learning_plan_by_share", {
+            _share_token: null,
+            _url_slug: planId,
+          });
+
           if (!error) {
-            planData = data;
+            planData = Array.isArray(data) ? data[0] : data;
             isPublic = true;
           }
         }
 
-        // If not found by slug (or is UUID), try by ID
+        // If not found by slug (or is UUID), try by ID (owner/admin access via RLS)
         if (!planData && isUUID) {
           const { data, error } = await supabase
             .from("learning_plans")
@@ -140,7 +138,8 @@ const LearningPlanView = () => {
     }
   };
 
-  const depositAmount = plan ? Math.round(plan.total_price * 0.3) : 0;
+  const { depositPercentage } = useDepositPercentage((plan as any)?.deposit_percentage);
+  const depositAmount = plan ? Math.round(plan.total_price * (depositPercentage / 100)) : 0;
   const balanceAfterDeposit = plan ? plan.total_price - depositAmount : 0;
 
   // Extract student name from title (e.g., "Learning Plan for Ibrahim" -> "Ibrahim")
@@ -426,9 +425,9 @@ const LearningPlanView = () => {
                       </p>
                     </div>
                     
-                    {/* 30% Deposit */}
+                    {/* Deposit */}
                     <div className="p-4 rounded-xl bg-gradient-to-br from-blue-50 to-white border-2 border-blue-200/50">
-                      <p className="text-sm text-gray-500 mb-1">Or Pay 30% Deposit</p>
+                      <p className="text-sm text-gray-500 mb-1">Or Pay {depositPercentage}% Deposit</p>
                       <p className="text-2xl font-bold text-blue-600">
                         KES {depositAmount.toLocaleString()}
                       </p>

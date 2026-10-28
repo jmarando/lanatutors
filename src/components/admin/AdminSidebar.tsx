@@ -14,7 +14,8 @@ import {
   UserPlus,
   CalendarClock,
   BarChart3,
-  Send
+  Send,
+  Megaphone
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -107,6 +108,11 @@ export function AdminSidebar({ activeTab, onTabChange, counts }: AdminSidebarPro
           badgeClass: "bg-teal-600"
         },
         { 
+          id: "crm", 
+          label: "CRM / Customers", 
+          icon: Users 
+        },
+        { 
           id: "student-hub", 
           label: "Student Hub", 
           icon: Users 
@@ -120,6 +126,11 @@ export function AdminSidebar({ activeTab, onTabChange, counts }: AdminSidebarPro
           id: "whatsapp-inbox", 
           label: "WhatsApp Inbox", 
           icon: MessageSquare
+        },
+        { 
+          id: "whatsapp-campaigns", 
+          label: "WhatsApp Campaigns", 
+          icon: Megaphone
         },
       ],
     },
@@ -138,6 +149,11 @@ export function AdminSidebar({ activeTab, onTabChange, counts }: AdminSidebarPro
           badge: counts.tutoringBookings,
           badgeVariant: "default" as const,
           badgeClass: "bg-indigo-600"
+        },
+        { 
+          id: "invoices", 
+          label: "Invoices", 
+          icon: FileText 
         },
         { 
           id: "learning-plans", 

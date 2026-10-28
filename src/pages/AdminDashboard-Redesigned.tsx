@@ -22,6 +22,7 @@ import { TutorEmailList } from "@/components/admin/TutorEmailList";
 import { AdminIntensivePrograms } from "@/components/admin/AdminIntensivePrograms";
 import { AdminTutorProfileEdit } from "@/components/admin/AdminTutorProfileEdit";
 import { AdminStudentHub } from "@/components/admin/AdminStudentHub";
+import { AdminCrm } from "@/components/admin/AdminCrm";
 import { DailyOperationsCard } from "@/components/admin/DailyOperationsCard";
 import { BootcampEnrollments } from "@/components/admin/BootcampEnrollments";
 import { EmailComposer } from "@/components/admin/EmailComposer";
@@ -32,6 +33,10 @@ import { AdminLayout } from "@/components/admin/AdminLayout";
 import { AdminClassManagement } from "@/components/admin/AdminClassManagement";
 import { AdminReports } from "@/components/admin/AdminReports";
 import { WhatsAppInbox } from "@/components/admin/WhatsAppInbox";
+import { WhatsAppCampaigns } from "@/components/admin/WhatsAppCampaigns";
+import AdminInvoices from "@/components/admin/AdminInvoices";
+import { sendCrmEvent, splitName, stageFromFollowUpStatus } from "@/utils/metaCrm";
+
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -658,45 +663,45 @@ Reply with A, B, or C!
   };
 
   const fetchPendingReviews = async () => {
-    const { data, error } = await supabase
+    const { data: reviewData, error } = await supabase
       .from("tutor_reviews")
-      .select(`
-        *,
-        tutor_profiles!inner(id),
-        profiles!tutor_reviews_student_id_fkey(full_name)
-      `)
+      .select("*")
       .eq("is_moderated", false)
       .order("created_at", { ascending: false });
 
     if (error) {
       console.error("Error fetching pending reviews:", error);
-      const { data: reviewData } = await supabase
-        .from("tutor_reviews")
-        .select("*")
-        .eq("is_moderated", false)
-        .order("created_at", { ascending: false });
-      
-      if (reviewData) {
-        const enriched = await Promise.all(
-          reviewData.map(async (review) => {
-            const { data: profile } = await supabase
-              .from("profiles")
-              .select("full_name")
-              .eq("id", review.student_id)
-              .single();
-            const { data: tutorProfile } = await supabase
-              .from("tutor_profiles")
-              .select("id")
-              .eq("id", review.tutor_id)
-              .single();
-            return { ...review, profiles: profile, tutor_profiles: tutorProfile };
-          })
-        );
-        setPendingReviews(enriched);
-      }
-    } else {
-      setPendingReviews(data || []);
+      setPendingReviews([]);
+      return;
     }
+
+    if (!reviewData?.length) {
+      setPendingReviews([]);
+      return;
+    }
+
+    const studentIds = [...new Set(reviewData.map((r: any) => r.student_id).filter(Boolean))];
+    const tutorIds = [...new Set(reviewData.map((r: any) => r.tutor_id).filter(Boolean))];
+
+    const [{ data: profiles }, { data: tutors }] = await Promise.all([
+      studentIds.length
+        ? supabase.from("profiles").select("id, full_name").in("id", studentIds)
+        : Promise.resolve({ data: [] as any[] }),
+      tutorIds.length
+        ? supabase.from("tutor_profiles").select("id").in("id", tutorIds)
+        : Promise.resolve({ data: [] as any[] }),
+    ]);
+
+    const profileMap = new Map((profiles || []).map((p: any) => [p.id, p]));
+    const tutorMap = new Map((tutors || []).map((t: any) => [t.id, t]));
+
+    setPendingReviews(
+      reviewData.map((review: any) => ({
+        ...review,
+        profiles: profileMap.get(review.student_id) || null,
+        tutor_profiles: tutorMap.get(review.tutor_id) || null,
+      }))
+    );
   };
 
   const handleApplicationReview = async (
@@ -1117,6 +1122,14 @@ The Lana Team`;
 
       if (updateError) throw updateError;
 
+      void sendCrmEvent("contacted", {
+        recordId: selectedBooking.id,
+        email: selectedBooking.email,
+        phone: selectedBooking.phone_number,
+        ...splitName(selectedBooking.parent_name),
+        customData: { student_name: selectedBooking.student_name },
+      });
+
       toast.success("Follow-up email sent successfully!");
       setFollowUpDialog(false);
       fetchConsultationBookings();
@@ -1139,12 +1152,22 @@ The Lana Team`;
 
       if (error) throw error;
 
+      const booking = consultationBookings.find((b) => b.id === bookingId);
+      void sendCrmEvent("converted", {
+        recordId: bookingId,
+        email: booking?.email,
+        phone: booking?.phone_number,
+        ...splitName(booking?.parent_name),
+        customData: { student_name: booking?.student_name },
+      });
+
       toast.success("Marked as converted! 🎉");
       fetchConsultationBookings();
     } catch (error: any) {
       toast.error("Failed to update status: " + error.message);
     }
   };
+
 
   const fetchConsultationNotes = async (consultationId: string) => {
     const { data, error } = await supabase
@@ -1189,7 +1212,20 @@ The Lana Team`;
 
       if (error) throw error;
 
+      const stage = stageFromFollowUpStatus(status);
+      if (stage) {
+        const booking = consultationBookings.find((b) => b.id === bookingId);
+        void sendCrmEvent(stage, {
+          recordId: bookingId,
+          email: booking?.email,
+          phone: booking?.phone_number,
+          ...splitName(booking?.parent_name),
+          customData: { student_name: booking?.student_name },
+        });
+      }
+
       toast.success("Status updated successfully!");
+
       fetchConsultationBookings();
     } catch (error: any) {
       toast.error("Failed to update status: " + error.message);
@@ -2366,6 +2402,8 @@ The Lana Tutors Team`
         return <BlogManagement />;
       case 'edit-tutors':
         return <AdminTutorProfileEdit />;
+      case 'crm':
+        return <AdminCrm />;
       case 'student-hub':
         return <AdminStudentHub />;
       case 'bootcamp-enrollments':
@@ -2389,6 +2427,8 @@ The Lana Tutors Team`
         return <AdminClassManagement />;
       case 'bookings':
         return renderBookingsContent();
+      case 'invoices':
+        return <AdminInvoices />;
       case 'tutor-signups':
         return <TutorSignupList />;
       case 'december-bootcamp':
@@ -2397,6 +2437,8 @@ The Lana Tutors Team`
         return <AdminReports />;
       case 'whatsapp-inbox':
         return <WhatsAppInbox />;
+      case 'whatsapp-campaigns':
+        return <WhatsAppCampaigns />;
       default:
         return renderDashboardContent();
     }

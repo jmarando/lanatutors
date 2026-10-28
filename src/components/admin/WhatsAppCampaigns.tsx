@@ -1,0 +1,535 @@
+import { useEffect, useMemo, useState } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { Badge } from "@/components/ui/badge";
+
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { toast } from "sonner";
+import { Send, Eye, Users, PhoneOff, Loader2, CheckCircle2, XCircle, AlertCircle } from "lucide-react";
+import { HOLIDAY_CAMPAIGN_NUMBERS } from "@/data/holidayCampaignList";
+
+interface CampaignContact {
+  phone: string;
+  name?: string;
+  source?: string;
+  components?: any[];
+}
+
+export function WhatsAppCampaigns() {
+  const [templateName, setTemplateName] = useState("");
+  const [languageCode, setLanguageCode] = useState("en");
+  const [audienceSource, setAudienceSource] = useState<"manual" | "consultations" | "inquiries" | "bookings">("manual");
+  const [manualPhones, setManualPhones] = useState("");
+  const [audience, setAudience] = useState<CampaignContact[]>([]);
+  const [loadingAudience, setLoadingAudience] = useState(false);
+  const [preview, setPreview] = useState<any>(null);
+  const [previewing, setPreviewing] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [result, setResult] = useState<any>(null);
+  const [suppressions, setSuppressions] = useState<string[]>([]);
+  const [skipAlreadySent, setSkipAlreadySent] = useState(true);
+  const [alreadySentCount, setAlreadySentCount] = useState(0);
+  const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
+  const [greetingMode, setGreetingMode] = useState<"fixed" | "generic" | "personal">("fixed");
+  const [headerImageUrl, setHeaderImageUrl] = useState(
+    "https://iccemuiqcdumgxiwxzdq.supabase.co/storage/v1/object/public/blog-images/campaign-header.jpg"
+  );
+
+  useEffect(() => {
+    loadSuppressions();
+  }, []);
+
+  const loadSuppressions = async () => {
+    const { data } = await supabase.from("whatsapp_suppressions").select("phone_number");
+    setSuppressions((data || []).map((s) => s.phone_number));
+  };
+
+  const normalizePhone = (phone: string) => {
+    let p = phone.replace(/[\s+()-]/g, "");
+    if (p.startsWith("0")) p = "254" + p.slice(1);
+    if (p.length === 9) p = "254" + p;
+    return p;
+  };
+
+  const greetingComponents = (name?: string) => {
+    const components: any[] = [];
+    if (headerImageUrl.trim()) {
+      components.push({
+        type: "header",
+        parameters: [{ type: "image", image: { link: headerImageUrl.trim() } }],
+      });
+    }
+    if (greetingMode !== "fixed") {
+      const greeting = greetingMode === "personal" && name ? name : "there";
+      components.push({ type: "body", parameters: [{ type: "text", text: greeting }] });
+    }
+    return components.length ? components : undefined;
+  };
+
+  const buildAudience = async () => {
+    setLoadingAudience(true);
+    const contacts: CampaignContact[] = [];
+
+    if (audienceSource === "manual") {
+      manualPhones
+        .split(/[\n,;]/)
+        .map((p) => p.trim())
+        .filter(Boolean)
+        .forEach((phone) => {
+          contacts.push({ phone: normalizePhone(phone), source: "manual", components: greetingComponents() });
+        });
+    } else if (audienceSource === "consultations") {
+      const { data } = await supabase
+        .from("consultation_bookings")
+        .select("phone_number, parent_name")
+        .not("phone_number", "is", null);
+      (data || []).forEach((b: any) => {
+        contacts.push({ phone: normalizePhone(b.phone_number), name: b.parent_name, source: "consultation", components: greetingComponents(b.parent_name) });
+      });
+    } else if (audienceSource === "inquiries") {
+      const { data } = await supabase
+        .from("tutor_inquiries")
+        .select("parent_phone, parent_name")
+        .not("parent_phone", "is", null);
+      (data || []).forEach((i: any) => {
+        contacts.push({ phone: normalizePhone(i.parent_phone), name: i.parent_name, source: "inquiry", components: greetingComponents(i.parent_name) });
+      });
+    } else if (audienceSource === "bookings") {
+      const { data } = await supabase
+        .from("bookings")
+        .select("student_profile_id, student_id, students(full_name)")
+        .not("student_profile_id", "is", null)
+        .limit(500);
+      // Need parent phones via students -> profiles
+      const studentIds = (data || []).map((b: any) => b.student_profile_id).filter(Boolean);
+      if (studentIds.length) {
+        const { data: students } = await supabase
+          .from("students")
+          .select("id, parent_id, full_name, parent:profiles(phone_number)")
+          .in("id", studentIds);
+        (students || []).forEach((s: any) => {
+          if (s.parent?.phone_number) {
+            contacts.push({ phone: normalizePhone(s.parent.phone_number), name: s.full_name, source: "booking", components: greetingComponents(s.full_name) });
+          }
+        });
+      }
+    }
+
+    // Deduplicate by phone
+    const seen = new Set<string>();
+    let deduped = contacts.filter((c) => {
+      if (seen.has(c.phone)) return false;
+      seen.add(c.phone);
+      return true;
+    });
+
+    let skipped = 0;
+    if (skipAlreadySent && templateName.trim()) {
+      const sentSet = await loadAlreadySent(templateName.trim());
+      const before = deduped.length;
+      deduped = deduped.filter((c) => !sentSet.has(c.phone));
+      skipped = before - deduped.length;
+    }
+    setAlreadySentCount(skipped);
+
+    setAudience(deduped);
+    setLoadingAudience(false);
+    setResult(null);
+    setPreview(null);
+    setProgress(null);
+  };
+
+  const loadAlreadySent = async (template: string) => {
+    const sent = new Set<string>();
+    const pageSize = 1000;
+    for (let page = 0; page < 30; page++) {
+      const { data, error } = await supabase
+        .from("communication_logs")
+        .select("metadata")
+        .eq("channel", "whatsapp")
+        .eq("status", "sent")
+        .filter("metadata->>template_name", "eq", template)
+        .range(page * pageSize, page * pageSize + pageSize - 1);
+      if (error || !data?.length) break;
+      data.forEach((row: any) => {
+        const phone = row?.metadata?.phone;
+        if (phone) sent.add(normalizePhone(String(phone)));
+      });
+      if (data.length < pageSize) break;
+    }
+    return sent;
+  };
+
+  const activeAudience = useMemo(() => {
+    return audience.filter((c) => !suppressions.includes(c.phone));
+  }, [audience, suppressions]);
+
+  const handlePreview = async () => {
+    if (!templateName || activeAudience.length === 0) {
+      toast.error("Choose a template and build an audience first");
+      return;
+    }
+    setPreviewing(true);
+    const { data, error } = await supabase.functions.invoke("send-whatsapp-marketing", {
+      body: {
+        templateName,
+        languageCode,
+        audience: activeAudience.slice(0, 1),
+        preview: true,
+      },
+    });
+    setPreviewing(false);
+    if (error) {
+      toast.error("Preview failed: " + error.message);
+      return;
+    }
+    setPreview(data);
+  };
+
+  const handleSend = async () => {
+    if (!templateName || activeAudience.length === 0) {
+      toast.error("Choose a template and build an audience first");
+      return;
+    }
+    setSending(true);
+    setProgress({ done: 0, total: activeAudience.length });
+
+    const batchSize = 100;
+    const totals = { sent: 0, failed: 0, suppressed: 0, total: 0, results: [] as any[] };
+
+    for (let i = 0; i < activeAudience.length; i += batchSize) {
+      const batch = activeAudience.slice(i, i + batchSize);
+      let data: any = null;
+      let lastError: any = null;
+      // retry a batch once before giving up, and keep going with the rest
+      for (let attempt = 0; attempt < 2 && !data; attempt++) {
+        const res = await supabase.functions.invoke("send-whatsapp-marketing", {
+          body: { templateName, languageCode, audience: batch },
+        });
+        if (res.error) lastError = res.error;
+        else data = res.data;
+      }
+      if (!data) {
+        toast.error(`Batch ${Math.floor(i / batchSize) + 1} failed: ${lastError?.message || "unknown"} — continuing`);
+        continue;
+      }
+
+      totals.sent += data?.sent || 0;
+      totals.failed += data?.failed || 0;
+      totals.suppressed += data?.suppressed || 0;
+      totals.total += data?.total || batch.length;
+      totals.results.push(...(data?.results || []));
+      setProgress({ done: Math.min(i + batchSize, activeAudience.length), total: activeAudience.length });
+      setResult({ ...totals });
+    }
+
+    setSending(false);
+    setResult({ ...totals });
+    toast.success(`Sent ${totals.sent} messages`);
+  };
+
+  const addSuppression = async (phone: string) => {
+    const { error } = await supabase.from("whatsapp_suppressions").insert({
+      phone_number: normalizePhone(phone),
+      reason: "manual_opt_out",
+      source: "admin_campaign",
+    });
+    if (error) {
+      toast.error("Failed to suppress: " + error.message);
+    } else {
+      toast.success("Number suppressed");
+      loadSuppressions();
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-2xl font-bold">WhatsApp Campaigns</h2>
+          <p className="text-muted-foreground">Send approved Meta templates to leads and customers</p>
+        </div>
+        <Badge variant="outline" className="text-sm">
+          <PhoneOff className="h-3 w-3 mr-1" />
+          {suppressions.length} opted out
+        </Badge>
+      </div>
+
+      <Tabs defaultValue="compose" className="w-full">
+        <TabsList>
+          <TabsTrigger value="compose">Compose</TabsTrigger>
+          <TabsTrigger value="suppressions">Opt-outs</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="compose" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">1. Template</CardTitle>
+              <CardDescription>Use the exact name of an approved Meta WhatsApp template</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div className="grid md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="templateName">Template name</Label>
+                  <Input
+                    id="templateName"
+                    value={templateName}
+                    onChange={(e) => setTemplateName(e.target.value)}
+                    placeholder="e.g. holiday_tuition_2026"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="languageCode">Language code</Label>
+                  <Input
+                    id="languageCode"
+                    value={languageCode}
+                    onChange={(e) => setLanguageCode(e.target.value)}
+                    placeholder="en_US"
+                  />
+                </div>
+              </div>
+              <div className="space-y-2 pt-2 border-t">
+                <Label htmlFor="greetingMode">Greeting style</Label>
+                <Select
+                  value={greetingMode}
+                  onValueChange={(v: any) => {
+                    const mode = v as "fixed" | "generic" | "personal";
+                    setGreetingMode(mode);
+                    setAudience((prev) =>
+                      prev.map((c) => ({ ...c, components: greetingComponents(c.name) }))
+                    );
+                    setPreview(null);
+                    setResult(null);
+                  }}
+                >
+                  <SelectTrigger id="greetingMode">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="fixed">Template has fixed text (no variables)</SelectItem>
+                    <SelectItem value="generic">Use “Hi there” (requires {"{{1}}"} body variable)</SelectItem>
+                    <SelectItem value="personal">Use “Hi [Name]” (requires {"{{1}}"} body variable)</SelectItem>
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  Choose the greeting that matches your approved Meta template. If your template already says “Hi there!” with no variable, pick the first option.
+                </p>
+              </div>
+              <div className="space-y-2 pt-2 border-t">
+                <Label htmlFor="headerImageUrl">Header image URL (required if template header is an image)</Label>
+                <Input
+                  id="headerImageUrl"
+                  value={headerImageUrl}
+                  onChange={(e) => {
+                    setHeaderImageUrl(e.target.value);
+                    setPreview(null);
+                    setResult(null);
+                  }}
+                  onBlur={() =>
+                    setAudience((prev) => prev.map((c) => ({ ...c, components: greetingComponents(c.name) })))
+                  }
+                  placeholder="https://iccemuiqcdumgxiwxzdq.supabase.co/storage/v1/object/public/blog-images/campaign-header.jpg"
+                />
+                <p className="text-xs text-muted-foreground">
+                  Leave empty for text-only templates. Must be a public https JPG/PNG link.
+                </p>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">2. Audience</CardTitle>
+              <CardDescription>Pick who should receive this campaign</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <Select value={audienceSource} onValueChange={(v: any) => setAudienceSource(v)}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="manual">Manual phone list</SelectItem>
+                  <SelectItem value="consultations">All consultation bookings</SelectItem>
+                  <SelectItem value="inquiries">All tutor inquiries</SelectItem>
+                  <SelectItem value="bookings">Booking parents</SelectItem>
+                </SelectContent>
+              </Select>
+
+              {audienceSource === "manual" && (
+                <div className="space-y-2">
+                  <Label>Phone numbers</Label>
+                  <Textarea
+                    value={manualPhones}
+                    onChange={(e) => setManualPhones(e.target.value)}
+                    placeholder="254712345678&#10;254723456789"
+                    rows={5}
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setManualPhones(HOLIDAY_CAMPAIGN_NUMBERS.join("\n"));
+                      toast.success(`Loaded ${HOLIDAY_CAMPAIGN_NUMBERS.length} numbers from the holiday master list`);
+                    }}
+                  >
+                    Load holiday master list ({HOLIDAY_CAMPAIGN_NUMBERS.length})
+                  </Button>
+                </div>
+              )}
+
+              <div className="flex items-center gap-2 rounded-md border p-3">
+                <input
+                  id="skipSent"
+                  type="checkbox"
+                  className="h-4 w-4"
+                  checked={skipAlreadySent}
+                  onChange={(e) => setSkipAlreadySent(e.target.checked)}
+                />
+                <Label htmlFor="skipSent" className="text-sm font-normal">
+                  Skip numbers that already received this template (recommended for resuming a batch)
+                </Label>
+              </div>
+
+              <Button onClick={buildAudience} disabled={loadingAudience} variant="secondary">
+                {loadingAudience ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Users className="h-4 w-4 mr-2" />}
+                Build audience
+              </Button>
+
+              {audience.length > 0 && (
+                <div className="flex flex-wrap gap-2 items-center text-sm">
+                  <Badge variant="secondary">{audience.length} total</Badge>
+                  <Badge variant="outline" className="text-muted-foreground">
+                    {audience.length - activeAudience.length} suppressed
+                  </Badge>
+                  {alreadySentCount > 0 && (
+                    <Badge variant="outline" className="text-muted-foreground">
+                      {alreadySentCount} already sent (skipped)
+                    </Badge>
+                  )}
+                  <Badge variant="default" className="bg-green-600">
+                    {activeAudience.length} will receive
+                  </Badge>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {activeAudience.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-lg">3. Preview & Send</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                <div className="flex gap-2">
+                  <Button onClick={handlePreview} disabled={previewing} variant="outline">
+                    {previewing ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Eye className="h-4 w-4 mr-2" />}
+                    Preview first contact
+                  </Button>
+                  <Button onClick={handleSend} disabled={sending}>
+                    {sending ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Send className="h-4 w-4 mr-2" />}
+                    Send to {activeAudience.length} contacts
+                  </Button>
+                </div>
+
+                {progress && (
+                  <p className="text-sm text-muted-foreground">
+                    Batch progress: {progress.done} / {progress.total} processed (sending 200 at a time). Keep this tab
+                    open until it finishes.
+                  </p>
+                )}
+
+                {preview && (
+                  <div className="bg-muted p-4 rounded-lg text-sm font-mono overflow-auto">
+                    <p className="text-xs text-muted-foreground mb-2">Payload preview</p>
+                    <pre className="text-xs">{JSON.stringify(preview.payload, null, 2)}</pre>
+                  </div>
+                )}
+
+                {result && (
+                  <div className="space-y-2">
+                    <div className="grid grid-cols-3 gap-2">
+                      <Card className="bg-green-50">
+                        <CardContent className="p-3 text-center">
+                          <CheckCircle2 className="h-5 w-5 text-green-600 mx-auto mb-1" />
+                          <p className="text-xl font-bold text-green-600">{result.sent}</p>
+                          <p className="text-xs text-muted-foreground">Sent</p>
+                        </CardContent>
+                      </Card>
+                      <Card className="bg-red-50">
+                        <CardContent className="p-3 text-center">
+                          <XCircle className="h-5 w-5 text-red-600 mx-auto mb-1" />
+                          <p className="text-xl font-bold text-red-600">{result.failed}</p>
+                          <p className="text-xs text-muted-foreground">Failed</p>
+                        </CardContent>
+                      </Card>
+                      <Card className="bg-gray-50">
+                        <CardContent className="p-3 text-center">
+                          <PhoneOff className="h-5 w-5 text-gray-600 mx-auto mb-1" />
+                          <p className="text-xl font-bold text-gray-600">{result.suppressed}</p>
+                          <p className="text-xs text-muted-foreground">Suppressed</p>
+                        </CardContent>
+                      </Card>
+                    </div>
+                    {result.results?.some((r: any) => r.error) && (
+                      <div className="bg-red-50 p-3 rounded-lg text-sm">
+                        <p className="font-medium flex items-center gap-2"><AlertCircle className="h-4 w-4" /> Errors</p>
+                        <ul className="mt-1 space-y-1 text-xs text-muted-foreground">
+                          {result.results.filter((r: any) => r.error).map((r: any, i: number) => (
+                            <li key={i}>{r.phone}: {r.error}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          )}
+        </TabsContent>
+
+        <TabsContent value="suppressions" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Opted-out numbers</CardTitle>
+              <CardDescription>These numbers will be skipped in all campaigns</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {suppressions.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No opt-outs yet.</p>
+              ) : (
+                <div className="flex flex-wrap gap-2">
+                  {suppressions.map((phone) => (
+                    <Badge key={phone} variant="secondary">{phone}</Badge>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Manual suppress</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <Input id="suppressPhone" placeholder="254712345678" />
+              <Button
+                onClick={() => {
+                  const phone = (document.getElementById("suppressPhone") as HTMLInputElement)?.value;
+                  if (phone) addSuppression(phone);
+                }}
+              >
+                Add to opt-out list
+              </Button>
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+}

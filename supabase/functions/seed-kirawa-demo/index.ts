@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { requireAdmin } from "../_shared/auth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -8,6 +9,10 @@ const corsHeaders = {
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
+  // Demo seeding creates auth accounts and school data: platform admins only
+  const auth = await requireAdmin(req, corsHeaders);
+  if (auth.error) return auth.error;
+
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
   const admin = createClient(supabaseUrl, serviceKey, { auth: { autoRefreshToken: false, persistSession: false } });
@@ -15,10 +20,13 @@ Deno.serve(async (req) => {
   const schoolId = "11111111-1111-1111-1111-111111111111";
 
   // Create demo users
+  // Password comes from a secret, or is randomly generated per run - never hardcoded
+  const demoPassword = Deno.env.get("DEMO_SEED_PASSWORD") ?? crypto.randomUUID();
+
   const demoUsers = [
-    { email: "admin@kirawa.demo", password: "demo1234", full_name: "Mrs. Sarah Kamau", role: "admin" },
-    { email: "teacher@kirawa.demo", password: "demo1234", full_name: "Mr. James Ochieng", role: "teacher" },
-    { email: "parent@kirawa.demo", password: "demo1234", full_name: "Mrs. Grace Wanjiku", role: "parent" },
+    { email: "admin@kirawa.demo", password: demoPassword, full_name: "Mrs. Sarah Kamau", role: "admin" },
+    { email: "teacher@kirawa.demo", password: demoPassword, full_name: "Mr. James Ochieng", role: "teacher" },
+    { email: "parent@kirawa.demo", password: demoPassword, full_name: "Mrs. Grace Wanjiku", role: "parent" },
   ];
 
   const memberIds: Record<string, string> = {};

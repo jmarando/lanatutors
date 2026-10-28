@@ -2,6 +2,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Check, CreditCard, Package, Zap } from "lucide-react";
+import { useDepositPercentage } from "@/hooks/useDepositPercentage";
 
 interface PackageOffer {
   id: string;
@@ -50,7 +51,11 @@ export const PaymentOptionsCard = ({
   disabled = false,
   tutorId
 }: PaymentOptionsCardProps) => {
-  const depositPercentage = '30%';
+  const { depositPercentage } = useDepositPercentage();
+  const computedPct = totalAmount > 0
+    ? Math.round((depositAmount / totalAmount) * 100)
+    : depositPercentage;
+  const depositPercentageLabel = `${computedPct}%`;
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
@@ -128,7 +133,7 @@ export const PaymentOptionsCard = ({
                 </div>
                 <div>
                   <div className="font-semibold flex items-center gap-2">
-                    Pay Deposit ({depositPercentage})
+                    Pay Deposit ({depositPercentageLabel})
                     {paymentOption === 'deposit' && (
                       <Check className="w-4 h-4 text-primary" />
                     )}

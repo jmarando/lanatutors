@@ -34,15 +34,15 @@ const generateEmailTemplate = (
   sessionDate: string,
   sessionTime: string,
   meetingLink: string,
-  reminderType: "24h" | "1h"
+  reminderType: "24h" | "1h",
+  forTutor = false
 ) => {
   const urgencyText = reminderType === "1h" 
     ? "Your session starts in 1 hour!" 
     : "Your session is tomorrow!";
   
-  const ctaText = reminderType === "1h" 
-    ? "Join Now" 
-    : "Add to Calendar";
+  const ctaText = "Open My Dashboard";
+  const dashboardUrl = forTutor ? "https://lanatutors.africa/tutor/dashboard" : "https://lanatutors.africa/student/dashboard";
 
   return `
     <!DOCTYPE html>
@@ -70,7 +70,7 @@ const generateEmailTemplate = (
                     Hi ${studentName},
                   </p>
                   <p style="color: #374151; font-size: 16px; line-height: 1.6; margin: 0 0 30px;">
-                    This is a friendly reminder about your upcoming tutoring session. We're excited to see you learn and grow!
+                    This is a friendly reminder about your upcoming tutoring session. ${forTutor ? 'Please be ready a few minutes early.' : "We're excited to see you learn and grow!"}
                   </p>
                   
                   <!-- Session Details Card -->
@@ -86,7 +86,7 @@ const generateEmailTemplate = (
                           </tr>
                           <tr>
                             <td style="padding: 8px 0; color: #78350f; font-size: 15px;">
-                              <strong>Tutor:</strong> ${tutorName}
+                              <strong>${forTutor ? "Student" : "Tutor"}:</strong> ${tutorName}
                             </td>
                           </tr>
                           <tr>
@@ -108,7 +108,7 @@ const generateEmailTemplate = (
                   <table width="100%" cellpadding="0" cellspacing="0">
                     <tr>
                       <td align="center" style="padding: 10px 0 30px;">
-                        <a href="${meetingLink || 'https://lanatutors.africa/student/dashboard'}" 
+                        <a href="${dashboardUrl}" 
                            style="display: inline-block; background: linear-gradient(135deg, #FF6B35 0%, #FF8C42 100%); color: #ffffff; text-decoration: none; padding: 16px 40px; border-radius: 8px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 14px rgba(255, 107, 53, 0.4);">
                           ${ctaText}
                         </a>
@@ -237,7 +237,7 @@ serve(async (req) => {
           booking.subject,
           formatDate(booking.tutor_availability.start_time),
           formatTime(booking.tutor_availability.start_time),
-          booking.meeting_link || "",
+          "",
           "24h"
         );
 
@@ -258,6 +258,31 @@ serve(async (req) => {
         if (emailResponse.ok) {
           sentCount++;
           console.log(`24h reminder sent for booking ${booking.id}`);
+        }
+
+        // Also remind the tutor
+        const { data: tutorUser } = await supabase.auth.admin.getUserById(booking.tutor_id);
+        if (tutorUser?.user?.email) {
+          const tutorRes = await fetch("https://api.resend.com/emails", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Authorization: `Bearer ${RESEND_API_KEY}` },
+            body: JSON.stringify({
+              from: "Lana Tutors <info@lanatutors.africa>",
+              to: [tutorUser.user.email],
+              subject: `Reminder: ${booking.subject} session with ${studentProfile?.full_name || "your student"} ${"24h" === "24h" ? "tomorrow" : "in 1 hour"}`,
+              html: generateEmailTemplate(
+                tutorName?.full_name || "Tutor",
+                studentProfile?.full_name || "Student",
+                booking.subject,
+                formatDate(booking.tutor_availability.start_time),
+                formatTime(booking.tutor_availability.start_time),
+                "",
+                "24h",
+                true
+              ),
+            }),
+          });
+          if (tutorRes.ok) sentCount++;
         }
       } catch (err) {
         console.error(`Error sending 24h reminder for booking ${booking.id}:`, err);
@@ -289,7 +314,7 @@ serve(async (req) => {
           booking.subject,
           formatDate(booking.tutor_availability.start_time),
           formatTime(booking.tutor_availability.start_time),
-          booking.meeting_link || "",
+          "",
           "1h"
         );
 
@@ -310,6 +335,31 @@ serve(async (req) => {
         if (emailResponse.ok) {
           sentCount++;
           console.log(`1h reminder sent for booking ${booking.id}`);
+        }
+
+        // Also remind the tutor
+        const { data: tutorUser } = await supabase.auth.admin.getUserById(booking.tutor_id);
+        if (tutorUser?.user?.email) {
+          const tutorRes = await fetch("https://api.resend.com/emails", {
+            method: "POST",
+            headers: { "Content-Type": "application/json", Authorization: `Bearer ${RESEND_API_KEY}` },
+            body: JSON.stringify({
+              from: "Lana Tutors <info@lanatutors.africa>",
+              to: [tutorUser.user.email],
+              subject: `Reminder: ${booking.subject} session with ${studentProfile?.full_name || "your student"} ${"1h" === "24h" ? "tomorrow" : "in 1 hour"}`,
+              html: generateEmailTemplate(
+                tutorName?.full_name || "Tutor",
+                studentProfile?.full_name || "Student",
+                booking.subject,
+                formatDate(booking.tutor_availability.start_time),
+                formatTime(booking.tutor_availability.start_time),
+                "",
+                "1h",
+                true
+              ),
+            }),
+          });
+          if (tutorRes.ok) sentCount++;
         }
       } catch (err) {
         console.error(`Error sending 1h reminder for booking ${booking.id}:`, err);

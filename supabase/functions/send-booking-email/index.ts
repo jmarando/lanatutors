@@ -381,6 +381,7 @@ const handler = async (req: Request): Promise<Response> => {
         body: JSON.stringify({
           from: 'Lana Tutors <info@lanatutors.africa>',
           to: [studentEmail || ''],
+          cc: ['info@lanatutors.africa'],
           subject: 'Booking Confirmation - Lana Tutors',
           html: studentEmailHtml,
         }),
@@ -577,6 +578,7 @@ const handler = async (req: Request): Promise<Response> => {
         body: JSON.stringify({
           from: 'Lana Tutors <info@lanatutors.africa>',
           to: [tutorProfile?.email || ''],
+          cc: ['info@lanatutors.africa'],
           subject: 'New Booking - Lana Tutors',
           html: tutorEmailHtml,
         }),
