@@ -77,6 +77,123 @@ serve(async (req) => {
       }
     }
 
+    // --- Server-side amount & currency validation (prevents client price tampering) ---
+    // The amount a client may pay is derived from the referenced record, never trusted
+    // from the request body. Every flow charges in the record's own currency (KES unless
+    // the record stores otherwise). An authenticated user could otherwise invoke this with
+    // amount: 1 and have the booking/enrollment confirmed for a nominal sum.
+    const pt = paymentType || 'booking'
+    const round2 = (n: unknown) => Math.round(Number(n))
+    const clientAmount = round2(amount)
+    const clientCurrency = String(currency || 'KES').toUpperCase()
+
+    if (!Number.isFinite(clientAmount) || clientAmount <= 0) {
+      return new Response(
+        JSON.stringify({ success: false, error: 'Invalid payment amount.' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    const resolveExpected = async (): Promise<{ currency: string; allowed: number[] } | null> => {
+      switch (pt) {
+        case 'booking':
+        case 'tutor_booking_deposit':
+        case 'booking_balance': {
+          if (!referenceId) return null
+          const { data: b } = await supabase
+            .from('bookings')
+            .select('amount, balance_due, currency')
+            .eq('id', referenceId)
+            .maybeSingle()
+          if (!b) return null
+          const cur = String(b.currency || 'KES').toUpperCase()
+          const full = Number(b.amount) || 0
+          if (pt === 'booking_balance') {
+            return { currency: cur, allowed: [round2(b.balance_due)].filter((n) => n > 0) }
+          }
+          // full payment, 30% deposit, 1% deposit (special tutor), or remaining balance
+          return {
+            currency: cur,
+            allowed: [full, full * 0.3, full * 0.01, Number(b.balance_due) || 0]
+              .map(round2)
+              .filter((n) => n > 0),
+          }
+        }
+        case 'package_purchase':
+        case 'package':
+        case 'multi_package': {
+          if (!referenceId) return null
+          const { data: p } = await supabase
+            .from('package_purchases')
+            .select('total_amount, currency')
+            .eq('id', referenceId)
+            .maybeSingle()
+          if (!p) return null
+          const cur = String(p.currency || 'KES').toUpperCase()
+          const total = Number(p.total_amount) || 0
+          return { currency: cur, allowed: [total, total * 0.3, total * 0.01].map(round2).filter((n) => n > 0) }
+        }
+        case 'intensive_enrollment': {
+          if (!referenceId) return null
+          const { data: e } = await supabase
+            .from('intensive_enrollments')
+            .select('total_amount')
+            .eq('id', referenceId)
+            .maybeSingle()
+          if (!e) return null
+          const total = Number(e.total_amount) || 0
+          return { currency: 'KES', allowed: [total, total * 0.3].map(round2).filter((n) => n > 0) }
+        }
+        case 'group_class_enrollment': {
+          if (!referenceId) return null
+          const { data: g } = await supabase
+            .from('group_class_enrollments')
+            .select('amount_paid')
+            .eq('id', referenceId)
+            .maybeSingle()
+          if (!g) return null
+          return { currency: 'KES', allowed: [round2(g.amount_paid)].filter((n) => n > 0) }
+        }
+        case 'subscription':
+          return { currency: 'KES', allowed: [500] }
+        case 'single_recording':
+          return { currency: 'KES', allowed: [200] }
+        default:
+          return null
+      }
+    }
+
+    const expected = await resolveExpected()
+    if (!expected || expected.allowed.length === 0) {
+      console.error('Amount validation failed: could not resolve expected price', { paymentType: pt, referenceId })
+      return new Response(
+        JSON.stringify({ success: false, error: 'Unable to verify the amount for this order.' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    if (clientCurrency !== expected.currency) {
+      console.error('Currency mismatch on payment', { clientCurrency, expected: expected.currency, paymentType: pt, referenceId })
+      return new Response(
+        JSON.stringify({ success: false, error: 'Payment currency does not match this order.' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+
+    // Snap to the nearest legitimate amount; ±2 absorbs client/server rounding differences.
+    const chargeAmount = expected.allowed.find((a) => Math.abs(a - clientAmount) <= 2)
+    if (chargeAmount === undefined) {
+      console.error('Payment amount rejected (does not match order)', {
+        clientAmount, allowed: expected.allowed, paymentType: pt, referenceId, userId: user.id,
+      })
+      return new Response(
+        JSON.stringify({ success: false, error: 'Payment amount does not match this order.' }),
+        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      )
+    }
+    const chargeCurrency = expected.currency
+    // --- end amount validation ---
+
     // Step 1: Get Pesapal access token
     const consumerKey = Deno.env.get('PESAPAL_CONSUMER_KEY')
     const consumerSecret = Deno.env.get('PESAPAL_CONSUMER_SECRET')
@@ -137,8 +254,8 @@ serve(async (req) => {
     
     const orderRequest = {
       id: merchantReference,
-      currency: currency || 'KES',
-      amount: parseFloat(amount),
+      currency: chargeCurrency,
+      amount: chargeAmount,
       description: description || 'Payment',
       callback_url: baseCallbackUrl,
       redirect_mode: 'TOP_WINDOW', // Ensures redirect happens in the same window
@@ -207,8 +324,8 @@ serve(async (req) => {
       .from('payments')
       .insert({
         user_id: user.id,
-        amount: parseFloat(amount),
-        currency: currency || 'KES',
+        amount: chargeAmount,
+        currency: chargeCurrency,
         status: 'pending',
         payment_type: paymentType || 'booking',
         reference_id: referenceId,
