@@ -20,9 +20,9 @@ const SUBJECTS: Record<string, SubjectContent> = {
   mathematics: {
     slug: "mathematics",
     name: "Mathematics",
-    title: "Mathematics Tutors in Kenya from KES 1,500/hr",
+    title: "Mathematics Tutors in Kenya — KCSE, IGCSE & IB",
     description:
-      "Verified Kenyan maths tutors for CBC, KCSE, IGCSE and IB, including KCSE markers. One-on-one online lessons from KES 1,500 an hour. Free assessment call.",
+      "Verified Kenyan maths tutors for CBC, KCSE, IGCSE and IB, including KCSE markers. One-on-one online lessons. Free call with a learning coordinator.",
     intro:
       "Whether your child is preparing for KCSE Paper 1 and 2, sitting IGCSE Mathematics (0580), tackling IB Maths AA/AI, or building number fluency in CBC — Lana matches you with verified Kenyan maths tutors who teach the curriculum your child sits.",
     curricula: ["CBC Mathematics", "KCSE Mathematics (8-4-4)", "IGCSE Mathematics 0580 / 0607", "IB Mathematics AA & AI"],
@@ -39,7 +39,7 @@ const SUBJECTS: Record<string, SubjectContent> = {
     faqs: [
       {
         q: "How much do maths tutors in Kenya cost?",
-        a: "Mathematics tutoring on Lana starts from KES 1,500 per hour for primary CBC and goes up to KES 3,500 per hour for IB Higher Level Mathematics.",
+        a: "It depends on the curriculum and level, from primary CBC to IB Higher Level. Book a free assessment call and a learning coordinator will recommend a tutor and walk you through pricing.",
       },
       {
         q: "Can my tutor help with KCSE past papers?",

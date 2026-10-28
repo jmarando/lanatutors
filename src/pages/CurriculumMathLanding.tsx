@@ -28,7 +28,7 @@ const DATA: Record<string, CurriculumMath> = {
     description:
       "Verified KCSE Mathematics tutors in Kenya. One-on-one Paper 1 & Paper 2 preparation with experienced KCSE markers and classroom teachers.",
     answer:
-      "Lana Tutors matches Kenyan students with verified KCSE Mathematics tutors — most of whom are practising classroom teachers or KCSE markers. Lessons run online over Google Meet or in-person in Nairobi, with structured Paper 1 and Paper 2 preparation, past-paper drills, and personalised marking. Rates start from KES 1,800 per hour.",
+      "Lana Tutors matches Kenyan students with verified KCSE Mathematics tutors — most of whom are practising classroom teachers or KCSE markers. Lessons run online over Google Meet or in-person in Nairobi, with structured Paper 1 and Paper 2 preparation, past-paper drills, and personalised marking. A free assessment call with a learning coordinator covers tutor choice and pricing.",
     intro:
       "KCSE Mathematics rewards mastery of fundamentals plus disciplined exam technique. Our KCSE Maths tutors cover Form 1–4 in depth, run timed Paper 1 and Paper 2 practice, and walk students through past-paper marking schemes.",
     levels: ["Form 1", "Form 2", "Form 3", "Form 4 (KCSE candidates)"],
@@ -42,7 +42,7 @@ const DATA: Record<string, CurriculumMath> = {
       "Paper 2 — Longer applications, calculus, statistics (2.5 hrs)",
     ],
     faqs: [
-      { q: "How much do KCSE Mathematics tutors cost?", a: "KCSE Mathematics tutoring on Lana starts from KES 1,800/hr for Form 1–2 and KES 2,200–2,800/hr for Form 3–4 KCSE candidates." },
+      { q: "How much do KCSE Mathematics tutors cost?", a: "It depends on the form and the tutor. Book a free assessment call and a learning coordinator will recommend a tutor and walk you through pricing." },
       { q: "Are tutors KCSE markers?", a: "Many are. We prioritise tutors who have marked KCSE Mathematics or teach the subject in Kenyan secondary schools." },
       { q: "Can my child get Paper 1 & Paper 2 mock practice?", a: "Yes. Tutors run timed Paper 1 and Paper 2 mocks with full marking-scheme feedback." },
       { q: "Do you offer KCSE Mathematics holiday intensives?", a: "Yes — small-group KCSE Maths intensives run during April, August and December school holidays." },
@@ -56,7 +56,7 @@ const DATA: Record<string, CurriculumMath> = {
     description:
       "Verified IGCSE Mathematics tutors for Cambridge 0580 (Extended/Core) and 0607 International Mathematics. Online one-on-one lessons.",
     answer:
-      "Lana Tutors connects IGCSE students with verified mathematics tutors specialising in Cambridge 0580 (Core and Extended) and 0607 International Mathematics. Lessons are delivered online over Google Meet by Kenyan teachers with international-school experience. Rates start from KES 2,200 per hour (≈ USD 17 / GBP 13).",
+      "Lana Tutors connects IGCSE students with verified mathematics tutors specialising in Cambridge 0580 (Core and Extended) and 0607 International Mathematics. Lessons are delivered online over Google Meet by Kenyan teachers with international-school experience. A free assessment call with a learning coordinator covers tutor choice and pricing.",
     intro:
       "IGCSE Mathematics 0580 splits into Core (grades C–G) and Extended (A*–E). Our tutors place your child on the right tier, then run structured topic teaching, past-paper practice on Papers 1–4, and dedicated work on the harder Extended-only topics.",
     levels: ["Year 10", "Year 11 (IGCSE candidates)"],
@@ -84,7 +84,7 @@ const DATA: Record<string, CurriculumMath> = {
     description:
       "IB Mathematics tutors for Analysis & Approaches (AA) and Applications & Interpretation (AI), SL and HL. One-on-one online lessons.",
     answer:
-      "Lana Tutors provides IB Mathematics tutors across both Analysis & Approaches (AA) and Applications & Interpretation (AI), at Standard Level and Higher Level. Tutors support IB content teaching, Internal Assessment (IA) design and write-up, and timed Paper 1, 2, and 3 (HL) practice. Online one-on-one lessons from KES 2,800 per hour (≈ USD 22).",
+      "Lana Tutors provides IB Mathematics tutors across both Analysis & Approaches (AA) and Applications & Interpretation (AI), at Standard Level and Higher Level. Tutors support IB content teaching, Internal Assessment (IA) design and write-up, and timed Paper 1, 2, and 3 (HL) practice. Lessons are online and one-on-one.",
     intro:
       "IB Maths splits into AA (more pure, calculus-heavy) and AI (more applied, statistics-heavy), each at SL and HL. Our IB Maths tutors are familiar with both routes, GDC use, and the IA — the 20% of the grade most often left to the last minute.",
     levels: ["DP1", "DP2", "IB Maths SL", "IB Maths HL"],
@@ -113,7 +113,7 @@ const DATA: Record<string, CurriculumMath> = {
     description:
       "Verified Kenyan CBC Mathematics tutors for Grade 1–9. Online and in-person one-on-one lessons aligned with the KICD CBC curriculum.",
     answer:
-      "Lana Tutors offers verified CBC Mathematics tutors for Grade 1 through Grade 9, aligned with the KICD CBC curriculum. Lessons are project-based and competency-focused, delivered online over Google Meet or in-person in Nairobi. Rates start from KES 1,500 per hour for Lower Primary.",
+      "Lana Tutors offers verified CBC Mathematics tutors for Grade 1 through Grade 9, aligned with the KICD CBC curriculum. Lessons are project-based and competency-focused, delivered online over Google Meet or in-person in Nairobi. A free assessment call with a learning coordinator covers tutor choice and pricing.",
     intro:
       "CBC Mathematics is competency-based — your child is assessed on what they can do, not just what they remember. Our CBC Maths tutors build numeracy from Lower Primary through to Junior Secondary, using projects, real-world tasks and KICD-aligned activities.",
     levels: ["Lower Primary (Grade 1–3)", "Upper Primary (Grade 4–6)", "Junior Secondary (Grade 7–9)"],

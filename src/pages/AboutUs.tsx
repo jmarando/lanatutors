@@ -408,7 +408,7 @@ const AboutUs = () => {
             {[
               {
                 q: "How much can I earn as a tutor?",
-                a: "Tutors keep 70% of their session fees with monthly payouts. Rates vary by subject, curriculum, and experience level, with most tutors earning between KES 1,000 to KES 3,000 per hour."
+                a: "Tutors keep 70% of their session fees with monthly payouts. Earnings depend on your subjects, curriculum and experience level; we share typical rates during onboarding."
               },
               {
                 q: "How do I get paid?",

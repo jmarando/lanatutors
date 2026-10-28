@@ -29,7 +29,6 @@ import tutor6 from "@/assets/tutor-6.jpg";
 import calvinProfilePhoto from "@/assets/calvin-profile.png";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { GeneralLearningPlanRequest } from "@/components/GeneralLearningPlanRequest";
-import { PriceDisplay } from "@/components/PriceDisplay";
 const TutorSearch = () => {
   const navigate = useNavigate();
   const [selectedSubject, setSelectedSubject] = useState("all");
@@ -207,8 +206,8 @@ const TutorSearch = () => {
     "@context": "https://schema.org",
     "@type": "FAQPage",
     mainEntity: [
-      { "@type": "Question", name: "How much do tutors in Kenya cost?", acceptedAnswer: { "@type": "Answer", text: "Online one-on-one tutoring on Lana ranges from KES 1,500 to KES 3,500 per hour depending on the curriculum (CBC, KCSE, IGCSE, IB) and the tutor's experience. Diaspora families can pay in USD, GBP, EUR or KES." } },
-      { "@type": "Question", name: "How do I find a private tutor in Kenya?", acceptedAnswer: { "@type": "Answer", text: "Browse verified tutors on this page, filter by curriculum, subject, level and location, then view a tutor's profile and book a session online. We match most families with the right tutor within 48 hours." } },
+      { "@type": "Question", name: "How much do tutors in Kenya cost?", acceptedAnswer: { "@type": "Answer", text: "It depends on the curriculum (CBC, KCSE, IGCSE, IB), the level and the tutor. Book a free assessment call and a learning coordinator will recommend tutors and walk you through pricing. Diaspora families can pay in USD, GBP, EUR or KES." } },
+      { "@type": "Question", name: "How do I find a private tutor in Kenya?", acceptedAnswer: { "@type": "Answer", text: "Browse verified tutors on this page, filter by curriculum, subject, level and location, then view a tutor's profile and book a free call with a learning coordinator to arrange lessons. We match most families with the right tutor within 48 hours." } },
       { "@type": "Question", name: "Do you offer online tutoring across Kenya and for the diaspora?", acceptedAnswer: { "@type": "Answer", text: "Yes. All our tutors offer online lessons over Google Meet, so students in Nairobi, Mombasa, Kisumu — or Kenyan families abroad in the UK, US, UAE and Australia — can learn from a verified Kenyan teacher." } },
       { "@type": "Question", name: "Are Lana tutors verified?", acceptedAnswer: { "@type": "Answer", text: "Every tutor goes through ID verification, qualification checks and a subject-knowledge assessment before being listed. Most are practising teachers in top Kenyan schools." } },
       { "@type": "Question", name: "Which curricula do your tutors cover?", acceptedAnswer: { "@type": "Answer", text: "We support CBC, KCSE (8-4-4), IGCSE (Cambridge), A-Levels, IB and American curricula across primary, secondary and exam-prep levels." } },
@@ -218,7 +217,7 @@ const TutorSearch = () => {
   return <div className="min-h-screen bg-[image:var(--gradient-page)]">
       <SEO
         title="Tuition in Kenya: Browse Verified Tutors"
-        description="Filter verified tutors for CBC, KCSE, IGCSE, A-Level and IB by subject, curriculum and location. One-on-one tuition online or in Nairobi from KES 1,500/hr."
+        description="Filter verified tutors for CBC, KCSE, IGCSE, A-Level and IB by subject, curriculum and location, then talk to a learning coordinator. Online or in Nairobi."
         keywords="tutors in kenya, online tutor in kenya, private tutors in kenya, tutoring in kenya, kcse tutor, cbc tutor, igcse tutor, ib tutor, find a tutor kenya"
         canonical="https://lanatutors.africa/tutors"
         structuredData={tutorsFaqSchema}
@@ -233,7 +232,7 @@ const TutorSearch = () => {
               Find a private tutor in Kenya for KCSE, CBC, IGCSE, A-Level or IB. Every tutor on Lana is a verified teacher from a top Kenyan school — book one-on-one online tutoring from anywhere in Kenya, or from the diaspora.
             </p>
             <p className="text-sm text-muted-foreground mb-6 max-w-3xl mx-auto">
-              Rates from KES 1,500/hour. Available in USD, GBP and EUR for diaspora families. Most students matched with the right tutor within 48 hours.
+              Found a tutor you like? Book a free call with a learning coordinator to talk through fit, schedule and pricing. Most students are matched within 48 hours.
             </p>
             
             {/* How It Works Section */}
@@ -260,8 +259,8 @@ const TutorSearch = () => {
                       <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mb-3">
                         <CalendarIcon className="w-5 h-5 text-primary" />
                       </div>
-                      <h3 className="font-semibold mb-1">3. Book Session</h3>
-                      <p className="text-sm text-muted-foreground">Select available time slots and book your tutoring sessions directly</p>
+                      <h3 className="font-semibold mb-1">3. Talk to a Coordinator</h3>
+                      <p className="text-sm text-muted-foreground">Book a free call. A learning coordinator confirms the right tutor and walks you through pricing</p>
                     </div>
                     <div className="flex flex-col items-start">
                       <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center mb-3">
@@ -387,9 +386,6 @@ const TutorSearch = () => {
                       {tutor.curriculum && tutor.curriculum.length > 0 && <p className="mt-1 text-xs text-muted-foreground">
                           <span className="font-semibold">Curricula:</span> {tutor.curriculum.join(", ")}
                         </p>}
-                      <p className="mt-1 text-xs font-semibold text-primary">
-                        From <PriceDisplay amountKES={tutor.hourlyRate} />/hr
-                      </p>
                     </div>
                   </div>
                   <Button onClick={() => {

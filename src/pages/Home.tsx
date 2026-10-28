@@ -22,7 +22,6 @@ import { SEO } from "@/components/SEO";
 import { analytics } from "@/utils/analytics";
 import { supabase } from "@/integrations/supabase/client";
 import { GroupClassBanner } from "@/components/GroupClassBanner";
-import { PriceDisplay } from "@/components/PriceDisplay";
 import { useNavigate } from "react-router-dom";
 import heroVideo from "@/assets/hero-video.mp4";
 import heroImage from "@/assets/hero-image.jpg";
@@ -82,7 +81,7 @@ const Home = () => {
     {
       icon: Search,
       title: "1. Browse & Compare Tutors",
-      description: "Search our database of 500+ verified tutors from top Kenyan schools. Learn online from anywhere in the world. Filter by subject, experience level, rating, and hourly rate. View detailed profiles including qualifications, teaching style, student reviews, and availability."
+      description: "Search our database of 500+ verified tutors from top Kenyan schools. Learn online from anywhere in the world. Filter by subject, curriculum, level and location. View detailed profiles including qualifications, teaching style, student reviews, and availability."
     },
     {
       icon: Calendar,
@@ -209,7 +208,7 @@ const Home = () => {
     <div className="min-h-screen bg-[image:var(--gradient-page)]">
       <SEO 
         title="Private Tutors in Kenya, Online or in Nairobi"
-        description="Verified teachers from Kenya's top schools for CBC, KCSE, IGCSE and A-Level. One-on-one, online or in Nairobi, from KES 1,500 an hour. Free assessment call."
+        description="Verified teachers from Kenya's top schools for CBC, KCSE, IGCSE and A-Level. One-on-one, online or in Nairobi. Book a free call with a learning coordinator."
         structuredData={organizationSchema}
       />
       
@@ -455,9 +454,6 @@ const Home = () => {
                     <div className="text-sm text-muted-foreground mb-2">
                       {tutor.experienceYears}+ years experience
                     </div>
-                    <div className="text-xl font-bold text-primary mb-3">
-                      <PriceDisplay amountKES={tutor.hourlyRate} />/hr
-                    </div>
                   </div>
                   <Link to={`/tutors/${tutor.profileSlug || tutor.id}`}>
                     <Button className="w-full" variant="outline" size="sm">View Profile</Button>
@@ -553,7 +549,7 @@ const Home = () => {
             {[
               {
                 q: "How much can I earn as a tutor?",
-                a: "Tutors keep 70% of their session fees with monthly payouts. Rates vary by subject, curriculum, and experience level, with most tutors earning between KES 1,000 to KES 3,000 per hour."
+                a: "Tutors keep 70% of their session fees with monthly payouts. Earnings depend on your subjects, curriculum and experience level; we share typical rates during onboarding."
               },
               {
                 q: "How do I get paid?",

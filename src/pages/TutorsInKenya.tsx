@@ -45,7 +45,7 @@ const TutorsInKenya = () => {
         name: "How much do online tutors in Kenya cost?",
         acceptedAnswer: {
           "@type": "Answer",
-          text: "Rates start from KES 1,500 per hour for primary subjects and go up to KES 3,500 per hour for senior secondary, IGCSE, and IB subjects. Discounts apply when you book lesson packages of 5 or 10 sessions.",
+          text: "It depends on the subject, curriculum, level and tutor. Book a free assessment call and a learning coordinator will recommend the right tutor and walk you through pricing, including package options.",
         },
       },
       {
@@ -105,8 +105,8 @@ const TutorsInKenya = () => {
   return (
     <div className="min-h-screen bg-background">
       <SEO
-        title="Online Tutors in Kenya from KES 1,500 an Hour"
-        description="Verified Kenyan teachers for CBC, KCSE, IGCSE and IB, one-on-one online from KES 1,500 an hour. Book a free assessment call and get matched in 48 hours."
+        title="Online Tutors in Kenya, Matched in 48 Hours"
+        description="Verified Kenyan teachers for CBC, KCSE, IGCSE and IB, one-on-one online. Book a free assessment call and a learning coordinator matches you in 48 hours."
         keywords="tutors in kenya, online tutors kenya, kenyan tutors, cbc tutors, kcse tutors, igcse tutors kenya, ib tutors nairobi, online tutoring kenya"
         canonical={canonical}
         structuredData={structuredData}
