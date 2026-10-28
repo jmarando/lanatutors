@@ -15,8 +15,36 @@ const GEMINI_MODEL = Deno.env.get("GEMINI_MODEL") ?? "gemini-2.5-flash";
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
+const WA_APP_SECRET = Deno.env.get("WHATSAPP_APP_SECRET");
 
 const admin = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
+
+// Verify Meta's X-Hub-Signature-256 header: HMAC-SHA256 of the raw request body,
+// keyed with the WhatsApp app secret. Without this, anyone who learns the URL can
+// POST fake inbound messages and drive the AI responder / write to the database.
+async function verifyWhatsAppSignature(rawBody: string, signatureHeader: string | null): Promise<boolean> {
+  if (!WA_APP_SECRET) return true; // not configured yet — do not block (see deploy note in POST handler)
+  if (!signatureHeader) return false;
+  const expectedHex = signatureHeader.startsWith("sha256=") ? signatureHeader.slice(7) : signatureHeader;
+  try {
+    const key = await crypto.subtle.importKey(
+      "raw",
+      new TextEncoder().encode(WA_APP_SECRET),
+      { name: "HMAC", hash: "SHA-256" },
+      false,
+      ["sign"],
+    );
+    const mac = await crypto.subtle.sign("HMAC", key, new TextEncoder().encode(rawBody));
+    const actualHex = [...new Uint8Array(mac)].map((b) => b.toString(16).padStart(2, "0")).join("");
+    if (actualHex.length !== expectedHex.length) return false;
+    let diff = 0;
+    for (let i = 0; i < actualHex.length; i++) diff |= actualHex.charCodeAt(i) ^ expectedHex.charCodeAt(i);
+    return diff === 0;
+  } catch (e) {
+    console.error("WhatsApp signature verification error:", e);
+    return false;
+  }
+}
 
 const SYSTEM_PROMPT = `You are Lana, the WhatsApp assistant for Lana Tutors — Kenya's premium tutoring platform for local and diaspora families.
 
@@ -452,7 +480,20 @@ serve(async (req: Request) => {
 
   if (req.method === "POST") {
     try {
-      const body = await req.json();
+      const rawBody = await req.text();
+      const signature = req.headers.get("x-hub-signature-256");
+      const valid = await verifyWhatsAppSignature(rawBody, signature);
+      if (!valid) {
+        console.error("Rejected WhatsApp webhook: invalid X-Hub-Signature-256");
+        return new Response(JSON.stringify({ error: "invalid signature" }), {
+          status: 401,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      if (!WA_APP_SECRET) {
+        console.warn("WHATSAPP_APP_SECRET is not set — webhook signatures are NOT enforced. Set it in Supabase to activate verification.");
+      }
+      const body = JSON.parse(rawBody);
       console.log("WA webhook payload:", JSON.stringify(body));
       // fire-and-forget so we ACK within Meta's 5s window
       handleIncoming(body);

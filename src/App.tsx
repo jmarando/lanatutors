@@ -42,7 +42,6 @@ const GroupClassMarketplace = lazy(() => import("./pages/GroupClassMarketplace")
 const GroupClassEnrollment = lazy(() => import("./pages/GroupClassEnrollment"));
 
 const NotFound = lazy(() => import("./pages/NotFound"));
-const TestEmail = lazy(() => import("./pages/TestEmail"));
 const BookingConfirmed = lazy(() => import("./pages/BookingConfirmed"));
 const PackageConfirmed = lazy(() => import("./pages/PackageConfirmed"));
 const TutorProfileSetup = lazy(() => import("./pages/TutorProfileSetup"));
@@ -106,7 +105,6 @@ const AppContent = () => {
           <Route path="/tutor-guide-printable" element={<TutorGuidePrintable />} />
           <Route path="/admin" element={<AdminDashboardRedesigned />} />
           <Route path="/book-consultation" element={<BookConsultation />} />
-          <Route path="/test-email" element={<TestEmail />} />
           <Route path="/booking-confirmed" element={<BookingConfirmed />} />
           <Route path="/package-confirmed" element={<PackageConfirmed />} />
           <Route path="/consultation-confirmed" element={<ConsultationConfirmed />} />

@@ -23,15 +23,42 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
+    // This function sends arbitrary HTML to an arbitrary recipient, so it must never be
+    // callable anonymously. Require an authenticated caller who holds the 'admin' role.
+    const admin = createClient(
+      Deno.env.get("SUPABASE_URL")!,
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
+    );
+
+    const token = req.headers.get("Authorization")?.replace("Bearer ", "");
+    if (!token) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401, headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    }
+    const { data: { user }, error: authError } = await admin.auth.getUser(token);
+    if (authError || !user) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401, headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    }
+    const { data: adminRole } = await admin
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", user.id)
+      .eq("role", "admin")
+      .maybeSingle();
+    if (!adminRole) {
+      return new Response(JSON.stringify({ error: "Forbidden: admin role required" }), {
+        status: 403, headers: { "Content-Type": "application/json", ...corsHeaders },
+      });
+    }
+
     const { to, subject, html, message, recipientName, replyTo }: AdminEmailRequest = await req.json();
 
     console.log(`Sending admin email to ${to} with subject: ${subject}`);
 
     // Honour the unsubscribe / suppression list
-    const admin = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!,
-    );
     const { data: suppressed } = await admin
       .from("email_suppressions")
       .select("email")

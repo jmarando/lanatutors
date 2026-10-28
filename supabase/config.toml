@@ -24,9 +24,6 @@ verify_jwt = true
 [functions.send-booking-reminder]
 verify_jwt = true
 
-[functions.send-test-email]
-verify_jwt = false
-
 [functions.send-application-acknowledgment]
 verify_jwt = false
 
@@ -112,7 +109,7 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.send-admin-email]
-verify_jwt = false
+verify_jwt = true
 
 [functions.generate-recovery-payment-link]
 verify_jwt = true
