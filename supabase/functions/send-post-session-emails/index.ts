@@ -120,10 +120,10 @@ serve(async (req) => {
     );
 
     const now = new Date();
-    const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-    const twentyFiveHoursAgo = new Date(now.getTime() - 25 * 60 * 60 * 1000);
+    const fortyEightHoursAgo = new Date(now.getTime() - 48 * 60 * 60 * 1000);
+    const fortyNineHoursAgo = new Date(now.getTime() - 49 * 60 * 60 * 1000);
 
-    // Find completed sessions from 24-25 hours ago
+    // Ask for feedback two days after the session, not the next morning.
     const { data: bookings, error } = await supabase
       .from("bookings")
       .select(`
@@ -131,8 +131,8 @@ serve(async (req) => {
         tutor_availability!inner (start_time, end_time)
       `)
       .eq("status", "confirmed")
-      .gte("tutor_availability.end_time", twentyFiveHoursAgo.toISOString())
-      .lt("tutor_availability.end_time", twentyFourHoursAgo.toISOString());
+      .gte("tutor_availability.end_time", fortyNineHoursAgo.toISOString())
+      .lt("tutor_availability.end_time", fortyEightHoursAgo.toISOString());
 
     if (error) {
       console.error("Error fetching bookings:", error);
@@ -143,6 +143,14 @@ serve(async (req) => {
 
     for (const booking of bookings || []) {
       try {
+        // If they already reviewed the session, don't ask again.
+        const { data: existingReview } = await supabase
+          .from("tutor_reviews")
+          .select("id")
+          .eq("booking_id", booking.id)
+          .maybeSingle();
+        if (existingReview) continue;
+
         const { data: studentProfile } = await supabase
           .from("profiles")
           .select("full_name")

@@ -250,6 +250,9 @@ serve(async (req) => {
           const grossEarnings = (weekBookings || []).reduce((sum, b) => sum + (b.amount || 0), 0);
           const netEarnings = Math.round(grossEarnings * 0.7); // 70% after platform fee
 
+          // Don't add to the weekly pile if there was nothing to report.
+          if (sessionsCompleted === 0) continue;
+
           // Get upcoming sessions
           const { data: upcomingBookings } = await supabase
             .from("bookings")
@@ -314,6 +317,16 @@ serve(async (req) => {
 
       for (const tutor of unconnectedTutors || []) {
         try {
+          // One nudge only. In-app prompts handle the rest.
+          const { data: alreadyNudged } = await supabase
+            .from("communication_logs")
+            .select("id")
+            .eq("tutor_id", tutor.id)
+            .eq("subject", "calendar_sync_reminder")
+            .limit(1)
+            .maybeSingle();
+          if (alreadyNudged) continue;
+
           const { data: profile } = await supabase
             .from("profiles")
             .select("full_name")
@@ -340,7 +353,17 @@ serve(async (req) => {
             }),
           });
 
-          if (emailResponse.ok) sentCount++;
+          if (emailResponse.ok) {
+            sentCount++;
+            await supabase.from("communication_logs").insert({
+              tutor_id: tutor.id,
+              channel: "email",
+              direction: "outbound",
+              subject: "calendar_sync_reminder",
+              content: "One-time Google Calendar sync reminder",
+              status: "sent",
+            });
+          }
         } catch (err) {
           console.error("Error sending calendar reminder:", err);
         }

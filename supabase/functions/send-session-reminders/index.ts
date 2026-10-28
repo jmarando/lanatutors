@@ -166,7 +166,6 @@ serve(async (req) => {
     );
 
     const now = new Date();
-    const oneHourFromNow = new Date(now.getTime() + 60 * 60 * 1000);
     const twentyFourHoursFromNow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
     const twentyFiveHoursFromNow = new Date(now.getTime() + 25 * 60 * 60 * 1000);
 
@@ -183,22 +182,6 @@ serve(async (req) => {
 
     if (error24h) {
       console.error("Error fetching 24h bookings:", error24h);
-    }
-
-    // Fetch bookings for 1-hour reminder (between 1-2 hours from now)
-    const twoHoursFromNow = new Date(now.getTime() + 2 * 60 * 60 * 1000);
-    const { data: bookings1h, error: error1h } = await supabase
-      .from("bookings")
-      .select(`
-        *,
-        tutor_availability!inner (start_time, end_time)
-      `)
-      .eq("status", "confirmed")
-      .gte("tutor_availability.start_time", oneHourFromNow.toISOString())
-      .lt("tutor_availability.start_time", twoHoursFromNow.toISOString());
-
-    if (error1h) {
-      console.error("Error fetching 1h bookings:", error1h);
     }
 
     let sentCount = 0;
@@ -286,83 +269,6 @@ serve(async (req) => {
         }
       } catch (err) {
         console.error(`Error sending 24h reminder for booking ${booking.id}:`, err);
-      }
-    }
-
-    // Process 1-hour reminders
-    for (const booking of bookings1h || []) {
-      try {
-        const { data: studentProfile } = await supabase
-          .from("profiles")
-          .select("full_name")
-          .eq("id", booking.student_id)
-          .single();
-
-        const { data: userData } = await supabase.auth.admin.getUserById(booking.student_id);
-
-        const { data: tutorName } = await supabase
-          .from("profiles")
-          .select("full_name")
-          .eq("id", booking.tutor_id)
-          .single();
-
-        if (!userData?.user?.email) continue;
-
-        const emailHtml = generateEmailTemplate(
-          studentProfile?.full_name || "Student",
-          tutorName?.full_name || "Your Tutor",
-          booking.subject,
-          formatDate(booking.tutor_availability.start_time),
-          formatTime(booking.tutor_availability.start_time),
-          "",
-          "1h"
-        );
-
-        const emailResponse = await fetch("https://api.resend.com/emails", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${RESEND_API_KEY}`,
-          },
-          body: JSON.stringify({
-            from: "Lana Tutors <info@lanatutors.africa>",
-            to: [userData.user.email],
-            subject: `🔔 Starting Soon: ${booking.subject} Session in 1 Hour!`,
-            html: emailHtml,
-          }),
-        });
-
-        if (emailResponse.ok) {
-          sentCount++;
-          console.log(`1h reminder sent for booking ${booking.id}`);
-        }
-
-        // Also remind the tutor
-        const { data: tutorUser } = await supabase.auth.admin.getUserById(booking.tutor_id);
-        if (tutorUser?.user?.email) {
-          const tutorRes = await fetch("https://api.resend.com/emails", {
-            method: "POST",
-            headers: { "Content-Type": "application/json", Authorization: `Bearer ${RESEND_API_KEY}` },
-            body: JSON.stringify({
-              from: "Lana Tutors <info@lanatutors.africa>",
-              to: [tutorUser.user.email],
-              subject: `Reminder: ${booking.subject} session with ${studentProfile?.full_name || "your student"} ${"1h" === "24h" ? "tomorrow" : "in 1 hour"}`,
-              html: generateEmailTemplate(
-                tutorName?.full_name || "Tutor",
-                studentProfile?.full_name || "Student",
-                booking.subject,
-                formatDate(booking.tutor_availability.start_time),
-                formatTime(booking.tutor_availability.start_time),
-                "",
-                "1h",
-                true
-              ),
-            }),
-          });
-          if (tutorRes.ok) sentCount++;
-        }
-      } catch (err) {
-        console.error(`Error sending 1h reminder for booking ${booking.id}:`, err);
       }
     }
 
