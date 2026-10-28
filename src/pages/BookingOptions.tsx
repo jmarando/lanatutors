@@ -10,7 +10,7 @@ const BookingOptions = () => {
       icon: User,
       title: "Individual Tutor Sessions",
       description: "Book personalized 1-on-1 sessions with verified tutors",
-      price: "From KES 1,000/hr",
+      price: "Pricing on your free call",
       features: [
         "Choose your preferred tutor",
         "Flexible scheduling",

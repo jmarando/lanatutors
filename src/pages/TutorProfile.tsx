@@ -16,13 +16,11 @@ import { SEO } from "@/components/SEO";
 import { TutorAvatar, TutorBioDisplay } from "@/components/TutorDisplayInfo";
 import { formatName } from "@/utils/textFormatting";
 import { BookingCalendar } from "@/components/BookingCalendar";
-import { PackageSelector } from "@/components/PackageSelector";
 import { LearningPlanRequest } from "@/components/LearningPlanRequest";
 import { StudentPicker } from "@/components/StudentPicker";
 import { Student } from "@/hooks/useStudents";
 import { cn } from "@/lib/utils";
 import { getCurriculums, getLevelsForCurriculum, getSubjectsForCurriculumLevel } from "@/utils/curriculumData";
-import { PriceDisplay } from "@/components/PriceDisplay";
 import { analytics } from "@/utils/analytics";
 
 import tutor1 from "@/assets/tutor-1.jpg";
@@ -492,7 +490,7 @@ const TutorProfile = () => {
     <div className="min-h-screen bg-[image:var(--gradient-page)]">
       <SEO 
         title={`${tutor.name} - ${tutor.subjects.join(", ")} Tutor`}
-        description={`Book tutoring sessions with ${tutor.name}, an experienced ${tutor.subjects.join(", ")} tutor from ${tutor.school}. ${tutor.rating} star rating with ${tutor.reviews} reviews. From KES ${currentRate.toLocaleString()}/hour for online sessions.`}
+        description={`Meet ${tutor.name}, an experienced ${tutor.subjects.join(", ")} tutor from ${tutor.school}. ${tutor.rating} star rating from ${tutor.reviews} reviews. Book a free call with a learning coordinator.`}
         keywords={`${tutor.subjects.join(", ")}, Kenya tutor, ${tutor.school}, online tutoring`}
         structuredData={tutorSchema}
       />
@@ -842,8 +840,10 @@ const TutorProfile = () => {
               <Card className="border-primary/30 shadow-lg">
                 <CardContent className="p-6">
                   <div className="text-center mb-6">
-                    <h3 className="font-bold text-3xl mb-2">Book a Session</h3>
-                    <p className="text-muted-foreground text-base">Choose your preferred option</p>
+                    <h3 className="font-bold text-2xl mb-2">Talk to a Learning Coordinator</h3>
+                    <p className="text-muted-foreground text-base">
+                      Book a free call. We'll check that this tutor is the right fit, walk you through pricing and set up your first lesson.
+                    </p>
                   </div>
 
                   {/* Booking Options */}
@@ -853,43 +853,15 @@ const TutorProfile = () => {
                       <Button 
                         className="w-full group hover:shadow-lg transition-all h-auto py-5"
                         size="lg"
-                        onClick={() => handleBookingTypeSelect('single')}
-                      >
-                        <div className="flex flex-col items-center justify-center w-full gap-2">
-                          <span className="flex items-center gap-2 text-base font-semibold">
-                            <BookOpen className="w-5 h-5 shrink-0" />
-                            <span>Book a Session</span>
-                          </span>
-                          <span className="font-bold text-base">
-                            From <PriceDisplay amountKES={currentRate} />/hr
-                          </span>
-                        </div>
-                      </Button>
-                      <p className="text-xs text-center text-muted-foreground px-2">
-                        Choose date & time, select single (1hr) or double (2hrs) session, pick your curriculum & level, then pay and get instant confirmation
-                      </p>
-                    </div>
-
-                    <Separator className="my-5" />
-
-                    {/* Custom Package - Redirect to Consultation */}
-                    <div className="space-y-3">
-                      <Button 
-                        variant="outline"
-                        className="w-full bg-primary/5 border-primary/30 hover:bg-primary/10 hover:border-primary h-auto py-5 text-foreground whitespace-normal text-wrap"
-                        size="lg"
                         onClick={() => navigate('/book-consultation')}
                       >
-                        <div className="flex flex-col items-center gap-2 w-full">
-                          <div className="flex items-center gap-2">
-                            <Phone className="w-5 h-5 text-primary" />
-                            <span className="font-semibold text-base text-foreground">Want a Custom Package?</span>
-                          </div>
-                          <span className="text-sm text-muted-foreground">Speak to our learning expert</span>
-                        </div>
+                        <span className="flex items-center gap-2 text-base font-semibold">
+                          <Phone className="w-5 h-5 shrink-0" />
+                          <span>Book a Free Assessment Call</span>
+                        </span>
                       </Button>
                       <p className="text-xs text-center text-muted-foreground px-2">
-                        For multi-session packages, multiple subjects, or cross-tutor bundles - book a free consultation and we'll design the perfect plan for you
+                        Your coordinator will confirm the tutor's availability and pricing on the call.
                       </p>
                     </div>
 
@@ -919,29 +891,6 @@ const TutorProfile = () => {
                   </div>
                 </CardContent>
               </Card>
-
-              {/* Package Offers - Make More Prominent */}
-              {packages.length > 0 && (
-                <Card className="border-primary/30 bg-gradient-to-br from-primary/5 to-secondary/5">
-                  <CardContent className="p-6">
-                    <div className="text-center mb-6">
-                      <div className="inline-flex items-center gap-2 bg-primary/10 px-4 py-2 rounded-full mb-3">
-                        <Sparkles className="w-5 h-5 text-primary" />
-                        <h3 className="font-bold text-lg">Save with Packages</h3>
-                      </div>
-                    </div>
-                    
-                    <div className="space-y-4">
-                      <div className="text-sm font-medium mb-3">Available Packages</div>
-                      <PackageSelector
-                        tutorId={tutor.id}
-                        onSelectPackage={handlePackageSelect}
-                        baseRate={currentRate}
-                      />
-                    </div>
-                  </CardContent>
-                </Card>
-              )}
 
               {/* What's Included - Moved to Bottom */}
               <Card className="border-border/50">
