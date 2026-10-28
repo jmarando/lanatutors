@@ -1,3 +1,4 @@
+import { guardInternal } from "../_shared/auth-guard.ts";
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
@@ -16,6 +17,15 @@ interface ApprovalEmailRequest {
 const handler = async (req: Request): Promise<Response> => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
+  }
+
+  // Only trusted callers (another edge function via the service-role key, or a
+  // signed-in user) may invoke this. Blocks anonymous relay abuse.
+  const _guard = await guardInternal(req, { requireAdmin: false });
+  if (!_guard.ok) {
+    return new Response(JSON.stringify({ error: _guard.message }), {
+      status: _guard.status, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   }
 
   try {

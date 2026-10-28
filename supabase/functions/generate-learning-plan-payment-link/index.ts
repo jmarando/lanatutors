@@ -1,3 +1,4 @@
+import { guardInternal } from "../_shared/auth-guard.ts";
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.7.1'
 
@@ -11,6 +12,15 @@ const PESAPAL_BASE_URL = 'https://pay.pesapal.com/v3'
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
+  }
+
+  // Only trusted callers (another edge function via the service-role key, or a
+  // signed-in admin user) may invoke this. Blocks anonymous relay abuse.
+  const _guard = await guardInternal(req, { requireAdmin: true });
+  if (!_guard.ok) {
+    return new Response(JSON.stringify({ error: _guard.message }), {
+      status: _guard.status, headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   }
 
   try {
