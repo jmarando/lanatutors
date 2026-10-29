@@ -34,6 +34,9 @@ const StudentDashboard = lazy(() => import("./pages/StudentDashboard"));
 const UnifiedStudentDashboard = lazy(() => import("./pages/UnifiedStudentDashboard"));
 const TutorDashboard = lazy(() => import("./pages/TutorDashboard"));
 const AdminDashboardRedesigned = lazy(() => import("./pages/AdminDashboard-Redesigned"));
+const CrmToday = lazy(() => import("./pages/admin/CrmToday"));
+const CrmLeads = lazy(() => import("./pages/admin/CrmLeads"));
+const CrmFamily = lazy(() => import("./pages/admin/CrmFamily"));
 const BookConsultation = lazy(() => import("./pages/BookConsultation"));
 
 const AdminHolidayPackages = lazy(() => import("./pages/AdminHolidayPackages"));
@@ -74,9 +77,14 @@ const SchoolParentDashboard = lazy(() => import("./pages/school/SchoolParentDash
 const AppContent = () => {
   const location = useLocation();
   const isSchoolRoute = location.pathname.startsWith("/school/");
+  // The CRM screens carry their own top bar and phone bottom bar.
+  const isCrmRoute =
+    location.pathname === "/admin" ||
+    location.pathname === "/admin/leads" ||
+    location.pathname.startsWith("/admin/families/");
   return (
     <>
-      {!isSchoolRoute && <Navigation />}
+      {!isSchoolRoute && !isCrmRoute && <Navigation />}
       <Suspense fallback={
         <div className="min-h-screen flex items-center justify-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
@@ -110,7 +118,10 @@ const AppContent = () => {
           <Route path="/tutor-profile-submitted" element={<TutorProfileSubmitted />} />
           <Route path="/tutor-onboarding-guide" element={<TutorOnboardingGuide />} />
           <Route path="/tutor-guide-printable" element={<TutorGuidePrintable />} />
-          <Route path="/admin" element={<RequireRole roles={["admin"]}><AdminDashboardRedesigned /></RequireRole>} />
+          <Route path="/admin" element={<RequireRole roles={["admin"]}><CrmToday /></RequireRole>} />
+          <Route path="/admin/leads" element={<RequireRole roles={["admin"]}><CrmLeads /></RequireRole>} />
+          <Route path="/admin/families/:id" element={<RequireRole roles={["admin"]}><CrmFamily /></RequireRole>} />
+          <Route path="/admin/more" element={<RequireRole roles={["admin"]}><AdminDashboardRedesigned /></RequireRole>} />
           <Route path="/book-consultation" element={<BookConsultation />} />
           <Route path="/booking-confirmed" element={<BookingConfirmed />} />
           <Route path="/package-confirmed" element={<PackageConfirmed />} />
@@ -145,7 +156,7 @@ const AppContent = () => {
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Suspense>
-      {!isSchoolRoute && (
+      {!isSchoolRoute && !isCrmRoute && (
         <Suspense fallback={null}>
           <WhatsAppChatButton />
         </Suspense>
