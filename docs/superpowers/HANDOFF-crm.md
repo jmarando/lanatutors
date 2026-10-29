@@ -1,21 +1,23 @@
-# CRM handoff — apply slice 1, then build slice 2
+# CRM handoff — slice 1 is in the database; publish it, then build slice 2
 
-_Written 2026-10-29 for a session with a database/Lovable connection. Everything
-below was verified on this machine; nothing here is a guess._
+_Written 2026-10-29 for a session with a database/Lovable connection, and updated
+the same day once the migration was applied. Everything below was verified on
+this machine; nothing here is a guess._
 
 ## State in one paragraph
 
 Slice 1 of the CRM redesign (families, leads, lead activities, the Today / Leads
 / Family screens, the "+ Lead" form, call logging, the call-log import dry run)
-is **written and verified, but uncommitted and not applied to the database**.
-This session had no way to reach Postgres: `.env` holds only the public
-`VITE_SUPABASE_URL` / `VITE_SUPABASE_PUBLISHABLE_KEY` (and `.env` is tracked by
-git), there is no `LOVABLE_DB_MIGRATION_URL`, no Supabase CLI, no service-role
-key, and no Lovable MCP tool in the session. Confirmed against production on
-2026-10-29: `families`, `leads`, `lead_activities` and `crm_settings` all return
-`404 PGRST205` from PostgREST, so the migration is definitely not live.
+is **committed, merged with `main`, and its migration is applied to
+production**. `0004_crm_leads.sql` went in on 2026-10-29 through the Lovable
+connector in one transaction, and it is recorded in
+`drizzle.__drizzle_migrations`, so Lovable's drizzle runner will skip it when
+this branch merges. The new screens are **not live yet**: they ship when this
+branch is merged into `main` and published from Lovable. Until then `/admin` is
+still the old dashboard, while the new triggers already turn WhatsApp chats,
+bookings and web forms into leads.
 
-So the work left is: **commit → apply 0004 → smoke-test → slice 2**.
+So the work left is: **merge → publish → smoke-test → set the default owner → slice 2**.
 
 ---
 
@@ -24,17 +26,17 @@ So the work left is: **commit → apply 0004 → smoke-test → slice 2**.
 | | |
 |---|---|
 | Worktree | `/Users/mac/lanatutors/.claude/worktrees/crm-redesign` |
-| Branch | `claude/crm-redesign`, at `87ed63a` (the merge of PR #3) |
-| Commits on the branch | **none** — all slice-1 work is in the working tree |
+| Branch | `claude/crm-redesign`: `a83b8de` (slice 1), then `b28ca38` (merge of `origin/main`) |
 | Shared checkout | `/Users/mac/lanatutors`, on `main` |
 | Production project | `iccemuiqcdumgxiwxzdq` (`https://iccemuiqcdumgxiwxzdq.supabase.co`) |
+| Lovable project | `75fc15fb-4dcf-442a-b789-c8185bbd1cef` ("Lana Tutors"); the Lovable connector's `query_database` reaches production |
 
-`main` has moved since the branch point: `37f2023` + `ed46424` (PR #4, email
-cadence). That PR edited `src/pages/AdminDashboard-Redesigned.tsx`; this branch
-does not edit that file (it only routes to it), so a merge is expected to be
-clean — but do it before pushing.
+`origin/main` (PR #4, email cadence, which edited
+`src/pages/AdminDashboard-Redesigned.tsx`) merged cleanly as `b28ca38`.
+`npx tsc --noEmit -p tsconfig.app.json`, ESLint on the changed files and
+`vite build` all pass on the merged branch.
 
-Working-tree contents (all untracked/modified, `git status` shows them):
+What slice 1 adds or changes (commit `a83b8de`):
 
 ```
 drizzle/migrations/0004_crm_leads.sql          new, 564 lines
@@ -49,29 +51,11 @@ scripts/crm-apply/                             new: apply script
 docs/superpowers/                              new: spec, both slice plans, this file
 ```
 
-## 2. Step one: commit (2 minutes)
+## 2. Step one: commit — done
 
-Everything is uncommitted, so a `git clean` or a lost worktree loses the slice.
-This session did not commit because the repo convention is commits only on
-request.
+Committed as `a83b8de` on 2026-10-29, then `git merge origin/main` as `b28ca38`.
 
-```bash
-cd /Users/mac/lanatutors/.claude/worktrees/crm-redesign
-git status                       # expect 9 paths, no commits ahead
-git add -A
-git commit -m "CRM slice 1: families, leads and the lead pipeline
-
-- families, leads, lead_activities, crm_settings with admin-only RLS
-- WhatsApp, assessment-booking and web-form triggers, plus a backfill
-- Today, Leads and Family screens; + Lead; log call; won/lost
-- call-log import dry run; apply script for the drizzle track"
-git fetch origin
-git merge origin/main            # PR #4; AdminDashboard-Redesigned.tsx may merge cleanly
-```
-
-Optional but useful: `git push -u origin claude/crm-redesign` once you are happy.
-
-## 3. Step two: apply the migration
+## 3. Step two: apply the migration — done 2026-10-29
 
 ### What has to happen
 
@@ -83,21 +67,32 @@ run it again. The record is:
 - `hash` = `sha256` of the raw SQL file = `9cedfcb5b67d8d632fa79f840a108b25f1d71db9cb266b3c66f2df759896c2ab`
 - `created_at` = the journal entry's `when` = `1793166530801`
 
-### Connection string
+### How it was applied
 
-Lovable → Cloud → Database → **Connection string**. Use the **session pooler
-(port 5432)** or the direct connection, not the transaction pooler on 6543:
-the migration runs DDL and a backfill in one transaction.
+Lovable Cloud documents no raw Postgres connection string; its docs offer only
+the in-app SQL editor (More → Database → Manage → SQL editor). So `apply.sh`
+was not used. Instead, through the Lovable connector's `query_database`:
 
-Keep it out of the repo. `.env` is tracked here, so not there.
+1. **Read-only preflight**, one SELECT. It showed:
+   - no CRM objects yet;
+   - every source table and column present, with the right types;
+   - only the five `update_*_updated_at` triggers on the touched tables, none of
+     them calling out;
+   - `drizzle.__drizzle_migrations` holding 0000–0003 with hashes that match
+     this repo.
+2. **Probe:** confirmed the connector runs a multi-statement script as one
+   transaction.
+3. **Bundle:** one script, in this order:
+   - `BEGIN`;
+   - a guard that refuses if the hash is already recorded;
+   - the migration;
+   - the drizzle record;
+   - `COMMIT`.
+4. **Fingerprint:** production's columns, constraints, function bodies, indexes,
+   policies, RLS flags and triggers matched a scratch database built from the
+   committed file.
 
-```bash
-mkdir -p ~/.config/lanatutors
-printf '%s' 'postgresql://...' > ~/.config/lanatutors/db-url
-chmod 600 ~/.config/lanatutors/db-url
-```
-
-### Apply
+### Apply with a connection string (for reference)
 
 `scripts/crm-apply/apply.sh` was written and tested for exactly this. It:
 
@@ -110,34 +105,40 @@ chmod 600 ~/.config/lanatutors/db-url
 
 ```bash
 cd /Users/mac/lanatutors/.claude/worktrees/crm-redesign
-scripts/crm-apply/apply.sh --verify     # preflight: readable? tables absent?
 scripts/crm-apply/apply.sh              # apply + record + verify
 scripts/crm-apply/apply.sh              # second run should say "Already recorded"
+scripts/crm-apply/apply.sh --verify     # counts only; errors before the apply, when the tables do not exist yet
 ```
 
 Tested on a scratch cluster: first run creates 4 tables, 9 triggers, 4 policies
-and the record; second run is a no-op.
+and the record; second run is a no-op. Against production it would now say
+"Already recorded".
 
-### Manual path (Lovable SQL editor) if you have no connection string
+### Without a connection string (next migration)
 
-```bash
-scripts/crm-apply/apply.sh --print-record   # prints the drizzle INSERT
-```
+Send a single script through the connector or the SQL editor:
 
-Run the whole contents of `drizzle/migrations/0004_crm_leads.sql` in the Lovable
-SQL editor, then run the printed `INSERT`. Do both in the same session if you
-can.
+- `BEGIN;`
+- the migration file;
+- the `INSERT` from `scripts/crm-apply/apply.sh --print-record`;
+- `COMMIT;`
 
-### Expected after apply
+Running the migration and the record as two separate scripts risks applying one
+without the other.
 
-| Check | Expected |
-|---|---|
-| tables / triggers / policies | 4 / 9 / 4 |
-| functions | `crm_create_lead`, `crm_team_members`, `crm_set_default_owner` present and executable by `authenticated` |
-| families | roughly one per distinct phone across ~117 chats and ~152 bookings — a few hundred |
-| chats_linked | = number of `whatsapp_conversations` rows (~117) |
-| calls_linked | = number of `consultation_bookings` rows (~152) |
-| activities | at least the 44 copied consultation notes, plus assessments, stage changes and hand-offs |
+### Expected and actual after apply
+
+| Check | Expected | Actual, 2026-10-29 |
+|---|---|---|
+| tables / triggers / policies / functions | 4 / 9 / 4 / 8 | 4 / 9 / 4 / 8 |
+| admin RPCs | `crm_create_lead`, `crm_team_members`, `crm_set_default_owner` executable by `authenticated`, not `anon` | as expected |
+| families | about one per distinct phone | 219 (219 distinct phones; no booking without one) |
+| leads | one per family | 219: 18 new, 16 contacted, 11 call booked, 10 won, 164 lost (stale) |
+| needs reply | escalated chats where the parent wrote last | 16 open leads |
+| chats_linked | every `whatsapp_conversations` row | 120 of 120 |
+| calls_linked | every `consultation_bookings` row | 154 of 154 |
+| activities | assessments plus the copied notes | 211: 154 assessments, 44 consultation notes, 13 admin notes |
+| original rows | `updated_at` unchanged | no booking or chat touched by the backfill |
 
 If `families` is 0 while `chats_linked`/`calls_linked` are 0 too, the backfill
 did not run — stop and read the backfill block at the end of the migration.
@@ -173,10 +174,20 @@ bookings Won, and closes anything quiet since 1 Sept 2026 as lost/stale.
 ## 5. Step four: set the default owner (gap, 5 minutes)
 
 New leads take their owner from `crm_settings.default_owner_id`, and **there is
-no UI for it yet**. Until it is set, imported and new leads are unassigned.
+no UI for it yet**. Until it is set, imported and new leads are unassigned; all
+219 backfilled leads have no owner, and setting the default does not assign them.
+
+From a signed-in admin session:
 
 ```sql
 select public.crm_set_default_owner('<admin-user-uuid>');
+```
+
+That function checks `has_role(auth.uid(), 'admin')`, so it refuses through the
+Lovable connector, which has no user. There, update the row directly:
+
+```sql
+update public.crm_settings set default_owner_id = '<admin-user-uuid>', updated_at = now();
 ```
 
 Adding a small control on the Leads page is a good first slice-2 task.
@@ -269,9 +280,15 @@ The cases themselves are listed in the slice-1 plan (Task 1, steps 2 and 9).
 - **The call-log importer has only been run on a synthetic 6-row fixture**, not
   the real sheet. Run it on the real file and check the flagged rows before
   importing anything.
-- `crm_assessment_time` and `crm_stage_label` are callable helpers that were not
-  revoked from `anon` (they only format values). Harmless, but tighten them when
-  convenient.
+- `anon` can still execute four functions (checked in production 2026-10-29):
+  - `crm_normalize_phone`, `crm_assessment_time` and `crm_stage_label`, which
+    only format values;
+  - `crm_leads_before_update`, a trigger function that cannot be called directly.
+
+  Harmless, but tighten them when convenient.
 - The **old CRM tab and `crm_notes`** are still under `/admin/more`; retire them
   after the team has switched over.
-- **PR #4 changed `AdminDashboard-Redesigned.tsx`**; merge main before pushing.
+- **Deploy order:** the migration is already live, so merging this branch and
+  publishing from Lovable only ships the screens. Lovable should skip 0004
+  because it is recorded. After the publish, check that
+  `drizzle.__drizzle_migrations` still has exactly one `9cedfcb5…` row.
