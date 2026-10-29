@@ -1,4 +1,7 @@
 import { ReactNode } from "react";
+import { Link } from "react-router-dom";
+import { ArrowLeft } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { AdminSidebar } from "./AdminSidebar";
 
@@ -32,6 +35,11 @@ export function AdminLayout({ children, activeTab, onTabChange, counts }: AdminL
             <div className="flex-1">
               <h1 className="text-lg font-semibold text-foreground">Admin Dashboard</h1>
             </div>
+            <Button asChild variant="outline" size="sm">
+              <Link to="/admin">
+                <ArrowLeft className="h-4 w-4" /> Today
+              </Link>
+            </Button>
           </header>
           <div className="p-4 md:p-6 bg-white dark:bg-background min-h-full">
             {children}
