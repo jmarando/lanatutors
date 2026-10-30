@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { BACKUP_REPLY, looksLikeSpam, matchPrefill } from "./lana.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -10,8 +11,9 @@ const VERIFY_TOKEN = Deno.env.get("WHATSAPP_VERIFY_TOKEN");
 const WA_TOKEN = Deno.env.get("WHATSAPP_ACCESS_TOKEN");
 const WA_PHONE_ID = Deno.env.get("WHATSAPP_PHONE_NUMBER_ID");
 const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
-const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
-const GEMINI_MODEL = Deno.env.get("GEMINI_MODEL") ?? "gemini-2.5-flash";
+// Same gateway and default model as the site's other AI features (recommend-packages, generate-session-summary).
+const AI_GATEWAY_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
+const AI_MODEL = Deno.env.get("WHATSAPP_AI_MODEL") ?? "google/gemini-2.5-flash";
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
@@ -55,6 +57,13 @@ WHAT WE OFFER (context only — keep it brief)
 - 1-on-1 tutoring: CBC (Kenya), British (IGCSE/A-Levels), American, IB. Online (Google Meet) or in-person in Nairobi.
 - Single sessions, lesson packages, or a custom learning plan.
 - Vetted tutors. All emails come from info@lanatutors.africa.
+
+WHO IS WRITING
+Most people who write are parents, but not all. Work out who you are talking to before you follow the steps below.
+- Tutors or teachers looking for work (they say they teach, want to join us or apply, or ask about jobs, vacancies or sending a CV) are not parents. Reply in one or two sentences and put the tutor registration page on its own line: https://lanatutors.africa/become-a-tutor. Do not ask about a child, do not offer a coordinator call, and do not call escalate_to_team unless they are chasing an application they already submitted.
+- A student writing for themselves: follow the steps below, but speak to the student.
+- Anything that is not about tutoring (prizes, loans, investments, adverts): do not follow the parent steps. Say politely that this number is for tutoring questions, and stop.
+- If the conversation already contains messages from our team, carry on from where they left off. Do not repeat questions they already asked or answers they already gave.
 
 HOW TO HANDLE A PARENT
 1. Warm one-line acknowledgement, using their first name if known.
@@ -115,7 +124,9 @@ const TOOLS = [
   },
 ];
 
-type Msg = { role: "user" | "model"; content: string; ts: string };
+// `via` records how a bot message was produced ("ai", "backup" when the AI failed, or "prefill:<intent>" for a ready-made
+// reply); `sent_by: "human"` marks the team's replies.
+type Msg = { role: "user" | "model"; content: string; ts: string; via?: string; sent_by?: string };
 
 async function sendWhatsAppMessage(to: string, text: string) {
   // Safety: strip any "— Lana 💛" / "- Lana" sign-offs the model may add
@@ -326,65 +337,92 @@ async function toolEscalate(args: {
   }
 }
 
-// ---------------- GEMINI WITH TOOLS ----------------
+// ---------------- AI (LOVABLE GATEWAY) ----------------
 
-async function callGemini(
+type ToolCall = { id: string; function: { name: string; arguments?: string } };
+type GatewayMessage = {
+  role: "system" | "user" | "assistant" | "tool";
+  content: string | null;
+  tool_calls?: ToolCall[];
+  tool_call_id?: string;
+};
+type AiResult = { ok: true; text: string } | { ok: false; reason: string };
+
+const MAX_TOOL_ROUNDS = 4;
+const AI_TIMEOUT_MS = 25_000;
+
+function parseToolArgs(raw: string | undefined): Record<string, string> {
+  try {
+    return JSON.parse(raw || "{}");
+  } catch {
+    return {};
+  }
+}
+
+// Calls the AI. When it can't answer, the result says why, so the caller can alert the team instead
+// of failing silently.
+async function callAI(
   history: Msg[],
   profileName: string | undefined,
   parentId: string | null,
   phone: string,
-): Promise<{ text: string; escalated: boolean }> {
-  if (!GEMINI_API_KEY) return { text: fallbackReply(), escalated: false };
-
-  const contents = history.map((m) => ({
-    role: m.role,
-    parts: [{ text: m.content }],
-  }));
-
+): Promise<AiResult> {
   const sys =
     SYSTEM_PROMPT +
     (profileName ? `\n\nParent's WhatsApp name: "${profileName}".` : "") +
     (parentId ? `\nThis WhatsApp number IS linked to an existing parent account.` : `\nThis WhatsApp number is NOT linked to an existing parent account yet.`);
 
-  let escalated = false;
-  const maxRounds = 4;
+  const messages: GatewayMessage[] = [
+    { role: "system", content: sys },
+    ...history.map((m): GatewayMessage => ({ role: m.role === "model" ? "assistant" : "user", content: m.content })),
+  ];
 
-  for (let round = 0; round < maxRounds; round++) {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`;
-    const res = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        systemInstruction: { parts: [{ text: sys }] },
-        contents,
-        tools: [{ functionDeclarations: TOOLS }],
-      }),
-    });
-    if (!res.ok) {
-      console.error("Gemini error:", res.status, await res.text());
-      return { text: fallbackReply(), escalated };
+  for (let round = 0; round < MAX_TOOL_ROUNDS; round++) {
+    let res: Response;
+    let data: { choices?: { message?: GatewayMessage }[] } | undefined;
+    try {
+      res = await fetch(AI_GATEWAY_URL, {
+        method: "POST",
+        headers: { Authorization: `Bearer ${LOVABLE_API_KEY}`, "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: AI_MODEL,
+          messages,
+          tools: TOOLS.map((tool) => ({ type: "function", function: tool })),
+        }),
+        signal: AbortSignal.timeout(AI_TIMEOUT_MS),
+      });
+      if (res.ok) data = await res.json();
+    } catch (e) {
+      const timedOut = e instanceof Error && (e.name === "TimeoutError" || e.name === "AbortError");
+      const detail = e instanceof Error ? e.message : String(e);
+      return {
+        ok: false,
+        reason: timedOut
+          ? `The AI gateway timed out after ${AI_TIMEOUT_MS / 1000} seconds`
+          : `The AI gateway call failed: ${detail}`,
+      };
     }
-    const data = await res.json();
-    const parts = data?.candidates?.[0]?.content?.parts ?? [];
-    const calls = parts.filter((p: any) => p.functionCall);
-    const textParts = parts.filter((p: any) => p.text).map((p: any) => p.text);
+    if (!res.ok) {
+      const detail = (await res.text().catch(() => "")).slice(0, 300);
+      return { ok: false, reason: `The AI gateway answered ${res.status}: ${detail}` };
+    }
+
+    const message = data?.choices?.[0]?.message;
+    const calls = message?.tool_calls ?? [];
 
     if (calls.length === 0) {
-      const text = textParts.join("").trim() || fallbackReply();
-      return { text, escalated };
+      const text = message?.content?.trim();
+      return text ? { ok: true, text } : { ok: false, reason: "The AI answered with an empty message" };
     }
 
-    // Append model turn (with function calls) and execute each
-    contents.push({ role: "model", parts });
-
-    for (const c of calls) {
-      const name = c.functionCall.name;
-      const args = c.functionCall.args ?? {};
+    // Append the model's turn (with its tool calls), then answer each call.
+    messages.push({ role: "assistant", content: message?.content ?? null, tool_calls: calls });
+    for (const call of calls) {
+      const args = parseToolArgs(call.function.arguments);
       let result: unknown = { ok: true };
-      if (name === "get_booking_link") {
-        result = toolGetBookingLink(args);
-      } else if (name === "escalate_to_team") {
-        escalated = true;
+      if (call.function.name === "get_booking_link") {
+        result = toolGetBookingLink({ type: args.type ?? "" });
+      } else if (call.function.name === "escalate_to_team") {
         result = await toolEscalate({
           reason: args.reason ?? "unspecified",
           phone,
@@ -393,23 +431,68 @@ async function callGemini(
           history,
         });
       }
-      contents.push({
-        role: "user",
-        parts: [{ functionResponse: { name, response: result } }],
-      } as any);
+      messages.push({ role: "tool", tool_call_id: call.id, content: JSON.stringify(result) });
     }
   }
 
-  return { text: "Thanks — our team will follow up shortly.", escalated };
+  return { ok: true, text: "Thanks — our team will follow up shortly." };
 }
 
-function fallbackReply() {
-  return [
-    "Hi, thanks for reaching out to Lana Tutors. So I point you the right way — what grade or year is your child in, which curriculum, and which subjects are giving trouble?",
-    "",
-    "Our Learning Coordinator will then match your child with the right tutor and share the rate. If it's easier, tell me a good time to call you, or book a free 20-minute assessment call here:",
-    "https://lanatutors.africa/book-consultation",
-  ].join("\n");
+function escapeHtml(text: string) {
+  return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
+// Tells the team that Lana's AI could not answer and a backup message went out instead, and why.
+// Without this the failure is invisible: the person just gets a canned message.
+async function alertAiFailure(args: {
+  phone: string;
+  profileName?: string;
+  parentId: string | null;
+  reason: string;
+  history: Msg[];
+}) {
+  console.error("Lana's AI could not reply, backup message sent:", args.reason);
+  if (!RESEND_API_KEY) {
+    console.error("RESEND_API_KEY missing — cannot send the AI failure alert");
+    return;
+  }
+  const transcript = args.history
+    .map((m) => `${m.role === "user" ? "Parent" : m.sent_by === "human" ? "Team" : "Lana"}: ${m.content}`)
+    .join("\n\n");
+  const html = `
+    <table width="100%" cellpadding="0" cellspacing="0" style="font-family:Arial,sans-serif;background:#fef5f4;padding:24px;">
+      <tr><td>
+        <table width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;margin:0 auto;background:#fff;border-radius:12px;padding:24px;border-top:4px solid #f59e0b;">
+          <tr><td>
+            <h2 style="color:#b45309;margin:0 0 12px;">Lana's AI could not reply</h2>
+            <p style="margin:4px 0;"><strong>From:</strong> ${escapeHtml(args.profileName ?? "Unknown")} (+${escapeHtml(args.phone)})</p>
+            <p style="margin:4px 0;"><strong>Parent ID:</strong> ${args.parentId ?? "Not linked"}</p>
+            <p style="margin:4px 0;"><strong>What went wrong:</strong> ${escapeHtml(args.reason)}</p>
+            <p style="margin:12px 0 4px;">They were sent a short backup message asking who they are, and the chat is now with the team. Please reply to them on WhatsApp.</p>
+            <p style="margin:4px 0;color:#777;font-size:13px;">If this keeps happening, check the Lovable AI gateway (credits and status) and the whatsapp-webhook function logs.</p>
+            <hr style="border:none;border-top:1px solid #eee;margin:16px 0;"/>
+            <h3 style="color:#333;">Transcript</h3>
+            <pre style="white-space:pre-wrap;font-family:Arial,sans-serif;background:#fafafa;padding:12px;border-radius:8px;font-size:14px;">${escapeHtml(transcript)}</pre>
+          </td></tr>
+        </table>
+      </td></tr>
+    </table>
+  `;
+  try {
+    const r = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${RESEND_API_KEY}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        from: "Lana Tutors <info@lanatutors.africa>",
+        to: ["info@lanatutors.africa"],
+        subject: `⚠️ WhatsApp: Lana's AI could not reply — ${args.profileName ?? args.phone}`,
+        html,
+      }),
+    });
+    if (!r.ok) console.error("Resend AI-failure alert failed:", await r.text());
+  } catch (e) {
+    console.error("AI-failure alert error:", e);
+  }
 }
 
 // ---------------- WEBHOOK HANDLER ----------------
@@ -468,31 +551,53 @@ async function handleIncoming(body: any) {
 
     // If a human has taken over, just save the inbound message and stay silent.
     // The admin replies from the WhatsApp Inbox; no canned auto-reply.
+    // This flag is also what limits Lana to one auto-reply: she hands the chat to the team after replying (below),
+    // and "Resume AI" clears it so she answers once more. Earlier replies in the history, hers or the team's,
+    // don't count against her.
     if (convo.escalated) {
       console.log(`Convo escalated — saving inbound from ${from}, AI silent.`);
       await saveConversation(from, history);
       return;
     }
 
-    // Lana only sends ONE auto-reply per conversation. If she has already
-    // replied at any point, hand the thread to a human and stay silent
-    // until an admin clicks "Resume AI".
-    const alreadyReplied = history.some((m) => m.role === "model");
-    if (alreadyReplied) {
-      console.log(`First reply already sent for ${from} — handing to human.`);
-      await saveConversation(from, history, true);
+    // Prize and loan scams get no reply: the parent script is wrong for them and the team has no use for the hand-off.
+    if (looksLikeSpam(text)) {
+      console.log(`Ignoring what looks like spam from ${from}.`);
+      await saveConversation(from, history);
       return;
     }
 
-    const { text: rawReply } = await callGemini(history, profileName, convo.parent_id, from);
-    const reply = sanitizeReply(rawReply);
+    // The website's chat button prefills what the person wants to say. Someone who sends that unchanged has
+    // already told us what they want, so they get the team's own reply and the AI is not asked.
+    let reply: string;
+    let via: string;
+    let aiFailure: string | null = null;
+    const prefilled = matchPrefill(text);
+    if (prefilled) {
+      reply = prefilled.reply;
+      via = `prefill:${prefilled.intent}`;
+    } else {
+      const ai = await callAI(history, profileName, convo.parent_id, from);
+      if (ai.ok) {
+        reply = sanitizeReply(ai.text);
+        via = "ai";
+      } else {
+        reply = BACKUP_REPLY;
+        via = "backup";
+        aiFailure = ai.reason;
+      }
+    }
 
     await sendWhatsAppMessage(from, reply);
     await logComm({ phone: from, parentId: convo.parent_id, direction: "outbound", content: reply });
 
-    history.push({ role: "model", content: reply, ts: new Date().toISOString() });
-    // Always hand off after the first auto-reply.
+    history.push({ role: "model", content: reply, ts: new Date().toISOString(), via });
+    // Always hand off after an auto-reply.
     await saveConversation(from, history, true);
+
+    if (aiFailure) {
+      await alertAiFailure({ phone: from, profileName, parentId: convo.parent_id, reason: aiFailure, history });
+    }
 
   } catch (e) {
     console.error("handleIncoming error:", e);
