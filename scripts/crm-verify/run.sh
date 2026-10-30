@@ -4,6 +4,8 @@
 #   scripts/crm-verify/run.sh            build the stand-in schema, apply 0004, 0005 and 0006 (twice),
 #                                        run the SQL tests, then tear the cluster down
 #   scripts/crm-verify/run.sh --keep     leave the cluster running (prints how to connect)
+#   CRM_VERIFY_SKIP_TRACKER=1            skip the invented-tracker import (when applying a real-shaped one through
+#   CRM_VERIFY_EXTRA_SQL="a.sql b.sql"   SQL files applied last, in order)
 #
 # Needs the Postgres 14+ binaries on PATH (Homebrew: postgresql@16). Nothing here touches a real
 # database: the cluster lives in a temp folder and listens on 127.0.0.1 only.
@@ -69,6 +71,30 @@ if [ -f "$LESSONS" ]; then
   echo "== tests (after the second apply)"
   "${PSQL[@]}" -f "$HERE/test_second_apply.sql" 2>&1 | tee -a "$WORK/tests.log"
 fi
+
+# The SQL the tracker dry run writes: refuses to commit when its own totals are wrong, then runs once and is repeatable.
+if [ -f "$LESSONS" ] && [ -z "${CRM_VERIFY_SKIP_TRACKER:-}" ] && command -v python3 >/dev/null; then
+  echo "== tracker import SQL (invented tracker)"
+  python3 -I "$HERE/make_tracker_import.py" "$WORK/tracker"
+  if "${PSQL[@]}" -f "$WORK/tracker/import_bad.sql" >"$WORK/bad.log" 2>&1; then
+    echo "FAIL: an import whose totals are wrong was committed"; exit 1
+  fi
+  grep -q "Reconciliation failed" "$WORK/bad.log" || { echo "FAIL: the wrong import did not fail on its reconciliation"; cat "$WORK/bad.log"; exit 1; }
+  "${PSQL[@]}" -v expect=0 -f "$HERE/test_tracker_import.sql" 2>&1 | tee -a "$WORK/tests.log"
+  "${PSQL[@]}" -f "$WORK/tracker/import.sql" 2>&1 | tee -a "$WORK/tests.log"
+  grep -q "Reconciliation ok" "$WORK/tests.log" || { echo "FAIL: the import did not report a matching reconciliation"; exit 1; }
+  "${PSQL[@]}" -v expect=1 -f "$HERE/test_tracker_import.sql" 2>&1 | tee -a "$WORK/tests.log"
+  echo "== second run of import.sql adds nothing"
+  "${PSQL[@]}" -f "$WORK/tracker/import.sql" 2>&1 | tee -a "$WORK/tests.log"
+  "${PSQL[@]}" -v expect=1 -f "$HERE/test_tracker_import.sql" 2>&1 | tee -a "$WORK/tests.log"
+fi
+
+# Optional: SQL files to apply last, in order (space-separated paths), for example an import.sql made from the
+# real tracker with invented family phones, followed by a file of SELECTs that prints its totals.
+for extra in ${CRM_VERIFY_EXTRA_SQL:-}; do
+  echo "== extra: $(basename "$extra")"
+  "${PSQL[@]}" -f "$extra" 2>&1 | tee -a "$WORK/tests.log"
+done
 
 # Warnings the triggers are expected to raise (psql prints them to stderr, which tee captured).
 for expected in "no prepaid session left"; do
