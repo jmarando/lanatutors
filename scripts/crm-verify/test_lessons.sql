@@ -550,6 +550,49 @@ BEGIN
   RAISE NOTICE 'T19 ok';
 END $$;
 
+-- ------------------------------------------------------------------ T20 half sessions (the tracker records 3.5 taken)
+DO $$
+DECLARE f uuid := crm_test.get('f1'); e uuid; p uuid; q uuid; b uuid; rep public.lesson_reports; r record; p_used numeric;
+BEGIN
+  INSERT INTO public.enrolments (family_id, student_name, subject, tutor_id)
+  VALUES (f, 'Amani Kamau', 'Art', crm_test.id(32)) RETURNING id INTO e;
+  INSERT INTO public.session_packs (enrolment_id, amount_kes, sessions_bought, sessions_used, rate_per_session, paid_on)
+  VALUES (e, 5800, 4, 3.5, 1450, NULL) RETURNING id INTO p;
+  SELECT * INTO r FROM public.crm_enrolment_balances WHERE enrolment_id = e;
+  PERFORM crm_test.assert(r.sessions_used = 3.5 AND r.sessions_left = 0.5, 'T20 half sessions are kept, got ' || r.sessions_used || ' / ' || r.sessions_left);
+  PERFORM crm_test.assert(r.balance = 5800 - 3.5 * 1450, 'T20 the family still holds KES 725, got ' || r.balance);
+
+  -- a lesson needs a whole session: the half left over is not used
+  b := crm_test.book(crm_test.id(11), crm_test.id(22), crm_test.id(41), 'Art', now() - interval '70 hours');
+  PERFORM crm_test.assert((SELECT enrolment_id FROM public.bookings WHERE id = b) = e, 'T20 the lesson matched the imported enrolment');
+  PERFORM crm_test.as_admin();
+  INSERT INTO public.lesson_reports (booking_id, attendance) VALUES (b, 'delivered') RETURNING * INTO rep;
+  RESET ROLE;
+  PERFORM crm_test.assert(rep.pack_id IS NULL AND rep.tutor_pay_kes IS NULL, 'T20 half a session left is not enough for a lesson');
+  SELECT sessions_used INTO p_used FROM public.session_packs WHERE id = p;
+  PERFORM crm_test.assert(p_used = 3.5, 'T20 the old pack is untouched');
+
+  -- the next payment prices that lesson, at its own rate
+  INSERT INTO public.session_packs (enrolment_id, amount_kes, sessions_bought, paid_on) VALUES (e, 2900, 2, DATE '2026-11-05') RETURNING id INTO q;
+  SELECT * INTO rep FROM public.lesson_reports WHERE booking_id = b;
+  PERFORM crm_test.assert(rep.pack_id = q AND rep.tutor_pay_kes = 1015, 'T20 the new pack priced the lesson, got ' || coalesce(rep.tutor_pay_kes::text, 'null'));
+  SELECT * INTO r FROM public.crm_enrolment_balances WHERE enrolment_id = e;
+  PERFORM crm_test.assert(r.sessions_left = 1.5 AND r.balance = 725 + 2900 - 1450, 'T20 balances after the new pack, got ' || r.sessions_left || ' / ' || r.balance);
+
+  -- a payment with only half a session of room does not pick up a waiting lesson either
+  INSERT INTO public.enrolments (family_id, student_name, subject, tutor_id)
+  VALUES (f, 'Amani Kamau', 'Music', crm_test.id(32)) RETURNING id INTO e;
+  b := crm_test.book(crm_test.id(11), crm_test.id(22), crm_test.id(41), 'Music', now() - interval '71 hours');
+  PERFORM crm_test.as_admin();
+  INSERT INTO public.lesson_reports (booking_id, attendance) VALUES (b, 'delivered');
+  RESET ROLE;
+  INSERT INTO public.session_packs (enrolment_id, amount_kes, sessions_bought, sessions_used, rate_per_session, paid_on)
+  VALUES (e, 5800, 4, 3.5, 1450, DATE '2026-11-06');
+  SELECT * INTO rep FROM public.lesson_reports WHERE booking_id = b;
+  PERFORM crm_test.assert(rep.pack_id IS NULL, 'T20 half a session of room does not pick up a waiting lesson');
+  RAISE NOTICE 'T20 ok';
+END $$;
+
 -- ------------------------------------------------------------------ snapshot for the second-apply check
 DO $$
 BEGIN

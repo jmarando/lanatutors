@@ -22,6 +22,8 @@
 --    tracker import carries them as opening balances) and never join "Needs confirming".
 --  * sessions_used is not capped at sessions_bought: the team's tracker allows more sessions taken
 --    than paid for (the family then owes), and the import has to reproduce that.
+--  * Sessions may be fractional: the tracker records half sessions (3.5 taken). A lesson uses one
+--    whole session, so a pack with only half a session left is skipped for the next lesson.
 
 -- 70% of the family's rate for each session taken (the tracker's rule).
 CREATE OR REPLACE FUNCTION public.crm_tutor_share()
@@ -64,9 +66,9 @@ CREATE TABLE IF NOT EXISTS public.session_packs (
   amount_kes numeric(12,2) NOT NULL CHECK (amount_kes >= 0),
   reference text,
   paid_on date DEFAULT ((now() AT TIME ZONE 'Africa/Nairobi')::date),
-  sessions_bought integer NOT NULL CHECK (sessions_bought > 0),
+  sessions_bought numeric(6,2) NOT NULL CHECK (sessions_bought > 0),
   rate_per_session numeric(12,2) NOT NULL CHECK (rate_per_session >= 0),
-  sessions_used integer NOT NULL DEFAULT 0 CHECK (sessions_used >= 0),
+  sessions_used numeric(6,2) NOT NULL DEFAULT 0 CHECK (sessions_used >= 0),
   notes text,
   created_by uuid DEFAULT auth.uid(),
   created_at timestamptz NOT NULL DEFAULT now()
@@ -246,7 +248,7 @@ BEGIN
     ELSE
       PERFORM pg_advisory_xact_lock(hashtextextended(v_enrolment::text, 0));
       SELECT * INTO v_pack FROM session_packs
-      WHERE enrolment_id = v_enrolment AND sessions_used < sessions_bought
+      WHERE enrolment_id = v_enrolment AND sessions_bought - sessions_used >= 1
       ORDER BY paid_on NULLS FIRST, created_at, id
       LIMIT 1;
       IF FOUND THEN
@@ -311,7 +313,7 @@ CREATE OR REPLACE FUNCTION public.crm_session_packs_after_insert()
 RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
 DECLARE
   r record;
-  v_room integer := NEW.sessions_bought - NEW.sessions_used;
+  v_room integer := floor(NEW.sessions_bought - NEW.sessions_used)::integer;
 BEGIN
   BEGIN
     IF v_room > 0 THEN
@@ -415,9 +417,9 @@ SELECT
      ORDER BY sp.paid_on DESC NULLS LAST, sp.created_at DESC LIMIT 1),
     e.rate_per_session) AS rate_per_session,
   coalesce(pk.packs, 0)::integer AS packs,
-  coalesce(pk.bought, 0)::integer AS sessions_bought,
-  coalesce(pk.used, 0)::integer AS sessions_used,
-  (coalesce(pk.bought, 0) - coalesce(pk.used, 0))::integer AS sessions_left,
+  coalesce(pk.bought, 0)::numeric(8,2) AS sessions_bought,
+  coalesce(pk.used, 0)::numeric(8,2) AS sessions_used,
+  (coalesce(pk.bought, 0) - coalesce(pk.used, 0))::numeric(8,2) AS sessions_left,
   coalesce(pk.paid, 0)::numeric(12,2) AS amount_paid,
   coalesce(pk.balance, 0)::numeric(12,2) AS balance,
   coalesce(rp.unpriced, 0)::integer AS unpriced_lessons,
