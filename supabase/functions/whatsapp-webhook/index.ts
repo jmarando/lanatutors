@@ -1,6 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
-import { BACKUP_REPLY, looksLikeSpam, matchPrefill } from "./lana.ts";
+import { ATTACHMENT_NOTICE, BACKUP_REPLY, isGreeting, looksLikeSpam, matchPrefill } from "./lana.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -18,6 +18,10 @@ const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
 const WA_APP_SECRET = Deno.env.get("WHATSAPP_APP_SECRET");
+// Lana waits this long before answering, so a thought sent as two or three messages gets one reply that reads all
+// of it. After a bare greeting she waits four times as long, because the question usually follows.
+const REPLY_DELAY_MS = Number(Deno.env.get("WHATSAPP_REPLY_DELAY_MS") ?? 5000);
+const MAX_HISTORY = 50; // as in whatsapp-send
 
 const admin = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
 
@@ -124,9 +128,19 @@ const TOOLS = [
   },
 ];
 
-// `via` records how a bot message was produced ("ai", "backup" when the AI failed, or "prefill:<intent>" for a ready-made
-// reply); `sent_by: "human"` marks the team's replies.
-type Msg = { role: "user" | "model"; content: string; ts: string; via?: string; sent_by?: string };
+// `via` records how a bot message was produced ("ai", "backup" when the AI failed, "prefill:<intent>" for a ready-made
+// reply, "notice:attachment" or "opt_out"); `sent_by: "human"` marks the team's replies. Messages from the person
+// carry WhatsApp's message id, and `attachment` when they sent a photo, voice note or file.
+type Msg = {
+  role: "user" | "model";
+  content: string;
+  ts: string;
+  via?: string;
+  sent_by?: string;
+  wa_id?: string;
+  attachment?: { type: string; id?: string; caption?: string };
+};
+type Conversation = { phone_number: string; parent_id: string | null; escalated: boolean; messages: Msg[]; updated_at: string };
 
 async function sendWhatsAppMessage(to: string, text: string) {
   // Safety: strip any "— Lana 💛" / "- Lana" sign-offs the model may add
@@ -229,7 +243,7 @@ async function loadConversation(phone: string, profileName?: string) {
     // profiles.phone may not exist on all rows; ignore
   }
 
-  const { data: created } = await admin
+  const { data: created, error } = await admin
     .from("whatsapp_conversations")
     .insert({
       phone_number: phone,
@@ -239,20 +253,59 @@ async function loadConversation(phone: string, profileName?: string) {
     })
     .select()
     .single();
-  return created;
+  if (created) return created;
+  // Two messages that arrive together can both find no chat; the one that loses the insert uses the other's.
+  const { data: existing } = await admin.from("whatsapp_conversations").select("*").eq("phone_number", phone).maybeSingle();
+  if (!existing) console.error("Could not create the WhatsApp conversation:", error);
+  return existing;
 }
 
-async function saveConversation(phone: string, messages: Msg[], escalated?: boolean) {
-  const trimmed = messages.slice(-20);
-  const patch: Record<string, unknown> = {
-    messages: trimmed,
-    last_message_at: new Date().toISOString(),
-  };
-  if (escalated) {
-    patch.escalated = true;
-    patch.escalated_at = new Date().toISOString();
+async function getConversation(phone: string): Promise<Conversation | null> {
+  const { data } = await admin.from("whatsapp_conversations").select("*").eq("phone_number", phone).maybeSingle();
+  return data;
+}
+
+const SAVE_ATTEMPTS = 3;
+
+// Adds messages to a chat without overwriting anyone else's: another message from the same burst, or a reply the
+// team sends from the inbox while Lana is writing. It re-reads the chat just before writing and only writes if
+// nobody has written since (a trigger changes updated_at on every write); if the chat keeps changing, the last
+// attempt writes anyway rather than lose the message. Messages already saved are skipped, since Meta sometimes
+// delivers a message twice. Returns the chat as written, and whether anything was added.
+async function appendMessages(
+  phone: string,
+  msgs: Msg[],
+  patch: Record<string, unknown> = {},
+): Promise<{ convo: Conversation; added: boolean } | null> {
+  for (let attempt = 1; attempt <= SAVE_ATTEMPTS + 1; attempt++) {
+    const convo = await getConversation(phone);
+    if (!convo) return null;
+    const history = Array.isArray(convo.messages) ? convo.messages : [];
+    const fresh = msgs.filter((m) => !m.wa_id || !history.some((h) => h.wa_id === m.wa_id));
+    if (fresh.length === 0) return { convo, added: false };
+    const update = admin
+      .from("whatsapp_conversations")
+      .update({ messages: [...history, ...fresh].slice(-MAX_HISTORY), last_message_at: new Date().toISOString(), ...patch })
+      .eq("phone_number", phone);
+    const { data } = await (attempt <= SAVE_ATTEMPTS ? update.eq("updated_at", convo.updated_at) : update)
+      .select()
+      .maybeSingle();
+    if (data) return { convo: data, added: true };
   }
-  await admin.from("whatsapp_conversations").update(patch).eq("phone_number", phone);
+  return null;
+}
+
+// Takes the chat for Lana's one answer by setting `escalated`, which also hands it to the team once she has
+// answered. Only one of several webhook calls racing on the same chat can take it, so nobody gets two answers.
+async function claimForReply(phone: string): Promise<boolean> {
+  const { data } = await admin
+    .from("whatsapp_conversations")
+    .update({ escalated: true, escalated_at: new Date().toISOString() })
+    .eq("phone_number", phone)
+    .eq("escalated", false)
+    .select("phone_number")
+    .maybeSingle();
+  return Boolean(data);
 }
 
 // ---------------- TOOLS ----------------
@@ -435,7 +488,7 @@ async function callAI(
     }
   }
 
-  return { ok: true, text: "Thanks — our team will follow up shortly." };
+  return { ok: false, reason: `The AI called tools ${MAX_TOOL_ROUNDS} times without writing a reply` };
 }
 
 function escapeHtml(text: string) {
@@ -497,7 +550,58 @@ async function alertAiFailure(args: {
 
 // ---------------- WEBHOOK HANDLER ----------------
 
-async function handleIncoming(body: any) {
+// The parts of Meta's webhook payload this function reads.
+type WaMessage = {
+  from: string;
+  id: string;
+  type: string;
+  text?: { body?: string };
+  button?: { text?: string };
+  interactive?: { button_reply?: { title?: string }; list_reply?: { title?: string } };
+  [attachment: string]: unknown;
+};
+type WebhookBody = {
+  entry?: { changes?: { value?: { messages?: WaMessage[]; contacts?: { profile?: { name?: string } }[] } }[] }[];
+};
+
+const ATTACHMENT_LABELS: Record<string, string> = {
+  image: "Image",
+  video: "Video",
+  audio: "Audio",
+  document: "Document",
+  sticker: "Sticker",
+  location: "Location",
+  contacts: "Contact card",
+};
+
+// What an incoming message says, as it is saved and shown to the AI. A tapped reply button or list choice reads as
+// the text on it. An attachment is saved as a label so the team can see what arrived: Lana can't open it, but she
+// reads its caption. Reactions need no answer.
+function readIncoming(msg: WaMessage): Pick<Msg, "content" | "attachment"> | null {
+  switch (msg.type) {
+    case "reaction":
+      return null;
+    case "text":
+      return { content: msg.text?.body ?? "" };
+    case "button":
+      return { content: msg.button?.text ?? "" };
+    case "interactive":
+      return { content: (msg.interactive?.button_reply ?? msg.interactive?.list_reply)?.title ?? "" };
+    default: {
+      const media = (msg[msg.type] ?? {}) as { id?: string; caption?: string; filename?: string; voice?: boolean };
+      const label = media.voice ? "Voice note" : ATTACHMENT_LABELS[msg.type] ?? "Attachment";
+      const caption = media.caption?.trim() || undefined;
+      return {
+        content: `[${label}${media.filename ? `: ${media.filename}` : ""}]${caption ? ` ${caption}` : ""}`,
+        attachment: { type: msg.type, id: media.id, caption },
+      };
+    }
+  }
+}
+
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+async function handleIncoming(body: WebhookBody) {
   try {
     const change = body.entry?.[0]?.changes?.[0]?.value;
     const msg = change?.messages?.[0];
@@ -508,16 +612,12 @@ async function handleIncoming(body: any) {
     const from = msg.from;
     const profileName = change?.contacts?.[0]?.profile?.name;
 
-    if (msg.type !== "text") {
-      console.log("Non-text message:", msg.type);
-      await sendWhatsAppMessage(
-        from,
-        "Thanks for your message. I can only read text right now — please type your question and I'll help.",
-      );
+    const incoming = readIncoming(msg);
+    if (!incoming) {
+      console.log(`Ignoring a ${msg.type} from ${from}.`);
       return;
     }
-
-    const text = msg.text?.body ?? "";
+    const text = incoming.content;
     console.log(`Incoming from ${profileName ?? from}: ${text}`);
 
     const convo = await loadConversation(from, profileName);
@@ -526,11 +626,23 @@ async function handleIncoming(body: any) {
       return;
     }
 
+    const saved = await appendMessages(from, [
+      { role: "user", content: text, ts: new Date().toISOString(), wa_id: msg.id, ...(incoming.attachment && { attachment: incoming.attachment }) },
+    ]);
+    if (!saved) {
+      console.error(`Could not save the message from ${from}`);
+      return;
+    }
+    if (!saved.added) {
+      console.log(`Already have message ${msg.id} from ${from}: Meta delivered it twice.`);
+      return;
+    }
+
     // Log inbound
     await logComm({ phone: from, parentId: convo.parent_id, direction: "inbound", content: text });
 
     // Handle opt-out or abusive replies immediately (works even if escalated)
-    if (isOptOutOrAbusiveMessage(text)) {
+    if (!incoming.attachment && isOptOutOrAbusiveMessage(text)) {
       await suppressWhatsAppNumber(from, "inbound_reply");
       const confirmation = [
         "Understood. We've removed you from our WhatsApp marketing list, so you won't get any more promotional messages.",
@@ -539,45 +651,72 @@ async function handleIncoming(body: any) {
       ].join("\n");
       await sendWhatsAppMessage(from, confirmation);
       await logComm({ phone: from, parentId: convo.parent_id, direction: "outbound", content: confirmation });
-      const history: Msg[] = Array.isArray(convo.messages) ? convo.messages : [];
-      history.push({ role: "user", content: text, ts: new Date().toISOString() });
-      history.push({ role: "model", content: confirmation, ts: new Date().toISOString() });
-      await saveConversation(from, history, true);
+      const now = new Date().toISOString();
+      await appendMessages(from, [{ role: "model", content: confirmation, ts: now, via: "opt_out" }], { escalated: true, escalated_at: now });
       return;
     }
 
-    const history: Msg[] = Array.isArray(convo.messages) ? convo.messages : [];
-    history.push({ role: "user", content: text, ts: new Date().toISOString() });
+    // If a human has taken over, the message is saved for them and Lana stays silent.
+    // This flag is also what limits Lana to one answer: she takes the chat to answer (claimForReply) and the team
+    // has it afterwards, and "Resume AI" clears it so she answers once more. Earlier replies in the history, hers or
+    // the team's, don't count against her.
+    if (saved.convo.escalated) {
+      console.log(`Convo escalated — saved inbound from ${from}, AI silent.`);
+      return;
+    }
 
-    // If a human has taken over, just save the inbound message and stay silent.
-    // The admin replies from the WhatsApp Inbox; no canned auto-reply.
-    // This flag is also what limits Lana to one auto-reply: she hands the chat to the team after replying (below),
-    // and "Resume AI" clears it so she answers once more. Earlier replies in the history, hers or the team's,
-    // don't count against her.
-    if (convo.escalated) {
-      console.log(`Convo escalated — saving inbound from ${from}, AI silent.`);
-      await saveConversation(from, history);
+    // People often send one thought as two or three messages. Wait a moment so that one reply reads all of them:
+    // whichever message arrived last answers for the lot.
+    await sleep(isGreeting(text) ? REPLY_DELAY_MS * 4 : REPLY_DELAY_MS);
+    const latest = await getConversation(from);
+    if (!latest || latest.escalated) return;
+    const history = latest.messages;
+    if (history.filter((m) => m.role === "user").at(-1)?.wa_id !== msg.id) {
+      console.log(`A newer message from ${from} will be answered instead.`);
+      return;
+    }
+    // What they've said since anyone last replied, and the part of it Lana can read.
+    const lastReply = history.map((m) => m.role).lastIndexOf("model");
+    const pending = history.slice(lastReply + 1);
+    const readable = pending.filter((m) => !m.attachment || m.attachment.caption);
+
+    // Only attachments so far: ask once for a typed message. That is not an answer, so Lana keeps the chat; if
+    // they send more attachments, the team takes it.
+    if (readable.length === 0) {
+      if (history[lastReply]?.via === "notice:attachment") {
+        await claimForReply(from);
+        return;
+      }
+      await sendWhatsAppMessage(from, ATTACHMENT_NOTICE);
+      await logComm({ phone: from, parentId: convo.parent_id, direction: "outbound", content: ATTACHMENT_NOTICE });
+      await appendMessages(from, [{ role: "model", content: ATTACHMENT_NOTICE, ts: new Date().toISOString(), via: "notice:attachment" }]);
       return;
     }
 
     // Prize and loan scams get no reply: the parent script is wrong for them and the team has no use for the hand-off.
-    if (looksLikeSpam(text)) {
+    if (readable.every((m) => looksLikeSpam(m.content))) {
       console.log(`Ignoring what looks like spam from ${from}.`);
-      await saveConversation(from, history);
       return;
     }
 
-    // The website's chat button prefills what the person wants to say. Someone who sends that unchanged has
-    // already told us what they want, so they get the team's own reply and the AI is not asked.
+    if (!(await claimForReply(from))) {
+      console.log(`Another reply to ${from} is already on its way.`);
+      return;
+    }
+    // Anything that arrived while the chat was being taken is part of what Lana answers.
+    const context = (await getConversation(from))?.messages ?? history;
+
+    // The website's chat button prefills what the person wants to say. Someone who sends that unchanged, and nothing
+    // else, has already told us what they want, so they get the team's own reply and the AI is not asked.
     let reply: string;
     let via: string;
     let aiFailure: string | null = null;
-    const prefilled = matchPrefill(text);
+    const prefilled = pending.length === 1 ? matchPrefill(pending[0].content) : null;
     if (prefilled) {
       reply = prefilled.reply;
       via = `prefill:${prefilled.intent}`;
     } else {
-      const ai = await callAI(history, profileName, convo.parent_id, from);
+      const ai = await callAI(context, profileName, convo.parent_id, from);
       if (ai.ok) {
         reply = sanitizeReply(ai.text);
         via = "ai";
@@ -590,13 +729,11 @@ async function handleIncoming(body: any) {
 
     await sendWhatsAppMessage(from, reply);
     await logComm({ phone: from, parentId: convo.parent_id, direction: "outbound", content: reply });
-
-    history.push({ role: "model", content: reply, ts: new Date().toISOString(), via });
-    // Always hand off after an auto-reply.
-    await saveConversation(from, history, true);
+    const sent: Msg = { role: "model", content: reply, ts: new Date().toISOString(), via };
+    await appendMessages(from, [sent]);
 
     if (aiFailure) {
-      await alertAiFailure({ phone: from, profileName, parentId: convo.parent_id, reason: aiFailure, history });
+      await alertAiFailure({ phone: from, profileName, parentId: convo.parent_id, reason: aiFailure, history: [...context, sent] });
     }
 
   } catch (e) {
@@ -634,10 +771,12 @@ serve(async (req: Request) => {
       if (!WA_APP_SECRET) {
         console.warn("WHATSAPP_APP_SECRET is not set — webhook signatures are NOT enforced. Set it in Supabase to activate verification.");
       }
-      const body = JSON.parse(rawBody);
+      const body: WebhookBody = JSON.parse(rawBody);
       console.log("WA webhook payload:", JSON.stringify(body));
-      // fire-and-forget so we ACK within Meta's 5s window
-      handleIncoming(body);
+      // Answer Meta straight away (it retries after 5 seconds), and hand the runtime the reply work, which waits for
+      // follow-up messages and then the AI, so it is not cut off once the response has gone.
+      const work = handleIncoming(body);
+      (globalThis as { EdgeRuntime?: { waitUntil(promise: Promise<unknown>): void } }).EdgeRuntime?.waitUntil(work);
       return new Response(JSON.stringify({ success: true }), {
         status: 200,
         headers: { ...corsHeaders, "Content-Type": "application/json" },

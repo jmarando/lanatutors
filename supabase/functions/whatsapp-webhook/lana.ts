@@ -16,6 +16,10 @@ export const BACKUP_REPLY = [
   TUTOR_SIGNUP_URL,
 ].join("\n");
 
+// Sent when someone has only sent attachments. Lana can't open voice notes, photos or files.
+export const ATTACHMENT_NOTICE =
+  "Thanks for your message. I can't open voice notes, photos or files here, so could you type what you need?";
+
 export type PrefillIntent = "tutor_apply" | "assessment_call" | "learning_plan" | "callback" | "learn_more";
 
 // What people send when they start a chat from a button instead of typing. The first four are the options in
@@ -88,6 +92,15 @@ export function matchPrefill(text: string): { intent: PrefillIntent; reply: stri
   const key = normalize(text);
   const intent = (Object.keys(PREFILLED) as PrefillIntent[]).find((i) => normalize(PREFILLED[i]) === key);
   return intent ? { intent, reply: TEAM_REPLIES[intent] } : null;
+}
+
+// A message that is only a hello, in English or Swahili. The real question usually follows within seconds, so
+// Lana waits longer before answering one.
+const GREETING =
+  /^(?:hi+|hey+|hello+|helo|hallo|greetings|greatings|good (?:morning|afternoon|evening|day)|morning|evening|habari(?: yako| yenu)?|jambo|hujambo|mambo|sasa|niaje|salaam?|salamu)(?: (?:there|lana|lana tutors|team|sir|madam|maam))?$/;
+
+export function isGreeting(text: string): boolean {
+  return GREETING.test(normalize(text));
 }
 
 // Prize and loan scams that reach the number. Deliberately narrow: a wrong guess means a parent gets no

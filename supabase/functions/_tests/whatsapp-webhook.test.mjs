@@ -292,3 +292,210 @@ test("honours a request to stop: confirms, suppresses the number and does not as
   assert.match(fn.world.sent[0].text, /removed you from our WhatsApp marketing list/);
   assert.equal(fn.world.tables.whatsapp_suppressions.length, 1);
 });
+
+// ---------------- Messages in bursts, twice, or while the team is writing ----------------
+
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+const userMessages = (conversation) => conversation.messages.filter((m) => m.role === "user").map((m) => m.content);
+// What the person said, as the model was shown it.
+const userTurns = (call) => (call?.body.messages ?? []).filter((m) => m.role === "user").map((m) => m.content);
+
+test("two messages sent back to back get one reply that reads both, and both are saved", async (t) => {
+  const fn = await start(t, { gateway: [{ ...aiText("Thanks for your interest. Please register here."), delayMs: 20 }] });
+
+  await fn.deliver(inbound({ from: PARENT, text: "Hello, I'd like to apply to teach chemistry with you." }));
+  await fn.deliver(inbound({ from: PARENT, text: "My email is tutor@example.com" }));
+  await fn.settle();
+
+  assert.equal(fn.world.sent.length, 1, "one reply");
+  assert.deepEqual(userMessages(fn.world.conversation(PARENT)), [
+    "Hello, I'd like to apply to teach chemistry with you.",
+    "My email is tutor@example.com",
+  ]);
+  assert.equal(fn.world.gatewayCalls.length, 1);
+  assert.deepEqual(userTurns(fn.world.gatewayCalls[0]), [
+    "Hello, I'd like to apply to teach chemistry with you.",
+    "My email is tutor@example.com",
+  ]);
+});
+
+test("a bare greeting waits for the question that usually follows, and one reply answers both", async (t) => {
+  const fn = await start(t, { gateway: [aiText("Happy to help with Form 3 chemistry. What's a good time to call you?")] });
+
+  await fn.deliver(inbound({ from: PARENT, text: "Hello" }));
+  await sleep(40); // longer than the usual pause (20 ms in tests), shorter than the pause after a greeting
+  await fn.deliver(inbound({ from: PARENT, text: "I need a chemistry tutor for my son in Form 3" }));
+  await fn.settle();
+
+  assert.equal(fn.world.gatewayCalls.length, 1);
+  assert.deepEqual(userTurns(fn.world.gatewayCalls[0]), ["Hello", "I need a chemistry tutor for my son in Form 3"]);
+  assert.deepEqual(fn.world.sent.map((m) => m.text), ["Happy to help with Form 3 chemistry. What's a good time to call you?"]);
+});
+
+test("a message Meta delivers twice is saved and answered once", async (t) => {
+  const fn = await start(t, { gateway: [aiText("Happy to help with IB physics. What's a good time to call you?"), aiText("A SECOND REPLY")] });
+  const message = inbound({ from: PARENT, id: "wamid.same", text: "Do you have IB physics tutors?" });
+
+  await fn.post(message);
+  await fn.post(message);
+
+  assert.deepEqual(fn.world.sent.map((m) => m.text), ["Happy to help with IB physics. What's a good time to call you?"]);
+  assert.deepEqual(userMessages(fn.world.conversation(PARENT)), ["Do you have IB physics tutors?"]);
+});
+
+test("a reply the team sends from the inbox while Lana is writing is kept", async (t) => {
+  const teamReply = { role: "model", content: "Hi, this is Wanjiru from the team. Calling you now.", ts: "2026-10-30T09:00:01.000Z", sent_by: "human" };
+  const fn = await start(t, {
+    gateway: [{
+      ...aiText("Thanks. What's a good time for our Learning Coordinator to call?"),
+      delayMs: 20,
+      // What whatsapp-send does when the team replies: append to the chat and write it back.
+      meanwhile: (world) => {
+        const row = world.tables.whatsapp_conversations.find((c) => c.phone_number === PARENT);
+        row.messages = [...row.messages, teamReply];
+        row.updated_at = world.timestamp();
+      },
+    }],
+  });
+
+  await fn.post(inbound({ from: PARENT, text: "Please call me about Grade 8 maths." }));
+
+  const contents = fn.world.conversation(PARENT).messages.map((m) => m.content);
+  assert.ok(contents.includes(teamReply.content), "the team's reply is still in the chat");
+  assert.ok(contents.includes("Thanks. What's a good time for our Learning Coordinator to call?"));
+});
+
+test("hands its background work to the runtime, so the reply is not cut off once Meta has its answer", async (t) => {
+  const fn = await start(t, { gateway: [aiText("Happy to help.")] });
+
+  await fn.deliver(inbound({ from: PARENT, text: "Do you teach IGCSE French?" }));
+
+  assert.equal(fn.world.background.length, 1, "the work was given to EdgeRuntime.waitUntil");
+  await fn.settle();
+});
+
+test("an AI that keeps asking for tools without ever answering counts as a failure", async (t) => {
+  const fn = await start(t, {
+    gateway: Array.from({ length: 4 }, (_, i) => aiToolCall("get_booking_link", { type: "assessment_call" }, `call_${i}`)),
+  });
+
+  await fn.post(inbound({ from: PARENT, text: PARENT_MESSAGE }));
+
+  assert.match(fn.world.sent[0].text, /are you a parent or student/i);
+  assert.equal(fn.world.conversation(PARENT).messages.at(-1).via, "backup");
+  assert.equal(fn.world.emails.length, 1);
+});
+
+// ---------------- Photos, voice notes, reactions and buttons ----------------
+
+test("a photo sent while the team has the chat is saved for them, and Lana says nothing", async (t) => {
+  const fn = await start(t, {
+    conversations: [{ phone_number: PARENT, escalated: true, messages: [{ role: "user", content: "Hello", ts: "2026-10-30T08:00:00.000Z" }] }],
+  });
+
+  await fn.post(inbound({ from: PARENT, type: "image", image: { id: "media.1", mime_type: "image/jpeg", caption: "Here is his homework" } }));
+
+  assert.deepEqual(fn.world.sent, []);
+  const last = fn.world.conversation(PARENT).messages.at(-1);
+  assert.equal(last.role, "user");
+  assert.match(last.content, /image/i);
+  assert.match(last.content, /Here is his homework/);
+});
+
+test("a voice note in a new chat gets one request to type, and Lana still answers what they type next", async (t) => {
+  const fn = await start(t, { gateway: [aiText("Happy to help with Grade 4 maths. What's a good time to call you?")] });
+
+  await fn.post(inbound({ from: PARENT, type: "audio", audio: { id: "media.2", mime_type: "audio/ogg; codecs=opus", voice: true } }));
+
+  assert.equal(fn.world.sent.length, 1);
+  assert.match(fn.world.sent[0].text, /type/i);
+  assert.equal(fn.world.gatewayCalls.length, 0);
+  assert.equal(fn.world.conversation(PARENT)?.escalated, false, "asking them to type does not hand the chat over");
+
+  await fn.post(inbound({ from: PARENT, text: "I need a maths tutor for my Grade 4 son" }));
+
+  assert.equal(fn.world.sent.length, 2);
+  assert.equal(fn.world.sent[1].text, "Happy to help with Grade 4 maths. What's a good time to call you?");
+  assert.equal(fn.world.conversation(PARENT).escalated, true);
+});
+
+test("a second voice note in a row goes to the team instead of repeating the request to type", async (t) => {
+  const fn = await start(t);
+
+  await fn.post(inbound({ from: PARENT, type: "audio", audio: { id: "media.3", voice: true } }));
+  await fn.post(inbound({ from: PARENT, type: "audio", audio: { id: "media.4", voice: true } }));
+
+  assert.equal(fn.world.sent.length, 1, "asked to type only once");
+  assert.equal(fn.world.conversation(PARENT)?.escalated, true, "the team takes it from here");
+});
+
+test("an emoji reaction gets no reply", async (t) => {
+  const fn = await start(t);
+
+  await fn.post(inbound({ from: PARENT, type: "reaction", reaction: { message_id: "wamid.out.1", emoji: "👍" } }));
+
+  assert.deepEqual(fn.world.sent, []);
+  assert.equal(fn.world.gatewayCalls.length, 0);
+});
+
+test("a tapped reply button is read like a typed message", async (t) => {
+  const fn = await start(t, { gateway: [aiText("Great. What's a good time for our Learning Coordinator to call you?")] });
+
+  await fn.post(inbound({ from: PARENT, type: "button", button: { text: "Yes, call me", payload: "CALL_ME" } }));
+
+  assert.deepEqual(fn.world.sent.map((m) => m.text), ["Great. What's a good time for our Learning Coordinator to call you?"]);
+  assert.deepEqual(userTurns(fn.world.gatewayCalls[0]), ["Yes, call me"]);
+});
+
+test("a choice picked from an interactive message is read like a typed message", async (t) => {
+  const fn = await start(t, { gateway: [aiText("Great, let's book it. Which country are you in?")] });
+
+  await fn.post(inbound({
+    from: PARENT,
+    type: "interactive",
+    interactive: { type: "button_reply", button_reply: { id: "book", title: "Book a call" } },
+  }));
+
+  assert.deepEqual(userTurns(fn.world.gatewayCalls[0]), ["Book a call"]);
+  assert.deepEqual(fn.world.sent.map((m) => m.text), ["Great, let's book it. Which country are you in?"]);
+});
+
+test("a write that lands between Lana reading the chat and saving her reply is kept", async (t) => {
+  const teamReply = { role: "model", content: "Hello from the team, we'll call you at 4pm.", ts: "2026-10-30T09:00:02.000Z", sent_by: "human" };
+  const fn = await start(t, {
+    gateway: [{
+      ...aiText("Thanks. Our Learning Coordinator will call you."),
+      // The next write is Lana saving her reply: the team's message lands just before it.
+      meanwhile: (world) => {
+        world.beforeNextUpdate = (w) => {
+          const row = w.tables.whatsapp_conversations.find((c) => c.phone_number === PARENT);
+          row.messages = [...row.messages, teamReply];
+          row.updated_at = w.timestamp();
+        };
+      },
+    }],
+  });
+
+  await fn.post(inbound({ from: PARENT, text: "Can someone call me about A-Level physics?" }));
+
+  const contents = fn.world.conversation(PARENT).messages.map((m) => m.content);
+  assert.ok(contents.includes(teamReply.content), "the team's message survived");
+  assert.ok(contents.includes("Thanks. Our Learning Coordinator will call you."), "and so did Lana's");
+});
+
+test("if the team takes over just as Lana is about to answer, she stays silent", async (t) => {
+  const fn = await start(t, { gateway: [aiText("THIS SHOULD NOT BE SENT")] });
+
+  await fn.deliver(inbound({ from: PARENT, text: "Do you have a German tutor for an adult learner?" }));
+  // Lana is waiting for follow-up messages; her next write is taking the chat to answer. The team's
+  // "Take over" lands just before it.
+  fn.world.beforeNextUpdate = (w) => {
+    const row = w.tables.whatsapp_conversations.find((c) => c.phone_number === PARENT);
+    row.escalated = true;
+    row.updated_at = w.timestamp();
+  };
+  await fn.settle();
+
+  assert.deepEqual(fn.world.sent, []);
+  assert.equal(fn.world.gatewayCalls.length, 0);
+});
