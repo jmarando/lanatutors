@@ -635,6 +635,9 @@ const Home = () => {
               <h4 className="font-bold mb-4">For Students</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li><Link to="/tutors">Find Tutors</Link></li>
+                <li><Link to="/tutors-in-nairobi">Home Tutors in Nairobi</Link></li>
+                <li><Link to="/tutors-in-mombasa">Tutors in Mombasa</Link></li>
+                <li><Link to="/tutors-in-kisumu">Tutors in Kisumu</Link></li>
                 <li><Link to="/diaspora">Tutors for Diaspora Families</Link></li>
                 <li><Link to="/login">My Dashboard</Link></li>
                 <li><Link to="/how-it-works">How It Works</Link></li>
