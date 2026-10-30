@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -20,8 +20,9 @@ import { supabase } from "@/integrations/supabase/client";
 
 const ForTutors = () => {
   const navigate = useNavigate();
-  const [isChecking, setIsChecking] = useState(true);
 
+  // The page renders straight away (the build-time prerender needs it to); a signed-in tutor
+  // is sent to their dashboard once this check finishes.
   useEffect(() => {
     const checkTutorStatus = async () => {
       try {
@@ -44,24 +45,11 @@ const ForTutors = () => {
         }
       } catch (error) {
         console.error('Error checking tutor status:', error);
-      } finally {
-        setIsChecking(false);
       }
     };
 
     checkTutorStatus();
   }, [navigate]);
-
-  if (isChecking) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading...</p>
-        </div>
-      </div>
-    );
-  }
 
   const benefits = [
     {

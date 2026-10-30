@@ -1,7 +1,7 @@
 import { Helmet } from 'react-helmet-async';
 import { useLocation } from 'react-router-dom';
 
-const SITE_URL = 'https://lanatutors.africa';
+export const SITE_URL = 'https://lanatutors.africa';
 
 interface SEOProps {
   title: string;
