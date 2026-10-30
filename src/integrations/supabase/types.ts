@@ -316,6 +316,7 @@ export type Database = {
           converted_to_customer: boolean | null
           created_at: string | null
           email: string | null
+          family_id: string | null
           follow_up_sent_at: string | null
           follow_up_status: string | null
           grade_level: string
@@ -346,6 +347,7 @@ export type Database = {
           converted_to_customer?: boolean | null
           created_at?: string | null
           email?: string | null
+          family_id?: string | null
           follow_up_sent_at?: string | null
           follow_up_status?: string | null
           grade_level: string
@@ -376,6 +378,7 @@ export type Database = {
           converted_to_customer?: boolean | null
           created_at?: string | null
           email?: string | null
+          family_id?: string | null
           follow_up_sent_at?: string | null
           follow_up_status?: string | null
           grade_level?: string
@@ -395,7 +398,15 @@ export type Database = {
           updated_at?: string | null
           urgency?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "consultation_bookings_family_id_fkey"
+            columns: ["family_id"]
+            isOneToOne: false
+            referencedRelation: "families"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       consultation_notes: {
         Row: {
@@ -462,6 +473,24 @@ export type Database = {
           id?: string
           note?: string
           note_type?: string
+        }
+        Relationships: []
+      }
+      crm_settings: {
+        Row: {
+          default_owner_id: string | null
+          id: boolean
+          updated_at: string
+        }
+        Insert: {
+          default_owner_id?: string | null
+          id?: boolean
+          updated_at?: string
+        }
+        Update: {
+          default_owner_id?: string | null
+          id?: boolean
+          updated_at?: string
         }
         Relationships: []
       }
@@ -618,6 +647,60 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      families: {
+        Row: {
+          area: string | null
+          created_at: string
+          email: string | null
+          id: string
+          notes: string | null
+          parent_name: string | null
+          parent_profile_id: string | null
+          phone: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          area?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          notes?: string | null
+          parent_name?: string | null
+          parent_profile_id?: string | null
+          phone?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          area?: string | null
+          created_at?: string
+          email?: string | null
+          id?: string
+          notes?: string | null
+          parent_name?: string | null
+          parent_profile_id?: string | null
+          phone?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "families_parent_profile_id_fkey"
+            columns: ["parent_profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "families_parent_profile_id_fkey"
+            columns: ["parent_profile_id"]
+            isOneToOne: false
+            referencedRelation: "public_tutor_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       general_learning_plan_requests: {
         Row: {
@@ -1281,6 +1364,181 @@ export type Database = {
             columns: ["added_by"]
             isOneToOne: false
             referencedRelation: "public_tutor_profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lead_activities: {
+        Row: {
+          body: string | null
+          created_at: string
+          created_by: string | null
+          family_id: string
+          id: string
+          kind: string
+          lead_id: string | null
+          meta: Json
+          occurred_at: string
+          source_id: string | null
+          source_table: string | null
+        }
+        Insert: {
+          body?: string | null
+          created_at?: string
+          created_by?: string | null
+          family_id: string
+          id?: string
+          kind?: string
+          lead_id?: string | null
+          meta?: Json
+          occurred_at?: string
+          source_id?: string | null
+          source_table?: string | null
+        }
+        Update: {
+          body?: string | null
+          created_at?: string
+          created_by?: string | null
+          family_id?: string
+          id?: string
+          kind?: string
+          lead_id?: string | null
+          meta?: Json
+          occurred_at?: string
+          source_id?: string | null
+          source_table?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_activities_family_id_fkey"
+            columns: ["family_id"]
+            isOneToOne: false
+            referencedRelation: "families"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lead_activities_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      leads: {
+        Row: {
+          assessment_at: string | null
+          assessment_outcome: string | null
+          budget: string | null
+          channel: string
+          created_at: string
+          curriculum: string | null
+          family_id: string
+          grade_level: string | null
+          id: string
+          last_activity_at: string
+          lost_at: string | null
+          lost_reason: string | null
+          mode: string | null
+          needs_reply: boolean
+          next_step: string | null
+          next_step_at: string | null
+          next_step_owner_id: string | null
+          owner_id: string | null
+          quoted_package: string | null
+          quoted_rate_kes: number | null
+          recommended_tutor_id: string | null
+          source_id: string | null
+          source_table: string | null
+          stage: string
+          student_name: string | null
+          subjects: string[]
+          updated_at: string
+          urgency: string | null
+          won_at: string | null
+        }
+        Insert: {
+          assessment_at?: string | null
+          assessment_outcome?: string | null
+          budget?: string | null
+          channel?: string
+          created_at?: string
+          curriculum?: string | null
+          family_id: string
+          grade_level?: string | null
+          id?: string
+          last_activity_at?: string
+          lost_at?: string | null
+          lost_reason?: string | null
+          mode?: string | null
+          needs_reply?: boolean
+          next_step?: string | null
+          next_step_at?: string | null
+          next_step_owner_id?: string | null
+          owner_id?: string | null
+          quoted_package?: string | null
+          quoted_rate_kes?: number | null
+          recommended_tutor_id?: string | null
+          source_id?: string | null
+          source_table?: string | null
+          stage?: string
+          student_name?: string | null
+          subjects?: string[]
+          updated_at?: string
+          urgency?: string | null
+          won_at?: string | null
+        }
+        Update: {
+          assessment_at?: string | null
+          assessment_outcome?: string | null
+          budget?: string | null
+          channel?: string
+          created_at?: string
+          curriculum?: string | null
+          family_id?: string
+          grade_level?: string | null
+          id?: string
+          last_activity_at?: string
+          lost_at?: string | null
+          lost_reason?: string | null
+          mode?: string | null
+          needs_reply?: boolean
+          next_step?: string | null
+          next_step_at?: string | null
+          next_step_owner_id?: string | null
+          owner_id?: string | null
+          quoted_package?: string | null
+          quoted_rate_kes?: number | null
+          recommended_tutor_id?: string | null
+          source_id?: string | null
+          source_table?: string | null
+          stage?: string
+          student_name?: string | null
+          subjects?: string[]
+          updated_at?: string
+          urgency?: string | null
+          won_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "leads_family_id_fkey"
+            columns: ["family_id"]
+            isOneToOne: false
+            referencedRelation: "families"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leads_recommended_tutor_id_fkey"
+            columns: ["recommended_tutor_id"]
+            isOneToOne: false
+            referencedRelation: "tutor_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leads_recommended_tutor_id_fkey"
+            columns: ["recommended_tutor_id"]
+            isOneToOne: false
+            referencedRelation: "tutor_profiles_public"
             referencedColumns: ["id"]
           },
         ]
@@ -2931,6 +3189,7 @@ export type Database = {
           created_at: string
           escalated: boolean
           escalated_at: string | null
+          family_id: string | null
           last_message_at: string
           messages: Json
           parent_id: string | null
@@ -2942,6 +3201,7 @@ export type Database = {
           created_at?: string
           escalated?: boolean
           escalated_at?: string | null
+          family_id?: string | null
           last_message_at?: string
           messages?: Json
           parent_id?: string | null
@@ -2953,6 +3213,7 @@ export type Database = {
           created_at?: string
           escalated?: boolean
           escalated_at?: string | null
+          family_id?: string | null
           last_message_at?: string
           messages?: Json
           parent_id?: string | null
@@ -2960,7 +3221,15 @@ export type Database = {
           profile_name?: string | null
           updated_at?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_conversations_family_id_fkey"
+            columns: ["family_id"]
+            isOneToOne: false
+            referencedRelation: "families"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       whatsapp_suppressions: {
         Row: {
@@ -3096,6 +3365,54 @@ export type Database = {
       assign_user_role: {
         Args: { _role: string; _user_id: string }
         Returns: undefined
+      }
+      crm_assessment_time: {
+        Args: { p_date: string; p_time: string }
+        Returns: string
+      }
+      crm_create_lead: {
+        Args: {
+          p_channel?: string
+          p_curriculum?: string
+          p_email?: string
+          p_grade_level?: string
+          p_note?: string
+          p_parent_name: string
+          p_phone: string
+          p_student_name?: string
+          p_subjects?: string[]
+        }
+        Returns: string
+      }
+      crm_normalize_phone: { Args: { p: string }; Returns: string }
+      crm_open_lead: {
+        Args: {
+          p_at?: string
+          p_channel: string
+          p_family_id: string
+          p_source_id: string
+          p_source_table: string
+        }
+        Returns: string
+      }
+      crm_record_assessment_booking: {
+        Args: {
+          p: Database["public"]["Tables"]["consultation_bookings"]["Row"]
+        }
+        Returns: string
+      }
+      crm_set_default_owner: { Args: { p_user_id: string }; Returns: undefined }
+      crm_stage_label: { Args: { p_stage: string }; Returns: string }
+      crm_team_members: {
+        Args: never
+        Returns: {
+          full_name: string
+          user_id: string
+        }[]
+      }
+      crm_upsert_family: {
+        Args: { p_email?: string; p_name: string; p_phone: string }
+        Returns: string
       }
       generate_tutor_slug: {
         Args: { full_name: string; tutor_id: string }
