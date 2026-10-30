@@ -18,7 +18,7 @@ import {
   Sparkles
 } from "lucide-react";
 import { Link } from "react-router-dom";
-import { SEO } from "@/components/SEO";
+import { SEO, SITE_URL } from "@/components/SEO";
 import { analytics } from "@/utils/analytics";
 import { supabase } from "@/integrations/supabase/client";
 import { GroupClassBanner } from "@/components/GroupClassBanner";
@@ -49,8 +49,8 @@ const Home = () => {
     "@type": "EducationalOrganization",
     "name": "Lana Tutors",
     "description": "Your Trusted Tutoring Partner - Quality online tutoring from verified Kenyan teachers. Join from anywhere in the world.",
-    "url": window.location.origin,
-    "logo": `${window.location.origin}/favicon.ico`,
+    "url": SITE_URL,
+    "logo": `${SITE_URL}/favicon.png`,
     "address": {
       "@type": "PostalAddress",
       "streetAddress": "First Floor, Arbor House, Arboretum Drive",
