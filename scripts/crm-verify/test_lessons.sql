@@ -527,6 +527,29 @@ BEGIN
   RAISE NOTICE 'T17 ok';
 END $$;
 
+-- ------------------------------------------------------------------ T19 the client cannot choose the enrolment, the pack or the pay
+-- (a tutor will write these reports in the payouts slice; what they send for those columns is ignored)
+DO $$
+DECLARE b uuid; rep public.lesson_reports;
+BEGIN
+  b := crm_test.book(crm_test.id(11), crm_test.id(21), crm_test.id(41), 'Maths', now() - interval '60 hours');
+  PERFORM crm_test.as_admin();
+  INSERT INTO public.lesson_reports (booking_id, attendance, tutor_pay_kes, pack_id, enrolment_id)
+  VALUES (b, 'delivered', 99999, crm_test.get('pack2'), crm_test.get('e3')) RETURNING * INTO rep;
+  RESET ROLE;
+  PERFORM crm_test.assert(rep.enrolment_id = crm_test.get('e1'), 'T19 the enrolment comes from the booking, not from the client');
+  PERFORM crm_test.assert(rep.pack_id = crm_test.get('pack1') AND rep.tutor_pay_kes = 2100,
+    'T19 pack and pay are worked out by the database, got ' || coalesce(rep.tutor_pay_kes::text, 'null'));
+
+  b := crm_test.book(crm_test.id(11), crm_test.id(21), crm_test.id(41), 'Maths', now() - interval '61 hours');
+  PERFORM crm_test.as_admin();
+  INSERT INTO public.lesson_reports (booking_id, attendance, tutor_pay_kes, pack_id)
+  VALUES (b, 'tutor_absent', 5000, crm_test.get('pack1')) RETURNING * INTO rep;
+  RESET ROLE;
+  PERFORM crm_test.assert(rep.pack_id IS NULL AND rep.tutor_pay_kes = 0, 'T19 a lesson that does not count cannot be given pay');
+  RAISE NOTICE 'T19 ok';
+END $$;
+
 -- ------------------------------------------------------------------ snapshot for the second-apply check
 DO $$
 BEGIN
