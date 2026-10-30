@@ -6,7 +6,8 @@
 // dist/<path>/index.html and dist/<path>.html, so the raw HTML of /tutors, /diaspora and the rest
 // carries that page's own title, description, canonical, Open Graph tags and body. That HTML is
 // what WhatsApp and Facebook link previews and crawlers that don't run JavaScript read. In the
-// browser, src/main.tsx still starts the app with createRoot, which replaces this markup.
+// browser, src/main.tsx hydrates this markup. Anything that updates state before hydration ends
+// must do it in a transition (see src/contexts/AuthContext.tsx), or React re-renders the page.
 //
 // Add a page to public/sitemap.xml and the next publish prerenders it. A page is skipped, and keeps
 // the plain SPA shell, if it throws while rendering in Node (for example by reading `window` during
