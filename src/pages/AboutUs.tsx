@@ -184,7 +184,7 @@ const AboutUs = () => {
   return (
     <div className="min-h-screen bg-[image:var(--gradient-page)]">
       <SEO
-        title="About Us - Our Mission to Democratize Quality Education Globally"
+        title="About Us: Verified Kenyan Teachers, Worldwide"
         description="Learn about Lana's mission to make quality tutoring from verified Kenyan teachers accessible to students worldwide. Discover how we work, our values, and why thousands of families globally trust us."
       />
 

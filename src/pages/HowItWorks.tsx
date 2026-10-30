@@ -118,7 +118,7 @@ const HowItWorks = () => {
   return (
     <div className="min-h-screen bg-[image:var(--gradient-page)]">
       <SEO 
-        title="How It Works - Online & In-Person Tutoring Kenya"
+        title="How Online & In-Person Tutoring Works in Kenya"
         description="Learn how to get started with Lana Tutors. Book a free consultation, find verified tutors, schedule sessions, and start learning. Simple M-Pesa payment."
         keywords="how online tutoring works, book tutor Kenya, tutoring process, M-Pesa tutor payment, online learning Kenya"
       />
