@@ -1,7 +1,7 @@
 import { useState, useRef } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -250,7 +250,7 @@ const BecomeATutor = () => {
               <Progress value={progress} className="h-2" />
               <p className="text-sm text-muted-foreground mt-2">Step {step} of 3</p>
             </div>
-            <CardTitle className="text-2xl">Become a Tutor</CardTitle>
+            <h1 className="text-2xl font-semibold leading-none tracking-tight">Become a Tutor</h1>
             <CardDescription>
               Join Kenya's leading tutoring platform through our simple 3-step vetting process.
               <Link to="/tutor-onboarding-guide" className="block mt-2 text-primary hover:underline font-medium">

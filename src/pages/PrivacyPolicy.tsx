@@ -7,7 +7,7 @@ const PrivacyPolicy = () => {
   return (
     <div className="min-h-screen bg-background">
       <SEO 
-        title="Privacy Policy | Lana Tutors"
+        title="Privacy Policy"
         description="Lana Tutors Privacy Policy - Learn how we collect, use, and protect your personal information in compliance with Kenyan Data Protection Act."
         canonical="/privacy-policy"
       />

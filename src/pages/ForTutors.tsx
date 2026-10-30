@@ -154,7 +154,7 @@ const ForTutors = () => {
     <div className="min-h-screen bg-[image:var(--gradient-page)]">
       <SEO 
         title="Become a Tutor - Teach & Earn with Lana"
-        description="Join Kenya's premier online tutoring platform. Earn KES 2,000-3,500/hour teaching students from top schools. Flexible schedule, secure payments, growing student base."
+        description="Teach students from Kenya's top schools one-on-one, on your own schedule, and keep 70% of every session fee. See how it works, then apply."
       />
       
       {/* Hero Section */}
