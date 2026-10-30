@@ -31,7 +31,9 @@ import { LogCallDialog } from "@/components/admin/crm/LogCallDialog";
 import { AssessmentCard } from "@/components/admin/crm/AssessmentCard";
 import { CloseLeadDialog } from "@/components/admin/crm/CloseLeadDialog";
 import { FamilyTimeline } from "@/components/admin/crm/FamilyTimeline";
-import { useFamily, useListedTutors, useTeam } from "@/components/admin/crm/useCrmData";
+import { SessionsCard } from "@/components/admin/crm/SessionsCard";
+import { StudentProgress } from "@/components/admin/crm/StudentProgress";
+import { useFamily, useListedTutors, useTeam, useTutors } from "@/components/admin/crm/useCrmData";
 import type { Lead, LeadUpdate, Stage } from "@/components/admin/crm/crmTypes";
 import { crmConsultations, crmDb } from "@/components/admin/crm/crmTypes";
 import {
@@ -55,6 +57,7 @@ export default function CrmFamily() {
   const { data, loading, error, reload } = useFamily(id);
   const { team } = useTeam();
   const tutors = useListedTutors();
+  const allTutors = useTutors();
   const [logging, setLogging] = useState(false);
   const [closing, setClosing] = useState<"won" | "lost" | null>(null);
   const [savingLead, setSavingLead] = useState(false);
@@ -124,6 +127,16 @@ export default function CrmFamily() {
     }
     const saved = await patchLead({ stage: value as Stage }, `Moved to ${stageLabel(value)}`);
     if (saved) fireMeta(value as Stage);
+  };
+
+  // A family that has paid is a customer: offer the one-tap move to Won while the lead is still open.
+  const suggestWon = () => {
+    if (activeLead && activeLead.stage !== "won" && activeLead.stage !== "lost") {
+      toast("This family has paid, but its lead is still open.", {
+        action: { label: "Mark won", onClick: () => setClosing("won") },
+        duration: 12000,
+      });
+    }
   };
 
   const title = family?.parent_name || formatPhone(family?.phone) || "Family";
@@ -265,6 +278,21 @@ export default function CrmFamily() {
                   This family has no lead yet. Add one from the Leads page.
                 </CardContent>
               </Card>
+            )}
+
+            <SessionsCard
+              familyId={family.id}
+              enrolments={data.enrolments}
+              packs={data.packs}
+              balances={data.balances}
+              error={data.sessionsError}
+              tutors={allTutors}
+              onChanged={() => void reload()}
+              onRecorded={suggestWon}
+            />
+
+            {!data.sessionsError && (
+              <StudentProgress enrolments={data.enrolments} lessons={data.lessons} />
             )}
 
             {activeLead && (

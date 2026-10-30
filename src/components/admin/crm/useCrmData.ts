@@ -2,16 +2,21 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { crmDb } from "./crmTypes";
 import type {
+  CrmLesson,
   CrmSettings,
+  Enrolment,
+  EnrolmentBalance,
   Family,
   Lead,
   LeadActivity,
   LeadWithFamily,
   ListedTutor,
+  SessionPack,
   TeamMember,
   WhatsAppConversation,
 } from "./crmTypes";
 import { OPEN_STAGES } from "./crmTypes";
+import { weekRange } from "./lessonsLogic";
 
 const OPEN_STAGE_LIST = [...OPEN_STAGES];
 
@@ -85,15 +90,27 @@ export interface FamilyBundle {
   leads: Lead[];
   activities: LeadActivity[];
   conversation: WhatsAppConversation | null;
+  /** The children and subjects the family pays for, with their packs, balances and lessons. */
+  enrolments: Enrolment[];
+  packs: SessionPack[];
+  balances: EnrolmentBalance[];
+  lessons: CrmLesson[];
+  /** Set when the sessions queries fail, so the Sessions card says so instead of looking empty. */
+  sessionsError: string | null;
 }
 
-/** One family, all its leads, the timeline and the WhatsApp chat. */
+/** One family, all its leads, the timeline, the WhatsApp chat and its sessions. */
 export function useFamily(id: string | undefined): AsyncState<FamilyBundle> {
   const [data, setData] = useState<FamilyBundle>({
     family: null,
     leads: [],
     activities: [],
     conversation: null,
+    enrolments: [],
+    packs: [],
+    balances: [],
+    lessons: [],
+    sessionsError: null,
   });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -104,7 +121,16 @@ export function useFamily(id: string | undefined): AsyncState<FamilyBundle> {
       return;
     }
     setLoading(true);
-    const [familyRes, leadsRes, activitiesRes, conversationRes] = await Promise.all([
+    const [
+      familyRes,
+      leadsRes,
+      activitiesRes,
+      conversationRes,
+      enrolmentsRes,
+      packsRes,
+      balancesRes,
+      lessonsRes,
+    ] = await Promise.all([
       crmDb.from("families").select("*").eq("id", id).maybeSingle(),
       crmDb.from("leads").select("*").eq("family_id", id).order("created_at", { ascending: false }),
       crmDb
@@ -118,6 +144,21 @@ export function useFamily(id: string | undefined): AsyncState<FamilyBundle> {
         .select("*")
         .eq("family_id", id)
         .maybeSingle(),
+      crmDb.from("enrolments").select("*").eq("family_id", id).order("created_at"),
+      // The inner join keeps only this family's packs; the embedded column is ignored.
+      crmDb
+        .from("session_packs")
+        .select("*, enrolments!inner(family_id)")
+        .eq("enrolments.family_id", id)
+        .order("paid_on", { ascending: false, nullsFirst: false })
+        .order("created_at", { ascending: false }),
+      crmDb.from("crm_enrolment_balances").select("*").eq("family_id", id),
+      crmDb
+        .from("crm_lessons")
+        .select("*")
+        .eq("family_id", id)
+        .order("starts_at", { ascending: false })
+        .limit(300),
     ]);
     setError(
       message(familyRes.error) ??
@@ -130,6 +171,15 @@ export function useFamily(id: string | undefined): AsyncState<FamilyBundle> {
       leads: (leadsRes.data ?? []) as unknown as Lead[],
       activities: (activitiesRes.data ?? []) as unknown as LeadActivity[],
       conversation: (conversationRes.data ?? null) as unknown as WhatsAppConversation | null,
+      enrolments: (enrolmentsRes.data ?? []) as unknown as Enrolment[],
+      packs: (packsRes.data ?? []) as unknown as SessionPack[],
+      balances: (balancesRes.data ?? []) as unknown as EnrolmentBalance[],
+      lessons: (lessonsRes.data ?? []) as unknown as CrmLesson[],
+      sessionsError:
+        message(enrolmentsRes.error) ??
+        message(packsRes.error) ??
+        message(balancesRes.error) ??
+        message(lessonsRes.error),
     });
     setLoading(false);
   }, [id]);
@@ -220,4 +270,127 @@ export function useListedTutors(): ListedTutor[] {
 export function useTeamNames() {
   const { team } = useTeam();
   return useMemo(() => new Map(team.map((m) => [m.user_id, m.full_name])), [team]);
+}
+
+/** Lessons in a Nairobi week, `offsetWeeks` away from this one, earliest first. */
+export function useWeekLessons(offsetWeeks = 0): AsyncState<CrmLesson[]> {
+  const [data, setData] = useState<CrmLesson[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const reload = useCallback(async () => {
+    setLoading(true);
+    const week = weekRange(new Date(), offsetWeeks);
+    const { data: rows, error: err } = await crmDb
+      .from("crm_lessons")
+      .select("*")
+      .gte("starts_at", week.start.toISOString())
+      .lt("starts_at", week.end.toISOString())
+      .order("starts_at")
+      .limit(500);
+    setError(message(err));
+    setData((rows ?? []) as unknown as CrmLesson[]);
+    setLoading(false);
+  }, [offsetWeeks]);
+
+  useEffect(() => {
+    void reload();
+  }, [reload]);
+
+  return { data, loading, error, reload };
+}
+
+/** Past lessons nobody has confirmed yet (since the cut-over), oldest first. */
+export function usePendingLessons(): AsyncState<CrmLesson[]> {
+  const [data, setData] = useState<CrmLesson[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const reload = useCallback(async () => {
+    setLoading(true);
+    const { data: rows, error: err } = await crmDb
+      .from("crm_lessons")
+      .select("*")
+      .eq("tracked", true)
+      .is("report_id", null)
+      .neq("booking_status", "cancelled")
+      .lt("ends_at", new Date().toISOString())
+      .order("ends_at")
+      .limit(500);
+    setError(message(err));
+    setData((rows ?? []) as unknown as CrmLesson[]);
+    setLoading(false);
+  }, []);
+
+  useEffect(() => {
+    void reload();
+  }, [reload]);
+
+  return { data, loading, error, reload };
+}
+
+/** Active enrolments with one prepaid session left, or none. */
+export function useTopUps(): AsyncState<EnrolmentBalance[]> {
+  const [data, setData] = useState<EnrolmentBalance[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const reload = useCallback(async () => {
+    setLoading(true);
+    const { data: rows, error: err } = await crmDb
+      .from("crm_enrolment_balances")
+      .select("*")
+      .eq("status", "active")
+      .gt("sessions_bought", 0)
+      .lte("sessions_left", 1)
+      .order("sessions_left")
+      .limit(200);
+    setError(message(err));
+    setData((rows ?? []) as unknown as EnrolmentBalance[]);
+    setLoading(false);
+  }, []);
+
+  useEffect(() => {
+    void reload();
+  }, [reload]);
+
+  return { data, loading, error, reload };
+}
+
+/** Every tutor profile, listed ones first, for the "which tutor" pickers. */
+export function useTutors(): ListedTutor[] {
+  const [tutors, setTutors] = useState<ListedTutor[]>([]);
+
+  useEffect(() => {
+    let active = true;
+    void (async () => {
+      const { data } = await supabase
+        .from("tutor_profiles")
+        .select("id, user_id, is_listed")
+        .limit(500);
+      if (!active || !data) return;
+      const ids = data.map((t) => t.user_id).filter((v): v is string => Boolean(v));
+      let names = new Map<string, string>();
+      if (ids.length > 0) {
+        const { data: profiles } = await supabase.from("profiles").select("id, full_name").in("id", ids);
+        names = new Map((profiles ?? []).map((p) => [p.id, p.full_name ?? "Tutor"]));
+      }
+      if (!active) return;
+      setTutors(
+        data
+          .map((t) => ({
+            id: t.id,
+            name: (t.user_id && names.get(t.user_id)) || "Tutor",
+            listed: Boolean(t.is_listed),
+          }))
+          .sort((a, b) => Number(b.listed) - Number(a.listed) || a.name.localeCompare(b.name))
+          .map(({ id, name }) => ({ id, name })),
+      );
+    })();
+    return () => {
+      active = false;
+    };
+  }, []);
+
+  return tutors;
 }

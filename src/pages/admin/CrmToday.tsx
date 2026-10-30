@@ -8,9 +8,15 @@ import { cn } from "@/lib/utils";
 import { CrmShell } from "@/components/admin/crm/CrmShell";
 import { LeadRow } from "@/components/admin/crm/LeadRow";
 import { NewLeadDialog } from "@/components/admin/crm/NewLeadDialog";
-import { useOpenLeads, useTeamNames } from "@/components/admin/crm/useCrmData";
+import { TopUpRow } from "@/components/admin/crm/TopUpRow";
+import {
+  useOpenLeads,
+  usePendingLessons,
+  useTeamNames,
+  useTopUps,
+} from "@/components/admin/crm/useCrmData";
 import type { LeadWithFamily } from "@/components/admin/crm/crmTypes";
-import { dateKey, dueState, nairobiDate } from "@/components/admin/crm/crmMeta";
+import { dateKey, dueState, formatDay, nairobiDate } from "@/components/admin/crm/crmMeta";
 
 type Scope = "mine" | "everyone";
 
@@ -29,6 +35,8 @@ interface Bucket {
 export default function CrmToday() {
   const { data: leads, loading, error, reload } = useOpenLeads();
   const names = useTeamNames();
+  const topUps = useTopUps();
+  const toConfirm = usePendingLessons();
   const [scope, setScope] = useState<Scope>("everyone");
   const [adding, setAdding] = useState(false);
   const { user } = useAuth();
@@ -229,6 +237,65 @@ export default function CrmToday() {
               </CardContent>
             </Card>
           ))}
+
+          <Card className={topUps.data.length === 0 ? "opacity-80" : ""}>
+            <CardHeader className="flex flex-row items-start justify-between gap-2 space-y-0 pb-2">
+              <div>
+                <CardTitle className="text-sm font-semibold">Top-ups due</CardTitle>
+                <p className="text-[11px] text-muted-foreground">Down to the last prepaid session</p>
+              </div>
+              <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
+                {topUps.data.length}
+              </span>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              {topUps.error ? (
+                <p className="py-2 text-xs text-muted-foreground">Sessions are not available yet: {topUps.error}</p>
+              ) : topUps.data.length === 0 ? (
+                <p className="py-2 text-xs text-muted-foreground">No family is about to run out of sessions.</p>
+              ) : (
+                <>
+                  {topUps.data.slice(0, 6).map((balance) => (
+                    <TopUpRow key={balance.enrolment_id} balance={balance} />
+                  ))}
+                  {topUps.data.length > 6 && (
+                    <p className="text-xs text-muted-foreground">
+                      and {topUps.data.length - 6} more, on their family pages
+                    </p>
+                  )}
+                </>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card className={toConfirm.data.length === 0 ? "opacity-80" : ""}>
+            <CardHeader className="flex flex-row items-start justify-between gap-2 space-y-0 pb-2">
+              <div>
+                <CardTitle className="text-sm font-semibold">Lessons to confirm</CardTitle>
+                <p className="text-[11px] text-muted-foreground">The lesson is over, nobody has reported on it</p>
+              </div>
+              <span className="rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
+                {toConfirm.data.length}
+              </span>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              {toConfirm.error ? (
+                <p className="py-2 text-xs text-muted-foreground">Lessons are not available yet: {toConfirm.error}</p>
+              ) : toConfirm.data.length === 0 ? (
+                <p className="py-2 text-xs text-muted-foreground">Every lesson has a report.</p>
+              ) : (
+                <>
+                  <p className="text-sm">
+                    {toConfirm.data.length} lesson{toConfirm.data.length === 1 ? "" : "s"} waiting. The oldest ended{" "}
+                    {formatDay(toConfirm.data[0].ends_at)}.
+                  </p>
+                  <Button size="sm" variant="outline" asChild>
+                    <Link to="/admin/lessons">Open lessons</Link>
+                  </Button>
+                </>
+              )}
+            </CardContent>
+          </Card>
         </div>
       )}
 

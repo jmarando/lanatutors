@@ -1,13 +1,14 @@
 import { ReactNode } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Home, Users, MoreHorizontal, ArrowLeft } from "lucide-react";
+import { Home, Users, CalendarDays, MoreHorizontal, ArrowLeft } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export type CrmSection = "today" | "leads" | "family" | "more";
+export type CrmSection = "today" | "leads" | "lessons" | "family" | "more";
 
 const NAV = [
   { key: "today", label: "Today", to: "/admin", icon: Home },
   { key: "leads", label: "Leads", to: "/admin/leads", icon: Users },
+  { key: "lessons", label: "Lessons", to: "/admin/lessons", icon: CalendarDays },
   { key: "more", label: "More", to: "/admin/more", icon: MoreHorizontal },
 ] as const;
 
@@ -92,7 +93,7 @@ export function CrmShell({ title, subtitle, active, actions, backTo, children }:
         className="fixed inset-x-0 bottom-0 z-20 border-t bg-background md:hidden"
         style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
       >
-        <div className="grid grid-cols-3">
+        <div className="grid grid-cols-4">
           {NAV.map((item) => {
             const Icon = item.icon;
             const isActive =
