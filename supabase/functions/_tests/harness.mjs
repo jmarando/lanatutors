@@ -263,6 +263,28 @@ export async function loadFunction(name, { env = {}, conversations = [], gateway
   };
 }
 
+// Loads a pure TypeScript module (one with no Deno imports and no network, such as booking.ts) so its functions
+// can be tested directly, without a handler around them.
+export async function loadModule(relPathFromFunctionsDir) {
+  const bundle = await build({
+    entryPoints: [path.join(functionsDir, relPathFromFunctionsDir)],
+    bundle: true,
+    write: false,
+    format: "esm",
+    platform: "node",
+    target: "node20",
+    logLevel: "silent",
+  });
+  const dir = await mkdtemp(path.join(tmpdir(), "edge-module-"));
+  try {
+    const file = path.join(dir, "module.mjs");
+    await writeFile(file, bundle.outputFiles[0].text);
+    return await import(`${pathToFileURL(file).href}?load=${++loads}`);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+}
+
 let messageIds = 0;
 
 // An inbound WhatsApp message in the shape Meta's webhook delivers. A text message by default; pass `type`
