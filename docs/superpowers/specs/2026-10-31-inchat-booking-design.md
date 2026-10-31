@@ -1,6 +1,6 @@
 # In-chat booking: book the free assessment call inside the WhatsApp chat with Lana
 
-Date: 2026-10-31. Status (2026-11-01): approved on 2026-11-01, including the calls under "My calls"; built on the branch and checked (see "How it is checked"); migration 0008 applied to production on 2026-11-01, after PR #11 and PR #12 were merged and published the same night; this branch is not pushed and its code is not deployed.
+Date: 2026-10-31. Status (2026-11-01): approved on 2026-11-01, including the calls under "My calls"; built on the branch and checked (see "How it is checked"); migration 0008 applied to production on 2026-11-01, after PR #11 and PR #12 were merged and published the same night; this branch was pushed and opened as a pull request against `main` on 2026-11-01; it is not merged and its code is not deployed.
 Branch `claude/suspicious-driscoll-69e883`, stacked on PR #12 (keep Lana answering), which is stacked on PR #11 (the bot fix). `main` is merged in.
 
 ## Why
