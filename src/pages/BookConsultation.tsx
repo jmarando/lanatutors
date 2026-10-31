@@ -320,7 +320,15 @@ const BookConsultation = () => {
       navigate(`/consultation-confirmed?parentName=${encodeURIComponent(formData.parentName)}&studentName=${encodeURIComponent(formData.studentName)}&date=${consultationDateStr}&time=${encodeURIComponent(selectedTime)}&email=${encodeURIComponent(formData.email)}`);
     } catch (error: any) {
       console.error("Error booking consultation:", error);
-      toast.error(error.message || "Failed to book consultation");
+      if (error?.code === "23505") {
+        // The database allows one booking per time, and someone took this one between the check and the booking.
+        toast.error("This time slot was just booked by someone else. Please select a different time.");
+        setSelectedTime("");
+        const { data: bookedNow } = await supabase.rpc("get_booked_consultation_times", { _date: format(selectedDate!, 'yyyy-MM-dd') });
+        if (bookedNow) setBookedSlots((bookedNow as { consultation_time: string }[]).map(b => b.consultation_time));
+      } else {
+        toast.error(error.message || "Failed to book consultation");
+      }
     } finally {
       setLoading(false);
     }

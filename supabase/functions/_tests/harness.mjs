@@ -15,15 +15,17 @@ const functionsDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), 
 
 const SERVE_MOCK = "export const serve = (handler) => { globalThis.__edgeHandler = handler; };";
 const SUPABASE_MOCK = "export const createClient = () => globalThis.__fakeSupabase;";
+const DJWT_MOCK = "export const create = async () => \"fake.jwt\";";
 
 const denoUrlImports = {
   name: "deno-url-imports",
   setup(b) {
     b.onResolve({ filter: /^https:\/\/deno\.land\/std@[^/]+\/http\/server\.ts$/ }, (a) => ({ path: a.path, namespace: "mock" }));
     b.onResolve({ filter: /^https:\/\/esm\.sh\/@supabase\/supabase-js@/ }, (a) => ({ path: a.path, namespace: "mock" }));
+    b.onResolve({ filter: /^https:\/\/deno\.land\/x\/djwt@/ }, (a) => ({ path: a.path, namespace: "mock" }));
     b.onResolve({ filter: /^https?:\/\// }, (a) => ({ errors: [{ text: `URL import the test harness does not fake: ${a.path}` }] }));
     b.onLoad({ filter: /.*/, namespace: "mock" }, (a) => ({
-      contents: a.path.includes("deno.land") ? SERVE_MOCK : SUPABASE_MOCK,
+      contents: a.path.includes("/x/djwt@") ? DJWT_MOCK : a.path.includes("deno.land") ? SERVE_MOCK : SUPABASE_MOCK,
       loader: "js",
     }));
   },
@@ -168,6 +170,7 @@ function makeWorld({ conversations, gateway, anthropic, meta, bookings, function
     emails: [], // Resend emails: { to, subject, html }
     events: [], // what happened, in order: "insert booking", "update booking", "call <function>", "send text|interactive", "email <subject>"
     functionCalls: [], // calls to the booking functions: { name, headers, body }
+    googleEvents: [], // calendar events created through Google: the event body
     functionQueue: Object.fromEntries(Object.entries(functions).map(([name, outcomes]) => [name, [...outcomes]])),
     failInsert: Boolean(failInsert), // the next insert into consultation_bookings fails
     rejectNextInsert: Boolean(rejectNextInsert), // the next one finds the time taken by someone else
@@ -194,7 +197,12 @@ function makeWorld({ conversations, gateway, anthropic, meta, bookings, function
     world.activity++;
     try {
       const target = String(url);
-      const body = init.body ? JSON.parse(init.body) : undefined;
+      let body;
+      if (typeof init.body === "string") {
+        try { body = JSON.parse(init.body); } catch { body = init.body; }
+      } else if (init.body) {
+        body = String(init.body);
+      }
       if (target.startsWith("https://graph.facebook.com/")) {
         const outcome = world.metaQueue.shift();
         if (outcome?.throws) throw outcome.throws;
@@ -226,6 +234,11 @@ function makeWorld({ conversations, gateway, anthropic, meta, bookings, function
       if (target.startsWith("https://generativelanguage.googleapis.com/")) {
         world.geminiCalls.push(target);
         return jsonResponse(500, { error: "the function must not call Gemini directly" });
+      }
+      if (target === "https://oauth2.googleapis.com/token") return jsonResponse(200, { access_token: "tok" });
+      if (target.startsWith("https://www.googleapis.com/calendar/v3/calendars/primary/events")) {
+        world.googleEvents.push(body);
+        return jsonResponse(200, { id: "evt_1", hangoutLink: "https://meet.google.com/abc-defg-hij" });
       }
       if (target.startsWith(FUNCTIONS_URL)) {
         const name = target.slice(FUNCTIONS_URL.length);
@@ -298,7 +311,13 @@ export async function loadFunction(
   const dir = await mkdtemp(path.join(tmpdir(), "edge-test-"));
   const file = path.join(dir, `${name}.mjs`);
   await writeFile(file, bundle.outputFiles[0].text);
-  await import(`${pathToFileURL(file).href}?load=${++loads}`);
+  const realSetInterval = globalThis.setInterval;
+  globalThis.setInterval = (...args) => realSetInterval(...args).unref();
+  try {
+    await import(`${pathToFileURL(file).href}?load=${++loads}`);
+  } finally {
+    globalThis.setInterval = realSetInterval;
+  }
   const handler = globalThis.__edgeHandler;
 
   // Deliver a webhook payload the way Meta would. Resolves once the function has answered Meta.
