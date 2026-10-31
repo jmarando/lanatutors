@@ -2,7 +2,7 @@
 //
 // Deno isn't needed to test them: the function is bundled with esbuild, its two URL imports (the Deno
 // `serve` and supabase-js) are swapped for fakes, and the only things faked are the boundaries, the
-// network (Meta, the AI gateway, Resend) and the database. Everything else is the real handler code.
+// network (Meta, the AI gateway, Claude, Resend) and the database. Everything else is the real handler code.
 //
 // The leading underscore keeps this folder out of the function deploy, like _shared.
 import { build } from "esbuild";
@@ -32,6 +32,13 @@ const denoUrlImports = {
 const clone = (value) => (value === undefined ? value : structuredClone(value));
 const jsonResponse = (status, body) =>
   new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json" } });
+// Waits like a slow server, but gives up the moment the request is aborted, as a real fetch does.
+const delay = (ms, signal) =>
+  new Promise((resolve, reject) => {
+    if (signal?.aborted) return reject(signal.reason);
+    const timer = setTimeout(resolve, ms);
+    signal?.addEventListener("abort", () => { clearTimeout(timer); reject(signal.reason); }, { once: true });
+  });
 
 // The slice of the supabase-js query builder the functions use, over in-memory tables.
 class Query {
@@ -106,15 +113,18 @@ const DEFAULT_ENV = {
   WHATSAPP_REPLY_DELAY_MS: "20",
 };
 
-function makeWorld({ conversations, gateway }) {
+function makeWorld({ conversations, gateway, anthropic, meta }) {
   const world = {
     tables: { whatsapp_conversations: clone(conversations), communication_logs: [], whatsapp_suppressions: [], profiles: [] },
     sent: [], // WhatsApp messages the function sent: { to, text }
     emails: [], // Resend emails: { to, subject, html }
     gatewayCalls: [], // AI gateway requests: { headers, body }
+    anthropicCalls: [], // Claude requests: { headers, body }
     geminiCalls: [], // direct Gemini calls, which the function must no longer make
     logs: [],
     gatewayQueue: [...gateway],
+    anthropicQueue: [...anthropic],
+    metaQueue: [...meta], // scripted outcomes for WhatsApp sends: { status, body } or { throws }; none left means it works
     background: [], // work the function handed to EdgeRuntime.waitUntil
     inflight: 0,
     activity: 0,
@@ -133,6 +143,9 @@ function makeWorld({ conversations, gateway }) {
       const target = String(url);
       const body = init.body ? JSON.parse(init.body) : undefined;
       if (target.startsWith("https://graph.facebook.com/")) {
+        const outcome = world.metaQueue.shift();
+        if (outcome?.throws) throw outcome.throws;
+        if (outcome && outcome.status >= 400) return jsonResponse(outcome.status, outcome.body);
         world.sent.push({ to: body.to, text: body.text.body });
         return jsonResponse(200, { messages: [{ id: "wamid.fake" }] });
       }
@@ -142,7 +155,15 @@ function makeWorld({ conversations, gateway }) {
         if (!next) return jsonResponse(500, { error: "no scripted gateway response left" });
         // Something else happening while the model is thinking, e.g. the team replying from the inbox.
         if (next.meanwhile) next.meanwhile(world);
-        if (next.delayMs) await new Promise((resolve) => setTimeout(resolve, next.delayMs));
+        if (next.delayMs) await delay(next.delayMs, init.signal);
+        if (next.throws) throw next.throws;
+        return jsonResponse(next.status, next.body);
+      }
+      if (target === "https://api.anthropic.com/v1/messages") {
+        world.anthropicCalls.push({ headers: init.headers, body });
+        const next = world.anthropicQueue.shift();
+        if (!next) return jsonResponse(500, { type: "error", error: { type: "api_error", message: "no scripted Claude response left" } });
+        if (next.delayMs) await delay(next.delayMs, init.signal);
         if (next.throws) throw next.throws;
         return jsonResponse(next.status, next.body);
       }
@@ -181,7 +202,7 @@ async function settle(world) {
 
 let loads = 0;
 
-export async function loadFunction(name, { env = {}, conversations = [], gateway = [] } = {}) {
+export async function loadFunction(name, { env = {}, conversations = [], gateway = [], anthropic = [], meta = [] } = {}) {
   const bundle = await build({
     entryPoints: [path.join(functionsDir, name, "index.ts")],
     bundle: true,
@@ -193,7 +214,7 @@ export async function loadFunction(name, { env = {}, conversations = [], gateway
     plugins: [denoUrlImports],
   });
 
-  const world = makeWorld({ conversations, gateway });
+  const world = makeWorld({ conversations, gateway, anthropic, meta });
   const fullEnv = { ...DEFAULT_ENV, ...env };
   const saved = { fetch: globalThis.fetch, Deno: globalThis.Deno, EdgeRuntime: globalThis.EdgeRuntime, console: { ...console } };
   globalThis.fetch = world.fetch;
@@ -274,3 +295,24 @@ export const aiToolCall = (name, args, id = "call_1") => ({
   },
 });
 export const aiFailure = (status, message = "gateway error") => ({ status, body: { error: { message } } });
+
+// Scripted answers from Claude's Messages API.
+export const claudeText = (text) => ({
+  status: 200,
+  body: { id: "msg_fake", type: "message", role: "assistant", content: [{ type: "text", text }], stop_reason: "end_turn" },
+});
+const CLAUDE_ERROR_TYPES = {
+  400: "invalid_request_error", 401: "authentication_error", 402: "billing_error", 403: "permission_error",
+  404: "not_found_error", 429: "rate_limit_error", 529: "overloaded_error",
+};
+export const claudeFailure = (status, message = "claude error") => ({
+  status,
+  body: { type: "error", error: { type: CLAUDE_ERROR_TYPES[status] ?? "api_error", message }, request_id: "req_fake" },
+});
+export const claudeRefusal = () => ({
+  status: 200,
+  body: {
+    id: "msg_fake", type: "message", role: "assistant", content: [], stop_reason: "refusal",
+    stop_details: { type: "refusal", category: null, explanation: "declined" },
+  },
+});
