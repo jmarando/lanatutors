@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { readClaudeReply, toClaudeMessages } from "./claude.ts";
 import { ATTACHMENT_NOTICE, BACKUP_REPLY, isGreeting, looksLikeSpam, matchPrefill } from "./lana.ts";
 
 const corsHeaders = {
@@ -14,6 +15,11 @@ const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
 // Same gateway and default model as the site's other AI features (recommend-packages, generate-session-summary).
 const AI_GATEWAY_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
 const AI_MODEL = Deno.env.get("WHATSAPP_AI_MODEL") ?? "google/gemini-2.5-flash";
+// The second AI. When the first one fails, Claude gets one try at the same chat, without tools. Leave
+// ANTHROPIC_API_KEY unset and there is no second AI.
+const ANTHROPIC_API_KEY = Deno.env.get("ANTHROPIC_API_KEY");
+const FALLBACK_MODEL = Deno.env.get("WHATSAPP_FALLBACK_MODEL") ?? "claude-haiku-5-5";
+const FALLBACK_BUDGET_MS = Number(Deno.env.get("WHATSAPP_FALLBACK_BUDGET_MS") ?? 15_000);
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
@@ -142,25 +148,37 @@ type Msg = {
 };
 type Conversation = { phone_number: string; parent_id: string | null; escalated: boolean; messages: Msg[]; updated_at: string };
 
-async function sendWhatsAppMessage(to: string, text: string) {
+type SendResult = { ok: true } | { ok: false; error: string };
+
+// Sends a WhatsApp message. Meta can refuse (an expired token, say) or be out of reach, and the caller has to know
+// which, so the answer says so. It never throws.
+async function sendWhatsAppMessage(to: string, text: string): Promise<SendResult> {
   // Safety: strip any "— Lana 💛" / "- Lana" sign-offs the model may add
   const cleaned = text
     .replace(/\n*\s*[—-]\s*Lana\s*(💛|❤️|♥|<3)?\s*$/i, "")
     .replace(/\n*\s*Lana\s*(💛|❤️|♥)\s*$/i, "")
     .trim();
-  const res = await fetch(`https://graph.facebook.com/v21.0/${WA_PHONE_ID}/messages`, {
-    method: "POST",
-    headers: { Authorization: `Bearer ${WA_TOKEN}`, "Content-Type": "application/json" },
-    body: JSON.stringify({
-      messaging_product: "whatsapp",
-      to,
-      type: "text",
-      text: { body: cleaned, preview_url: true },
-    }),
-  });
-  const data = await res.json();
-  if (!res.ok) console.error("WA send error:", data);
-  return data;
+  try {
+    const res = await fetch(`https://graph.facebook.com/v21.0/${WA_PHONE_ID}/messages`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${WA_TOKEN}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        messaging_product: "whatsapp",
+        to,
+        type: "text",
+        text: { body: cleaned, preview_url: true },
+      }),
+    });
+    const data = await res.json().catch(() => null);
+    if (res.ok) return { ok: true };
+    console.error("WA send error:", data);
+    const meta = (data as { error?: { message?: string; code?: number } } | null)?.error;
+    const said = `${meta?.message ? `: ${meta.message}` : ""}${meta?.code ? ` (code ${meta.code})` : ""}`;
+    return { ok: false, error: `Meta answered ${res.status}${said}` };
+  } catch (e) {
+    console.error("WA send failed:", e);
+    return { ok: false, error: `The call to Meta failed: ${e instanceof Error ? e.message : String(e)}` };
+  }
 }
 
 async function logComm(args: {
@@ -399,10 +417,12 @@ type GatewayMessage = {
   tool_calls?: ToolCall[];
   tool_call_id?: string;
 };
-type AiResult = { ok: true; text: string } | { ok: false; reason: string };
+type AiResult = { ok: true; text: string; via: "ai" | "ai_fallback"; model: string } | { ok: false; reason: string };
 
 const MAX_TOOL_ROUNDS = 4;
-const AI_TIMEOUT_MS = 25_000;
+// The AI gets this long, in total, for its whole conversation including the tool rounds. Past it the backup goes
+// out, so a slow gateway can't keep someone waiting.
+const AI_BUDGET_MS = Number(Deno.env.get("WHATSAPP_AI_BUDGET_MS") ?? 20_000);
 
 function parseToolArgs(raw: string | undefined): Record<string, string> {
   try {
@@ -412,25 +432,47 @@ function parseToolArgs(raw: string | undefined): Record<string, string> {
   }
 }
 
-// Calls the AI. When it can't answer, the result says why, so the caller can alert the team instead
-// of failing silently.
+// The prompt both AIs get, with what Lana knows about who is writing.
+function systemPrompt(profileName: string | undefined, parentId: string | null): string {
+  return (
+    SYSTEM_PROMPT +
+    (profileName ? `\n\nParent's WhatsApp name: "${profileName}".` : "") +
+    (parentId ? `\nThis WhatsApp number IS linked to an existing parent account.` : `\nThis WhatsApp number is NOT linked to an existing parent account yet.`)
+  );
+}
+
+// Calls the AI. When it can't answer, the result says why, so the caller can alert the team instead of failing
+// silently. It never throws: a reply Lana can't read is a failure like any other.
 async function callAI(
   history: Msg[],
   profileName: string | undefined,
   parentId: string | null,
   phone: string,
 ): Promise<AiResult> {
-  const sys =
-    SYSTEM_PROMPT +
-    (profileName ? `\n\nParent's WhatsApp name: "${profileName}".` : "") +
-    (parentId ? `\nThis WhatsApp number IS linked to an existing parent account.` : `\nThis WhatsApp number is NOT linked to an existing parent account yet.`);
+  try {
+    return await askGateway(history, profileName, parentId, phone);
+  } catch (e) {
+    const detail = e instanceof Error ? e.message : String(e);
+    return { ok: false, reason: `The AI gateway sent a reply Lana could not read: ${detail}` };
+  }
+}
 
+async function askGateway(
+  history: Msg[],
+  profileName: string | undefined,
+  parentId: string | null,
+  phone: string,
+): Promise<AiResult> {
+  const deadline = Date.now() + AI_BUDGET_MS;
+  const timeoutReason = `The AI gateway timed out after ${AI_BUDGET_MS / 1000} seconds`;
   const messages: GatewayMessage[] = [
-    { role: "system", content: sys },
+    { role: "system", content: systemPrompt(profileName, parentId) },
     ...history.map((m): GatewayMessage => ({ role: m.role === "model" ? "assistant" : "user", content: m.content })),
   ];
 
   for (let round = 0; round < MAX_TOOL_ROUNDS; round++) {
+    const remaining = deadline - Date.now();
+    if (remaining <= 0) return { ok: false, reason: timeoutReason };
     let res: Response;
     let data: { choices?: { message?: GatewayMessage }[] } | undefined;
     try {
@@ -442,18 +484,13 @@ async function callAI(
           messages,
           tools: TOOLS.map((tool) => ({ type: "function", function: tool })),
         }),
-        signal: AbortSignal.timeout(AI_TIMEOUT_MS),
+        signal: AbortSignal.timeout(remaining),
       });
       if (res.ok) data = await res.json();
     } catch (e) {
       const timedOut = e instanceof Error && (e.name === "TimeoutError" || e.name === "AbortError");
       const detail = e instanceof Error ? e.message : String(e);
-      return {
-        ok: false,
-        reason: timedOut
-          ? `The AI gateway timed out after ${AI_TIMEOUT_MS / 1000} seconds`
-          : `The AI gateway call failed: ${detail}`,
-      };
+      return { ok: false, reason: timedOut ? timeoutReason : `The AI gateway call failed: ${detail}` };
     }
     if (!res.ok) {
       const detail = (await res.text().catch(() => "")).slice(0, 300);
@@ -465,7 +502,9 @@ async function callAI(
 
     if (calls.length === 0) {
       const text = message?.content?.trim();
-      return text ? { ok: true, text } : { ok: false, reason: "The AI answered with an empty message" };
+      return text
+        ? { ok: true, text, via: "ai", model: AI_MODEL }
+        : { ok: false, reason: "The AI answered with an empty message" };
     }
 
     // Append the model's turn (with its tool calls), then answer each call.
@@ -491,41 +530,89 @@ async function callAI(
   return { ok: false, reason: `The AI called tools ${MAX_TOOL_ROUNDS} times without writing a reply` };
 }
 
+// ---------------- SECOND AI (CLAUDE) ----------------
+
+const CLAUDE_URL = "https://api.anthropic.com/v1/messages";
+const CLAUDE_API_VERSION = "2026-10-21";
+const NO_TOOLS_NOTE =
+  "\n\nTools are not available for this reply. Do not try to call any. Where the steps above say to use a tool, use " +
+  "the links written in this prompt instead. For a complaint or a payment problem, say a person from the team will call them back.";
+
+// Asks Claude to answer the chat. Plain fetch, like every other outside service here, and no tools: the prompt already
+// holds the links, and the chat still goes to the team. It never throws; a problem comes back as a reason.
+async function callClaude(history: Msg[], profileName: string | undefined, parentId: string | null): Promise<AiResult> {
+  if (!ANTHROPIC_API_KEY) return { ok: false, reason: "No Anthropic API key is set" };
+  const messages = toClaudeMessages(history);
+  if (messages.length === 0) return { ok: false, reason: "There was nothing from the person for Claude to answer" };
+  try {
+    const res = await fetch(CLAUDE_URL, {
+      method: "POST",
+      headers: { "x-api-key": ANTHROPIC_API_KEY, "anthropic-version": CLAUDE_API_VERSION, "content-type": "application/json" },
+      body: JSON.stringify({
+        model: FALLBACK_MODEL,
+        max_tokens: 1024,
+        system: systemPrompt(profileName, parentId) + NO_TOOLS_NOTE,
+        messages,
+        output_config: { effort: "low" },
+      }),
+      signal: AbortSignal.timeout(FALLBACK_BUDGET_MS),
+    });
+    const reading = readClaudeReply(res.status, await res.json().catch(() => null));
+    return reading.ok ? { ok: true, text: reading.text, via: "ai_fallback", model: FALLBACK_MODEL } : reading;
+  } catch (e) {
+    const timedOut = e instanceof Error && (e.name === "TimeoutError" || e.name === "AbortError");
+    const detail = e instanceof Error ? e.message : String(e);
+    return {
+      ok: false,
+      reason: timedOut ? `Claude timed out after ${FALLBACK_BUDGET_MS / 1000} seconds` : `The call to Claude failed: ${detail}`,
+    };
+  }
+}
+
 function escapeHtml(text: string) {
   return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }
 
-// Tells the team that Lana's AI could not answer and a backup message went out instead, and why.
-// Without this the failure is invisible: the person just gets a canned message.
-async function alertAiFailure(args: {
-  phone: string;
-  profileName?: string;
-  parentId: string | null;
-  reason: string;
+type Accent = { border: string; heading: string };
+const AMBER: Accent = { border: "#f59e0b", heading: "#b45309" };
+const RED: Accent = { border: "#e7422d", heading: "#b91c1c" };
+
+// One email to the team: a heading, some labelled facts, a few notes, an optional grey hint and the chat so far.
+// Alerts go out after the reply they are about, and one that can't be sent is logged and dropped.
+async function sendAlert(args: {
+  subject: string;
+  heading: string;
+  accent: Accent;
+  facts: [string, string][];
+  notes: string[];
+  hint?: string;
   history: Msg[];
 }) {
-  console.error("Lana's AI could not reply, backup message sent:", args.reason);
   if (!RESEND_API_KEY) {
-    console.error("RESEND_API_KEY missing — cannot send the AI failure alert");
+    console.error("RESEND_API_KEY missing — cannot send the alert:", args.subject);
     return;
   }
+  const factLines = args.facts.map(([label, value]) => `<p style="margin:4px 0;"><strong>${escapeHtml(label)}:</strong> ${escapeHtml(value)}</p>`);
+  const noteLines = args.notes.map((note) => `<p style="margin:12px 0 4px;">${escapeHtml(note)}</p>`);
+  const hintLine = args.hint
+    ? `<p style="margin:4px 0;color:#777;font-size:13px;white-space:pre-wrap;">${escapeHtml(args.hint)}</p>`
+    : "";
   const transcript = args.history
     .map((m) => `${m.role === "user" ? "Parent" : m.sent_by === "human" ? "Team" : "Lana"}: ${m.content}`)
     .join("\n\n");
+  const chatBlock = args.history.length
+    ? `<hr style="border:none;border-top:1px solid #eee;margin:16px 0;"/>
+            <h3 style="color:#333;">Transcript</h3>
+            <pre style="white-space:pre-wrap;font-family:Arial,sans-serif;background:#fafafa;padding:12px;border-radius:8px;font-size:14px;">${escapeHtml(transcript)}</pre>`
+    : "";
   const html = `
     <table width="100%" cellpadding="0" cellspacing="0" style="font-family:Arial,sans-serif;background:#fef5f4;padding:24px;">
       <tr><td>
-        <table width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;margin:0 auto;background:#fff;border-radius:12px;padding:24px;border-top:4px solid #f59e0b;">
+        <table width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;margin:0 auto;background:#fff;border-radius:12px;padding:24px;border-top:4px solid ${args.accent.border};">
           <tr><td>
-            <h2 style="color:#b45309;margin:0 0 12px;">Lana's AI could not reply</h2>
-            <p style="margin:4px 0;"><strong>From:</strong> ${escapeHtml(args.profileName ?? "Unknown")} (+${escapeHtml(args.phone)})</p>
-            <p style="margin:4px 0;"><strong>Parent ID:</strong> ${args.parentId ?? "Not linked"}</p>
-            <p style="margin:4px 0;"><strong>What went wrong:</strong> ${escapeHtml(args.reason)}</p>
-            <p style="margin:12px 0 4px;">They were sent a short backup message asking who they are, and the chat is now with the team. Please reply to them on WhatsApp.</p>
-            <p style="margin:4px 0;color:#777;font-size:13px;">If this keeps happening, check the Lovable AI gateway (credits and status) and the whatsapp-webhook function logs.</p>
-            <hr style="border:none;border-top:1px solid #eee;margin:16px 0;"/>
-            <h3 style="color:#333;">Transcript</h3>
-            <pre style="white-space:pre-wrap;font-family:Arial,sans-serif;background:#fafafa;padding:12px;border-radius:8px;font-size:14px;">${escapeHtml(transcript)}</pre>
+            <h2 style="color:${args.accent.heading};margin:0 0 12px;">${escapeHtml(args.heading)}</h2>
+            ${[...factLines, ...noteLines, hintLine].join("\n            ")}
+            ${chatBlock}
           </td></tr>
         </table>
       </td></tr>
@@ -538,14 +625,98 @@ async function alertAiFailure(args: {
       body: JSON.stringify({
         from: "Lana Tutors <info@lanatutors.africa>",
         to: ["info@lanatutors.africa"],
-        subject: `⚠️ WhatsApp: Lana's AI could not reply — ${args.profileName ?? args.phone}`,
+        subject: args.subject,
         html,
       }),
     });
-    if (!r.ok) console.error("Resend AI-failure alert failed:", await r.text());
+    if (!r.ok) console.error("Resend alert failed:", await r.text());
   } catch (e) {
-    console.error("AI-failure alert error:", e);
+    console.error("Alert error:", e);
   }
+}
+
+const whoFacts = (args: { phone: string; profileName?: string; parentId: string | null }): [string, string][] => [
+  ["From", `${args.profileName ?? "Unknown"} (+${args.phone})`],
+  ["Parent ID", args.parentId ?? "Not linked"],
+];
+
+// Tells the team that Lana's AI could not answer and a backup message went out instead, and why.
+// Without this the failure is invisible: the person just gets a canned message.
+async function alertAiFailure(args: {
+  phone: string;
+  profileName?: string;
+  parentId: string | null;
+  reason: string;
+  history: Msg[];
+}) {
+  console.error("Lana's AI could not reply, backup message sent:", args.reason);
+  await sendAlert({
+    subject: `⚠️ WhatsApp: Lana's AI could not reply — ${args.profileName ?? args.phone}`,
+    heading: "Lana's AI could not reply",
+    accent: AMBER,
+    facts: [...whoFacts(args), ["What went wrong", args.reason]],
+    notes: ["They were sent a short backup message asking who they are, and the chat is now with the team. Please reply to them on WhatsApp."],
+    hint: "If this keeps happening, check the Lovable AI gateway (credits and status) and the whatsapp-webhook function logs.",
+    history: args.history,
+  });
+}
+
+// Tells the team that the first AI failed and Claude answered instead, so what broke gets fixed before the backup
+// is all that is left.
+async function alertFallbackUsed(args: {
+  phone: string;
+  profileName?: string;
+  parentId: string | null;
+  reason: string;
+  history: Msg[];
+}) {
+  console.error("Lana's first AI failed, Claude answered instead:", args.reason);
+  await sendAlert({
+    subject: `WhatsApp: Lana used her fallback AI — ${args.profileName ?? args.phone}`,
+    heading: "Lana's usual AI failed, so Claude answered",
+    accent: AMBER,
+    facts: [...whoFacts(args), ["Why the first AI failed", args.reason]],
+    notes: ["The person got a reply. Please check the Lovable AI gateway (credits and status)."],
+    history: args.history,
+  });
+}
+
+// Tells the team that WhatsApp itself would not take Lana's message, so nothing reached the person.
+async function alertSendFailed(args: {
+  phone: string;
+  profileName?: string;
+  parentId: string | null;
+  error: string;
+  history: Msg[];
+}) {
+  console.error("WhatsApp refused Lana's message:", args.error);
+  await sendAlert({
+    subject: `⚠️ WhatsApp: Meta refused Lana's reply — ${args.profileName ?? args.phone}`,
+    heading: "Lana's reply could not be sent",
+    accent: RED,
+    facts: [...whoFacts(args), ["What Meta said", args.error]],
+    notes: ["Nothing reached them. Please reply to them from the WhatsApp inbox."],
+    hint: "If it says the access token is invalid or expired, create a permanent token (a System User) in Meta Business Settings and update the WHATSAPP_ACCESS_TOKEN secret. Until then the inbox cannot send either.",
+    history: args.history,
+  });
+}
+
+// Tells the team that Lana hit an error nobody planned for, with what is known about whose message it was. It sends the
+// person nothing: from here it can't tell whether a reply already went out.
+async function alertCrash(args: { phone?: string; profileName?: string; text?: string; error: unknown }) {
+  const error = args.error instanceof Error ? args.error : new Error(String(args.error));
+  const facts: [string, string][] = [["What went wrong", error.message]];
+  if (args.phone) facts.push(["From", `${args.profileName ?? "Unknown"} (+${args.phone})`]);
+  if (args.text) facts.push(["Their message", args.text]);
+  await sendAlert({
+    subject: "⚠️ WhatsApp: Lana hit an unexpected error",
+    heading: "Lana hit an unexpected error",
+    accent: RED,
+    facts,
+    notes: ["A reply may or may not have gone out. Please check the chat in the WhatsApp inbox."],
+    hint: (error.stack ?? "").split("\n").slice(0, 6).join("\n"),
+    history: [],
+  });
 }
 
 // ---------------- WEBHOOK HANDLER ----------------
@@ -602,6 +773,8 @@ function readIncoming(msg: WaMessage): Pick<Msg, "content" | "attachment"> | nul
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 async function handleIncoming(body: WebhookBody) {
+  // What the catch at the bottom can tell the team if something unexpected goes wrong part-way.
+  const known: { phone?: string; profileName?: string; text?: string } = {};
   try {
     const change = body.entry?.[0]?.changes?.[0]?.value;
     const msg = change?.messages?.[0];
@@ -611,6 +784,8 @@ async function handleIncoming(body: WebhookBody) {
     }
     const from = msg.from;
     const profileName = change?.contacts?.[0]?.profile?.name;
+    known.phone = from;
+    known.profileName = profileName;
 
     const incoming = readIncoming(msg);
     if (!incoming) {
@@ -618,6 +793,7 @@ async function handleIncoming(body: WebhookBody) {
       return;
     }
     const text = incoming.content;
+    known.text = text;
     console.log(`Incoming from ${profileName ?? from}: ${text}`);
 
     const convo = await loadConversation(from, profileName);
@@ -649,7 +825,11 @@ async function handleIncoming(body: WebhookBody) {
         "",
         "If you need help with anything, please reach us at info@lanatutors.africa."
       ].join("\n");
-      await sendWhatsAppMessage(from, confirmation);
+      const confirmed = await sendWhatsAppMessage(from, confirmation);
+      if (!confirmed.ok) {
+        await alertSendFailed({ phone: from, profileName, parentId: convo.parent_id, error: confirmed.error, history: saved.convo.messages });
+        return;
+      }
       await logComm({ phone: from, parentId: convo.parent_id, direction: "outbound", content: confirmation });
       const now = new Date().toISOString();
       await appendMessages(from, [{ role: "model", content: confirmation, ts: now, via: "opt_out" }], { escalated: true, escalated_at: now });
@@ -687,7 +867,11 @@ async function handleIncoming(body: WebhookBody) {
         await claimForReply(from);
         return;
       }
-      await sendWhatsAppMessage(from, ATTACHMENT_NOTICE);
+      const noticed = await sendWhatsAppMessage(from, ATTACHMENT_NOTICE);
+      if (!noticed.ok) {
+        await alertSendFailed({ phone: from, profileName, parentId: convo.parent_id, error: noticed.error, history });
+        return;
+      }
       await logComm({ phone: from, parentId: convo.parent_id, direction: "outbound", content: ATTACHMENT_NOTICE });
       await appendMessages(from, [{ role: "model", content: ATTACHMENT_NOTICE, ts: new Date().toISOString(), via: "notice:attachment" }]);
       return;
@@ -711,15 +895,22 @@ async function handleIncoming(body: WebhookBody) {
     let reply: string;
     let via: string;
     let aiFailure: string | null = null;
+    let firstAiFailure: string | null = null; // why the first AI failed, when the second one answered instead
     const prefilled = pending.length === 1 ? matchPrefill(pending[0].content) : null;
     if (prefilled) {
       reply = prefilled.reply;
       via = `prefill:${prefilled.intent}`;
     } else {
-      const ai = await callAI(context, profileName, convo.parent_id, from);
+      let ai = await callAI(context, profileName, convo.parent_id, from);
+      if (!ai.ok && ANTHROPIC_API_KEY) {
+        // The first AI failed, so Claude gets one try. If it answers, the team is told why it was needed.
+        const second = await callClaude(context, profileName, convo.parent_id);
+        if (second.ok) firstAiFailure = ai.reason;
+        ai = second.ok ? second : { ok: false, reason: `${ai.reason}. The second AI also failed: ${second.reason}` };
+      }
       if (ai.ok) {
         reply = sanitizeReply(ai.text);
-        via = "ai";
+        via = ai.via;
       } else {
         reply = BACKUP_REPLY;
         via = "backup";
@@ -727,17 +918,25 @@ async function handleIncoming(body: WebhookBody) {
       }
     }
 
-    await sendWhatsAppMessage(from, reply);
+    const delivery = await sendWhatsAppMessage(from, reply);
+    if (!delivery.ok) {
+      // Lana took the chat to answer it, so it stays with the team, who now know why nothing arrived.
+      await alertSendFailed({ phone: from, profileName, parentId: convo.parent_id, error: delivery.error, history: context });
+      return;
+    }
     await logComm({ phone: from, parentId: convo.parent_id, direction: "outbound", content: reply });
     const sent: Msg = { role: "model", content: reply, ts: new Date().toISOString(), via };
     await appendMessages(from, [sent]);
 
     if (aiFailure) {
       await alertAiFailure({ phone: from, profileName, parentId: convo.parent_id, reason: aiFailure, history: [...context, sent] });
+    } else if (firstAiFailure) {
+      await alertFallbackUsed({ phone: from, profileName, parentId: convo.parent_id, reason: firstAiFailure, history: [...context, sent] });
     }
 
   } catch (e) {
     console.error("handleIncoming error:", e);
+    await alertCrash({ phone: known.phone, profileName: known.profileName, text: known.text, error: e });
   }
 }
 

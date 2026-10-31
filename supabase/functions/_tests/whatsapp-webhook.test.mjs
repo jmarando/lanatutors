@@ -2,7 +2,7 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import { test } from "node:test";
-import { aiFailure, aiText, aiToolCall, inbound, loadFunction } from "./harness.mjs";
+import { aiFailure, aiText, aiToolCall, claudeFailure, claudeRefusal, claudeText, inbound, loadFunction } from "./harness.mjs";
 
 const PARENT = "254700000001";
 
@@ -498,4 +498,182 @@ test("if the team takes over just as Lana is about to answer, she stays silent",
 
   assert.deepEqual(fn.world.sent, []);
   assert.equal(fn.world.gatewayCalls.length, 0);
+});
+
+// ---------------- Keeping Lana answering ----------------
+
+test("a gateway that answers too slowly is cut off at the time limit, and the backup goes out", async (t) => {
+  const fn = await start(t, { env: { WHATSAPP_AI_BUDGET_MS: "60" }, gateway: [{ ...aiText("TOO LATE"), delayMs: 400 }] });
+  await fn.post(inbound({ from: PARENT, text: PARENT_MESSAGE }));
+  assert.equal(fn.world.sent.length, 1);
+  assert.match(fn.world.sent[0].text, /are you a parent or student/i);
+  assert.match(fn.world.emails[0].html, /timed out/i);
+  assert.equal(fn.world.conversation(PARENT).messages.at(-1).via, "backup");
+});
+
+for (const [name, body] of [
+  ["a number where the text should be", { choices: [{ message: { role: "assistant", content: 42 } }] }],
+  ["no choices at all", {}],
+]) {
+  test(`a gateway reply with ${name} is a reported failure, not a silent crash`, async (t) => {
+    const fn = await start(t, { gateway: [{ status: 200, body }] });
+    await fn.post(inbound({ from: PARENT, text: PARENT_MESSAGE }));
+    assert.match(fn.world.sent[0].text, /are you a parent or student/i);
+    assert.equal(fn.world.emails.length, 1);
+  });
+}
+
+const claudeKey = { ANTHROPIC_API_KEY: "sk-ant-test" };
+
+test("when the first AI fails, Claude answers, the reply is marked as the fallback's, and the team is told why", async (t) => {
+  const reply = "Happy to help with Grade 6 maths. Would you like a call from our Learning Coordinator?";
+  const fn = await start(t, { env: claudeKey, gateway: [aiFailure(402, "Not enough credits")], anthropic: [claudeText(reply)] });
+  await fn.post(inbound({ from: PARENT, name: "Amina", text: PARENT_MESSAGE }));
+  assert.deepEqual(fn.world.sent.map((m) => m.text), [reply]);
+  const saved = fn.world.conversation(PARENT);
+  assert.deepEqual([saved.escalated, saved.messages.at(-1).via], [true, "ai_fallback"]);
+  assert.equal(fn.world.emails.length, 1);
+  assert.match(fn.world.emails[0].subject, /fallback AI/i);
+  assert.match(fn.world.emails[0].html, /402/);
+  assert.match(fn.world.emails[0].html, /Not enough credits/);
+});
+
+test("the request to Claude is well formed", async (t) => {
+  const fn = await start(t, { env: claudeKey, gateway: [aiFailure(500)], anthropic: [claudeText("Happy to help.")] });
+  await fn.post(inbound({ from: PARENT, text: PARENT_MESSAGE }));
+  const { headers, body } = fn.world.anthropicCalls[0];
+  assert.equal(headers["x-api-key"], "sk-ant-test");
+  assert.equal(headers["anthropic-version"], "2026-10-21");
+  assert.equal(body.model, "claude-haiku-5-5");
+  assert.deepEqual(body.output_config, { effort: "low" });
+  for (const field of ["tools", "temperature", "top_p", "top_k", "thinking"]) assert.equal(field in body, false, field);
+  assert.match(body.system, /Learning Coordinator/);
+  assert.match(body.system, /Tools are not available/);
+  assert.equal(body.messages.at(-1).role, "user");
+});
+
+test("the chat is reshaped for Claude: user first, never two in a row from one side", async (t) => {
+  const fn = await start(t, {
+    env: claudeKey, gateway: [aiFailure(500)], anthropic: [claudeText("Happy to help.")],
+    conversations: [{ phone_number: PARENT, escalated: false, messages: [
+      { role: "model", content: "Hello, this is Wanjiru from the team.", ts: "2026-10-30T08:00:00.000Z", sent_by: "human" },
+      { role: "user", content: "Hi, I saw your ad", ts: "2026-10-30T08:01:00.000Z" },
+      { role: "model", content: "Great, what grade is he in?", ts: "2026-10-30T08:02:00.000Z", sent_by: "human" },
+      { role: "user", content: "Grade 6", ts: "2026-10-30T08:03:00.000Z" },
+    ] }],
+  });
+  await fn.post(inbound({ from: PARENT, text: "Please call me" }));
+  const { messages } = fn.world.anthropicCalls[0].body;
+  assert.deepEqual(messages.map((m) => m.role), ["user", "assistant", "user"]);
+  assert.match(messages[0].content, /Hi, I saw your ad/);
+  assert.match(messages[2].content, /Grade 6\n\nPlease call me/);
+});
+
+test("a slow first AI hands over to Claude, and its late answer is never sent", async (t) => {
+  const fn = await start(t, {
+    env: { ...claudeKey, WHATSAPP_AI_BUDGET_MS: "60" },
+    gateway: [{ ...aiText("TOO LATE"), delayMs: 400 }], anthropic: [claudeText("Happy to help.")],
+  });
+  await fn.post(inbound({ from: PARENT, text: PARENT_MESSAGE }));
+  assert.deepEqual(fn.world.sent.map((m) => m.text), ["Happy to help."]);
+  assert.equal(fn.world.conversation(PARENT).messages.at(-1).via, "ai_fallback");
+});
+
+test("when Claude fails too, the backup goes out and one alert names both failures", async (t) => {
+  const fn = await start(t, { env: claudeKey, gateway: [aiFailure(402, "Not enough credits")], anthropic: [claudeFailure(529, "Overloaded")] });
+  await fn.post(inbound({ from: PARENT, text: PARENT_MESSAGE }));
+  assert.match(fn.world.sent[0].text, /are you a parent or student/i);
+  assert.equal(fn.world.conversation(PARENT).messages.at(-1).via, "backup");
+  assert.equal(fn.world.emails.length, 1);
+  for (const word of [/402/, /Not enough credits/, /529/, /Overloaded/]) assert.match(fn.world.emails[0].html, word);
+});
+
+for (const [name, response] of [["declining", claudeRefusal()], ["answering with no text", claudeText("")]]) {
+  test(`Claude ${name} counts as a failure: the backup goes out`, async (t) => {
+    const fn = await start(t, { env: claudeKey, gateway: [aiFailure(500)], anthropic: [response] });
+    await fn.post(inbound({ from: PARENT, text: PARENT_MESSAGE }));
+    assert.equal(fn.world.anthropicCalls.length, 1, "Claude was asked");
+    assert.equal(fn.world.conversation(PARENT).messages.at(-1).via, "backup");
+  });
+}
+
+test("Claude taking too long is cut off at its own limit", async (t) => {
+  const fn = await start(t, { env: { ...claudeKey, WHATSAPP_FALLBACK_BUDGET_MS: "60" }, gateway: [aiFailure(500)], anthropic: [{ ...claudeText("TOO LATE"), delayMs: 400 }] });
+  await fn.post(inbound({ from: PARENT, text: PARENT_MESSAGE }));
+  assert.equal(fn.world.anthropicCalls.length, 1, "Claude was asked");
+  assert.ok(!fn.world.sent.some((m) => m.text === "TOO LATE"), "its late answer is not sent");
+  assert.equal(fn.world.conversation(PARENT).messages.at(-1).via, "backup");
+});
+
+test("Claude is not asked when the first AI worked", async (t) => {
+  const fn = await start(t, { env: claudeKey, gateway: [aiText("Happy to help.")] });
+  await fn.post(inbound({ from: PARENT, text: PARENT_MESSAGE }));
+  assert.equal(fn.world.anthropicCalls.length, 0);
+  assert.equal(fn.world.emails.length, 0);
+});
+
+test("with no key, a failing first AI goes straight to the backup and Claude is never called", async (t) => {
+  const fn = await start(t, { gateway: [aiFailure(500)] });
+  await fn.post(inbound({ from: PARENT, text: PARENT_MESSAGE }));
+  assert.equal(fn.world.anthropicCalls.length, 0);
+  assert.equal(fn.world.conversation(PARENT).messages.at(-1).via, "backup");
+});
+
+test("Claude's reply gets the same tutor-link check, and the key is never in an email or a log", async (t) => {
+  const fn = await start(t, { env: claudeKey, gateway: [aiFailure(500)], anthropic: [claudeText("Try https://lanatutors.africa/tutor/abc123, she is great.")] });
+  await fn.post(inbound({ from: PARENT, text: PARENT_MESSAGE }));
+  assert.equal(fn.world.conversation(PARENT).messages.at(-1).via, "ai_fallback", "it was Claude's reply that was checked");
+  assert.doesNotMatch(fn.world.sent[0].text, /lanatutors\.africa\/tutor\//);
+  assert.match(fn.world.sent[0].text, /Learning Coordinator/);
+  const everything = JSON.stringify(fn.world.emails) + fn.world.logs.map((l) => l.text).join("\n");
+  assert.doesNotMatch(everything, /sk-ant-test/);
+});
+
+const META_REFUSAL = { status: 401, body: { error: { message: "Invalid OAuth access token.", code: 190 } } };
+
+test("when Meta refuses the reply, the team is emailed Meta's error, nothing is recorded as sent, and the chat stays with the team", async (t) => {
+  const fn = await start(t, { gateway: [aiText("Happy to help.")], meta: [META_REFUSAL] });
+  await fn.post(inbound({ from: PARENT, text: "Do you teach on Saturdays?" }));
+  assert.deepEqual(fn.world.sent, []);
+  const saved = fn.world.conversation(PARENT);
+  assert.equal(saved.escalated, true);
+  assert.equal(saved.messages.filter((m) => m.role === "model").length, 0);
+  assert.equal(fn.world.emails.length, 1);
+  assert.match(fn.world.emails[0].subject, /Meta refused/i);
+  assert.match(fn.world.emails[0].html, /Invalid OAuth access token/);
+  assert.match(fn.world.emails[0].html, /WHATSAPP_ACCESS_TOKEN/);
+});
+
+test("a network failure sending the reply is reported the same way", async (t) => {
+  const fn = await start(t, { gateway: [aiText("Happy to help.")], meta: [{ throws: new Error("fetch failed") }] });
+  await fn.post(inbound({ from: PARENT, text: "Do you teach on Saturdays?" }));
+  assert.equal(fn.world.emails.length, 1);
+  assert.match(fn.world.emails[0].html, /fetch failed/);
+});
+
+for (const [name, message] of [
+  ["request to type", () => inbound({ from: PARENT, type: "audio", audio: { id: "m1", voice: true } })],
+  ["stop confirmation", () => inbound({ from: PARENT, text: "Stop" })],
+]) {
+  test(`a refused ${name} is reported to the team too`, async (t) => {
+    const fn = await start(t, { meta: [META_REFUSAL] });
+    await fn.post(message());
+    assert.deepEqual(fn.world.sent, []);
+    assert.equal(fn.world.emails.length, 1);
+    assert.match(fn.world.emails[0].subject, /Meta refused/i);
+  });
+}
+
+test("an unexpected crash emails the team what it knows, and sends nothing", async (t) => {
+  const fn = await start(t, { gateway: [aiText("NEVER SENT")] });
+  await fn.deliver(inbound({ from: PARENT, name: "Amina", text: "Do you teach on Saturdays?" }));
+  // Lana is waiting for follow-ups; her next write is taking the chat. Make that write blow up.
+  fn.world.beforeNextUpdate = () => { throw new Error("database exploded"); };
+  await fn.settle();
+  assert.deepEqual(fn.world.sent, []);
+  assert.equal(fn.world.emails.length, 1);
+  assert.match(fn.world.emails[0].subject, /unexpected error/i);
+  for (const word of [/database exploded/, /Do you teach on Saturdays/, /Amina/, new RegExp(PARENT)]) {
+    assert.match(fn.world.emails[0].html, word);
+  }
 });
