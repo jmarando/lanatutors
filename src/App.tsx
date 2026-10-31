@@ -3,7 +3,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
-import { lazy, Suspense, useMemo } from "react";
+import { lazy, Suspense, useMemo, type ReactNode } from "react";
 import Navigation from "./components/Navigation";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
@@ -67,6 +67,7 @@ const TutorsInKenya = lazy(() => import("./pages/TutorsInKenya"));
 const SubjectLanding = lazy(() => import("./pages/SubjectLanding"));
 const CurriculumMathLanding = lazy(() => import("./pages/CurriculumMathLanding"));
 const Diaspora = lazy(() => import("./pages/Diaspora"));
+const CityLanding = lazy(() => import("./pages/CityLanding"));
 
 // School module
 const SchoolLogin = lazy(() => import("./pages/school/SchoolLogin"));
@@ -74,7 +75,7 @@ const SchoolAdminDashboard = lazy(() => import("./pages/school/SchoolAdminDashbo
 const SchoolTeacherDashboard = lazy(() => import("./pages/school/SchoolTeacherDashboard"));
 const SchoolParentDashboard = lazy(() => import("./pages/school/SchoolParentDashboard"));
 
-const AppContent = () => {
+export const AppContent = () => {
   const location = useLocation();
   const isSchoolRoute = location.pathname.startsWith("/school/");
   // The CRM screens carry their own top bar and phone bottom bar.
@@ -135,6 +136,9 @@ const AppContent = () => {
           <Route path="/privacy-policy" element={<PrivacyPolicy />} />
           <Route path="/unsubscribe" element={<Unsubscribe />} />
           <Route path="/tutors-in-kenya" element={<TutorsInKenya />} />
+          <Route path="/tutors-in-nairobi" element={<CityLanding />} />
+          <Route path="/tutors-in-mombasa" element={<CityLanding />} />
+          <Route path="/tutors-in-kisumu" element={<CityLanding />} />
           <Route path="/subjects/:subject" element={<SubjectLanding />} />
           <Route path="/kcse-mathematics-tutors" element={<CurriculumMathLanding slugOverride="kcse-mathematics-tutors" />} />
           <Route path="/igcse-mathematics-tutors" element={<CurriculumMathLanding slugOverride="igcse-mathematics-tutors" />} />
@@ -165,7 +169,9 @@ const AppContent = () => {
   );
 };
 
-const App = () => {
+// Everything above the router. The build-time prerender (src/entry-prerender.tsx) wraps the same
+// providers around a StaticRouter, so keep providers here rather than in App.
+export const AppProviders = ({ children }: { children: ReactNode }) => {
   const queryClient = useMemo(() => new QueryClient({
     defaultOptions: {
       queries: {
@@ -186,14 +192,20 @@ const App = () => {
           <TooltipProvider>
             <Toaster />
             <Sonner />
-            <BrowserRouter>
-              <AppContent />
-            </BrowserRouter>
+            {children}
           </TooltipProvider>
         </AuthProvider>
       </QueryClientProvider>
     </ErrorBoundary>
   );
 };
+
+const App = () => (
+  <AppProviders>
+    <BrowserRouter>
+      <AppContent />
+    </BrowserRouter>
+  </AppProviders>
+);
 
 export default App;

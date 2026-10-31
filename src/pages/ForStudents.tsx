@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -21,8 +21,9 @@ import { supabase } from "@/integrations/supabase/client";
 
 const ForStudents = () => {
   const navigate = useNavigate();
-  const [isChecking, setIsChecking] = useState(true);
 
+  // The page renders straight away (the build-time prerender needs it to); a signed-in student
+  // is sent to their dashboard once this check finishes.
   useEffect(() => {
     const checkStudentStatus = async () => {
       try {
@@ -45,24 +46,11 @@ const ForStudents = () => {
         }
       } catch (error) {
         console.error('Error checking student status:', error);
-      } finally {
-        setIsChecking(false);
       }
     };
 
     checkStudentStatus();
   }, [navigate]);
-
-  if (isChecking) {
-    return (
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-muted-foreground">Loading...</p>
-        </div>
-      </div>
-    );
-  }
 
   const benefits = [
     {
@@ -155,7 +143,7 @@ const ForStudents = () => {
   return (
     <div className="min-h-screen bg-[image:var(--gradient-page)]">
       <SEO 
-        title="For Students - Quality Online Tutoring from Verified Kenyan Teachers"
+        title="1-on-1 Tutoring from Verified Kenyan Teachers"
         description="Connect with verified tutors from top Kenyan schools from anywhere in the world. Get personalized 1-on-1 tutoring for KCSE, KCPE, CBC, IGCSE, and American curriculum. Learn online globally or in-person in Kenya."
       />
       

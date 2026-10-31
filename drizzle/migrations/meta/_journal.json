@@ -36,6 +36,13 @@
       "when": 1793166530801,
       "tag": "0004_crm_leads",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1793335163143,
+      "tag": "0005_crm_handoff_next_step",
+      "breakpoints": true
     }
   ]
 }
