@@ -148,25 +148,37 @@ type Msg = {
 };
 type Conversation = { phone_number: string; parent_id: string | null; escalated: boolean; messages: Msg[]; updated_at: string };
 
-async function sendWhatsAppMessage(to: string, text: string) {
+type SendResult = { ok: true } | { ok: false; error: string };
+
+// Sends a WhatsApp message. Meta can refuse (an expired token, say) or be out of reach, and the caller has to know
+// which, so the answer says so. It never throws.
+async function sendWhatsAppMessage(to: string, text: string): Promise<SendResult> {
   // Safety: strip any "— Lana 💛" / "- Lana" sign-offs the model may add
   const cleaned = text
     .replace(/\n*\s*[—-]\s*Lana\s*(💛|❤️|♥|<3)?\s*$/i, "")
     .replace(/\n*\s*Lana\s*(💛|❤️|♥)\s*$/i, "")
     .trim();
-  const res = await fetch(`https://graph.facebook.com/v21.0/${WA_PHONE_ID}/messages`, {
-    method: "POST",
-    headers: { Authorization: `Bearer ${WA_TOKEN}`, "Content-Type": "application/json" },
-    body: JSON.stringify({
-      messaging_product: "whatsapp",
-      to,
-      type: "text",
-      text: { body: cleaned, preview_url: true },
-    }),
-  });
-  const data = await res.json();
-  if (!res.ok) console.error("WA send error:", data);
-  return data;
+  try {
+    const res = await fetch(`https://graph.facebook.com/v21.0/${WA_PHONE_ID}/messages`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${WA_TOKEN}`, "Content-Type": "application/json" },
+      body: JSON.stringify({
+        messaging_product: "whatsapp",
+        to,
+        type: "text",
+        text: { body: cleaned, preview_url: true },
+      }),
+    });
+    const data = await res.json().catch(() => null);
+    if (res.ok) return { ok: true };
+    console.error("WA send error:", data);
+    const meta = (data as { error?: { message?: string; code?: number } } | null)?.error;
+    const said = `${meta?.message ? `: ${meta.message}` : ""}${meta?.code ? ` (code ${meta.code})` : ""}`;
+    return { ok: false, error: `Meta answered ${res.status}${said}` };
+  } catch (e) {
+    console.error("WA send failed:", e);
+    return { ok: false, error: `The call to Meta failed: ${e instanceof Error ? e.message : String(e)}` };
+  }
 }
 
 async function logComm(args: {
@@ -563,6 +575,7 @@ function escapeHtml(text: string) {
 
 type Accent = { border: string; heading: string };
 const AMBER: Accent = { border: "#f59e0b", heading: "#b45309" };
+const RED: Accent = { border: "#e7422d", heading: "#b91c1c" };
 
 // One email to the team: a heading, some labelled facts, a few notes, an optional grey hint and the chat so far.
 // Alerts go out after the reply they are about, and one that can't be sent is logged and dropped.
@@ -668,6 +681,44 @@ async function alertFallbackUsed(args: {
   });
 }
 
+// Tells the team that WhatsApp itself would not take Lana's message, so nothing reached the person.
+async function alertSendFailed(args: {
+  phone: string;
+  profileName?: string;
+  parentId: string | null;
+  error: string;
+  history: Msg[];
+}) {
+  console.error("WhatsApp refused Lana's message:", args.error);
+  await sendAlert({
+    subject: `⚠️ WhatsApp: Meta refused Lana's reply — ${args.profileName ?? args.phone}`,
+    heading: "Lana's reply could not be sent",
+    accent: RED,
+    facts: [...whoFacts(args), ["What Meta said", args.error]],
+    notes: ["Nothing reached them. Please reply to them from the WhatsApp inbox."],
+    hint: "If it says the access token is invalid or expired, create a permanent token (a System User) in Meta Business Settings and update the WHATSAPP_ACCESS_TOKEN secret. Until then the inbox cannot send either.",
+    history: args.history,
+  });
+}
+
+// Tells the team that Lana hit an error nobody planned for, with what is known about whose message it was. It sends the
+// person nothing: from here it can't tell whether a reply already went out.
+async function alertCrash(args: { phone?: string; profileName?: string; text?: string; error: unknown }) {
+  const error = args.error instanceof Error ? args.error : new Error(String(args.error));
+  const facts: [string, string][] = [["What went wrong", error.message]];
+  if (args.phone) facts.push(["From", `${args.profileName ?? "Unknown"} (+${args.phone})`]);
+  if (args.text) facts.push(["Their message", args.text]);
+  await sendAlert({
+    subject: "⚠️ WhatsApp: Lana hit an unexpected error",
+    heading: "Lana hit an unexpected error",
+    accent: RED,
+    facts,
+    notes: ["A reply may or may not have gone out. Please check the chat in the WhatsApp inbox."],
+    hint: (error.stack ?? "").split("\n").slice(0, 6).join("\n"),
+    history: [],
+  });
+}
+
 // ---------------- WEBHOOK HANDLER ----------------
 
 // The parts of Meta's webhook payload this function reads.
@@ -722,6 +773,8 @@ function readIncoming(msg: WaMessage): Pick<Msg, "content" | "attachment"> | nul
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 async function handleIncoming(body: WebhookBody) {
+  // What the catch at the bottom can tell the team if something unexpected goes wrong part-way.
+  const known: { phone?: string; profileName?: string; text?: string } = {};
   try {
     const change = body.entry?.[0]?.changes?.[0]?.value;
     const msg = change?.messages?.[0];
@@ -731,6 +784,8 @@ async function handleIncoming(body: WebhookBody) {
     }
     const from = msg.from;
     const profileName = change?.contacts?.[0]?.profile?.name;
+    known.phone = from;
+    known.profileName = profileName;
 
     const incoming = readIncoming(msg);
     if (!incoming) {
@@ -738,6 +793,7 @@ async function handleIncoming(body: WebhookBody) {
       return;
     }
     const text = incoming.content;
+    known.text = text;
     console.log(`Incoming from ${profileName ?? from}: ${text}`);
 
     const convo = await loadConversation(from, profileName);
@@ -769,7 +825,11 @@ async function handleIncoming(body: WebhookBody) {
         "",
         "If you need help with anything, please reach us at info@lanatutors.africa."
       ].join("\n");
-      await sendWhatsAppMessage(from, confirmation);
+      const confirmed = await sendWhatsAppMessage(from, confirmation);
+      if (!confirmed.ok) {
+        await alertSendFailed({ phone: from, profileName, parentId: convo.parent_id, error: confirmed.error, history: saved.convo.messages });
+        return;
+      }
       await logComm({ phone: from, parentId: convo.parent_id, direction: "outbound", content: confirmation });
       const now = new Date().toISOString();
       await appendMessages(from, [{ role: "model", content: confirmation, ts: now, via: "opt_out" }], { escalated: true, escalated_at: now });
@@ -807,7 +867,11 @@ async function handleIncoming(body: WebhookBody) {
         await claimForReply(from);
         return;
       }
-      await sendWhatsAppMessage(from, ATTACHMENT_NOTICE);
+      const noticed = await sendWhatsAppMessage(from, ATTACHMENT_NOTICE);
+      if (!noticed.ok) {
+        await alertSendFailed({ phone: from, profileName, parentId: convo.parent_id, error: noticed.error, history });
+        return;
+      }
       await logComm({ phone: from, parentId: convo.parent_id, direction: "outbound", content: ATTACHMENT_NOTICE });
       await appendMessages(from, [{ role: "model", content: ATTACHMENT_NOTICE, ts: new Date().toISOString(), via: "notice:attachment" }]);
       return;
@@ -854,7 +918,12 @@ async function handleIncoming(body: WebhookBody) {
       }
     }
 
-    await sendWhatsAppMessage(from, reply);
+    const delivery = await sendWhatsAppMessage(from, reply);
+    if (!delivery.ok) {
+      // Lana took the chat to answer it, so it stays with the team, who now know why nothing arrived.
+      await alertSendFailed({ phone: from, profileName, parentId: convo.parent_id, error: delivery.error, history: context });
+      return;
+    }
     await logComm({ phone: from, parentId: convo.parent_id, direction: "outbound", content: reply });
     const sent: Msg = { role: "model", content: reply, ts: new Date().toISOString(), via };
     await appendMessages(from, [sent]);
@@ -867,6 +936,7 @@ async function handleIncoming(body: WebhookBody) {
 
   } catch (e) {
     console.error("handleIncoming error:", e);
+    await alertCrash({ phone: known.phone, profileName: known.profileName, text: known.text, error: e });
   }
 }
 

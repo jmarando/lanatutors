@@ -628,3 +628,52 @@ test("Claude's reply gets the same tutor-link check, and the key is never in an 
   const everything = JSON.stringify(fn.world.emails) + fn.world.logs.map((l) => l.text).join("\n");
   assert.doesNotMatch(everything, /sk-ant-test/);
 });
+
+const META_REFUSAL = { status: 401, body: { error: { message: "Invalid OAuth access token.", code: 190 } } };
+
+test("when Meta refuses the reply, the team is emailed Meta's error, nothing is recorded as sent, and the chat stays with the team", async (t) => {
+  const fn = await start(t, { gateway: [aiText("Happy to help.")], meta: [META_REFUSAL] });
+  await fn.post(inbound({ from: PARENT, text: "Do you teach on Saturdays?" }));
+  assert.deepEqual(fn.world.sent, []);
+  const saved = fn.world.conversation(PARENT);
+  assert.equal(saved.escalated, true);
+  assert.equal(saved.messages.filter((m) => m.role === "model").length, 0);
+  assert.equal(fn.world.emails.length, 1);
+  assert.match(fn.world.emails[0].subject, /Meta refused/i);
+  assert.match(fn.world.emails[0].html, /Invalid OAuth access token/);
+  assert.match(fn.world.emails[0].html, /WHATSAPP_ACCESS_TOKEN/);
+});
+
+test("a network failure sending the reply is reported the same way", async (t) => {
+  const fn = await start(t, { gateway: [aiText("Happy to help.")], meta: [{ throws: new Error("fetch failed") }] });
+  await fn.post(inbound({ from: PARENT, text: "Do you teach on Saturdays?" }));
+  assert.equal(fn.world.emails.length, 1);
+  assert.match(fn.world.emails[0].html, /fetch failed/);
+});
+
+for (const [name, message] of [
+  ["request to type", () => inbound({ from: PARENT, type: "audio", audio: { id: "m1", voice: true } })],
+  ["stop confirmation", () => inbound({ from: PARENT, text: "Stop" })],
+]) {
+  test(`a refused ${name} is reported to the team too`, async (t) => {
+    const fn = await start(t, { meta: [META_REFUSAL] });
+    await fn.post(message());
+    assert.deepEqual(fn.world.sent, []);
+    assert.equal(fn.world.emails.length, 1);
+    assert.match(fn.world.emails[0].subject, /Meta refused/i);
+  });
+}
+
+test("an unexpected crash emails the team what it knows, and sends nothing", async (t) => {
+  const fn = await start(t, { gateway: [aiText("NEVER SENT")] });
+  await fn.deliver(inbound({ from: PARENT, name: "Amina", text: "Do you teach on Saturdays?" }));
+  // Lana is waiting for follow-ups; her next write is taking the chat. Make that write blow up.
+  fn.world.beforeNextUpdate = () => { throw new Error("database exploded"); };
+  await fn.settle();
+  assert.deepEqual(fn.world.sent, []);
+  assert.equal(fn.world.emails.length, 1);
+  assert.match(fn.world.emails[0].subject, /unexpected error/i);
+  for (const word of [/database exploded/, /Do you teach on Saturdays/, /Amina/, new RegExp(PARENT)]) {
+    assert.match(fn.world.emails[0].html, word);
+  }
+});

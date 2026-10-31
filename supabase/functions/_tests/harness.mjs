@@ -113,7 +113,7 @@ const DEFAULT_ENV = {
   WHATSAPP_REPLY_DELAY_MS: "20",
 };
 
-function makeWorld({ conversations, gateway, anthropic }) {
+function makeWorld({ conversations, gateway, anthropic, meta }) {
   const world = {
     tables: { whatsapp_conversations: clone(conversations), communication_logs: [], whatsapp_suppressions: [], profiles: [] },
     sent: [], // WhatsApp messages the function sent: { to, text }
@@ -124,6 +124,7 @@ function makeWorld({ conversations, gateway, anthropic }) {
     logs: [],
     gatewayQueue: [...gateway],
     anthropicQueue: [...anthropic],
+    metaQueue: [...meta], // scripted outcomes for WhatsApp sends: { status, body } or { throws }; none left means it works
     background: [], // work the function handed to EdgeRuntime.waitUntil
     inflight: 0,
     activity: 0,
@@ -142,6 +143,9 @@ function makeWorld({ conversations, gateway, anthropic }) {
       const target = String(url);
       const body = init.body ? JSON.parse(init.body) : undefined;
       if (target.startsWith("https://graph.facebook.com/")) {
+        const outcome = world.metaQueue.shift();
+        if (outcome?.throws) throw outcome.throws;
+        if (outcome && outcome.status >= 400) return jsonResponse(outcome.status, outcome.body);
         world.sent.push({ to: body.to, text: body.text.body });
         return jsonResponse(200, { messages: [{ id: "wamid.fake" }] });
       }
@@ -198,7 +202,7 @@ async function settle(world) {
 
 let loads = 0;
 
-export async function loadFunction(name, { env = {}, conversations = [], gateway = [], anthropic = [] } = {}) {
+export async function loadFunction(name, { env = {}, conversations = [], gateway = [], anthropic = [], meta = [] } = {}) {
   const bundle = await build({
     entryPoints: [path.join(functionsDir, name, "index.ts")],
     bundle: true,
@@ -210,7 +214,7 @@ export async function loadFunction(name, { env = {}, conversations = [], gateway
     plugins: [denoUrlImports],
   });
 
-  const world = makeWorld({ conversations, gateway, anthropic });
+  const world = makeWorld({ conversations, gateway, anthropic, meta });
   const fullEnv = { ...DEFAULT_ENV, ...env };
   const saved = { fetch: globalThis.fetch, Deno: globalThis.Deno, EdgeRuntime: globalThis.EdgeRuntime, console: { ...console } };
   globalThis.fetch = world.fetch;
