@@ -373,3 +373,12 @@ test("the offer carries the two buttons, in one message or two", () => {
   assert.deepEqual(buttons.booking, { step: "offer" });
   assert.match(buttons.content, /\[Buttons: Book a free call \| Call me back\]$/);
 });
+
+test("a refused booked message still gives the details as plain text, because the call is booked", () => {
+  const booked = b.bookedOut({ day: "2026-11-04", time: "01:20 PM", email: "jane@example.com", link: MEET, id: "b1" });
+  assert.equal(booked.fallback, booked.wa.interactive.body.text);
+  assert.ok(booked.fallback.includes(MEET));
+
+  const already = b.alreadyBookedOut("2026-11-05", "02:00 PM");
+  assert.equal(already.fallback, already.wa.interactive.body.text);
+});

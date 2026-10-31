@@ -37,6 +37,7 @@ export type BookingRow = {
   booked_via?: string | null;
   created_at?: string;
   meeting_link?: string | null;
+  email?: string | null;
 };
 
 // The website's call times, in its own text (ALL_TIME_SLOTS in src/pages/BookConsultation.tsx; a test keeps the two
@@ -416,10 +417,11 @@ export function bookedOut(a: { day: string; time: string; email: string; link: s
     lines.push("", "Our team will send you the Google Meet link here before the call.");
   }
   lines.push("", PREPARE);
-  return buttonsOut("booking:done", lines.join("\n"), CHANGE_BUTTON, state("done", { id: a.id }), COPY.teamArranges);
+  const body = lines.join("\n");
+  return buttonsOut("booking:done", body, CHANGE_BUTTON, state("done", { id: a.id }), body);
 }
 
 export function alreadyBookedOut(day: string, time: string): Outgoing {
   const body = `You already have a call booked for ${longDay(day)}, ${niceTime(time)} Nairobi time (EAT). If you need to change it, tap the button below.`;
-  return buttonsOut("booking:done", body, CHANGE_BUTTON, state("done"), COPY.teamArranges);
+  return buttonsOut("booking:done", body, CHANGE_BUTTON, state("done"), body);
 }

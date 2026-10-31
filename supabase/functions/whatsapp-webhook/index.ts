@@ -3,26 +3,36 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import {
   type Action,
   type Booked,
+  type BookingRow,
   type BookingState,
   type Outgoing,
   COPY,
   HORIZON_DAYS,
+  MAX_CHAT_BOOKINGS_PER_DAY,
   MAX_LIST_ROWS,
   addDays,
+  alreadyBookedOut,
   askEmailOut,
+  bookedOut,
+  bookingRow,
   confirmOut,
+  countRecentChatBookings,
   currentFlow,
   dayListOut,
   findEmail,
   freeTimes,
   isFree,
   isOpen,
+  isUpcoming,
+  longDay,
   nairobiNow,
+  niceTime,
   openDays,
   parseTap,
   partOf,
   partsOf,
   partsOut,
+  phoneVariants,
   textOut,
   timesInPart,
   timesOut,
@@ -57,6 +67,11 @@ const REPLY_DELAY_MS = Number(Deno.env.get("WHATSAPP_REPLY_DELAY_MS") ?? 5000);
 const MAX_HISTORY = 50; // as in whatsapp-send
 // Booking the assessment call inside the chat. WHATSAPP_BOOKING=off takes the buttons away without a deploy.
 const BOOKING_ON = (Deno.env.get("WHATSAPP_BOOKING") ?? "on").toLowerCase() !== "off";
+// Every booking made in the chat also emails the team a notice, for the launch month. WHATSAPP_BOOKING_NOTICES=off
+// silences it; the alerts about things that went wrong are never silenced.
+const BOOKING_NOTICES_ON = (Deno.env.get("WHATSAPP_BOOKING_NOTICES") ?? "on").toLowerCase() !== "off";
+// How long each call to the two booking functions may take before it counts as failed.
+const BOOKING_CALL_MS = Number(Deno.env.get("WHATSAPP_BOOKING_CALL_MS") ?? 20_000);
 
 const admin = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
 
@@ -615,6 +630,7 @@ function escapeHtml(text: string) {
 type Accent = { border: string; heading: string };
 const AMBER: Accent = { border: "#f59e0b", heading: "#b45309" };
 const RED: Accent = { border: "#e7422d", heading: "#b91c1c" };
+const GREEN: Accent = { border: "#16a34a", heading: "#15803d" };
 
 // One email to the team: a heading, some labelled facts, a few notes, an optional grey hint and the chat so far.
 // Alerts go out after the reply they are about, and one that can't be sent is logged and dropped.
@@ -856,8 +872,10 @@ async function loadBooked(fromDay: string, toDay: string): Promise<Booked | null
   return booked;
 }
 
-async function sayWentWrong(ctx: BookingContext): Promise<void> {
+// Tells the family the team will take it from here, and tells the team why.
+async function sayWentWrong(ctx: BookingContext, detail: string): Promise<void> {
   await say(ctx, [textOut("booking:error", COPY.wentWrong)]);
+  await alertBooking("read_failed", ctx, { detail });
 }
 
 // "Just filled up" for a day that would have had times but they have all gone; plain "again" for a day that was never
@@ -877,9 +895,22 @@ function offerTimes(day: string, times: string[], email?: string, taken = false)
 async function startBooking(ctx: BookingContext, email?: string, intro?: "again" | "filled"): Promise<void> {
   const now = new Date();
   const today = nairobiNow(now).day;
+  const held = await lookUpBookings(ctx.from, now);
+  if (!held) {
+    await sayWentWrong(ctx, "Could not read this number's bookings");
+    return;
+  }
+  if (held.upcoming) {
+    await say(ctx, [alreadyBookedOut(held.upcoming.consultation_date, held.upcoming.consultation_time)]);
+    return;
+  }
+  if (held.recent >= MAX_CHAT_BOOKINGS_PER_DAY) {
+    await say(ctx, [textOut("booking:limit", COPY.limit)]);
+    return;
+  }
   const booked = await loadBooked(today, addDays(today, HORIZON_DAYS));
   if (!booked) {
-    await sayWentWrong(ctx);
+    await sayWentWrong(ctx, "Could not read the booked call times");
     return;
   }
   const days = openDays(now, booked);
@@ -894,7 +925,7 @@ async function showDay(ctx: BookingContext, day: string, email?: string): Promis
   const now = new Date();
   const booked = await loadBooked(day, day);
   if (!booked) {
-    await sayWentWrong(ctx);
+    await sayWentWrong(ctx, "Could not read the booked call times");
     return;
   }
   const times = freeTimes(day, now, booked);
@@ -908,7 +939,7 @@ async function showDay(ctx: BookingContext, day: string, email?: string): Promis
 async function showPart(ctx: BookingContext, day: string, part: "am" | "pm" | "eve", email?: string): Promise<void> {
   const booked = await loadBooked(day, day);
   if (!booked) {
-    await sayWentWrong(ctx);
+    await sayWentWrong(ctx, "Could not read the booked call times");
     return;
   }
   const times = timesInPart(freeTimes(day, new Date(), booked), part);
@@ -924,21 +955,262 @@ async function chooseTime(ctx: BookingContext, day: string, time: string, email?
   const now = new Date();
   const booked = await loadBooked(day, day);
   if (!booked) {
-    await sayWentWrong(ctx);
+    await sayWentWrong(ctx, "Could not read the booked call times");
     return;
   }
   if (!isFree(day, time, now, booked)) {
-    const times = freeTimes(day, now, booked);
-    if (times.length === 0) {
-      await startBooking(ctx, email, emptyDayIntro(day, now));
-      return;
-    }
-    // Someone took it a moment ago: offer the other times of the same part of the day, or the whole day if none are left.
-    const samePart = timesInPart(times, partOf(time));
-    await say(ctx, [offerTimes(day, samePart.length > 0 ? samePart : times, email, true)]);
+    await reofferTimes(ctx, day, time, email, now, booked);
     return;
   }
   await say(ctx, [email ? confirmOut(day, time, email) : askEmailOut(day, time)]);
+}
+
+// Someone took the time a moment ago: offer the other times of the same part of the day, or the whole day if none are
+// left, or the days if the day is full.
+async function reofferTimes(ctx: BookingContext, day: string, time: string, email: string | undefined, now: Date, booked: Booked): Promise<void> {
+  const times = freeTimes(day, now, booked);
+  if (times.length === 0) {
+    await startBooking(ctx, email, emptyDayIntro(day, now));
+    return;
+  }
+  const samePart = timesInPart(times, partOf(time));
+  await say(ctx, [offerTimes(day, samePart.length > 0 ? samePart : times, email, true)]);
+}
+
+const PENDING_MEET_LINK = "https://meet.google.com/pending"; // what the website stores when Google did not make a link
+
+// Calls one of the booking functions as the service role. It never throws; a failure comes back as an error.
+async function callFunction(name: string, body: unknown): Promise<{ ok: boolean; data: Record<string, unknown> | null; error?: string }> {
+  try {
+    const res = await fetch(`${SUPABASE_URL}/functions/v1/${name}`, {
+      method: "POST",
+      headers: { Authorization: `Bearer ${SERVICE_ROLE}`, apikey: SERVICE_ROLE, "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+      signal: AbortSignal.timeout(BOOKING_CALL_MS),
+    });
+    const data = (await res.json().catch(() => null)) as Record<string, unknown> | null;
+    if (res.ok) return { ok: true, data };
+    return { ok: false, data, error: `${name} answered ${res.status}: ${JSON.stringify(data).slice(0, 200)}` };
+  } catch (e) {
+    const timedOut = e instanceof Error && (e.name === "TimeoutError" || e.name === "AbortError");
+    const detail = e instanceof Error ? e.message : String(e);
+    return {
+      ok: false,
+      data: null,
+      error: timedOut ? `${name} did not answer within ${BOOKING_CALL_MS / 1000} seconds` : `The call to ${name} failed: ${detail}`,
+    };
+  }
+}
+
+// This number's bookings, once: the one that is still to come, if any, and how many were made in the chat in the last
+// day. Null when they can't be read.
+async function lookUpBookings(phone: string, now: Date): Promise<{ upcoming: BookingRow | null; recent: number } | null> {
+  const { data, error } = await admin
+    .from("consultation_bookings")
+    .select("id, consultation_date, consultation_time, status, booked_via, created_at, meeting_link, email")
+    .in("phone_number", phoneVariants(phone));
+  if (error || !data) {
+    console.error("Could not read this number's bookings:", error);
+    return null;
+  }
+  const rows = data as BookingRow[];
+  return { upcoming: rows.find((row) => isUpcoming(row, now)) ?? null, recent: countRecentChatBookings(rows, now) };
+}
+
+type BookingProblem = "read_failed" | "not_saved" | "no_link" | "email_failed" | "change";
+
+const BOOKING_PROBLEMS: Record<BookingProblem, { subject: string; heading: string; accent: Accent; note: string }> = {
+  read_failed: {
+    subject: "⚠️ WhatsApp: a booking in the chat could not read the free times",
+    heading: "A booking in the chat could not read the free times",
+    accent: AMBER,
+    note: "They were told the team will book it with them. Please reply to them in the WhatsApp inbox.",
+  },
+  not_saved: {
+    subject: "⚠️ WhatsApp: a booking in the chat could not be saved",
+    heading: "A booking in the chat could not be saved",
+    accent: RED,
+    note: "Nothing was booked and nobody was invited. They were told the team will book it with them. Please reply to them in the WhatsApp inbox.",
+  },
+  no_link: {
+    subject: "⚠️ WhatsApp: booked, but no Meet link",
+    heading: "Booked, but the Google Meet link could not be made",
+    accent: AMBER,
+    note: "The booking is saved and they were told the link will follow, but nobody has been invited and no confirmation email went. Please make the Google Meet link and send it to them in the chat.",
+  },
+  email_failed: {
+    subject: "⚠️ WhatsApp: the confirmation email did not send",
+    heading: "The confirmation email did not send",
+    accent: AMBER,
+    note: "The booking is saved, they have the details in the chat and Google's calendar invite. Only the confirmation email is missing.",
+  },
+  change: {
+    subject: "WhatsApp: change or cancel a call",
+    heading: "They want to change or cancel their call",
+    accent: AMBER,
+    note: "Please move or cancel the booking in the admin, then confirm with them in the chat.",
+  },
+};
+
+// One email to the team about a booking in the chat that needs a person. Sent after the reply it is about.
+async function alertBooking(
+  kind: BookingProblem,
+  ctx: BookingContext,
+  details: { detail?: string; day?: string; time?: string; email?: string; link?: string | null; bookingId?: string; history?: Msg[] } = {},
+): Promise<void> {
+  const problem = BOOKING_PROBLEMS[kind];
+  if (kind !== "change") console.error(`Booking in the chat: ${kind}`, details.detail ?? "");
+  const facts: [string, string][] = whoFacts({ phone: ctx.from, profileName: ctx.profileName, parentId: ctx.parentId });
+  if (details.day && details.time) facts.push(["The call", `${longDay(details.day)}, ${niceTime(details.time)} Nairobi time (EAT)`]);
+  if (details.email) facts.push(["Email", details.email]);
+  if (details.link) facts.push(["Google Meet", details.link]);
+  if (details.bookingId) facts.push(["Booking id", details.bookingId]);
+  if (details.detail) facts.push(["What went wrong", details.detail]);
+  await sendAlert({
+    subject: `${problem.subject} — ${ctx.profileName || ctx.from}`,
+    heading: problem.heading,
+    accent: problem.accent,
+    facts,
+    notes: [problem.note],
+    history: await chatSoFar(ctx.from, details.history ?? []),
+  });
+}
+
+// This number already has an upcoming booking. The same time means a second tap on Confirm: say nothing while the first
+// is still being set up, or repeat the details once it is finished. Any other time means they already have a call.
+// Returns true when it has dealt with the tap.
+async function answerHeld(
+  ctx: BookingContext,
+  upcoming: BookingRow | null,
+  day: string,
+  time: string,
+  email: string,
+  now: Date,
+  history: Msg[],
+): Promise<boolean> {
+  if (!upcoming) return false;
+  if (upcoming.consultation_date === day && upcoming.consultation_time === time) {
+    const stored = upcoming.meeting_link ?? "";
+    const settingUp = stored === "" && Date.parse(upcoming.created_at ?? "") > now.getTime() - 120_000;
+    if (!settingUp) {
+      const link = stored !== "" && !stored.endsWith("/pending") ? stored : null;
+      await say(ctx, [bookedOut({ day, time, email: upcoming.email ?? email, link, id: upcoming.id })], history);
+    }
+    return true;
+  }
+  await say(ctx, [alreadyBookedOut(upcoming.consultation_date, upcoming.consultation_time)], history);
+  return true;
+}
+
+// The time is no longer free. It may be this very number's own booking, made a moment ago by a second tap, in which
+// case there is nothing to say; otherwise someone else has it, and the other times are offered.
+async function timeGone(ctx: BookingContext, day: string, time: string, email: string, now: Date, history: Msg[]): Promise<void> {
+  const held = await lookUpBookings(ctx.from, now);
+  if (held && (await answerHeld(ctx, held.upcoming, day, time, email, now, history))) return;
+  const booked = await loadBooked(day, day);
+  if (!booked) {
+    await sayWentWrong(ctx, "Could not read the booked call times");
+    return;
+  }
+  await reofferTimes(ctx, day, time, email, now, booked);
+}
+
+// "Confirm" was tapped. The order is the design: reserve the time first, so the side effects can fail without losing it.
+async function confirmBooking(ctx: BookingContext, day: string, time: string, history: Msg[]): Promise<void> {
+  const flow = currentFlow(history);
+  const card = flow?.step === "confirm" && flow.day === day && flow.time === time ? (flow.email ?? null) : null;
+  const now = new Date();
+
+  const held = await lookUpBookings(ctx.from, now);
+  if (!held) {
+    await sayWentWrong(ctx, "Could not read this number's bookings");
+    return;
+  }
+  // A second tap on Confirm, or a call already booked, whichever message the button is on.
+  if (await answerHeld(ctx, held.upcoming, day, time, card ?? "", now, history)) return;
+  if (card === null) {
+    // The button is from an older message: show where the booking really is.
+    await startBooking(ctx, isOpen(flow) ? flow.email : undefined);
+    return;
+  }
+  const email = card;
+  if (held.recent >= MAX_CHAT_BOOKINGS_PER_DAY) {
+    await say(ctx, [textOut("booking:limit", COPY.limit)], history);
+    return;
+  }
+
+  const booked = await loadBooked(day, day);
+  if (!booked) {
+    await sayWentWrong(ctx, "Could not read the booked call times");
+    return;
+  }
+  if (!isFree(day, time, now, booked)) {
+    await timeGone(ctx, day, time, email, now, history);
+    return;
+  }
+
+  const row = bookingRow({ name: ctx.profileName, phone: ctx.from, email, day, time, history });
+  const { data: saved, error } = await admin.from("consultation_bookings").insert(row).select().single();
+  if (error || !saved) {
+    // The slot rule says someone has it: another family, or this number's own tap a moment ago.
+    if (error?.code === "23505") {
+      await timeGone(ctx, day, time, email, now, history);
+      return;
+    }
+    await say(ctx, [textOut("booking:error", COPY.wentWrong)], history);
+    await alertBooking("not_saved", ctx, { detail: error?.message ?? "No row came back", day, time, email, history });
+    return;
+  }
+  const bookingId = String(saved.id);
+
+  // The Google event and its Meet link. If Google fails the booking stands, with the website's "pending" link.
+  const calendar = await callFunction("create-consultation-calendar-event", {
+    parentName: row.parent_name,
+    studentName: "",
+    email,
+    phoneNumber: `+${ctx.from}`,
+    consultationDate: day,
+    consultationTime: time,
+    subjects: [],
+    gradeLevel: "",
+    notes: row.additional_notes,
+    source: "whatsapp",
+  });
+  const made = typeof calendar.data?.meetingLink === "string" ? calendar.data.meetingLink : "";
+  const link = calendar.ok && calendar.data?.success === true && made !== "" && !made.endsWith("/pending") ? made : null;
+  await admin.from("consultation_bookings").update({ meeting_link: link ?? PENDING_MEET_LINK }).eq("id", bookingId);
+
+  await say(ctx, [bookedOut({ day, time, email, link, id: bookingId })], history);
+  if (!link) {
+    await alertBooking("no_link", ctx, { detail: calendar.error ?? "Google did not make a Meet link", day, time, email, bookingId, history });
+  } else {
+    const confirmation = await callFunction("send-consultation-booking-confirmation", {
+      email,
+      parentName: row.parent_name,
+      studentName: "",
+      consultationDate: day,
+      consultationTime: time,
+      meetingLink: link,
+    });
+    if (!confirmation.ok) await alertBooking("email_failed", ctx, { detail: confirmation.error, day, time, email, link, bookingId, history });
+  }
+
+  if (BOOKING_NOTICES_ON) {
+    await sendAlert({
+      subject: `WhatsApp: a call was booked in the chat — ${ctx.profileName || ctx.from}`,
+      heading: "A call was booked in the WhatsApp chat",
+      accent: GREEN,
+      facts: [
+        ...whoFacts({ phone: ctx.from, profileName: ctx.profileName, parentId: ctx.parentId }),
+        ["Email", email],
+        ["The call", `${longDay(day)}, ${niceTime(time)} Nairobi time (EAT)`],
+        ["Google Meet", link ?? "not made yet"],
+        ["Booking id", bookingId],
+      ],
+      notes: ["They booked it themselves in the chat. The lead is now \"Call booked\"."],
+      history: await chatSoFar(ctx.from, []),
+    });
+  }
 }
 
 // A tap on one of Lana's booking buttons or list rows. The ids carry their own data, so a tap on an old message is
@@ -975,9 +1247,23 @@ async function runBookingTap(ctx: BookingContext, action: Action, history: Msg[]
     case "time":
       await chooseTime(ctx, action.day, action.time, email);
       return;
-    default:
-      // Confirming and changing a booking come with the booking itself.
-      await say(ctx, [textOut("booking:off", COPY.teamArranges)], history);
+    case "confirm":
+      await confirmBooking(ctx, action.day, action.time, history);
+      return;
+    case "change": {
+      // Changing or cancelling is the team's job for now: tell them which booking, and tell the family it is in hand.
+      await say(ctx, [textOut("booking:change", COPY.changeAck)], history);
+      const booking = (await lookUpBookings(ctx.from, new Date()))?.upcoming;
+      await alertBooking("change", ctx, {
+        day: booking?.consultation_date,
+        time: booking?.consultation_time,
+        email: booking?.email ?? undefined,
+        link: booking?.meeting_link,
+        bookingId: booking?.id,
+        history,
+      });
+      return;
+    }
   }
 }
 

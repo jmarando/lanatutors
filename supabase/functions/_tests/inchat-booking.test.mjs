@@ -299,3 +299,259 @@ test("WHATSAPP_BOOKING=off answers any tap with 'our team will arrange it'", asy
   assert.deepEqual(fn.world.sent.map((m) => m.text), [COPY.teamArranges]);
   assert.equal(fn.world.sent[0].interactive, undefined);
 });
+
+// ---------------- confirming and booking ----------------
+
+const MEET = "https://meet.google.com/abc-defg-hij";
+const CALENDAR = "create-consultation-calendar-event";
+const CONFIRMATION = "send-consultation-booking-confirmation";
+const confirmChat = (extra = {}) => chatAt({ step: "confirm", day: "2026-11-03", time: "01:20 PM", email: "jane@example.com" }, extra);
+const CONFIRM = (options) => tap("bk:confirm:2026-11-03:1320", "Confirm", options);
+const mine = (fn) => fn.world.tables.consultation_bookings.filter((booking) => booking.phone_number === PARENT);
+const callsTo = (fn, name) => fn.world.functionCalls.filter((call) => call.name === name);
+const subjects = (fn) => fn.world.emails.map((email) => email.subject);
+const googleFailed = { [CALENDAR]: [{ status: 200, body: { success: false, message: "token_error", meetingLink: "https://meet.google.com/pending" } }] };
+
+test("Confirm books the call: the row, the event, the link, the chat message, the email and the notice, in that order", async (t) => {
+  const fn = await start(t, confirmChat());
+
+  await fn.post(CONFIRM());
+
+  assert.deepEqual(fn.world.events, [
+    "insert booking",
+    `call ${CALENDAR}`,
+    "update booking",
+    "send interactive",
+    `call ${CONFIRMATION}`,
+    "email WhatsApp: a call was booked in the chat — Test Parent",
+  ]);
+  assert.equal(mine(fn).length, 1);
+  const [booking] = mine(fn);
+  const expected = {
+    parent_name: "Test Parent", student_name: "", phone_number: PARENT, email: "jane@example.com", grade_level: "",
+    subjects_interest: [], preferred_mode: "consultation", consultation_date: "2026-11-03", consultation_time: "01:20 PM",
+    status: "confirmed", booked_via: "whatsapp", meeting_link: MEET,
+  };
+  for (const [key, value] of Object.entries(expected)) assert.deepEqual(booking[key], value, key);
+  assert.match(booking.additional_notes, /Grade 6, CBC/);
+
+  const [calendar] = callsTo(fn, CALENDAR);
+  assert.deepEqual(calendar.body, {
+    parentName: "Test Parent", studentName: "", email: "jane@example.com", phoneNumber: "+254700000001",
+    consultationDate: "2026-11-03", consultationTime: "01:20 PM", subjects: [], gradeLevel: "",
+    notes: booking.additional_notes, source: "whatsapp",
+  });
+  assert.equal(calendar.headers.Authorization, "Bearer service-role");
+  const [confirmation] = callsTo(fn, CONFIRMATION);
+  assert.equal(confirmation.body.meetingLink, MEET);
+  assert.equal(confirmation.body.email, "jane@example.com");
+  assert.ok(!("phoneNumber" in confirmation.body), "no phone number, or the function would send its own WhatsApp text");
+
+  assert.equal(fn.world.sent.length, 1, "only Lana's message is sent");
+  assert.deepEqual(buttonsOf(fn.world.sent[0]), [{ id: "bk:change", title: "Change or cancel" }]);
+  assert.ok(fn.world.sent[0].text.includes(MEET));
+  assert.deepEqual(last(fn).booking, { step: "done", id: booking.id });
+});
+
+test("two Confirm taps at once make one booking and one confirmation", async (t) => {
+  const fn = await start(t, confirmChat());
+
+  await Promise.all([fn.deliver(CONFIRM()), fn.deliver(CONFIRM())]);
+  await fn.settle();
+
+  assert.equal(mine(fn).length, 1);
+  assert.equal(callsTo(fn, CALENDAR).length, 1);
+  assert.equal(fn.world.sent.filter((message) => message.text.includes(MEET)).length, 1);
+});
+
+test("a second Confirm after it finished repeats the details and books nothing", async (t) => {
+  const fn = await start(t, confirmChat());
+
+  await fn.post(CONFIRM());
+  await fn.post(CONFIRM());
+
+  assert.equal(mine(fn).length, 1);
+  assert.equal(callsTo(fn, CALENDAR).length, 1);
+  assert.equal(fn.world.sent.length, 2);
+  assert.equal(fn.world.sent[1].text, fn.world.sent[0].text, "the same details again");
+});
+
+test("a time taken since the card was shown is not booked", async (t) => {
+  const fn = await start(t, confirmChat({ bookings: held("2026-11-03", ["01:20 PM"]) }));
+
+  await fn.post(CONFIRM());
+
+  assert.equal(mine(fn).length, 0);
+  assert.equal(fn.world.functionCalls.length, 0);
+  assert.ok(fn.world.sent[0].text.startsWith("Sorry, that time has just been taken."));
+});
+
+test("if the slot rule rejects the insert, the family is not told they are booked", async (t) => {
+  const fn = await start(t, confirmChat({ rejectNextInsert: true }));
+
+  await fn.post(CONFIRM());
+
+  assert.equal(fn.world.tables.consultation_bookings.length, 1, "only the rival's booking");
+  assert.equal(mine(fn).length, 0);
+  assert.equal(fn.world.functionCalls.length, 0);
+  assert.ok(fn.world.sent[0].text.startsWith("Sorry, that time has just been taken."));
+  assert.notEqual(last(fn).booking?.step, "done");
+});
+
+test("a number with an upcoming booking cannot book a second", async (t) => {
+  const existing = [{ phone_number: PARENT, consultation_date: "2026-11-05", consultation_time: "02:00 PM", email: "jane@example.com", meeting_link: MEET }];
+  const fn = await start(t, confirmChat({ bookings: existing }));
+
+  await fn.post(CONFIRM());
+  await fn.post(tap("bk:start", "Book a free call"));
+
+  assert.equal(mine(fn).length, 1, "no second booking");
+  for (const sent of fn.world.sent) {
+    assert.ok(sent.text.includes("Thursday 5 November, 2:00 pm"), sent.text);
+    assert.deepEqual(buttonsOf(sent), [{ id: "bk:change", title: "Change or cancel" }]);
+  }
+  assert.equal(fn.world.sent.length, 2);
+});
+
+test("a call that is already over does not count as upcoming", async (t) => {
+  const over = [{ phone_number: PARENT, consultation_date: "2026-11-01", consultation_time: "02:00 PM", meeting_link: MEET }];
+  const fn = await start(t, confirmChat({ bookings: over }));
+
+  await fn.post(CONFIRM());
+
+  assert.equal(mine(fn).length, 2);
+  assert.ok(fn.world.sent[0].text.includes("Your call is booked."));
+});
+
+test("three chat bookings in 24 hours is the limit", async (t) => {
+  const anHourAgo = new Date(NOW - 3_600_000).toISOString();
+  const recent = ["2026-11-09", "2026-11-10", "2026-11-11"].map((day) => ({
+    phone_number: PARENT, consultation_date: day, consultation_time: "11:00 AM", status: "cancelled", booked_via: "whatsapp", created_at: anHourAgo,
+  }));
+  const fn = await start(t, confirmChat({ bookings: recent }));
+
+  await fn.post(CONFIRM());
+
+  assert.equal(fn.world.sent[0].text, COPY.limit);
+  assert.equal(mine(fn).length, 3);
+});
+
+test("Google failing leaves the booking standing, with no dead link", async (t) => {
+  const fn = await start(t, confirmChat({ functions: googleFailed }));
+
+  await fn.post(CONFIRM());
+
+  assert.equal(mine(fn).length, 1);
+  assert.equal(mine(fn)[0].meeting_link, "https://meet.google.com/pending");
+  assert.ok(fn.world.sent[0].text.includes("Our team will send you the Google Meet link here before the call."));
+  assert.ok(!fn.world.sent[0].text.includes("meet.google.com"));
+  assert.equal(callsTo(fn, CONFIRMATION).length, 0, "no confirmation email with a dead link");
+  assert.ok(subjects(fn).some((subject) => subject.startsWith("⚠️ WhatsApp: booked, but no Meet link")));
+});
+
+for (const [name, outcome, env] of [
+  ["crashing", { status: 500, body: { error: "boom" } }, {}],
+  ["hanging", { status: 200, body: { success: true, meetingLink: MEET }, delayMs: 200 }, { WHATSAPP_BOOKING_CALL_MS: "50" }],
+]) {
+  test(`the calendar function ${name} is handled the same way`, async (t) => {
+    const fn = await start(t, confirmChat({ functions: { [CALENDAR]: [outcome] }, env }));
+
+    await fn.post(CONFIRM());
+
+    assert.equal(mine(fn).length, 1);
+    assert.equal(mine(fn)[0].meeting_link, "https://meet.google.com/pending");
+    assert.ok(fn.world.sent[0].text.includes("Our team will send you the Google Meet link"));
+    assert.ok(subjects(fn).some((subject) => subject.startsWith("⚠️ WhatsApp: booked, but no Meet link")));
+  });
+}
+
+test("the confirmation email failing is reported; the chat confirmation was already sent", async (t) => {
+  const fn = await start(t, confirmChat({ functions: { [CONFIRMATION]: [{ status: 500, body: { error: "Resend is down" } }] } }));
+
+  await fn.post(CONFIRM());
+
+  assert.ok(subjects(fn).some((subject) => subject.startsWith("⚠️ WhatsApp: the confirmation email did not send")));
+  assert.equal(last(fn).booking.step, "done");
+  assert.ok(fn.world.sent[0].text.includes(MEET));
+});
+
+test("a row that cannot be saved is reported and no event is made", async (t) => {
+  const fn = await start(t, confirmChat({ failInsert: true }));
+
+  await fn.post(CONFIRM());
+
+  assert.equal(fn.world.sent[0].text, COPY.wentWrong);
+  assert.equal(fn.world.functionCalls.length, 0);
+  assert.ok(subjects(fn).some((subject) => subject.startsWith("⚠️ WhatsApp: a booking in the chat could not be saved")));
+});
+
+test("a Confirm for a card that is no longer current shows the current step", async (t) => {
+  const fn = await start(t, chatAt({ step: "day" }));
+
+  await fn.post(CONFIRM());
+
+  assert.equal(mine(fn).length, 0);
+  assert.equal(fn.world.sent[0].interactive.type, "list");
+});
+
+test("a missing WhatsApp name still books", async (t) => {
+  const fn = await start(t, confirmChat());
+
+  await fn.post(CONFIRM({ name: "" }));
+
+  assert.equal(mine(fn)[0].parent_name, "");
+  assert.equal(callsTo(fn, CALENDAR)[0].body.parentName, "");
+  assert.ok(fn.world.sent[0].text.includes("Your call is booked."));
+});
+
+test("a very long WhatsApp name is cut to 200 characters", async (t) => {
+  const fn = await start(t, confirmChat());
+
+  await fn.post(CONFIRM({ name: "N".repeat(300) }));
+
+  assert.equal(mine(fn)[0].parent_name.length, 200);
+});
+
+test("the notice to info@ can be switched off", async (t) => {
+  const fn = await start(t, confirmChat({ env: { WHATSAPP_BOOKING_NOTICES: "off" } }));
+
+  await fn.post(CONFIRM());
+
+  assert.equal(mine(fn).length, 1);
+  assert.equal(fn.world.emails.length, 0);
+});
+
+test("the alerts about a booking that went wrong cannot be switched off", async (t) => {
+  const fn = await start(t, confirmChat({ env: { WHATSAPP_BOOKING_NOTICES: "off" }, functions: googleFailed }));
+
+  await fn.post(CONFIRM());
+
+  assert.equal(fn.world.emails.length, 1);
+  assert.ok(fn.world.emails[0].subject.startsWith("⚠️ WhatsApp: booked, but no Meet link"));
+});
+
+test("'Change or cancel' tells the team and the family", async (t) => {
+  const existing = [{ id: "b1", phone_number: PARENT, consultation_date: "2026-11-03", consultation_time: "01:20 PM", email: "jane@example.com", meeting_link: MEET }];
+  const fn = await start(t, chatAt({ step: "done", id: "b1" }, { bookings: existing }));
+
+  await fn.post(tap("bk:change", "Change or cancel"));
+
+  assert.equal(fn.world.sent[0].text, COPY.changeAck);
+  assert.equal(fn.world.emails.length, 1);
+  assert.equal(fn.world.emails[0].subject, "WhatsApp: change or cancel a call — Test Parent");
+  assert.ok(fn.world.emails[0].html.includes("Tuesday 3 November"));
+  assert.ok(fn.world.emails[0].html.includes("jane@example.com"));
+  assert.equal(fn.world.conversation(PARENT).escalated, true);
+});
+
+test("Meta refusing the booked message still leaves a booking and tells the team", async (t) => {
+  const refused = { status: 400, body: { error: { message: "Invalid parameter", code: 100 } } };
+  const fn = await start(t, confirmChat({ meta: [refused, refused] }));
+
+  await fn.post(CONFIRM());
+
+  assert.equal(mine(fn).length, 1);
+  assert.equal(fn.world.sent.length, 0, "nothing reached the family");
+  assert.ok(subjects(fn).some((subject) => subject.startsWith("⚠️ WhatsApp: Meta refused Lana's reply")));
+  assert.ok(subjects(fn).some((subject) => subject.startsWith("WhatsApp: a call was booked in the chat")), "the notice still goes");
+});

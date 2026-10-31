@@ -85,6 +85,23 @@ class Query {
       if (conversations && rows.some((row) => row.phone_number === this.payload.phone_number)) {
         return { data: null, error: { code: "23505", message: "duplicate key value violates unique constraint" } };
       }
+      if (this.table === "consultation_bookings") {
+        const { date, time } = { date: this.payload.consultation_date, time: this.payload.consultation_time };
+        if (this.world.failInsert) {
+          this.world.failInsert = false;
+          return { data: null, error: { code: "XX000", message: "boom" } };
+        }
+        // Someone else takes the time just before this insert, after the function's own check has passed.
+        if (this.world.rejectNextInsert) {
+          this.world.rejectNextInsert = false;
+          rows.push({ id: crypto.randomUUID(), phone_number: "254799999999", consultation_date: date, consultation_time: time, status: "confirmed", created_at: new Date().toISOString() });
+        }
+        // The slot rule of migration 0008: one booking that is not cancelled per time, from 2026-11-01.
+        if (date >= "2026-11-01" && rows.some((row) => row.consultation_date === date && row.consultation_time === time && row.status !== "cancelled")) {
+          return { data: null, error: { code: "23505", message: 'duplicate key value violates unique constraint "consultation_bookings_one_per_slot"' } };
+        }
+        this.world.events.push("insert booking");
+      }
       const at = this.world.timestamp();
       // A booking gets its id and creation time as the database would, the time from the (possibly mocked) clock.
       const row = this.table === "consultation_bookings"
@@ -96,6 +113,7 @@ class Query {
       rows.push(clone(this.payload));
       out = [this.payload];
     } else if (this.op === "update") {
+      if (this.table === "consultation_bookings") this.world.events.push("update booking");
       out = rows.filter(matches);
       for (const row of out) {
         Object.assign(row, clone(this.payload));
@@ -129,7 +147,14 @@ const DEFAULT_ENV = {
   WHATSAPP_REPLY_DELAY_MS: "20",
 };
 
-function makeWorld({ conversations, gateway, anthropic, meta, bookings }) {
+const FUNCTIONS_URL = `${DEFAULT_ENV.SUPABASE_URL}/functions/v1/`;
+// What the two booking functions answer unless a test scripts something else.
+const FUNCTION_DEFAULTS = {
+  "create-consultation-calendar-event": { status: 200, body: { success: true, eventId: "evt_1", meetingLink: "https://meet.google.com/abc-defg-hij" } },
+  "send-consultation-booking-confirmation": { status: 200, body: { id: "email_fake" } },
+};
+
+function makeWorld({ conversations, gateway, anthropic, meta, bookings, functions, failInsert, rejectNextInsert }) {
   const world = {
     tables: {
       whatsapp_conversations: clone(conversations),
@@ -141,6 +166,11 @@ function makeWorld({ conversations, gateway, anthropic, meta, bookings }) {
     },
     sent: [], // WhatsApp messages the function sent: { to, text }, and for lists and buttons also { interactive }
     emails: [], // Resend emails: { to, subject, html }
+    events: [], // what happened, in order: "insert booking", "update booking", "call <function>", "send text|interactive", "email <subject>"
+    functionCalls: [], // calls to the booking functions: { name, headers, body }
+    functionQueue: Object.fromEntries(Object.entries(functions).map(([name, outcomes]) => [name, [...outcomes]])),
+    failInsert: Boolean(failInsert), // the next insert into consultation_bookings fails
+    rejectNextInsert: Boolean(rejectNextInsert), // the next one finds the time taken by someone else
     gatewayCalls: [], // AI gateway requests: { headers, body }
     anthropicCalls: [], // Claude requests: { headers, body }
     geminiCalls: [], // direct Gemini calls, which the function must no longer make
@@ -169,6 +199,7 @@ function makeWorld({ conversations, gateway, anthropic, meta, bookings }) {
         const outcome = world.metaQueue.shift();
         if (outcome?.throws) throw outcome.throws;
         if (outcome && outcome.status >= 400) return jsonResponse(outcome.status, outcome.body);
+        world.events.push(body.type === "interactive" ? "send interactive" : "send text");
         world.sent.push(body.type === "interactive"
           ? { to: body.to, text: body.interactive.body.text, interactive: body.interactive }
           : { to: body.to, text: body.text.body });
@@ -196,7 +227,18 @@ function makeWorld({ conversations, gateway, anthropic, meta, bookings }) {
         world.geminiCalls.push(target);
         return jsonResponse(500, { error: "the function must not call Gemini directly" });
       }
+      if (target.startsWith(FUNCTIONS_URL)) {
+        const name = target.slice(FUNCTIONS_URL.length);
+        world.events.push(`call ${name}`);
+        world.functionCalls.push({ name, headers: init.headers, body });
+        const next = world.functionQueue[name]?.shift() ?? FUNCTION_DEFAULTS[name];
+        if (!next) return jsonResponse(404, { error: `no such function: ${name}` });
+        if (next.delayMs) await delay(next.delayMs, init.signal);
+        if (next.throws) throw next.throws;
+        return jsonResponse(next.status, next.body);
+      }
       if (target === "https://api.resend.com/emails") {
+        world.events.push(`email ${body.subject}`);
         world.emails.push(body);
         return jsonResponse(200, { id: "email_fake" });
       }
@@ -227,7 +269,10 @@ async function settle(world) {
 
 let loads = 0;
 
-export async function loadFunction(name, { env = {}, conversations = [], gateway = [], anthropic = [], meta = [], bookings = [] } = {}) {
+export async function loadFunction(
+  name,
+  { env = {}, conversations = [], gateway = [], anthropic = [], meta = [], bookings = [], functions = {}, failInsert = false, rejectNextInsert = false } = {},
+) {
   const bundle = await build({
     entryPoints: [path.join(functionsDir, name, "index.ts")],
     bundle: true,
@@ -239,7 +284,7 @@ export async function loadFunction(name, { env = {}, conversations = [], gateway
     plugins: [denoUrlImports],
   });
 
-  const world = makeWorld({ conversations, gateway, anthropic, meta, bookings });
+  const world = makeWorld({ conversations, gateway, anthropic, meta, bookings, functions, failInsert, rejectNextInsert });
   const fullEnv = { ...DEFAULT_ENV, ...env };
   const saved = { fetch: globalThis.fetch, Deno: globalThis.Deno, EdgeRuntime: globalThis.EdgeRuntime, console: { ...console } };
   globalThis.fetch = world.fetch;
