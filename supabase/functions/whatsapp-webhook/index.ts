@@ -399,10 +399,12 @@ type GatewayMessage = {
   tool_calls?: ToolCall[];
   tool_call_id?: string;
 };
-type AiResult = { ok: true; text: string } | { ok: false; reason: string };
+type AiResult = { ok: true; text: string; via: "ai" | "ai_fallback"; model: string } | { ok: false; reason: string };
 
 const MAX_TOOL_ROUNDS = 4;
-const AI_TIMEOUT_MS = 25_000;
+// The AI gets this long, in total, for its whole conversation including the tool rounds. Past it the backup goes
+// out, so a slow gateway can't keep someone waiting.
+const AI_BUDGET_MS = Number(Deno.env.get("WHATSAPP_AI_BUDGET_MS") ?? 20_000);
 
 function parseToolArgs(raw: string | undefined): Record<string, string> {
   try {
@@ -412,14 +414,30 @@ function parseToolArgs(raw: string | undefined): Record<string, string> {
   }
 }
 
-// Calls the AI. When it can't answer, the result says why, so the caller can alert the team instead
-// of failing silently.
+// Calls the AI. When it can't answer, the result says why, so the caller can alert the team instead of failing
+// silently. It never throws: a reply Lana can't read is a failure like any other.
 async function callAI(
   history: Msg[],
   profileName: string | undefined,
   parentId: string | null,
   phone: string,
 ): Promise<AiResult> {
+  try {
+    return await askGateway(history, profileName, parentId, phone);
+  } catch (e) {
+    const detail = e instanceof Error ? e.message : String(e);
+    return { ok: false, reason: `The AI gateway sent a reply Lana could not read: ${detail}` };
+  }
+}
+
+async function askGateway(
+  history: Msg[],
+  profileName: string | undefined,
+  parentId: string | null,
+  phone: string,
+): Promise<AiResult> {
+  const deadline = Date.now() + AI_BUDGET_MS;
+  const timeoutReason = `The AI gateway timed out after ${AI_BUDGET_MS / 1000} seconds`;
   const sys =
     SYSTEM_PROMPT +
     (profileName ? `\n\nParent's WhatsApp name: "${profileName}".` : "") +
@@ -431,6 +449,8 @@ async function callAI(
   ];
 
   for (let round = 0; round < MAX_TOOL_ROUNDS; round++) {
+    const remaining = deadline - Date.now();
+    if (remaining <= 0) return { ok: false, reason: timeoutReason };
     let res: Response;
     let data: { choices?: { message?: GatewayMessage }[] } | undefined;
     try {
@@ -442,18 +462,13 @@ async function callAI(
           messages,
           tools: TOOLS.map((tool) => ({ type: "function", function: tool })),
         }),
-        signal: AbortSignal.timeout(AI_TIMEOUT_MS),
+        signal: AbortSignal.timeout(remaining),
       });
       if (res.ok) data = await res.json();
     } catch (e) {
       const timedOut = e instanceof Error && (e.name === "TimeoutError" || e.name === "AbortError");
       const detail = e instanceof Error ? e.message : String(e);
-      return {
-        ok: false,
-        reason: timedOut
-          ? `The AI gateway timed out after ${AI_TIMEOUT_MS / 1000} seconds`
-          : `The AI gateway call failed: ${detail}`,
-      };
+      return { ok: false, reason: timedOut ? timeoutReason : `The AI gateway call failed: ${detail}` };
     }
     if (!res.ok) {
       const detail = (await res.text().catch(() => "")).slice(0, 300);
@@ -465,7 +480,9 @@ async function callAI(
 
     if (calls.length === 0) {
       const text = message?.content?.trim();
-      return text ? { ok: true, text } : { ok: false, reason: "The AI answered with an empty message" };
+      return text
+        ? { ok: true, text, via: "ai", model: AI_MODEL }
+        : { ok: false, reason: "The AI answered with an empty message" };
     }
 
     // Append the model's turn (with its tool calls), then answer each call.
@@ -719,7 +736,7 @@ async function handleIncoming(body: WebhookBody) {
       const ai = await callAI(context, profileName, convo.parent_id, from);
       if (ai.ok) {
         reply = sanitizeReply(ai.text);
-        via = "ai";
+        via = ai.via;
       } else {
         reply = BACKUP_REPLY;
         via = "backup";

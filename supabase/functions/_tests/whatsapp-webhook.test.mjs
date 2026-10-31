@@ -499,3 +499,26 @@ test("if the team takes over just as Lana is about to answer, she stays silent",
   assert.deepEqual(fn.world.sent, []);
   assert.equal(fn.world.gatewayCalls.length, 0);
 });
+
+// ---------------- Keeping Lana answering ----------------
+
+test("a gateway that answers too slowly is cut off at the time limit, and the backup goes out", async (t) => {
+  const fn = await start(t, { env: { WHATSAPP_AI_BUDGET_MS: "60" }, gateway: [{ ...aiText("TOO LATE"), delayMs: 400 }] });
+  await fn.post(inbound({ from: PARENT, text: PARENT_MESSAGE }));
+  assert.equal(fn.world.sent.length, 1);
+  assert.match(fn.world.sent[0].text, /are you a parent or student/i);
+  assert.match(fn.world.emails[0].html, /timed out/i);
+  assert.equal(fn.world.conversation(PARENT).messages.at(-1).via, "backup");
+});
+
+for (const [name, body] of [
+  ["a number where the text should be", { choices: [{ message: { role: "assistant", content: 42 } }] }],
+  ["no choices at all", {}],
+]) {
+  test(`a gateway reply with ${name} is a reported failure, not a silent crash`, async (t) => {
+    const fn = await start(t, { gateway: [{ status: 200, body }] });
+    await fn.post(inbound({ from: PARENT, text: PARENT_MESSAGE }));
+    assert.match(fn.world.sent[0].text, /are you a parent or student/i);
+    assert.equal(fn.world.emails.length, 1);
+  });
+}

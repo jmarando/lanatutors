@@ -32,6 +32,13 @@ const denoUrlImports = {
 const clone = (value) => (value === undefined ? value : structuredClone(value));
 const jsonResponse = (status, body) =>
   new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json" } });
+// Waits like a slow server, but gives up the moment the request is aborted, as a real fetch does.
+const delay = (ms, signal) =>
+  new Promise((resolve, reject) => {
+    if (signal?.aborted) return reject(signal.reason);
+    const timer = setTimeout(resolve, ms);
+    signal?.addEventListener("abort", () => { clearTimeout(timer); reject(signal.reason); }, { once: true });
+  });
 
 // The slice of the supabase-js query builder the functions use, over in-memory tables.
 class Query {
@@ -142,7 +149,7 @@ function makeWorld({ conversations, gateway }) {
         if (!next) return jsonResponse(500, { error: "no scripted gateway response left" });
         // Something else happening while the model is thinking, e.g. the team replying from the inbox.
         if (next.meanwhile) next.meanwhile(world);
-        if (next.delayMs) await new Promise((resolve) => setTimeout(resolve, next.delayMs));
+        if (next.delayMs) await delay(next.delayMs, init.signal);
         if (next.throws) throw next.throws;
         return jsonResponse(next.status, next.body);
       }
