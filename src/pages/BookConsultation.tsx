@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -328,7 +328,7 @@ const BookConsultation = () => {
 
   return <div className="min-h-screen bg-[image:var(--gradient-page)] py-12 px-6">
       <SEO 
-        title="Book Academic Assessment Call - Expert Tutor Matching" 
+        title="Book a Free 20-Minute Assessment Call" 
         description="Schedule a 20-minute academic assessment call with Lana education experts. Get personalized tutor recommendations, custom learning plan, and expert guidance for your child's success." 
         keywords="academic assessment Kenya, tutoring consultation, education assessment, tutor matching Kenya, learning plan Kenya" 
       />
@@ -345,7 +345,7 @@ const BookConsultation = () => {
               <Progress value={progress} className="h-2" />
               <p className="text-sm text-muted-foreground mt-1.5">Step {step} of 5</p>
             </div>
-            <CardTitle className="text-2xl text-center">Book Your Academic Assessment Call</CardTitle>
+            <h1 className="text-2xl font-semibold leading-none tracking-tight text-center">Book Your Academic Assessment Call</h1>
             <CardDescription className="text-sm text-center">
               20-minute session with an education consultant
             </CardDescription>

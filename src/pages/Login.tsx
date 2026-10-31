@@ -12,6 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { analytics } from "@/utils/analytics";
 import GoogleSignInButton from "@/components/GoogleSignInButton";
 import { ensureUserBootstrap } from "@/utils/ensureUserBootstrap";
+import { SEO } from "@/components/SEO";
 
 
 const Login = () => {
@@ -177,6 +178,10 @@ const Login = () => {
 
   return (
     <div className="min-h-screen bg-[image:var(--gradient-page)] flex items-center justify-center p-6">
+      <SEO
+        title="Log In"
+        description="Log in to your Lana Tutors account to manage your lessons and bookings."
+      />
       <div className="w-full max-w-md">
         <Link to="/" className="flex items-center justify-center gap-2 mb-8">
           <Award className="w-10 h-10 text-primary" />

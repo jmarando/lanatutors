@@ -197,11 +197,6 @@ const TutorSearch = () => {
     const matchesLocation = selectedLocation === "all" || selectedLocation === "online" && tutor.teachingMode?.includes("Online") || selectedLocation === "in-person" && tutor.teachingMode?.includes("In-Person") || (tutor.teachingLocation || "").toLowerCase().includes(selectedLocation.toLowerCase());
     return matchesSubject && matchesCurriculum && matchesTeachingLevel && matchesLocation;
   });
-  if (loading) {
-    return <div className="min-h-screen bg-secondary/20 flex items-center justify-center">
-        <p>Loading tutors...</p>
-      </div>;
-  }
   const tutorsFaqSchema = {
     "@context": "https://schema.org",
     "@type": "FAQPage",
@@ -341,9 +336,9 @@ const TutorSearch = () => {
         {/* Results Count */}
         <div className="max-w-7xl mx-auto mb-4">
           <div className="flex items-center justify-between flex-wrap gap-2">
-            <p className="text-sm text-muted-foreground">
+            {!loading && <p className="text-sm text-muted-foreground">
               Showing {filteredTutors.length} of {tutors.length} tutors
-            </p>
+            </p>}
             {(selectedSubject !== "all" || selectedCurriculum !== "all" || selectedTeachingLevel !== "all" || selectedLocation !== "all") && <Button variant="ghost" size="sm" onClick={() => {
             setSelectedSubject("all");
             setSelectedCurriculum("all");
@@ -354,7 +349,9 @@ const TutorSearch = () => {
               </Button>}
           </div>
         </div>
-        {filteredTutors.length === 0 ? <div className="text-center py-16">
+        {loading ? <div className="text-center py-16">
+            <p className="text-muted-foreground">Loading tutors...</p>
+          </div> : filteredTutors.length === 0 ? <div className="text-center py-16">
             <p className="text-xl font-semibold mb-2">No tutors found</p>
             <p className="text-muted-foreground mb-6">Try adjusting your filters or search criteria</p>
             <Button variant="outline" onClick={() => {

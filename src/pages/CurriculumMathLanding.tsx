@@ -24,7 +24,7 @@ const DATA: Record<string, CurriculumMath> = {
     slug: "kcse-mathematics-tutors",
     path: "/kcse-mathematics-tutors",
     curriculum: "KCSE",
-    title: "KCSE Mathematics Tutors in Kenya — Paper 1 & Paper 2 Prep",
+    title: "KCSE Mathematics Tutors — Paper 1 & 2 Prep",
     description:
       "Verified KCSE Mathematics tutors in Kenya. One-on-one Paper 1 & Paper 2 preparation with experienced KCSE markers and classroom teachers.",
     answer:
@@ -52,7 +52,7 @@ const DATA: Record<string, CurriculumMath> = {
     slug: "igcse-mathematics-tutors",
     path: "/igcse-mathematics-tutors",
     curriculum: "IGCSE",
-    title: "IGCSE Mathematics Tutors — 0580 & 0607 (Online, Worldwide)",
+    title: "IGCSE Mathematics Tutors Online — 0580 & 0607",
     description:
       "Verified IGCSE Mathematics tutors for Cambridge 0580 (Extended/Core) and 0607 International Mathematics. Online one-on-one lessons.",
     answer:
@@ -80,7 +80,7 @@ const DATA: Record<string, CurriculumMath> = {
     slug: "ib-mathematics-tutors",
     path: "/ib-mathematics-tutors",
     curriculum: "IB",
-    title: "IB Mathematics Tutors — AA & AI, SL & HL (Online)",
+    title: "IB Mathematics Tutors — AA & AI, SL & HL",
     description:
       "IB Mathematics tutors for Analysis & Approaches (AA) and Applications & Interpretation (AI), SL and HL. One-on-one online lessons.",
     answer:
@@ -109,7 +109,7 @@ const DATA: Record<string, CurriculumMath> = {
     slug: "cbc-mathematics-tutors",
     path: "/cbc-mathematics-tutors",
     curriculum: "CBC",
-    title: "CBC Mathematics Tutors in Kenya — Grade 1 to Grade 9",
+    title: "CBC Mathematics Tutors in Kenya — Grade 1 to 9",
     description:
       "Verified Kenyan CBC Mathematics tutors for Grade 1–9. Online and in-person one-on-one lessons aligned with the KICD CBC curriculum.",
     answer:

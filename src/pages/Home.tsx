@@ -18,12 +18,13 @@ import {
   Sparkles
 } from "lucide-react";
 import { Link } from "react-router-dom";
-import { SEO } from "@/components/SEO";
+import { SEO, SITE_URL } from "@/components/SEO";
 import { analytics } from "@/utils/analytics";
 import { supabase } from "@/integrations/supabase/client";
 import { GroupClassBanner } from "@/components/GroupClassBanner";
 import { useNavigate } from "react-router-dom";
 import heroVideo from "@/assets/hero-video.mp4";
+import heroVideoPoster from "@/assets/hero-video-poster.webp";
 import heroImage from "@/assets/hero-image.jpg";
 
 interface FeaturedTutor {
@@ -44,13 +45,14 @@ interface FeaturedTutor {
 const Home = () => {
   const navigate = useNavigate();
   const [featuredTutors, setFeaturedTutors] = useState<FeaturedTutor[]>([]);
+  const [playHeroVideo, setPlayHeroVideo] = useState(false);
   const organizationSchema = {
     "@context": "https://schema.org",
     "@type": "EducationalOrganization",
     "name": "Lana Tutors",
     "description": "Your Trusted Tutoring Partner - Quality online tutoring from verified Kenyan teachers. Join from anywhere in the world.",
-    "url": window.location.origin,
-    "logo": `${window.location.origin}/favicon.ico`,
+    "url": SITE_URL,
+    "logo": `${SITE_URL}/favicon.png`,
     "address": {
       "@type": "PostalAddress",
       "streetAddress": "First Floor, Arbor House, Arboretum Drive",
@@ -132,6 +134,21 @@ const Home = () => {
       description: "Students who use Lana see an average grade improvement of 2 levels within 3 months. 94% of students report increased confidence in their subjects. Our tutors have helped over 10,000 students excel in KCPE and KCSE examinations."
     }
   ];
+
+  // The hero video only loads on md+ screens, after the page itself has loaded. Phones, and visitors
+  // who ask for reduced motion or Data Saver, keep the poster frame instead of a multi-MB download.
+  useEffect(() => {
+    const saveData = (navigator as Navigator & { connection?: { saveData?: boolean } }).connection?.saveData;
+    if (saveData || !window.matchMedia("(min-width: 768px) and (prefers-reduced-motion: no-preference)").matches) return;
+
+    const start = () => setPlayHeroVideo(true);
+    if (document.readyState === "complete") {
+      start();
+      return;
+    }
+    window.addEventListener("load", start, { once: true });
+    return () => window.removeEventListener("load", start);
+  }, []);
 
   useEffect(() => {
     const fetchFeaturedTutors = async () => {
@@ -252,14 +269,15 @@ const Home = () => {
               </div>
             </div>
             <div className="relative overflow-hidden rounded-lg shadow-2xl">
-              <video 
-                src={heroVideo} 
-                autoPlay 
-                loop 
-                muted 
+              {/* Video and poster are pre-cropped to the frame the old scale-150 showed */}
+              <video
+                src={playHeroVideo ? heroVideo : undefined}
+                poster={heroVideoPoster}
+                autoPlay
+                loop
+                muted
                 playsInline
-                className="w-full h-auto object-cover scale-150"
-                style={{ transformOrigin: 'center 30%' }}
+                className="w-full aspect-video object-cover"
                 aria-label="Lana online tutoring demo video"
               >
                 Your browser does not support the video tag.
@@ -635,6 +653,9 @@ const Home = () => {
               <h4 className="font-bold mb-4">For Students</h4>
               <ul className="space-y-2 text-sm text-muted-foreground">
                 <li><Link to="/tutors">Find Tutors</Link></li>
+                <li><Link to="/tutors-in-nairobi">Home Tutors in Nairobi</Link></li>
+                <li><Link to="/tutors-in-mombasa">Tutors in Mombasa</Link></li>
+                <li><Link to="/tutors-in-kisumu">Tutors in Kisumu</Link></li>
                 <li><Link to="/diaspora">Tutors for Diaspora Families</Link></li>
                 <li><Link to="/login">My Dashboard</Link></li>
                 <li><Link to="/how-it-works">How It Works</Link></li>

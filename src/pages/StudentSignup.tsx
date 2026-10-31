@@ -16,6 +16,7 @@ import GoogleSignInButton from "@/components/GoogleSignInButton";
 import { validateAndNormalizePhone } from "@/utils/phoneValidation";
 import { getCurriculums, getLevelsForCurriculum, getSubjectsForCurriculumLevel } from "@/utils/curriculumData";
 import { z } from "zod";
+import { SEO } from "@/components/SEO";
 
 const emailSchema = z.string().email({ message: "Please enter a valid email address" });
 
@@ -231,6 +232,10 @@ const StudentSignup = () => {
 
   return (
     <div className="min-h-screen bg-[image:var(--gradient-page)] flex items-center justify-center p-6">
+      <SEO
+        title="Sign Up as a Student or Parent"
+        description="Create your Lana Tutors account as a student or parent and get matched with a verified Kenyan tutor."
+      />
       <div className="w-full max-w-2xl">
         <Link to="/" className="flex items-center justify-center gap-2 mb-8">
           <Award className="w-10 h-10 text-primary" />

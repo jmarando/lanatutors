@@ -2,205 +2,235 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   <url>
     <loc>https://lanatutors.africa/</loc>
-    <lastmod>2026-06-10</lastmod>
+    <lastmod>2026-10-29</lastmod>
     <changefreq>weekly</changefreq>
     <priority>1.0</priority>
   </url>
   <url>
     <loc>https://lanatutors.africa/tutors</loc>
-    <lastmod>2026-06-10</lastmod>
+    <lastmod>2026-10-29</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.95</priority>
   </url>
   <url>
     <loc>https://lanatutors.africa/tutors-in-kenya</loc>
-    <lastmod>2026-06-10</lastmod>
+    <lastmod>2026-10-29</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
+    <loc>https://lanatutors.africa/tutors-in-nairobi</loc>
+    <lastmod>2026-10-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://lanatutors.africa/tutors-in-mombasa</loc>
+    <lastmod>2026-10-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
+    <loc>https://lanatutors.africa/tutors-in-kisumu</loc>
+    <lastmod>2026-10-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.85</priority>
+  </url>
+  <url>
     <loc>https://lanatutors.africa/diaspora</loc>
-    <lastmod>2026-06-10</lastmod>
+    <lastmod>2026-10-29</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
     <loc>https://lanatutors.africa/tutors-for-african-students-abroad</loc>
-    <lastmod>2026-06-10</lastmod>
+    <lastmod>2026-10-29</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.85</priority>
   </url>
   <url>
     <loc>https://lanatutors.africa/kenyan-tutors-uk</loc>
-    <lastmod>2026-06-10</lastmod>
+    <lastmod>2026-10-29</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.85</priority>
   </url>
   <url>
     <loc>https://lanatutors.africa/kenyan-tutors-usa</loc>
-    <lastmod>2026-06-10</lastmod>
+    <lastmod>2026-10-29</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://lanatutors.africa/subjects/mathematics</loc>
-    <lastmod>2026-06-10</lastmod>
+    <lastmod>2026-10-29</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
     <loc>https://lanatutors.africa/subjects/chemistry</loc>
-    <lastmod>2026-06-10</lastmod>
+    <lastmod>2026-10-29</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.85</priority>
   </url>
   <url>
     <loc>https://lanatutors.africa/subjects/physics</loc>
-    <lastmod>2026-06-10</lastmod>
+    <lastmod>2026-10-29</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.85</priority>
   </url>
   <url>
     <loc>https://lanatutors.africa/subjects/biology</loc>
-    <lastmod>2026-06-10</lastmod>
+    <lastmod>2026-10-29</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.85</priority>
   </url>
   <url>
     <loc>https://lanatutors.africa/subjects/english</loc>
-    <lastmod>2026-06-10</lastmod>
+    <lastmod>2026-10-29</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.85</priority>
   </url>
   <url>
     <loc>https://lanatutors.africa/subjects/kiswahili</loc>
-    <lastmod>2026-06-10</lastmod>
+    <lastmod>2026-10-29</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.85</priority>
   </url>
   <url>
     <loc>https://lanatutors.africa/subjects/business-studies</loc>
-    <lastmod>2026-06-10</lastmod>
+    <lastmod>2026-10-29</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.85</priority>
   </url>
   <url>
     <loc>https://lanatutors.africa/subjects/computer-studies</loc>
-    <lastmod>2026-06-10</lastmod>
+    <lastmod>2026-10-29</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.85</priority>
   </url>
   <url>
     <loc>https://lanatutors.africa/subjects/geography</loc>
-    <lastmod>2026-06-10</lastmod>
+    <lastmod>2026-10-29</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://lanatutors.africa/subjects/history</loc>
-    <lastmod>2026-06-10</lastmod>
+    <lastmod>2026-10-29</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://lanatutors.africa/kcse-mathematics-tutors</loc>
-    <lastmod>2026-06-10</lastmod>
+    <lastmod>2026-10-29</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.95</priority>
   </url>
   <url>
     <loc>https://lanatutors.africa/igcse-mathematics-tutors</loc>
-    <lastmod>2026-06-10</lastmod>
+    <lastmod>2026-10-29</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
     <loc>https://lanatutors.africa/ib-mathematics-tutors</loc>
-    <lastmod>2026-06-10</lastmod>
+    <lastmod>2026-10-29</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
     <loc>https://lanatutors.africa/cbc-mathematics-tutors</loc>
-    <lastmod>2026-06-10</lastmod>
+    <lastmod>2026-10-29</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.9</priority>
   </url>
   <url>
     <loc>https://lanatutors.africa/how-it-works</loc>
-    <lastmod>2026-06-10</lastmod>
+    <lastmod>2026-10-29</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://lanatutors.africa/about</loc>
-    <lastmod>2026-06-10</lastmod>
+    <lastmod>2026-10-29</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://lanatutors.africa/become-a-tutor</loc>
-    <lastmod>2026-06-10</lastmod>
+    <lastmod>2026-10-29</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://lanatutors.africa/for-students</loc>
-    <lastmod>2026-06-10</lastmod>
+    <lastmod>2026-10-29</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.75</priority>
   </url>
   <url>
     <loc>https://lanatutors.africa/for-tutors</loc>
-    <lastmod>2026-06-10</lastmod>
+    <lastmod>2026-10-29</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.75</priority>
   </url>
   <url>
     <loc>https://lanatutors.africa/blog</loc>
-    <lastmod>2026-06-10</lastmod>
+    <lastmod>2026-10-29</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.75</priority>
   </url>
   <url>
     <loc>https://lanatutors.africa/book-consultation</loc>
-    <lastmod>2026-06-10</lastmod>
+    <lastmod>2026-10-29</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://lanatutors.africa/group-classes</loc>
-    <lastmod>2026-06-10</lastmod>
+    <lastmod>2026-10-29</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.75</priority>
   </url>
   <url>
     <loc>https://lanatutors.africa/request-learning-plan</loc>
-    <lastmod>2026-06-10</lastmod>
+    <lastmod>2026-10-29</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
     <loc>https://lanatutors.africa/login</loc>
-    <lastmod>2026-06-10</lastmod>
+    <lastmod>2026-10-29</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.4</priority>
   </url>
   <url>
     <loc>https://lanatutors.africa/student-signup</loc>
-    <lastmod>2026-06-10</lastmod>
+    <lastmod>2026-10-29</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
     <loc>https://lanatutors.africa/privacy-policy</loc>
-    <lastmod>2026-06-10</lastmod>
+    <lastmod>2026-10-29</lastmod>
     <changefreq>yearly</changefreq>
     <priority>0.3</priority>
   </url>
   <url>
     <loc>https://lanatutors.africa/blog/your-child-may-not-need-to-work-harder-revise-differently-people-daily</loc>
     <lastmod>2026-09-14</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://lanatutors.africa/blog/why-december-is-the-most-important-month-for-your-child-s-academic-progress</loc>
+    <lastmod>2025-11-28</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://lanatutors.africa/blog/a-parents-guide-cbc</loc>
+    <lastmod>2025-11-14</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.8</priority>
   </url>
