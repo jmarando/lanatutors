@@ -43,6 +43,13 @@
       "when": 1793335163143,
       "tag": "0005_crm_handoff_next_step",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1793441231783,
+      "tag": "0008_inchat_booking",
+      "breakpoints": true
     }
   ]
 }

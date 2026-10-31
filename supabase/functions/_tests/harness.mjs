@@ -15,15 +15,17 @@ const functionsDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), 
 
 const SERVE_MOCK = "export const serve = (handler) => { globalThis.__edgeHandler = handler; };";
 const SUPABASE_MOCK = "export const createClient = () => globalThis.__fakeSupabase;";
+const DJWT_MOCK = "export const create = async () => \"fake.jwt\";";
 
 const denoUrlImports = {
   name: "deno-url-imports",
   setup(b) {
     b.onResolve({ filter: /^https:\/\/deno\.land\/std@[^/]+\/http\/server\.ts$/ }, (a) => ({ path: a.path, namespace: "mock" }));
     b.onResolve({ filter: /^https:\/\/esm\.sh\/@supabase\/supabase-js@/ }, (a) => ({ path: a.path, namespace: "mock" }));
+    b.onResolve({ filter: /^https:\/\/deno\.land\/x\/djwt@/ }, (a) => ({ path: a.path, namespace: "mock" }));
     b.onResolve({ filter: /^https?:\/\// }, (a) => ({ errors: [{ text: `URL import the test harness does not fake: ${a.path}` }] }));
     b.onLoad({ filter: /.*/, namespace: "mock" }, (a) => ({
-      contents: a.path.includes("deno.land") ? SERVE_MOCK : SUPABASE_MOCK,
+      contents: a.path.includes("/x/djwt@") ? DJWT_MOCK : a.path.includes("deno.land") ? SERVE_MOCK : SUPABASE_MOCK,
       loader: "js",
     }));
   },
@@ -47,12 +49,20 @@ class Query {
     this.table = table;
     this.filters = [];
     this.op = "select";
+    this.sort = null;
+    this.cap = null;
   }
   select() { return this; }
   insert(row) { this.op = "insert"; this.payload = row; return this; }
   update(patch) { this.op = "update"; this.payload = patch; return this; }
   upsert(row) { this.op = "upsert"; this.payload = row; return this; }
-  eq(column, value) { this.filters.push([column, value]); return this; }
+  eq(column, value) { this.filters.push((row) => row[column] === value); return this; }
+  neq(column, value) { this.filters.push((row) => row[column] !== value); return this; }
+  gte(column, value) { this.filters.push((row) => row[column] >= value); return this; }
+  lte(column, value) { this.filters.push((row) => row[column] <= value); return this; }
+  in(column, values) { this.filters.push((row) => values.includes(row[column])); return this; }
+  order(column, { ascending = true } = {}) { this.sort = [column, ascending]; return this; }
+  limit(count) { this.cap = count; return this; }
   or() { return this; }
   maybeSingle() { this.mode = "maybe"; return this; }
   single() { this.mode = "one"; return this; }
@@ -62,7 +72,7 @@ class Query {
   run() {
     this.world.touch();
     const rows = (this.world.tables[this.table] ??= []);
-    const matches = (row) => this.filters.every(([column, value]) => row[column] === value);
+    const matches = (row) => this.filters.every((test) => test(row));
     const conversations = this.table === "whatsapp_conversations";
     // Lets a test land someone else's write just before the function's next one, e.g. the team clicking
     // "Take over" between Lana reading the chat and writing to it.
@@ -77,14 +87,35 @@ class Query {
       if (conversations && rows.some((row) => row.phone_number === this.payload.phone_number)) {
         return { data: null, error: { code: "23505", message: "duplicate key value violates unique constraint" } };
       }
+      if (this.table === "consultation_bookings") {
+        const { date, time } = { date: this.payload.consultation_date, time: this.payload.consultation_time };
+        if (this.world.failInsert) {
+          this.world.failInsert = false;
+          return { data: null, error: { code: "XX000", message: "boom" } };
+        }
+        // Someone else takes the time just before this insert, after the function's own check has passed.
+        if (this.world.rejectNextInsert) {
+          this.world.rejectNextInsert = false;
+          rows.push({ id: crypto.randomUUID(), phone_number: "254799999999", consultation_date: date, consultation_time: time, status: "confirmed", created_at: new Date().toISOString() });
+        }
+        // The slot rule of migration 0008: one booking that is not cancelled per time, from 2026-11-01.
+        if (date >= "2026-11-01" && rows.some((row) => row.consultation_date === date && row.consultation_time === time && row.status !== "cancelled")) {
+          return { data: null, error: { code: "23505", message: 'duplicate key value violates unique constraint "consultation_bookings_one_per_slot"' } };
+        }
+        this.world.events.push("insert booking");
+      }
       const at = this.world.timestamp();
-      const row = { escalated: false, messages: [], ...clone(this.payload), created_at: at, updated_at: at };
+      // A booking gets its id and creation time as the database would, the time from the (possibly mocked) clock.
+      const row = this.table === "consultation_bookings"
+        ? { id: crypto.randomUUID(), created_at: new Date().toISOString(), ...clone(this.payload) }
+        : { escalated: false, messages: [], ...clone(this.payload), created_at: at, updated_at: at };
       rows.push(row);
       out = [row];
     } else if (this.op === "upsert") {
       rows.push(clone(this.payload));
       out = [this.payload];
     } else if (this.op === "update") {
+      if (this.table === "consultation_bookings") this.world.events.push("update booking");
       out = rows.filter(matches);
       for (const row of out) {
         Object.assign(row, clone(this.payload));
@@ -93,6 +124,11 @@ class Query {
       }
     } else {
       out = rows.filter(matches);
+      if (this.sort) {
+        const [column, ascending] = this.sort;
+        out = [...out].sort((a, b) => (a[column] < b[column] ? -1 : a[column] > b[column] ? 1 : 0) * (ascending ? 1 : -1));
+      }
+      if (this.cap !== null) out = out.slice(0, this.cap);
     }
     out = out.map(clone);
     if (this.mode === "maybe") return { data: out[0] ?? null, error: null };
@@ -113,11 +149,31 @@ const DEFAULT_ENV = {
   WHATSAPP_REPLY_DELAY_MS: "20",
 };
 
-function makeWorld({ conversations, gateway, anthropic, meta }) {
+const FUNCTIONS_URL = `${DEFAULT_ENV.SUPABASE_URL}/functions/v1/`;
+// What the two booking functions answer unless a test scripts something else.
+const FUNCTION_DEFAULTS = {
+  "create-consultation-calendar-event": { status: 200, body: { success: true, eventId: "evt_1", meetingLink: "https://meet.google.com/abc-defg-hij" } },
+  "send-consultation-booking-confirmation": { status: 200, body: { id: "email_fake" } },
+};
+
+function makeWorld({ conversations, gateway, anthropic, meta, bookings, functions, failInsert, rejectNextInsert }) {
   const world = {
-    tables: { whatsapp_conversations: clone(conversations), communication_logs: [], whatsapp_suppressions: [], profiles: [] },
-    sent: [], // WhatsApp messages the function sent: { to, text }
+    tables: {
+      whatsapp_conversations: clone(conversations),
+      communication_logs: [],
+      whatsapp_suppressions: [],
+      profiles: [],
+      // Bookings already in the database. A seed row that does not say when it was made was made long ago.
+      consultation_bookings: bookings.map((row) => ({ id: crypto.randomUUID(), status: "confirmed", created_at: "2026-10-01T08:00:00.000Z", ...clone(row) })),
+    },
+    sent: [], // WhatsApp messages the function sent: { to, text }, and for lists and buttons also { interactive }
     emails: [], // Resend emails: { to, subject, html }
+    events: [], // what happened, in order: "insert booking", "update booking", "call <function>", "send text|interactive", "email <subject>"
+    functionCalls: [], // calls to the booking functions: { name, headers, body }
+    googleEvents: [], // calendar events created through Google: the event body
+    functionQueue: Object.fromEntries(Object.entries(functions).map(([name, outcomes]) => [name, [...outcomes]])),
+    failInsert: Boolean(failInsert), // the next insert into consultation_bookings fails
+    rejectNextInsert: Boolean(rejectNextInsert), // the next one finds the time taken by someone else
     gatewayCalls: [], // AI gateway requests: { headers, body }
     anthropicCalls: [], // Claude requests: { headers, body }
     geminiCalls: [], // direct Gemini calls, which the function must no longer make
@@ -141,12 +197,20 @@ function makeWorld({ conversations, gateway, anthropic, meta }) {
     world.activity++;
     try {
       const target = String(url);
-      const body = init.body ? JSON.parse(init.body) : undefined;
+      let body;
+      if (typeof init.body === "string") {
+        try { body = JSON.parse(init.body); } catch { body = init.body; }
+      } else if (init.body) {
+        body = String(init.body);
+      }
       if (target.startsWith("https://graph.facebook.com/")) {
         const outcome = world.metaQueue.shift();
         if (outcome?.throws) throw outcome.throws;
         if (outcome && outcome.status >= 400) return jsonResponse(outcome.status, outcome.body);
-        world.sent.push({ to: body.to, text: body.text.body });
+        world.events.push(body.type === "interactive" ? "send interactive" : "send text");
+        world.sent.push(body.type === "interactive"
+          ? { to: body.to, text: body.interactive.body.text, interactive: body.interactive }
+          : { to: body.to, text: body.text.body });
         return jsonResponse(200, { messages: [{ id: "wamid.fake" }] });
       }
       if (target === "https://ai.gateway.lovable.dev/v1/chat/completions") {
@@ -171,7 +235,23 @@ function makeWorld({ conversations, gateway, anthropic, meta }) {
         world.geminiCalls.push(target);
         return jsonResponse(500, { error: "the function must not call Gemini directly" });
       }
+      if (target === "https://oauth2.googleapis.com/token") return jsonResponse(200, { access_token: "tok" });
+      if (target.startsWith("https://www.googleapis.com/calendar/v3/calendars/primary/events")) {
+        world.googleEvents.push(body);
+        return jsonResponse(200, { id: "evt_1", hangoutLink: "https://meet.google.com/abc-defg-hij" });
+      }
+      if (target.startsWith(FUNCTIONS_URL)) {
+        const name = target.slice(FUNCTIONS_URL.length);
+        world.events.push(`call ${name}`);
+        world.functionCalls.push({ name, headers: init.headers, body });
+        const next = world.functionQueue[name]?.shift() ?? FUNCTION_DEFAULTS[name];
+        if (!next) return jsonResponse(404, { error: `no such function: ${name}` });
+        if (next.delayMs) await delay(next.delayMs, init.signal);
+        if (next.throws) throw next.throws;
+        return jsonResponse(next.status, next.body);
+      }
       if (target === "https://api.resend.com/emails") {
+        world.events.push(`email ${body.subject}`);
         world.emails.push(body);
         return jsonResponse(200, { id: "email_fake" });
       }
@@ -202,7 +282,10 @@ async function settle(world) {
 
 let loads = 0;
 
-export async function loadFunction(name, { env = {}, conversations = [], gateway = [], anthropic = [], meta = [] } = {}) {
+export async function loadFunction(
+  name,
+  { env = {}, conversations = [], gateway = [], anthropic = [], meta = [], bookings = [], functions = {}, failInsert = false, rejectNextInsert = false } = {},
+) {
   const bundle = await build({
     entryPoints: [path.join(functionsDir, name, "index.ts")],
     bundle: true,
@@ -214,7 +297,7 @@ export async function loadFunction(name, { env = {}, conversations = [], gateway
     plugins: [denoUrlImports],
   });
 
-  const world = makeWorld({ conversations, gateway, anthropic, meta });
+  const world = makeWorld({ conversations, gateway, anthropic, meta, bookings, functions, failInsert, rejectNextInsert });
   const fullEnv = { ...DEFAULT_ENV, ...env };
   const saved = { fetch: globalThis.fetch, Deno: globalThis.Deno, EdgeRuntime: globalThis.EdgeRuntime, console: { ...console } };
   globalThis.fetch = world.fetch;
@@ -228,7 +311,13 @@ export async function loadFunction(name, { env = {}, conversations = [], gateway
   const dir = await mkdtemp(path.join(tmpdir(), "edge-test-"));
   const file = path.join(dir, `${name}.mjs`);
   await writeFile(file, bundle.outputFiles[0].text);
-  await import(`${pathToFileURL(file).href}?load=${++loads}`);
+  const realSetInterval = globalThis.setInterval;
+  globalThis.setInterval = (...args) => realSetInterval(...args).unref();
+  try {
+    await import(`${pathToFileURL(file).href}?load=${++loads}`);
+  } finally {
+    globalThis.setInterval = realSetInterval;
+  }
   const handler = globalThis.__edgeHandler;
 
   // Deliver a webhook payload the way Meta would. Resolves once the function has answered Meta.
@@ -263,6 +352,28 @@ export async function loadFunction(name, { env = {}, conversations = [], gateway
   };
 }
 
+// Loads a pure TypeScript module (one with no Deno imports and no network, such as booking.ts) so its functions
+// can be tested directly, without a handler around them.
+export async function loadModule(relPathFromFunctionsDir) {
+  const bundle = await build({
+    entryPoints: [path.join(functionsDir, relPathFromFunctionsDir)],
+    bundle: true,
+    write: false,
+    format: "esm",
+    platform: "node",
+    target: "node20",
+    logLevel: "silent",
+  });
+  const dir = await mkdtemp(path.join(tmpdir(), "edge-module-"));
+  try {
+    const file = path.join(dir, "module.mjs");
+    await writeFile(file, bundle.outputFiles[0].text);
+    return await import(`${pathToFileURL(file).href}?load=${++loads}`);
+  } finally {
+    await rm(dir, { recursive: true, force: true });
+  }
+}
+
 let messageIds = 0;
 
 // An inbound WhatsApp message in the shape Meta's webhook delivers. A text message by default; pass `type`
@@ -278,6 +389,14 @@ export function inbound({ from = "254700000001", name = "Test Parent", text, id,
   return {
     entry: [{ changes: [{ field: "messages", value: { messages: [message], contacts: [{ profile: { name }, wa_id: from }] } }] }],
   };
+}
+
+// A tapped reply button, or with `list: true` a chosen list row, as Meta delivers it: the id and the title.
+export function tap(id, title, { from = "254700000001", name = "Test Parent", list = false } = {}) {
+  const interactive = list
+    ? { type: "list_reply", list_reply: { id, title } }
+    : { type: "button_reply", button_reply: { id, title } };
+  return inbound({ from, name, type: "interactive", interactive });
 }
 
 // Scripted answers from the Lovable AI gateway (OpenAI-style chat completions).

@@ -9,7 +9,7 @@
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
     "preview": "vite preview",
-    "test:edge": "node --test supabase/functions/_tests/whatsapp-webhook.test.mjs"
+    "test:edge": "node --test supabase/functions/_tests/*.test.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
