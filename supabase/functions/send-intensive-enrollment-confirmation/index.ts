@@ -1,5 +1,6 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { dailyWindow, formatLongDay, formatProgramDates } from "../_shared/bootcamp.ts";
 
 const RESEND_API_KEY = Deno.env.get("RESEND_API_KEY");
 
@@ -107,6 +108,13 @@ serve(async (req) => {
 
     console.log(`Sending email to: ${user.email}`);
 
+    // What the email says about the program comes from the program itself, not from any one year.
+    const program = enrollment.intensive_programs;
+    const programName: string = program?.name || "Holiday Classes";
+    const programDates = formatProgramDates(program?.start_date, program?.end_date);
+    const firstDay = formatLongDay(program?.start_date);
+    const dailySchedule = dailyWindow(classes?.map((c) => c.time_slot));
+
     // Build schedule HTML with meeting links
     const scheduleHTML = classes
       ?.map((cls) => {
@@ -148,11 +156,11 @@ serve(async (req) => {
                         <td align="center" style="font-size: 32px; color: #ffffff; padding-bottom: 8px;">🎓</td>
                       </tr>
                       <tr>
-                        <td align="center" style="font-size: 28px; font-weight: 600; color: #ffffff; letter-spacing: -0.5px;">Welcome to December Bootcamp!</td>
+                        <td align="center" style="font-size: 28px; font-weight: 600; color: #ffffff; letter-spacing: -0.5px;">Welcome to ${programName}!</td>
                       </tr>
-                      <tr>
-                        <td align="center" style="font-size: 14px; color: #ffffff; opacity: 0.9; padding-top: 8px;">December 8-19, 2025</td>
-                      </tr>
+                      ${programDates ? `<tr>
+                        <td align="center" style="font-size: 14px; color: #ffffff; opacity: 0.9; padding-top: 8px;">${programDates}</td>
+                      </tr>` : ""}
                     </table>
                   </td>
                 </tr>
@@ -174,8 +182,8 @@ serve(async (req) => {
                       </tr>
                       <tr>
                         <td style="padding-bottom: 20px; font-size: 15px; line-height: 1.6; color: #4a4a4a;">
-                          Thank you for enrolling in the <strong>December 2025 Holiday Bootcamp</strong>! 
-                          We're excited to have you join us for this intensive 2-week learning experience.
+                          Thank you for enrolling in <strong>${programName}</strong>! 
+                          We're excited to have you join us.
                         </td>
                       </tr>
                     </table>
@@ -193,16 +201,16 @@ serve(async (req) => {
                                 <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="100%">
                                   <tr>
                                     <td style="padding: 10px 0; border-bottom: 1px solid #FFD6D6; font-size: 14px; color: #666666;">Program:</td>
-                                    <td style="padding: 10px 0; border-bottom: 1px solid #FFD6D6; font-size: 14px; color: #1a1a1a; font-weight: 500; text-align: right;">${enrollment.intensive_programs?.name || "December Holiday Bootcamp"}</td>
+                                    <td style="padding: 10px 0; border-bottom: 1px solid #FFD6D6; font-size: 14px; color: #1a1a1a; font-weight: 500; text-align: right;">${programName}</td>
                                   </tr>
-                                  <tr>
+                                  ${programDates ? `<tr>
                                     <td style="padding: 10px 0; border-bottom: 1px solid #FFD6D6; font-size: 14px; color: #666666;">Dates:</td>
-                                    <td style="padding: 10px 0; border-bottom: 1px solid #FFD6D6; font-size: 14px; color: #1a1a1a; font-weight: 500; text-align: right;">December 8-19, 2025 (Mon-Fri)</td>
-                                  </tr>
-                                  <tr>
+                                    <td style="padding: 10px 0; border-bottom: 1px solid #FFD6D6; font-size: 14px; color: #1a1a1a; font-weight: 500; text-align: right;">${programDates} (Mon-Fri)</td>
+                                  </tr>` : ""}
+                                  ${dailySchedule ? `<tr>
                                     <td style="padding: 10px 0; border-bottom: 1px solid #FFD6D6; font-size: 14px; color: #666666;">Daily Schedule:</td>
-                                    <td style="padding: 10px 0; border-bottom: 1px solid #FFD6D6; font-size: 14px; color: #1a1a1a; font-weight: 500; text-align: right;">8:00 AM - 5:15 PM EAT</td>
-                                  </tr>
+                                    <td style="padding: 10px 0; border-bottom: 1px solid #FFD6D6; font-size: 14px; color: #1a1a1a; font-weight: 500; text-align: right;">${dailySchedule} EAT</td>
+                                  </tr>` : ""}
                                   <tr>
                                     <td style="padding: 10px 0; font-size: 14px; color: #666666;">Total Subjects:</td>
                                     <td style="padding: 10px 0; font-size: 14px; color: #1a1a1a; font-weight: 500; text-align: right;">${enrollment.total_subjects}</td>
@@ -249,7 +257,7 @@ serve(async (req) => {
                             </tr>
                             <tr>
                               <td style="font-size: 14px; line-height: 1.8; color: #78350F;">
-                                • <strong>Join your classes</strong> using the links above on December 8th<br>
+                                • <strong>Join your classes</strong> using the links above ${firstDay ? `on ${firstDay}` : "when classes start"}<br>
                                 • All times are in <strong>East Africa Time (EAT)</strong><br>
                                 • You'll receive daily reminders at 7:00 AM EAT<br>
                                 • <strong>Manage your classes</strong> anytime via your <a href="https://lanatutors.africa/student/dashboard" style="color: #D95436; text-decoration: underline;">Student Dashboard</a><br>
@@ -313,7 +321,7 @@ serve(async (req) => {
       body: JSON.stringify({
         from: "Lana Tutors <info@lanatutors.africa>",
         to: [user.email],
-        subject: `🎓 Welcome to December Bootcamp - Your Enrollment is Confirmed!`,
+        subject: `🎓 Welcome to ${programName} - Your Enrollment is Confirmed!`,
         html: emailHTML,
       }),
     });

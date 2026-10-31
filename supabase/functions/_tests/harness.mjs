@@ -190,7 +190,12 @@ function makeWorld({ conversations, gateway, anthropic, meta, bookings, function
     timestamp() { world.clock += 1; return `${new Date(world.clock).toISOString().slice(0, -1)}123+00:00`; },
     conversation: (phone) => clone(world.tables.whatsapp_conversations.find((c) => c.phone_number === phone)),
   };
-  world.supabase = { from: (table) => new Query(world, table) };
+  // The people behind auth user ids, for the functions that look up a student's email: set world.users[id] = { id, email }.
+  world.users = {};
+  world.supabase = {
+    from: (table) => new Query(world, table),
+    auth: { admin: { getUserById: async (id) => ({ data: { user: world.users[id] ?? null }, error: null }) } },
+  };
 
   world.fetch = async (url, init = {}) => {
     world.inflight++;
@@ -237,8 +242,12 @@ function makeWorld({ conversations, gateway, anthropic, meta, bookings, function
       }
       if (target === "https://oauth2.googleapis.com/token") return jsonResponse(200, { access_token: "tok" });
       if (target.startsWith("https://www.googleapis.com/calendar/v3/calendars/primary/events")) {
+        // Google refuses an event id the calendar already has, as the real API does.
+        if (body?.id && world.googleEvents.some((event) => event.id === body.id)) {
+          return jsonResponse(409, { error: { code: 409, message: "The requested identifier already exists." } });
+        }
         world.googleEvents.push(body);
-        return jsonResponse(200, { id: "evt_1", hangoutLink: "https://meet.google.com/abc-defg-hij" });
+        return jsonResponse(200, { id: body?.id ?? "evt_1", hangoutLink: "https://meet.google.com/abc-defg-hij" });
       }
       if (target.startsWith(FUNCTIONS_URL)) {
         const name = target.slice(FUNCTIONS_URL.length);

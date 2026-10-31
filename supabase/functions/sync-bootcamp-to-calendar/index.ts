@@ -1,35 +1,18 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { create } from "https://deno.land/x/djwt@v2.8/mod.ts";
+import { calendarEventId, parseTimeSlot, weekdayDates } from "../_shared/bootcamp.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// Time slots for December Holiday Bootcamp (Africa/Nairobi)
-const TIME_SLOT_MAP: Record<string, { start: string; end: string }> = {
-  "8:00 AM - 9:15 AM": { start: "08:00", end: "09:15" },
-  "9:30 AM - 10:45 AM": { start: "09:30", end: "10:45" },
-  "11:00 AM - 12:15 PM": { start: "11:00", end: "12:15" },
-  "1:00 PM - 2:15 PM": { start: "13:00", end: "14:15" },
-  "2:30 PM - 3:45 PM": { start: "14:30", end: "15:45" },
-  "4:00 PM - 5:15 PM": { start: "16:00", end: "17:15" },
-};
-
-// Program dates - 10 weekdays from Dec 8-19, 2025
-const PROGRAM_DATES = [
-  "2025-12-08", // Mon
-  "2025-12-09", // Tue
-  "2025-12-10", // Wed
-  "2025-12-11", // Thu
-  "2025-12-12", // Fri (Jamhuri Day - still running)
-  "2025-12-15", // Mon
-  "2025-12-16", // Tue
-  "2025-12-17", // Wed
-  "2025-12-18", // Thu
-  "2025-12-19", // Fri
-];
+// What this puts on the calendar: for each class of an active holiday program that has not ended, one event on each
+// of the program's Monday to Friday days, at the class's time slot (Africa/Nairobi). The days come from the program's
+// start_date and end_date, and the times from the class's time_slot (either label style, see _shared/bootcamp.ts).
+// Nothing about one year is written in here any more: it used to carry last December's ten dates and sync every active
+// class of every program.
 
 async function getAccessToken(): Promise<string> {
   const googleServiceAccount = Deno.env.get("GOOGLE_SERVICE_ACCOUNT_JSON");
@@ -102,13 +85,16 @@ async function getAccessToken(): Promise<string> {
 
 async function createCalendarEvent(
   accessToken: string,
+  eventId: string,
   summary: string,
   description: string,
   startDateTime: string,
   endDateTime: string,
   meetingLink?: string,
-): Promise<{ success: boolean; eventId?: string; error?: string }> {
+): Promise<{ success: boolean; alreadyThere?: boolean; error?: string }> {
   const calendarEvent: Record<string, unknown> = {
+    // The same id for the same class on the same day, so syncing twice cannot make a second event.
+    id: eventId,
     summary,
     description,
     start: {
@@ -139,6 +125,12 @@ async function createCalendarEvent(
     },
   );
 
+  // Google answers 409 when the calendar already has that id: this event was made by an earlier sync.
+  if (calendarResponse.status === 409) {
+    await calendarResponse.text();
+    return { success: true, alreadyThere: true };
+  }
+
   if (!calendarResponse.ok) {
     const errorText = await calendarResponse.text();
     console.error("Calendar event creation failed:", errorText);
@@ -147,7 +139,14 @@ async function createCalendarEvent(
 
   const event = await calendarResponse.json();
   console.log("Calendar event created:", event.id, summary);
-  return { success: true, eventId: event.id };
+  return { success: true };
+}
+
+interface Program {
+  id: string;
+  name: string;
+  start_date: string;
+  end_date: string;
 }
 
 const handler = async (req: Request): Promise<Response> => {
@@ -160,7 +159,40 @@ const handler = async (req: Request): Promise<Response> => {
     const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, supabaseKey);
 
-    // Fetch all active intensive classes with tutor info
+    // The admin screen calls this with no body. A body may name one program ({ "programId": "..." }).
+    let programId: string | undefined;
+    try {
+      const body = await req.json();
+      if (typeof body?.programId === "string") programId = body.programId;
+    } catch (_) {
+      // no body: sync every active program
+    }
+
+    const respond = (payload: Record<string, unknown>) =>
+      new Response(JSON.stringify({ success: true, created: 0, already_synced: 0, errors: 0, skipped: [], details: [], ...payload }), {
+        status: 200,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+
+    // Active programs that have not ended. Today is read in Nairobi time (UTC+3, no daylight saving).
+    const today = new Date(Date.now() + 3 * 60 * 60 * 1000).toISOString().slice(0, 10);
+    let programQuery = supabase
+      .from("intensive_programs")
+      .select("id, name, start_date, end_date")
+      .eq("is_active", true);
+    if (programId) programQuery = programQuery.eq("id", programId);
+    const { data: programRows, error: programsError } = await programQuery;
+    if (programsError) {
+      console.error("Error fetching programs:", programsError);
+      throw new Error("Failed to fetch intensive programs");
+    }
+    const programs: Program[] = ((programRows ?? []) as Program[]).filter((p) => p.end_date >= today);
+    if (programs.length === 0) {
+      return respond({ message: "No active program to sync: none is active, or it has already ended" });
+    }
+    const programById: Record<string, Program> = Object.fromEntries(programs.map((p) => [p.id, p]));
+
+    // Active classes of those programs only
     const { data: classes, error: classesError } = await supabase
       .from("intensive_classes")
       .select(`
@@ -174,23 +206,27 @@ const handler = async (req: Request): Promise<Response> => {
         program_id,
         current_enrollment
       `)
-      .eq("status", "active");
+      .eq("status", "active")
+      .in("program_id", programs.map((p) => p.id));
 
     if (classesError) {
       console.error("Error fetching classes:", classesError);
       throw new Error("Failed to fetch intensive classes");
     }
 
-    console.log(`Found ${classes?.length || 0} active bootcamp classes`);
+    console.log(`Found ${classes?.length || 0} active classes in ${programs.length} program(s)`);
+    if (!classes?.length) {
+      return respond({ message: "No active classes to sync" });
+    }
 
     // Fetch tutor names
-    const tutorIds = [...new Set(classes?.filter(c => c.tutor_id).map(c => c.tutor_id))];
+    const tutorIds = [...new Set(classes.filter((c) => c.tutor_id).map((c) => c.tutor_id))];
     const { data: tutorProfiles } = await supabase
       .from("tutor_profiles")
       .select("id, user_id")
       .in("id", tutorIds);
 
-    const tutorUserIds = tutorProfiles?.map(t => t.user_id) || [];
+    const tutorUserIds = tutorProfiles?.map((t) => t.user_id) || [];
     const { data: profiles } = await supabase
       .from("profiles")
       .select("id, full_name")
@@ -198,40 +234,47 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Create tutor name lookup
     const tutorNameMap: Record<string, string> = {};
-    tutorProfiles?.forEach(tp => {
-      const profile = profiles?.find(p => p.id === tp.user_id);
+    tutorProfiles?.forEach((tp) => {
+      const profile = profiles?.find((p) => p.id === tp.user_id);
       if (profile) {
         tutorNameMap[tp.id] = profile.full_name || "TBD";
       }
     });
 
     const accessToken = await getAccessToken();
+    const pauseMs = Number(Deno.env.get("BOOTCAMP_SYNC_DELAY_MS") ?? 100);
 
     let createdCount = 0;
+    let alreadyCount = 0;
     let errorCount = 0;
-    const results: Array<{ class: string; date: string; success: boolean; error?: string }> = [];
+    const skipped: Array<{ class: string; reason: string }> = [];
+    const results: Array<{ class: string; date: string; success: boolean; already_there?: boolean; error?: string }> = [];
 
-    // For each class, create events for all 10 program dates
-    for (const cls of classes || []) {
-      const timeSlot = TIME_SLOT_MAP[cls.time_slot];
+    for (const cls of classes) {
+      const program = programById[cls.program_id];
+      const gradeLevel = cls.grade_levels?.[0] || "Mixed";
+      const label = `${cls.subject} (${cls.curriculum} ${gradeLevel})`;
+
+      const timeSlot = parseTimeSlot(cls.time_slot);
       if (!timeSlot) {
         console.warn(`Unknown time slot: ${cls.time_slot} for class ${cls.subject}`);
+        skipped.push({ class: label, reason: `unknown time slot "${cls.time_slot}"` });
         continue;
       }
 
       const tutorName = cls.tutor_id ? (tutorNameMap[cls.tutor_id] || "TBD") : "TBD";
-      const gradeLevel = cls.grade_levels?.[0] || "Mixed";
+      const days = weekdayDates(program.start_date, program.end_date);
 
-      for (let i = 0; i < PROGRAM_DATES.length; i++) {
-        const date = PROGRAM_DATES[i];
+      for (let i = 0; i < days.length; i++) {
+        const date = days[i];
         const dayNumber = i + 1;
 
         const startDateTime = `${date}T${timeSlot.start}:00+03:00`;
         const endDateTime = `${date}T${timeSlot.end}:00+03:00`;
 
-        const summary = `Bootcamp: ${cls.subject} (${cls.curriculum} ${gradeLevel}) - ${tutorName}`;
+        const summary = `Bootcamp: ${label} - ${tutorName}`;
         const description = [
-          `December Holiday Bootcamp - Day ${dayNumber}`,
+          `${program.name} - Day ${dayNumber}`,
           `Subject: ${cls.subject}`,
           `Curriculum: ${cls.curriculum}`,
           `Grade Level: ${gradeLevel}`,
@@ -242,6 +285,7 @@ const handler = async (req: Request): Promise<Response> => {
 
         const result = await createCalendarEvent(
           accessToken,
+          calendarEventId(cls.id, date),
           summary,
           description,
           startDateTime,
@@ -249,40 +293,41 @@ const handler = async (req: Request): Promise<Response> => {
           cls.meeting_link,
         );
 
-        if (result.success) {
-          createdCount++;
-        } else {
+        if (!result.success) {
           errorCount++;
+        } else if (result.alreadyThere) {
+          alreadyCount++;
+        } else {
+          createdCount++;
         }
 
         results.push({
-          class: `${cls.subject} (${cls.curriculum} ${gradeLevel})`,
+          class: label,
           date,
           success: result.success,
+          already_there: result.alreadyThere,
           error: result.error,
         });
 
         // Small delay to avoid rate limiting
-        await new Promise(resolve => setTimeout(resolve, 100));
+        if (pauseMs > 0) await new Promise((resolve) => setTimeout(resolve, pauseMs));
       }
     }
 
-    console.log(`Sync complete. Created: ${createdCount}, Errors: ${errorCount}`);
+    console.log(`Sync complete. Created: ${createdCount}, already there: ${alreadyCount}, skipped classes: ${skipped.length}, errors: ${errorCount}`);
 
-    return new Response(
-      JSON.stringify({
-        success: true,
-        message: `Synced ${createdCount} calendar events for bootcamp classes`,
-        created: createdCount,
-        errors: errorCount,
-        details: results,
-      }),
-      { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } },
-    );
-  } catch (error: any) {
+    return respond({
+      message: `Synced ${createdCount} calendar events (${alreadyCount} were already there, ${skipped.length} classes skipped)`,
+      created: createdCount,
+      already_synced: alreadyCount,
+      errors: errorCount,
+      skipped,
+      details: results,
+    });
+  } catch (error) {
     console.error("Error syncing bootcamp to calendar:", error);
     return new Response(
-      JSON.stringify({ error: error.message ?? "unknown_error" }),
+      JSON.stringify({ error: error instanceof Error ? error.message : "unknown_error" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   }

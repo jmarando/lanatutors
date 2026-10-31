@@ -417,7 +417,7 @@ export const AdminIntensivePrograms = () => {
 
   // Sync all bootcamp classes to Google Calendar
   const handleSyncToCalendar = async () => {
-    if (!confirm("This will create calendar events for all bootcamp classes across all 10 program days. Continue?")) {
+    if (!confirm("This will create calendar events for the active program's classes on each of its class days (Monday to Friday). Running it again does not make duplicates. Continue?")) {
       return;
     }
     
@@ -427,7 +427,12 @@ export const AdminIntensivePrograms = () => {
       
       if (error) throw error;
       
-      toast.success(`Synced ${data.created} calendar events to info@lanatutors.africa`);
+      const notes = [
+        data.already_synced ? `${data.already_synced} already there` : "",
+        data.skipped?.length ? `${data.skipped.length} classes skipped: check their time slots` : "",
+        data.errors ? `${data.errors} failed` : "",
+      ].filter(Boolean).join(", ");
+      toast.success(`Synced ${data.created} calendar events to info@lanatutors.africa${notes ? ` (${notes})` : ""}`);
       console.log("Calendar sync results:", data);
     } catch (error) {
       console.error("Failed to sync to calendar:", error);
