@@ -1,6 +1,6 @@
 # In-chat booking: book the free assessment call inside the WhatsApp chat with Lana
 
-Date: 2026-10-31. Status: written for the owner's approval; nothing built, nothing live.
+Date: 2026-10-31. Status (2026-11-01): built on the branch and checked (see "How it is checked"); not pushed, not deployed, migration 0008 not applied. The owner's approval of the calls under "My calls" is not recorded here.
 Branch `claude/suspicious-driscoll-69e883`, stacked on PR #12 (keep Lana answering), which is stacked on PR #11 (the bot fix). `main` is merged in.
 
 ## Why
@@ -182,7 +182,7 @@ Failures:
 0006 (CRM lessons) and 0007 (learning loop) belong to other unmerged branches; the number only orders files and this SQL does not depend on either. Safe to run twice.
 
 1. `consultation_bookings.booked_via text` (null for website and older bookings, `whatsapp` for the chat), so the new channel can be counted.
-2. A rule that two families cannot hold one time: a unique index on `(consultation_date, consultation_time)` where `status <> 'cancelled'` **and `consultation_date >= '2026-11-01'`**. Production today (read-only, 2026-10-31): no such rule exists; 11 date-and-time pairs in the past are held twice (one three times), the latest on 2026-08-18, so a rule over all rows would fail to build. The date skips that history. One booking is upcoming, so the index builds. The website gets the same protection.
+2. A rule that two families cannot hold one time: a unique index on `(consultation_date, consultation_time)` where `status <> 'cancelled'` **and `consultation_date >= '2026-11-01'`**. Production today (read-only, 2026-10-31): no such rule exists; 11 date-and-time pairs in the past are held twice (one three times), the latest on 2026-08-18, so a rule over all rows would fail to build. The date skips that history. One booking is upcoming, so the index builds. The website gets the same protection. Rechecked read-only on 2026-11-01: still no rule and no `booked_via` column; 3 bookings that are not cancelled on or after 1 November, none clashing, so the index still builds; the live `crm_record_assessment_booking` equals 0004's text apart from whitespace, so 0008's replacement overwrites nothing else.
 3. `crm_record_assessment_booking` replaced by 0004's text plus one change: for a booking with `booked_via = 'whatsapp'` it sets the family's lead to `needs_reply = false`. The existing lead trigger (0005) then also clears a leftover "Reply to the WhatsApp hand-off" next step. The copy is compared with the live definition before applying, so it cannot overwrite a change made elsewhere.
 
 ### CRM and inbox after a booking
@@ -201,6 +201,7 @@ The write order in the chat is: the family's tap is saved (the lead is flagged, 
 - Strict `tsc` against the Deno shim and `eslint` on the touched files (the repo's lint count must not rise).
 - A scratch Postgres with the real migrations (0004, 0005, 0008, twice): the CRM effect of an in-chat booking and of a website booking, the slot rule (also after a cancel), and the existing WhatsApp write-sequence replay still passing.
 - Not verifiable from here, and said so: Meta's live behaviour with interactive messages on the production number, Google, Resend, the production migration, the site change in a browser. The first live test is a post-deploy check.
+- Results, 2026-11-01: `npm run test:edge` 145 pass (booking 24, in-chat 53, consultation functions 6, migration file 4, webhook 58). Strict `tsc` against the Deno shim over the webhook with `booking.ts`, `lana.ts` and `claude.ts`: 0 errors, and a deliberate error in a probe file is caught. `tsc -p tsconfig.app.json` clean. `npm run lint` 526 problems, as before the branch; the four errors in touched files are older `any`s the branch did not add. Scratch Postgres with 0004, 0005 and 0008 twice: 41 checks pass (23 of the old WhatsApp replay, 18 new), no CRM warnings. The branch diff holds no key, token or real phone number.
 
 ## Rollout (the owner decides each step)
 
@@ -218,6 +219,16 @@ The write order in the chat is: the family's tap is saved (the lead is flagged, 
 4. **`create-consultation-calendar-event` has no authentication and invites any address.** Existing; the webhook calls it server to server.
 5. **11 past times were booked twice** (listed under Database), which the new rule leaves alone.
 6. The inbox labels every non-human message "Lana (AI)".
+
+## Review notes (2026-11-01, from reading the finished diff against this document)
+
+The code does what this document says. Small things, none changed:
+
+1. **Order matters at rollout.** The new code selects and writes `booked_via`. Deployed before 0008 is applied, the first "Book a free call" tap answers "something went wrong on my side" and alerts the team. It fails safe, but apply 0008 first.
+2. **The `[Buttons: ...]` and `[List: ...]` lines are stored in the chat** so the inbox shows what was offered, and the AI reads them as part of Lana's earlier messages once the team clicks Resume AI. A model could copy the habit. If it ever does, strip those lines when the chat is handed to the AI.
+3. **A timed-out Google call.** After 20 seconds the booking is kept with the pending link and the team is told nobody was invited, but Google may still finish the event. The alert gives the booking id; check the calendar before making a second event.
+4. **"Sorry, that time has just been taken"** is also what a family sees when a time today has slipped inside the hour. The wording is slightly off; nothing is booked either way.
+5. **Typed "yes, book me" after the offer** (no tap) goes to the team, as designed: typed text is read only while a booking step is open.
 
 ## What is left to the builder
 
