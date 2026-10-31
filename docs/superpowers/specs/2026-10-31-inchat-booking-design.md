@@ -1,6 +1,6 @@
 # In-chat booking: book the free assessment call inside the WhatsApp chat with Lana
 
-Date: 2026-10-31. Status (2026-11-01): approved on 2026-11-01, including the calls under "My calls"; built on the branch and checked (see "How it is checked"); not pushed, not deployed, migration 0008 not applied.
+Date: 2026-10-31. Status (2026-11-01): approved on 2026-11-01, including the calls under "My calls"; built on the branch and checked (see "How it is checked"); migration 0008 applied to production on 2026-11-01, after PR #11 and PR #12 were merged and published the same night; this branch is not pushed and its code is not deployed.
 Branch `claude/suspicious-driscoll-69e883`, stacked on PR #12 (keep Lana answering), which is stacked on PR #11 (the bot fix). `main` is merged in.
 
 ## Why
@@ -205,8 +205,8 @@ The write order in the chat is: the family's tap is saved (the lead is flagged, 
 
 ## Rollout (the owner decides each step)
 
-1. Merge and deploy PR #11, then PR #12 (already built).
-2. Apply `0008` through the Lovable connector, with the owner's go-ahead, in one transaction; check with a SELECT.
+1. Merge and deploy PR #11, then PR #12 (already built). Done 2026-11-01: merged as `b8cd318` and `dc14ab6`, each published.
+2. Apply `0008` through the Lovable connector, with the owner's go-ahead, in one transaction; check with a SELECT. Done 2026-11-01: recorded as id 7 in `drizzle.__drizzle_migrations`, and the live function body equals the file's.
 3. Deploy the three edge functions through Lovable and publish the site.
 4. Checks on a real phone: send the "assessment call" starter and book a call end to end; a free-text message that gets the buttons; a tap on "Call me back"; "Change or cancel"; book the same time from a second phone (expect the friendly refusal); confirm the lead shows "Call booked" with no "needs reply"; cancel the test booking by hand and delete the calendar event.
 5. If anything misbehaves: `WHATSAPP_BOOKING=off`, no redeploy.
