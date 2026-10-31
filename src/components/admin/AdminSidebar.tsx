@@ -17,6 +17,7 @@ import {
   Send,
   Megaphone
 } from "lucide-react";
+import { Link } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import {
   Sidebar,
@@ -109,7 +110,9 @@ export function AdminSidebar({ activeTab, onTabChange, counts }: AdminSidebarPro
         },
         { 
           id: "crm", 
-          label: "CRM / Customers", 
+          label: "CRM",
+          // Opens the CRM's own screens (Today, Leads, Family) instead of a tab here.
+          to: "/admin", 
           icon: Users 
         },
         { 
@@ -237,7 +240,16 @@ export function AdminSidebar({ activeTab, onTabChange, counts }: AdminSidebarPro
             </SidebarGroupLabel>
             <SidebarGroupContent>
               <SidebarMenu>
-                {group.items.map((item) => (
+                {group.items.map((item) => item.to ? (
+                  <SidebarMenuItem key={item.id}>
+                    <SidebarMenuButton asChild tooltip={item.label} className="w-full justify-start gap-3">
+                      <Link to={item.to}>
+                        <item.icon className="h-4 w-4 shrink-0" />
+                        {!isCollapsed && <span className="flex-1 truncate">{item.label}</span>}
+                      </Link>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
+                ) : (
                   <SidebarMenuItem key={item.id}>
                     <SidebarMenuButton
                       onClick={() => onTabChange(item.id)}
