@@ -83,6 +83,10 @@ const TEAM_REPLIES: Record<PrefillIntent, string> = {
   ].join("\n"),
 };
 
+// What the "Call me back" button in the chat answers with: the reply the team already sends to the website's call-back
+// button.
+export const CALLBACK_REPLY = TEAM_REPLIES.callback;
+
 // Ignores case, punctuation and curly apostrophes, since WhatsApp and phone keyboards change them. It
 // matches the whole message only: someone who adds their own details gets the AI, not a ready-made reply.
 const normalize = (text: string) =>

@@ -47,6 +47,7 @@ export const CALL_TIMES: readonly string[] = [
   "07:00 PM", "07:20 PM", "07:40 PM", "08:00 PM", "08:20 PM", "08:40 PM",
 ];
 export const CALL_MINUTES = 20;
+export const MAX_LIST_ROWS = 10; // a WhatsApp list holds at most 10 rows
 export const MAX_DAYS_SHOWN = 10;
 export const HORIZON_DAYS = 14;
 export const MAX_CHAT_BOOKINGS_PER_DAY = 3;

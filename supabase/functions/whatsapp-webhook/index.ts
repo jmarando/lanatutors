@@ -1,7 +1,34 @@
 import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import {
+  type Action,
+  type Booked,
+  type BookingState,
+  type Outgoing,
+  COPY,
+  HORIZON_DAYS,
+  MAX_LIST_ROWS,
+  addDays,
+  askEmailOut,
+  confirmOut,
+  currentFlow,
+  dayListOut,
+  findEmail,
+  freeTimes,
+  isFree,
+  isOpen,
+  nairobiNow,
+  openDays,
+  parseTap,
+  partOf,
+  partsOf,
+  partsOut,
+  textOut,
+  timesInPart,
+  timesOut,
+} from "./booking.ts";
 import { readClaudeReply, toClaudeMessages } from "./claude.ts";
-import { ATTACHMENT_NOTICE, BACKUP_REPLY, isGreeting, looksLikeSpam, matchPrefill } from "./lana.ts";
+import { ATTACHMENT_NOTICE, BACKUP_REPLY, CALLBACK_REPLY, isGreeting, looksLikeSpam, matchPrefill } from "./lana.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -28,6 +55,8 @@ const WA_APP_SECRET = Deno.env.get("WHATSAPP_APP_SECRET");
 // of it. After a bare greeting she waits four times as long, because the question usually follows.
 const REPLY_DELAY_MS = Number(Deno.env.get("WHATSAPP_REPLY_DELAY_MS") ?? 5000);
 const MAX_HISTORY = 50; // as in whatsapp-send
+// Booking the assessment call inside the chat. WHATSAPP_BOOKING=off takes the buttons away without a deploy.
+const BOOKING_ON = (Deno.env.get("WHATSAPP_BOOKING") ?? "on").toLowerCase() !== "off";
 
 const admin = createClient(SUPABASE_URL, SERVICE_ROLE, { auth: { persistSession: false } });
 
@@ -135,8 +164,9 @@ const TOOLS = [
 ];
 
 // `via` records how a bot message was produced ("ai", "backup" when the AI failed, "prefill:<intent>" for a ready-made
-// reply, "notice:attachment" or "opt_out"); `sent_by: "human"` marks the team's replies. Messages from the person
-// carry WhatsApp's message id, and `attachment` when they sent a photo, voice note or file.
+// reply, "notice:attachment" or "opt_out", "booking:<step>" for the booking flow); `sent_by: "human"` marks the team's
+// replies. Messages from the person carry WhatsApp's message id, `attachment` when they sent a photo, voice note or
+// file, and `tap` (the id) when they tapped a button or list row. `booking` is what the booking flow remembers.
 type Msg = {
   role: "user" | "model";
   content: string;
@@ -145,29 +175,29 @@ type Msg = {
   sent_by?: string;
   wa_id?: string;
   attachment?: { type: string; id?: string; caption?: string };
+  tap?: string;
+  booking?: BookingState;
 };
 type Conversation = { phone_number: string; parent_id: string | null; escalated: boolean; messages: Msg[]; updated_at: string };
 
 type SendResult = { ok: true } | { ok: false; error: string };
 
-// Sends a WhatsApp message. Meta can refuse (an expired token, say) or be out of reach, and the caller has to know
-// which, so the answer says so. It never throws.
-async function sendWhatsAppMessage(to: string, text: string): Promise<SendResult> {
-  // Safety: strip any "— Lana 💛" / "- Lana" sign-offs the model may add
-  const cleaned = text
+// Strips a "— Lana" or "Lana" sign-off (with or without a heart) that the model may add to a message.
+function stripSignOff(text: string): string {
+  return text
     .replace(/\n*\s*[—-]\s*Lana\s*(💛|❤️|♥|<3)?\s*$/i, "")
     .replace(/\n*\s*Lana\s*(💛|❤️|♥)\s*$/i, "")
     .trim();
+}
+
+// Sends one message to WhatsApp. Meta can refuse (an expired token, say) or be out of reach, and the caller has to know
+// which, so the answer says so. It never throws.
+async function postToMeta(to: string, message: Record<string, unknown>): Promise<SendResult> {
   try {
     const res = await fetch(`https://graph.facebook.com/v21.0/${WA_PHONE_ID}/messages`, {
       method: "POST",
       headers: { Authorization: `Bearer ${WA_TOKEN}`, "Content-Type": "application/json" },
-      body: JSON.stringify({
-        messaging_product: "whatsapp",
-        to,
-        type: "text",
-        text: { body: cleaned, preview_url: true },
-      }),
+      body: JSON.stringify({ messaging_product: "whatsapp", to, ...message }),
     });
     const data = await res.json().catch(() => null);
     if (res.ok) return { ok: true };
@@ -179,6 +209,15 @@ async function sendWhatsAppMessage(to: string, text: string): Promise<SendResult
     console.error("WA send failed:", e);
     return { ok: false, error: `The call to Meta failed: ${e instanceof Error ? e.message : String(e)}` };
   }
+}
+
+function sendWhatsAppMessage(to: string, text: string): Promise<SendResult> {
+  return postToMeta(to, { type: "text", text: { body: stripSignOff(text), preview_url: true } });
+}
+
+// A list or reply buttons.
+function sendInteractive(to: string, interactive: Record<string, unknown>): Promise<SendResult> {
+  return postToMeta(to, { type: "interactive", interactive });
 }
 
 async function logComm(args: {
@@ -701,6 +740,31 @@ async function alertSendFailed(args: {
   });
 }
 
+// Tells the team that WhatsApp would not take a list or buttons, which means booking in the chat is not working.
+async function alertButtonsRefused(args: {
+  from: string;
+  profileName?: string;
+  parentId: string | null;
+  error: string;
+  history: Msg[];
+  sentInstead: boolean;
+}) {
+  console.error("WhatsApp refused Lana's buttons:", args.error);
+  await sendAlert({
+    subject: `⚠️ WhatsApp: buttons were refused — ${args.profileName ?? args.from}`,
+    heading: "WhatsApp refused Lana's buttons",
+    accent: AMBER,
+    facts: [...whoFacts({ phone: args.from, profileName: args.profileName, parentId: args.parentId }), ["What Meta said", args.error]],
+    notes: [
+      args.sentInstead
+        ? "They were sent the same words without the buttons, so nothing is lost for them. Booking in the chat does not work until this is fixed."
+        : "Nothing reached them. Booking in the chat does not work until this is fixed. Please reply to them from the WhatsApp inbox.",
+    ],
+    hint: "Set the secret WHATSAPP_BOOKING=off to take the buttons away while this is looked into, and check the whatsapp-webhook function logs.",
+    history: args.history,
+  });
+}
+
 // Tells the team that Lana hit an error nobody planned for, with what is known about whose message it was. It sends the
 // person nothing: from here it can't tell whether a reply already went out.
 async function alertCrash(args: { phone?: string; profileName?: string; text?: string; error: unknown }) {
@@ -719,6 +783,235 @@ async function alertCrash(args: { phone?: string; profileName?: string; text?: s
   });
 }
 
+// ---------------- IN-CHAT BOOKING ----------------
+
+// Booking the free assessment call inside the chat: the lists and buttons Lana sends, the taps and the typed email she
+// reads, and the booking itself. The rules and the wording are in booking.ts. What the flow remembers is a `booking`
+// field on Lana's own messages, so nothing else is stored. Every step is code, not AI, so it works when both AIs are
+// down.
+
+type BookingContext = { from: string; profileName?: string; parentId: string | null };
+
+function sendOutgoing(to: string, out: Outgoing): Promise<SendResult> {
+  return out.wa.type === "text" ? sendWhatsAppMessage(to, out.wa.body) : sendInteractive(to, out.wa.interactive);
+}
+
+// The chat as an alert should show it: what the caller already has, else what is saved.
+async function chatSoFar(phone: string, history: Msg[]): Promise<Msg[]> {
+  return history.length > 0 ? history : ((await getConversation(phone))?.messages ?? []);
+}
+
+// Sends each message in turn, then records it in the chat and the communication log. When WhatsApp refuses a list or
+// buttons the person gets the plain text instead (which carries no state, so it ends the flow) and the team is told;
+// when even a plain message is refused the team is told and this returns null. Returns what it recorded.
+async function say(ctx: BookingContext, outs: Outgoing[], history: Msg[] = []): Promise<Msg[] | null> {
+  const recorded: Msg[] = [];
+  for (const planned of outs) {
+    let out = planned;
+    let delivery = await sendOutgoing(ctx.from, out);
+    if (!delivery.ok && out.wa.type === "interactive") {
+      const refusal = delivery.error;
+      const plain = out.fallback ? textOut(out.via, out.fallback) : null;
+      if (plain) {
+        out = plain;
+        delivery = await sendOutgoing(ctx.from, plain);
+      }
+      await alertButtonsRefused({ ...ctx, error: refusal, history: await chatSoFar(ctx.from, history), sentInstead: Boolean(plain) && delivery.ok });
+      if (!plain) continue; // there was nothing to send in its place
+    }
+    if (!delivery.ok) {
+      await alertSendFailed({
+        phone: ctx.from,
+        profileName: ctx.profileName,
+        parentId: ctx.parentId,
+        error: delivery.error,
+        history: await chatSoFar(ctx.from, history),
+      });
+      return null;
+    }
+    await logComm({ phone: ctx.from, parentId: ctx.parentId, direction: "outbound", content: out.content });
+    const sent: Msg = { role: "model", content: out.content, ts: new Date().toISOString(), via: out.via, ...(out.booking && { booking: out.booking }) };
+    await appendMessages(ctx.from, [sent]);
+    recorded.push(sent);
+  }
+  return recorded;
+}
+
+// The times already held by a booking that is not cancelled, from one day to another, or null when they can't be read.
+async function loadBooked(fromDay: string, toDay: string): Promise<Booked | null> {
+  const { data, error } = await admin
+    .from("consultation_bookings")
+    .select("consultation_date, consultation_time")
+    .gte("consultation_date", fromDay)
+    .lte("consultation_date", toDay)
+    .neq("status", "cancelled");
+  if (error || !data) {
+    console.error("Could not read the booked call times:", error);
+    return null;
+  }
+  const booked: Booked = {};
+  for (const row of data as { consultation_date: string; consultation_time: string }[]) {
+    (booked[row.consultation_date] ??= []).push(row.consultation_time);
+  }
+  return booked;
+}
+
+async function sayWentWrong(ctx: BookingContext): Promise<void> {
+  await say(ctx, [textOut("booking:error", COPY.wentWrong)]);
+}
+
+// "Just filled up" for a day that would have had times but they have all gone; plain "again" for a day that was never
+// on offer (a Sunday, a day that has passed).
+function emptyDayIntro(day: string, now: Date): "filled" | "again" {
+  return freeTimes(day, now, {}).length > 0 ? "filled" : "again";
+}
+
+// The times of a day: a list, or buttons for the part of the day when there are too many for a list.
+function offerTimes(day: string, times: string[], email?: string, taken = false): Outgoing {
+  if (times.length <= MAX_LIST_ROWS) return timesOut(day, times, { email, taken });
+  const parts = partsOf(times);
+  return parts.length === 1 ? timesOut(day, timesInPart(times, parts[0]), { email, taken }) : partsOut(day, parts, email);
+}
+
+// Lists the days that have a free time. `email` is the one already given, kept when someone changes the time.
+async function startBooking(ctx: BookingContext, email?: string, intro?: "again" | "filled"): Promise<void> {
+  const now = new Date();
+  const today = nairobiNow(now).day;
+  const booked = await loadBooked(today, addDays(today, HORIZON_DAYS));
+  if (!booked) {
+    await sayWentWrong(ctx);
+    return;
+  }
+  const days = openDays(now, booked);
+  if (days.length === 0) {
+    await say(ctx, [textOut("booking:day", COPY.noFreeDays)]);
+    return;
+  }
+  await say(ctx, [dayListOut(days, now, { intro: intro ?? (email ? "again" : "first"), email })]);
+}
+
+async function showDay(ctx: BookingContext, day: string, email?: string): Promise<void> {
+  const now = new Date();
+  const booked = await loadBooked(day, day);
+  if (!booked) {
+    await sayWentWrong(ctx);
+    return;
+  }
+  const times = freeTimes(day, now, booked);
+  if (times.length === 0) {
+    await startBooking(ctx, email, emptyDayIntro(day, now));
+    return;
+  }
+  await say(ctx, [offerTimes(day, times, email)]);
+}
+
+async function showPart(ctx: BookingContext, day: string, part: "am" | "pm" | "eve", email?: string): Promise<void> {
+  const booked = await loadBooked(day, day);
+  if (!booked) {
+    await sayWentWrong(ctx);
+    return;
+  }
+  const times = timesInPart(freeTimes(day, new Date(), booked), part);
+  if (times.length === 0) {
+    await showDay(ctx, day, email);
+    return;
+  }
+  await say(ctx, [timesOut(day, times, { email })]);
+}
+
+// A time was picked: if it is still free, on to the email (or the confirmation card when the email is known).
+async function chooseTime(ctx: BookingContext, day: string, time: string, email?: string): Promise<void> {
+  const now = new Date();
+  const booked = await loadBooked(day, day);
+  if (!booked) {
+    await sayWentWrong(ctx);
+    return;
+  }
+  if (!isFree(day, time, now, booked)) {
+    const times = freeTimes(day, now, booked);
+    if (times.length === 0) {
+      await startBooking(ctx, email, emptyDayIntro(day, now));
+      return;
+    }
+    // Someone took it a moment ago: offer the other times of the same part of the day, or the whole day if none are left.
+    const samePart = timesInPart(times, partOf(time));
+    await say(ctx, [offerTimes(day, samePart.length > 0 ? samePart : times, email, true)]);
+    return;
+  }
+  await say(ctx, [email ? confirmOut(day, time, email) : askEmailOut(day, time)]);
+}
+
+// A tap on one of Lana's booking buttons or list rows. The ids carry their own data, so a tap on an old message is
+// checked against what is free now rather than trusted.
+async function runBookingTap(ctx: BookingContext, action: Action, history: Msg[]): Promise<void> {
+  // Lana's first answer already took the chat for the team; this only matters if the team gave it back.
+  await claimForReply(ctx.from);
+  if (!BOOKING_ON) {
+    await say(ctx, [textOut("booking:off", COPY.teamArranges)], history);
+    return;
+  }
+  const flow = currentFlow(history);
+  const email = isOpen(flow) ? flow.email : undefined;
+  switch (action.kind) {
+    case "callback":
+      await say(ctx, [textOut("booking:callback", CALLBACK_REPLY)], history);
+      return;
+    case "start":
+      await startBooking(ctx);
+      return;
+    case "retime":
+      await startBooking(ctx, email);
+      return;
+    case "reemail":
+      if (isOpen(flow) && flow.day && flow.time) await say(ctx, [askEmailOut(flow.day, flow.time)], history);
+      else await startBooking(ctx);
+      return;
+    case "day":
+      await showDay(ctx, action.day, email);
+      return;
+    case "part":
+      await showPart(ctx, action.day, action.part, email);
+      return;
+    case "time":
+      await chooseTime(ctx, action.day, action.time, email);
+      return;
+    default:
+      // Confirming and changing a booking come with the booking itself.
+      await say(ctx, [textOut("booking:off", COPY.teamArranges)], history);
+  }
+}
+
+// What the family typed while a booking step is open: the email, mostly. Short messages sent one after another are one
+// thought, so it waits and lets the newest of them answer for all.
+async function runBookingText(ctx: BookingContext, msgId: string): Promise<void> {
+  await sleep(REPLY_DELAY_MS);
+  const chat = await getConversation(ctx.from);
+  if (!chat) return;
+  const flow = currentFlow(chat.messages);
+  if (!isOpen(flow)) return; // the team replied meanwhile, or the flow ended
+  if (chat.messages.filter((m) => m.role === "user").at(-1)?.wa_id !== msgId) return;
+  await claimForReply(ctx.from);
+
+  const sinceLana = chat.messages.slice(chat.messages.map((m) => m.role).lastIndexOf("model") + 1);
+  const email = sinceLana
+    .filter((m) => m.role === "user" && !m.attachment && !m.tap)
+    .map((m) => findEmail(m.content))
+    .find((found) => found !== null) ?? null;
+
+  if (flow.step === "email" && flow.day && flow.time) {
+    if (email) await say(ctx, [confirmOut(flow.day, flow.time, email)], chat.messages);
+    else if ((flow.tries ?? 0) >= 1) await say(ctx, [textOut("booking:email", COPY.emailGiveUp)], chat.messages); // no state: the flow ends
+    else await say(ctx, [askEmailOut(flow.day, flow.time, { tries: 1 })], chat.messages);
+    return;
+  }
+  if (flow.step === "confirm" && flow.day && flow.time && email) {
+    await say(ctx, [confirmOut(flow.day, flow.time, email)], chat.messages);
+    return;
+  }
+  if (flow.nudged) return; // one reminder is enough; after that it is a conversation with the team
+  await say(ctx, [textOut(`booking:${flow.step}`, COPY.nudge, { ...flow, nudged: true })], chat.messages);
+}
+
 // ---------------- WEBHOOK HANDLER ----------------
 
 // The parts of Meta's webhook payload this function reads.
@@ -728,7 +1021,7 @@ type WaMessage = {
   type: string;
   text?: { body?: string };
   button?: { text?: string };
-  interactive?: { button_reply?: { title?: string }; list_reply?: { title?: string } };
+  interactive?: { button_reply?: { id?: string; title?: string }; list_reply?: { id?: string; title?: string } };
   [attachment: string]: unknown;
 };
 type WebhookBody = {
@@ -746,9 +1039,9 @@ const ATTACHMENT_LABELS: Record<string, string> = {
 };
 
 // What an incoming message says, as it is saved and shown to the AI. A tapped reply button or list choice reads as
-// the text on it. An attachment is saved as a label so the team can see what arrived: Lana can't open it, but she
-// reads its caption. Reactions need no answer.
-function readIncoming(msg: WaMessage): Pick<Msg, "content" | "attachment"> | null {
+// the text on it, and its id is kept as `tap`. An attachment is saved as a label so the team can see what arrived:
+// Lana can't open it, but she reads its caption. Reactions need no answer.
+function readIncoming(msg: WaMessage): Pick<Msg, "content" | "attachment" | "tap"> | null {
   switch (msg.type) {
     case "reaction":
       return null;
@@ -756,8 +1049,10 @@ function readIncoming(msg: WaMessage): Pick<Msg, "content" | "attachment"> | nul
       return { content: msg.text?.body ?? "" };
     case "button":
       return { content: msg.button?.text ?? "" };
-    case "interactive":
-      return { content: (msg.interactive?.button_reply ?? msg.interactive?.list_reply)?.title ?? "" };
+    case "interactive": {
+      const reply = msg.interactive?.button_reply ?? msg.interactive?.list_reply;
+      return { content: reply?.title ?? "", ...(reply?.id && { tap: reply.id }) };
+    }
     default: {
       const media = (msg[msg.type] ?? {}) as { id?: string; caption?: string; filename?: string; voice?: boolean };
       const label = media.voice ? "Voice note" : ATTACHMENT_LABELS[msg.type] ?? "Attachment";
@@ -803,7 +1098,14 @@ async function handleIncoming(body: WebhookBody) {
     }
 
     const saved = await appendMessages(from, [
-      { role: "user", content: text, ts: new Date().toISOString(), wa_id: msg.id, ...(incoming.attachment && { attachment: incoming.attachment }) },
+      {
+        role: "user",
+        content: text,
+        ts: new Date().toISOString(),
+        wa_id: msg.id,
+        ...(incoming.attachment && { attachment: incoming.attachment }),
+        ...(incoming.tap && { tap: incoming.tap }),
+      },
     ]);
     if (!saved) {
       console.error(`Could not save the message from ${from}`);
@@ -833,6 +1135,19 @@ async function handleIncoming(body: WebhookBody) {
       await logComm({ phone: from, parentId: convo.parent_id, direction: "outbound", content: confirmation });
       const now = new Date().toISOString();
       await appendMessages(from, [{ role: "model", content: confirmation, ts: now, via: "opt_out" }], { escalated: true, escalated_at: now });
+      return;
+    }
+
+    // Taps on the booking buttons and lists, and the typed email while a booking is open, belong to the booking flow.
+    // They are read even when the chat is with the team, which is where Lana's first answer leaves it.
+    const ctx: BookingContext = { from, profileName, parentId: convo.parent_id };
+    const action = incoming.tap ? parseTap(incoming.tap) : null;
+    if (action) {
+      await runBookingTap(ctx, action, saved.convo.messages);
+      return;
+    }
+    if (BOOKING_ON && !incoming.attachment && !incoming.tap && isOpen(currentFlow(saved.convo.messages))) {
+      await runBookingText(ctx, msg.id);
       return;
     }
 

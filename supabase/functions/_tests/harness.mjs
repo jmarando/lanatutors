@@ -47,12 +47,20 @@ class Query {
     this.table = table;
     this.filters = [];
     this.op = "select";
+    this.sort = null;
+    this.cap = null;
   }
   select() { return this; }
   insert(row) { this.op = "insert"; this.payload = row; return this; }
   update(patch) { this.op = "update"; this.payload = patch; return this; }
   upsert(row) { this.op = "upsert"; this.payload = row; return this; }
-  eq(column, value) { this.filters.push([column, value]); return this; }
+  eq(column, value) { this.filters.push((row) => row[column] === value); return this; }
+  neq(column, value) { this.filters.push((row) => row[column] !== value); return this; }
+  gte(column, value) { this.filters.push((row) => row[column] >= value); return this; }
+  lte(column, value) { this.filters.push((row) => row[column] <= value); return this; }
+  in(column, values) { this.filters.push((row) => values.includes(row[column])); return this; }
+  order(column, { ascending = true } = {}) { this.sort = [column, ascending]; return this; }
+  limit(count) { this.cap = count; return this; }
   or() { return this; }
   maybeSingle() { this.mode = "maybe"; return this; }
   single() { this.mode = "one"; return this; }
@@ -62,7 +70,7 @@ class Query {
   run() {
     this.world.touch();
     const rows = (this.world.tables[this.table] ??= []);
-    const matches = (row) => this.filters.every(([column, value]) => row[column] === value);
+    const matches = (row) => this.filters.every((test) => test(row));
     const conversations = this.table === "whatsapp_conversations";
     // Lets a test land someone else's write just before the function's next one, e.g. the team clicking
     // "Take over" between Lana reading the chat and writing to it.
@@ -78,7 +86,10 @@ class Query {
         return { data: null, error: { code: "23505", message: "duplicate key value violates unique constraint" } };
       }
       const at = this.world.timestamp();
-      const row = { escalated: false, messages: [], ...clone(this.payload), created_at: at, updated_at: at };
+      // A booking gets its id and creation time as the database would, the time from the (possibly mocked) clock.
+      const row = this.table === "consultation_bookings"
+        ? { id: crypto.randomUUID(), created_at: new Date().toISOString(), ...clone(this.payload) }
+        : { escalated: false, messages: [], ...clone(this.payload), created_at: at, updated_at: at };
       rows.push(row);
       out = [row];
     } else if (this.op === "upsert") {
@@ -93,6 +104,11 @@ class Query {
       }
     } else {
       out = rows.filter(matches);
+      if (this.sort) {
+        const [column, ascending] = this.sort;
+        out = [...out].sort((a, b) => (a[column] < b[column] ? -1 : a[column] > b[column] ? 1 : 0) * (ascending ? 1 : -1));
+      }
+      if (this.cap !== null) out = out.slice(0, this.cap);
     }
     out = out.map(clone);
     if (this.mode === "maybe") return { data: out[0] ?? null, error: null };
@@ -113,10 +129,17 @@ const DEFAULT_ENV = {
   WHATSAPP_REPLY_DELAY_MS: "20",
 };
 
-function makeWorld({ conversations, gateway, anthropic, meta }) {
+function makeWorld({ conversations, gateway, anthropic, meta, bookings }) {
   const world = {
-    tables: { whatsapp_conversations: clone(conversations), communication_logs: [], whatsapp_suppressions: [], profiles: [] },
-    sent: [], // WhatsApp messages the function sent: { to, text }
+    tables: {
+      whatsapp_conversations: clone(conversations),
+      communication_logs: [],
+      whatsapp_suppressions: [],
+      profiles: [],
+      // Bookings already in the database. A seed row that does not say when it was made was made long ago.
+      consultation_bookings: bookings.map((row) => ({ id: crypto.randomUUID(), status: "confirmed", created_at: "2026-10-01T08:00:00.000Z", ...clone(row) })),
+    },
+    sent: [], // WhatsApp messages the function sent: { to, text }, and for lists and buttons also { interactive }
     emails: [], // Resend emails: { to, subject, html }
     gatewayCalls: [], // AI gateway requests: { headers, body }
     anthropicCalls: [], // Claude requests: { headers, body }
@@ -146,7 +169,9 @@ function makeWorld({ conversations, gateway, anthropic, meta }) {
         const outcome = world.metaQueue.shift();
         if (outcome?.throws) throw outcome.throws;
         if (outcome && outcome.status >= 400) return jsonResponse(outcome.status, outcome.body);
-        world.sent.push({ to: body.to, text: body.text.body });
+        world.sent.push(body.type === "interactive"
+          ? { to: body.to, text: body.interactive.body.text, interactive: body.interactive }
+          : { to: body.to, text: body.text.body });
         return jsonResponse(200, { messages: [{ id: "wamid.fake" }] });
       }
       if (target === "https://ai.gateway.lovable.dev/v1/chat/completions") {
@@ -202,7 +227,7 @@ async function settle(world) {
 
 let loads = 0;
 
-export async function loadFunction(name, { env = {}, conversations = [], gateway = [], anthropic = [], meta = [] } = {}) {
+export async function loadFunction(name, { env = {}, conversations = [], gateway = [], anthropic = [], meta = [], bookings = [] } = {}) {
   const bundle = await build({
     entryPoints: [path.join(functionsDir, name, "index.ts")],
     bundle: true,
@@ -214,7 +239,7 @@ export async function loadFunction(name, { env = {}, conversations = [], gateway
     plugins: [denoUrlImports],
   });
 
-  const world = makeWorld({ conversations, gateway, anthropic, meta });
+  const world = makeWorld({ conversations, gateway, anthropic, meta, bookings });
   const fullEnv = { ...DEFAULT_ENV, ...env };
   const saved = { fetch: globalThis.fetch, Deno: globalThis.Deno, EdgeRuntime: globalThis.EdgeRuntime, console: { ...console } };
   globalThis.fetch = world.fetch;
@@ -300,6 +325,14 @@ export function inbound({ from = "254700000001", name = "Test Parent", text, id,
   return {
     entry: [{ changes: [{ field: "messages", value: { messages: [message], contacts: [{ profile: { name }, wa_id: from }] } }] }],
   };
+}
+
+// A tapped reply button, or with `list: true` a chosen list row, as Meta delivers it: the id and the title.
+export function tap(id, title, { from = "254700000001", name = "Test Parent", list = false } = {}) {
+  const interactive = list
+    ? { type: "list_reply", list_reply: { id, title } }
+    : { type: "button_reply", button_reply: { id, title } };
+  return inbound({ from, name, type: "interactive", interactive });
 }
 
 // Scripted answers from the Lovable AI gateway (OpenAI-style chat completions).
