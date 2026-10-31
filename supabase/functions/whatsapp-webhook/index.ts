@@ -27,6 +27,8 @@ import {
   longDay,
   nairobiNow,
   niceTime,
+  offerOut,
+  offersCall,
   openDays,
   parseTap,
   partOf,
@@ -471,7 +473,8 @@ type GatewayMessage = {
   tool_calls?: ToolCall[];
   tool_call_id?: string;
 };
-type AiResult = { ok: true; text: string; via: "ai" | "ai_fallback"; model: string } | { ok: false; reason: string };
+// `offeredBooking`: the AI fetched the assessment-call link, so its reply is offering the call.
+type AiResult = { ok: true; text: string; via: "ai" | "ai_fallback"; model: string; offeredBooking?: boolean } | { ok: false; reason: string };
 
 const MAX_TOOL_ROUNDS = 4;
 // The AI gets this long, in total, for its whole conversation including the tool rounds. Past it the backup goes
@@ -519,6 +522,7 @@ async function askGateway(
 ): Promise<AiResult> {
   const deadline = Date.now() + AI_BUDGET_MS;
   const timeoutReason = `The AI gateway timed out after ${AI_BUDGET_MS / 1000} seconds`;
+  let offeredBooking = false;
   const messages: GatewayMessage[] = [
     { role: "system", content: systemPrompt(profileName, parentId) },
     ...history.map((m): GatewayMessage => ({ role: m.role === "model" ? "assistant" : "user", content: m.content })),
@@ -557,7 +561,7 @@ async function askGateway(
     if (calls.length === 0) {
       const text = message?.content?.trim();
       return text
-        ? { ok: true, text, via: "ai", model: AI_MODEL }
+        ? { ok: true, text, via: "ai", model: AI_MODEL, offeredBooking }
         : { ok: false, reason: "The AI answered with an empty message" };
     }
 
@@ -568,6 +572,7 @@ async function askGateway(
       let result: unknown = { ok: true };
       if (call.function.name === "get_booking_link") {
         result = toolGetBookingLink({ type: args.type ?? "" });
+        if (args.type === "assessment_call") offeredBooking = true;
       } else if (call.function.name === "escalate_to_team") {
         result = await toolEscalate({
           reason: args.reason ?? "unspecified",
@@ -1497,7 +1502,13 @@ async function handleIncoming(body: WebhookBody) {
     let via: string;
     let aiFailure: string | null = null;
     let firstAiFailure: string | null = null; // why the first AI failed, when the second one answered instead
+    let askedForTheLink = false; // the AI fetched the assessment-call link, so its reply is offering the call
     const prefilled = pending.length === 1 ? matchPrefill(pending[0].content) : null;
+    if (prefilled?.intent === "assessment_call" && BOOKING_ON) {
+      // The plainest request there is to book: no script, the days to choose from.
+      await startBooking(ctx);
+      return;
+    }
     if (prefilled) {
       reply = prefilled.reply;
       via = `prefill:${prefilled.intent}`;
@@ -1512,6 +1523,7 @@ async function handleIncoming(body: WebhookBody) {
       if (ai.ok) {
         reply = sanitizeReply(ai.text);
         via = ai.via;
+        askedForTheLink = ai.offeredBooking === true;
       } else {
         reply = BACKUP_REPLY;
         via = "backup";
@@ -1519,20 +1531,16 @@ async function handleIncoming(body: WebhookBody) {
       }
     }
 
-    const delivery = await sendWhatsAppMessage(from, reply);
-    if (!delivery.ok) {
-      // Lana took the chat to answer it, so it stays with the team, who now know why nothing arrived.
-      await alertSendFailed({ phone: from, profileName, parentId: convo.parent_id, error: delivery.error, history: context });
-      return;
-    }
-    await logComm({ phone: from, parentId: convo.parent_id, direction: "outbound", content: reply });
-    const sent: Msg = { role: "model", content: reply, ts: new Date().toISOString(), via };
-    await appendMessages(from, [sent]);
+    // A reply that offers the assessment call carries the two buttons that start booking it in the chat. If WhatsApp
+    // refuses a message, say() has told the team and the chat stays with them (Lana took it to answer).
+    const offering = BOOKING_ON && offersCall(reply, askedForTheLink);
+    const sent = await say(ctx, offering ? offerOut(stripSignOff(reply), via) : [textOut(via, reply)], context);
+    if (!sent) return;
 
     if (aiFailure) {
-      await alertAiFailure({ phone: from, profileName, parentId: convo.parent_id, reason: aiFailure, history: [...context, sent] });
+      await alertAiFailure({ phone: from, profileName, parentId: convo.parent_id, reason: aiFailure, history: [...context, ...sent] });
     } else if (firstAiFailure) {
-      await alertFallbackUsed({ phone: from, profileName, parentId: convo.parent_id, reason: firstAiFailure, history: [...context, sent] });
+      await alertFallbackUsed({ phone: from, profileName, parentId: convo.parent_id, reason: firstAiFailure, history: [...context, ...sent] });
     }
 
   } catch (e) {

@@ -173,7 +173,6 @@ test("answers again after the team clicks Resume AI, then hands the chat back", 
 // The messages the website's chat button prefills, and what the team already sends back to each.
 const BUTTON_MESSAGES = [
   { intent: "tutor_apply", text: "Hi Lana Tutors! I'd like to apply to become a tutor.", reply: /lanatutors\.africa\/become-a-tutor/ },
-  { intent: "assessment_call", text: "Hi Lana Tutors! I'd like to book a 20-minute assessment call.", reply: /time zone/i },
   { intent: "learning_plan", text: "Hi Lana Tutors! I'd like a custom learning plan for my child.", reply: /time zone/i },
   { intent: "callback", text: "Hi Lana Tutors! Please have a learning coordinator call me back.", reply: /preferred time for the call/i },
   { intent: "learn_more", text: "Hi Lana Tutors! I'd like to learn more about your tutoring services.", reply: /welcome to Lana Tutors/i },
@@ -226,7 +225,7 @@ test("every message the website's chat button prefills is answered without the A
     try {
       await fn.post(inbound({ from: PARENT, text }));
       assert.equal(fn.world.gatewayCalls.length, 0, `the AI was asked about the button message "${text}"`);
-      assert.match(fn.world.conversation(PARENT).messages.at(-1).via, /^prefill:/, text);
+      assert.match(fn.world.conversation(PARENT).messages.at(-1).via, /^(prefill:|booking:)/, text);
     } finally {
       await fn.dispose();
     }

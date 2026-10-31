@@ -351,6 +351,12 @@ export function textOut(via: string, body: string, booking?: BookingState): Outg
   return { wa: { type: "text", body }, content: body, via, ...(booking && { booking }), fallback: body };
 }
 
+// Whether a reply from Lana is offering the assessment call: it carries the booking link, or the AI fetched the link
+// (even if it then wrote the offer without pasting it).
+export function offersCall(reply: string, aiAskedForTheLink: boolean): boolean {
+  return aiAskedForTheLink || /lanatutors\.africa\/book-consultation/i.test(reply);
+}
+
 const OFFER_BUTTONS = [
   { id: "bk:start", title: "Book a free call" },
   { id: "bk:callback", title: "Call me back" },

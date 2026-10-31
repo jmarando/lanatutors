@@ -3,7 +3,7 @@
 // themselves are tested in booking.test.mjs.
 import assert from "node:assert/strict";
 import { test } from "node:test";
-import { inbound, loadFunction, loadModule, tap } from "./harness.mjs";
+import { aiFailure, aiText, aiToolCall, claudeText, inbound, loadFunction, loadModule, tap } from "./harness.mjs";
 
 const PARENT = "254700000001";
 const NOW = Date.parse("2026-11-02T07:00:00Z"); // Monday 10:00 in Nairobi
@@ -554,4 +554,150 @@ test("Meta refusing the booked message still leaves a booking and tells the team
   assert.equal(fn.world.sent.length, 0, "nothing reached the family");
   assert.ok(subjects(fn).some((subject) => subject.startsWith("⚠️ WhatsApp: Meta refused Lana's reply")));
   assert.ok(subjects(fn).some((subject) => subject.startsWith("WhatsApp: a call was booked in the chat")), "the notice still goes");
+});
+
+// ---------------- offering the call on Lana's replies ----------------
+
+const LINK = "https://lanatutors.africa/book-consultation";
+const OFFER = `Thanks, Jane. Our Learning Coordinator can help. You can book a free 20-minute assessment call here:\n${LINK}`;
+const offerIds = (message) => buttonsOf(message).map((button) => button.id);
+
+test("a reply that offers the call goes out with the two buttons, and the link stays", async (t) => {
+  const fn = await start(t, { gateway: [aiText(OFFER)] });
+
+  await fn.post(inbound({ from: PARENT, name: "Jane", text: FIRST }));
+
+  const sent = fn.world.sent[0];
+  assert.deepEqual(offerIds(sent), ["bk:start", "bk:callback"]);
+  assert.ok(sent.text.includes(LINK));
+  assert.equal(last(fn).via, "ai");
+  assert.deepEqual(last(fn).booking, { step: "offer" });
+  assert.match(last(fn).content, /\[Buttons: Book a free call \| Call me back\]$/);
+});
+
+test("a reply that does not offer the call has no buttons", async (t) => {
+  const fn = await start(t, { gateway: [aiText("Thanks. Which subjects is he struggling with?")] });
+
+  await fn.post(inbound({ from: PARENT, text: FIRST }));
+
+  assert.equal(fn.world.sent[0].interactive, undefined);
+  assert.equal(last(fn).booking, undefined);
+});
+
+test("an AI that fetched the booking link counts as offering the call, even if its text has no link", async (t) => {
+  const fn = await start(t, {
+    gateway: [aiToolCall("get_booking_link", { type: "assessment_call" }), aiText("Our coordinator can speak to you for 20 minutes.")],
+  });
+
+  await fn.post(inbound({ from: PARENT, text: FIRST }));
+
+  assert.deepEqual(offerIds(fn.world.sent[0]), ["bk:start", "bk:callback"]);
+});
+
+test("a complaint does not get a booking button", async (t) => {
+  const fn = await start(t, {
+    gateway: [aiToolCall("escalate_to_team", { reason: "Charged twice" }), aiText("I'm sorry about that. Our Learning Coordinator will call you back.")],
+  });
+
+  await fn.post(inbound({ from: PARENT, text: "I was charged twice for one lesson" }));
+
+  assert.equal(fn.world.sent[0].interactive, undefined);
+});
+
+test("the backup message carries the buttons, and the alert email still goes", async (t) => {
+  const fn = await start(t, { gateway: [aiFailure(500)] });
+
+  await fn.post(inbound({ from: PARENT, text: FIRST }));
+
+  assert.deepEqual(offerIds(fn.world.sent[0]), ["bk:start", "bk:callback"]);
+  assert.equal(last(fn).via, "backup");
+  assert.equal(fn.world.emails.length, 1);
+  assert.match(fn.world.emails[0].subject, /Lana's AI could not reply/);
+});
+
+test("Claude's reply can carry the buttons too", async (t) => {
+  const fn = await start(t, {
+    gateway: [aiFailure(500)],
+    anthropic: [claudeText(OFFER)],
+    env: { ANTHROPIC_API_KEY: "sk-ant-test" },
+  });
+
+  await fn.post(inbound({ from: PARENT, text: FIRST }));
+
+  assert.deepEqual(offerIds(fn.world.sent[0]), ["bk:start", "bk:callback"]);
+  assert.equal(last(fn).via, "ai_fallback");
+});
+
+test("a reply longer than 1,024 characters goes out as text, then a short message with the buttons", async (t) => {
+  const long = `${"A long, careful answer. ".repeat(45)}\n${LINK}`;
+  assert.ok(long.length > 1024);
+  const fn = await start(t, { gateway: [aiText(long)] });
+
+  await fn.post(inbound({ from: PARENT, text: FIRST }));
+
+  assert.equal(fn.world.sent.length, 2);
+  assert.equal(fn.world.sent[0].interactive, undefined);
+  assert.ok(fn.world.sent[0].text.includes(LINK));
+  assert.equal(fn.world.sent[1].text, COPY.moreButtons);
+  assert.deepEqual(offerIds(fn.world.sent[1]), ["bk:start", "bk:callback"]);
+});
+
+test("the website's 'learn more' starter gets the buttons", async (t) => {
+  const fn = await start(t);
+
+  await fn.post(inbound({ from: PARENT, text: "Hi Lana Tutors! I'd like to learn more about your tutoring services." }));
+
+  assert.match(fn.world.sent[0].text, /welcome to Lana Tutors/i);
+  assert.deepEqual(offerIds(fn.world.sent[0]), ["bk:start", "bk:callback"]);
+  assert.equal(last(fn).via, "prefill:learn_more");
+});
+
+test("the website's 'apply to become a tutor' starter does not", async (t) => {
+  const fn = await start(t);
+
+  await fn.post(inbound({ from: PARENT, text: "Hi Lana Tutors! I'd like to apply to become a tutor." }));
+
+  assert.equal(fn.world.sent[0].interactive, undefined);
+});
+
+test("the website's 'assessment call' starter gets the day list straight away", async (t) => {
+  const fn = await start(t);
+
+  await fn.post(inbound({ from: PARENT, text: "Hi Lana Tutors! I'd like to book a 20-minute assessment call." }));
+
+  assert.equal(fn.world.sent[0].interactive.type, "list");
+  assert.equal(last(fn).via, "booking:day");
+  assert.equal(fn.world.gatewayCalls.length, 0);
+  assert.equal(fn.world.conversation(PARENT).escalated, true);
+});
+
+test("with WHATSAPP_BOOKING=off a reply with the link has no buttons", async (t) => {
+  const fn = await start(t, { gateway: [aiText(OFFER)], env: { WHATSAPP_BOOKING: "off" } });
+
+  await fn.post(inbound({ from: PARENT, text: FIRST }));
+
+  assert.equal(fn.world.sent[0].interactive, undefined);
+  assert.ok(fn.world.sent[0].text.includes(LINK));
+});
+
+test("with WHATSAPP_BOOKING=off the 'assessment call' starter gets the team's old script", async (t) => {
+  const fn = await start(t, { env: { WHATSAPP_BOOKING: "off" } });
+
+  await fn.post(inbound({ from: PARENT, text: "Hi Lana Tutors! I'd like to book a 20-minute assessment call." }));
+
+  assert.match(fn.world.sent[0].text, /time zone/i);
+  assert.equal(fn.world.sent[0].interactive, undefined);
+});
+
+test("Meta refusing the buttons still delivers Lana's answer", async (t) => {
+  const refused = { status: 400, body: { error: { message: "Invalid parameter", code: 100 } } };
+  const fn = await start(t, { gateway: [aiText(OFFER)], meta: [refused] });
+
+  await fn.post(inbound({ from: PARENT, text: FIRST }));
+
+  assert.equal(fn.world.sent.length, 1);
+  assert.equal(fn.world.sent[0].interactive, undefined);
+  assert.equal(fn.world.sent[0].text, OFFER);
+  assert.equal(last(fn).booking, undefined);
+  assert.ok(fn.world.emails.some((email) => email.subject.startsWith("⚠️ WhatsApp: buttons were refused")));
 });

@@ -382,3 +382,10 @@ test("a refused booked message still gives the details as plain text, because th
   const already = b.alreadyBookedOut("2026-11-05", "02:00 PM");
   assert.equal(already.fallback, already.wa.interactive.body.text);
 });
+
+test("the call is offered when the reply carries the booking link or the AI asked for it", () => {
+  assert.equal(b.offersCall("Thanks. Book a free call here:\nhttps://lanatutors.africa/book-consultation", false), true);
+  assert.equal(b.offersCall("Our coordinator will call you.", false), false);
+  assert.equal(b.offersCall("Our coordinator will call you.", true), true);
+  assert.equal(b.offersCall("Please register here: https://lanatutors.africa/become-a-tutor", false), false);
+});
