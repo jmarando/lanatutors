@@ -108,7 +108,7 @@ class Query {
       // A booking gets its id and creation time as the database would, the time from the (possibly mocked) clock.
       const row = this.table === "consultation_bookings"
         ? { id: crypto.randomUUID(), created_at: new Date().toISOString(), ...clone(this.payload) }
-        : { escalated: false, messages: [], ...clone(this.payload), created_at: at, updated_at: at };
+        : { escalated: false, messages: [], ...clone(this.payload), created_at: this.payload.created_at ?? at, updated_at: at };
       rows.push(row);
       out = [row];
     } else if (this.op === "upsert") {
@@ -192,9 +192,18 @@ function makeWorld({ conversations, gateway, anthropic, meta, bookings, function
   };
   // The people behind auth user ids, for the functions that look up a student's email: set world.users[id] = { id, email }.
   world.users = {};
+  // The people signed in, by access token, for the shared admin guard (_shared/auth-guard.ts): set world.sessions[token] = { id }.
+  // A token that is not here is refused, as the project's public anon key is: it is a valid JWT but not a user's.
+  world.sessions = {};
   world.supabase = {
     from: (table) => new Query(world, table),
-    auth: { admin: { getUserById: async (id) => ({ data: { user: world.users[id] ?? null }, error: null }) } },
+    auth: {
+      admin: { getUserById: async (id) => ({ data: { user: world.users[id] ?? null }, error: null }) },
+      getUser: async (token) => {
+        const user = world.sessions[token];
+        return user ? { data: { user }, error: null } : { data: { user: null }, error: { message: "invalid JWT" } };
+      },
+    },
   };
 
   world.fetch = async (url, init = {}) => {
@@ -330,11 +339,11 @@ export async function loadFunction(
   const handler = globalThis.__edgeHandler;
 
   // Deliver a webhook payload the way Meta would. Resolves once the function has answered Meta.
-  const deliver = (payload) =>
+  const deliver = (payload, headers = {}) =>
     handler(
       new Request("https://function.test/whatsapp-webhook", {
         method: "POST",
-        headers: { "content-type": "application/json" },
+        headers: { "content-type": "application/json", ...headers },
         body: JSON.stringify(payload),
       }),
     );
