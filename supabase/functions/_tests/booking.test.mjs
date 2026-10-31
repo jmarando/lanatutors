@@ -198,3 +198,178 @@ test("the booking row has the website's shape", () => {
   assert.equal(make({ name: "N".repeat(300) }).parent_name.length, 200);
   assert.equal(make({ history: [] }).additional_notes, "Booked in the WhatsApp chat.");
 });
+
+// ---------------- the messages Lana sends ----------------
+
+const NOW = MON_10;
+const listRows = (out) => out.wa.interactive.action.sections.flatMap((section) => section.rows);
+const buttonsOf = (out) => out.wa.interactive.action.buttons.map((button) => button.reply);
+const LONG_EMAIL = `${"a".repeat(242)}@example.com`; // 254 characters
+const MEET = "https://meet.google.com/abc-defg-hij";
+
+function everyMessage() {
+  const times = b.freeTimes("2026-11-03", NOW, {});
+  return [
+    b.dayListOut(b.openDays(NOW, {}), NOW),
+    b.partsOut("2026-11-04", ["am", "pm", "eve"]),
+    b.timesOut("2026-11-03", times.slice(0, 10)),
+    b.timesOut("2026-11-03", times.slice(0, 6), { taken: true }),
+    b.askEmailOut("2026-11-04", "01:20 PM"),
+    b.askEmailOut("2026-11-04", "01:20 PM", { tries: 1 }),
+    b.confirmOut("2026-11-04", "01:20 PM", LONG_EMAIL),
+    b.bookedOut({ day: "2026-11-04", time: "01:20 PM", email: LONG_EMAIL, link: MEET, id: "b1" }),
+    b.bookedOut({ day: "2026-11-04", time: "01:20 PM", email: "jane@example.com", link: null, id: "b1" }),
+    b.alreadyBookedOut("2026-11-05", "02:00 PM"),
+    ...b.offerOut("x".repeat(900), "ai"),
+    ...b.offerOut("y".repeat(1100), "ai"),
+  ];
+}
+
+test("every message the flow can build is inside Meta's limits", () => {
+  for (const out of everyMessage()) {
+    if (out.wa.type !== "interactive") continue;
+    const interactive = out.wa.interactive;
+    if (interactive.type === "list") {
+      const rows = listRows(out);
+      assert.ok(rows.length >= 1 && rows.length <= 10, "1 to 10 rows");
+      assert.ok(interactive.action.sections.length <= 10);
+      assert.ok(interactive.action.button.length <= 20, "list button");
+      assert.ok(interactive.body.text.length <= 4096);
+      for (const section of interactive.action.sections) assert.ok(section.title.length <= 24, "section title");
+      for (const row of rows) {
+        assert.ok(row.id.length <= 200, row.id);
+        assert.ok(row.title.length <= 24, row.title);
+        assert.ok(row.description.length <= 72, row.description);
+      }
+    } else {
+      assert.equal(interactive.type, "button");
+      const buttons = buttonsOf(out);
+      assert.ok(buttons.length >= 1 && buttons.length <= 3, "at most 3 buttons");
+      assert.ok(interactive.body.text.length <= 1024, "button message body");
+      for (const button of buttons) {
+        assert.ok(button.title.length <= 20, button.title);
+        assert.ok(button.id.length <= 256, button.id);
+      }
+    }
+  }
+});
+
+test("no message contains an emoji", () => {
+  const emoji = /\p{Extended_Pictographic}/u;
+  for (const out of everyMessage()) {
+    const sent = out.wa.type === "text" ? out.wa.body : JSON.stringify(out.wa.interactive);
+    assert.ok(!emoji.test(sent), sent.slice(0, 40));
+    assert.ok(!emoji.test(out.content));
+    assert.ok(!emoji.test(out.fallback));
+  }
+  for (const [name, text] of Object.entries(b.COPY)) assert.ok(!emoji.test(text), name);
+});
+
+test("day labels, times and ranges read as people say them", () => {
+  assert.equal(b.dayLabel("2026-11-02", NOW), "Today");
+  assert.equal(b.dayLabel("2026-11-03", NOW), "Tomorrow");
+  assert.equal(b.dayLabel("2026-11-04", NOW), "Wed 4 Nov");
+  assert.equal(b.longDay("2026-11-04"), "Wednesday 4 November");
+  assert.equal(b.niceTime("01:20 PM"), "1:20 pm");
+  assert.equal(b.niceTime("11:00 AM"), "11:00 am");
+  assert.equal(b.niceTime("12:00 PM"), "12:00 pm");
+  assert.equal(b.endTime("12:40 PM"), "1:00 pm");
+  assert.equal(b.endTime("11:40 AM"), "12:00 pm");
+  assert.equal(b.endTime("08:40 PM"), "9:00 pm");
+});
+
+test("the day list has Today and Tomorrow, counts and the state", () => {
+  const days = [...b.openDays(NOW, {}).slice(0, 2), { day: "2026-11-04", free: 1 }];
+
+  const out = b.dayListOut(days, NOW);
+  const rows = listRows(out);
+  assert.deepEqual(rows.map((row) => row.title), ["Today", "Tomorrow", "Wed 4 Nov"]);
+  assert.deepEqual(rows.map((row) => row.id), ["bk:day:2026-11-02", "bk:day:2026-11-03", "bk:day:2026-11-04"]);
+  assert.deepEqual(rows.map((row) => row.description), ["17 times free", "18 times free", "1 time free"]);
+  assert.deepEqual(out.booking, { step: "day" });
+  assert.equal(out.via, "booking:day");
+  assert.equal(out.wa.interactive.body.text, b.COPY.firstDays);
+  assert.match(out.content, /\n\n\[List: Today, Tomorrow, Wed 4 Nov\]$/);
+
+  assert.equal(b.dayListOut(days, NOW, { intro: "again" }).wa.interactive.body.text, b.COPY.againDays);
+  assert.equal(b.dayListOut(days, NOW, { intro: "filled" }).wa.interactive.body.text, b.COPY.filledDays);
+  assert.deepEqual(b.dayListOut(days, NOW, { email: "jane@example.com" }).booking, { step: "day", email: "jane@example.com" });
+});
+
+test("parts, times and the confirmation carry what the next tap needs", () => {
+  const parts = b.partsOut("2026-11-04", ["am", "pm", "eve"]);
+  assert.deepEqual(buttonsOf(parts).map((button) => button.title), ["11:00 am - 12:40 pm", "1:00 - 2:40 pm", "7:00 - 8:40 pm"]);
+  assert.deepEqual(buttonsOf(parts).map((button) => button.id), ["bk:part:2026-11-04:am", "bk:part:2026-11-04:pm", "bk:part:2026-11-04:eve"]);
+  assert.deepEqual(parts.booking, { step: "part", day: "2026-11-04" });
+
+  const times = b.timesOut("2026-11-04", ["01:20 PM"]);
+  assert.deepEqual(listRows(times), [{ id: "bk:time:2026-11-04:1320", title: "1:20 pm", description: "Wed 4 Nov, 20 minutes" }]);
+  assert.deepEqual(times.booking, { step: "time", day: "2026-11-04" });
+  assert.ok(!times.wa.interactive.body.text.startsWith("Sorry"));
+  assert.ok(b.timesOut("2026-11-04", ["01:20 PM"], { taken: true }).wa.interactive.body.text.startsWith("Sorry, that time has just been taken."));
+
+  const card = b.confirmOut("2026-11-04", "01:20 PM", "jane@example.com");
+  const body = card.wa.interactive.body.text;
+  assert.match(body, /Day: Wednesday 4 November/);
+  assert.match(body, /Time: 1:20 pm to 1:40 pm Nairobi time \(EAT\)/);
+  assert.match(body, /Email: jane@example\.com/);
+  assert.deepEqual(buttonsOf(card).map((button) => button.title), ["Confirm", "Change time", "Change email"]);
+  assert.deepEqual(buttonsOf(card).map((button) => button.id), ["bk:confirm:2026-11-04:1320", "bk:retime", "bk:reemail"]);
+  assert.deepEqual(card.booking, { step: "confirm", day: "2026-11-04", time: "01:20 PM", email: "jane@example.com" });
+  assert.match(card.content, /\n\n\[Buttons: Confirm \| Change time \| Change email\]$/);
+});
+
+test("the booked message has the link, or says the team will send it", () => {
+  const withLink = b.bookedOut({ day: "2026-11-04", time: "01:20 PM", email: "jane@example.com", link: MEET, id: "b1" });
+  const text = withLink.wa.interactive.body.text;
+  assert.ok(text.includes(MEET));
+  assert.ok(text.includes("jane@example.com"));
+  assert.ok(text.includes("Nairobi time (EAT)"));
+
+  const withoutLink = b.bookedOut({ day: "2026-11-04", time: "01:20 PM", email: "jane@example.com", link: null, id: "b1" });
+  assert.ok(withoutLink.wa.interactive.body.text.includes("Our team will send you the Google Meet link here before the call."));
+  assert.ok(!withoutLink.wa.interactive.body.text.includes("meet.google.com"));
+
+  for (const out of [withLink, withoutLink]) {
+    assert.ok(out.wa.interactive.body.text.endsWith("please type your child's grade and the subjects they need help with."));
+    assert.deepEqual(buttonsOf(out), [{ id: "bk:change", title: "Change or cancel" }]);
+    assert.deepEqual(out.booking, { step: "done", id: "b1" });
+    assert.equal(out.via, "booking:done");
+  }
+
+  const already = b.alreadyBookedOut("2026-11-05", "02:00 PM");
+  assert.ok(already.wa.interactive.body.text.includes("You already have a call booked for Thursday 5 November, 2:00 pm Nairobi time (EAT)."));
+  assert.deepEqual(buttonsOf(already), [{ id: "bk:change", title: "Change or cancel" }]);
+  assert.deepEqual(already.booking, { step: "done" });
+});
+
+test("asking for the email can retry", () => {
+  const first = b.askEmailOut("2026-11-04", "01:20 PM");
+  assert.equal(first.wa.body, b.COPY.askEmail);
+  assert.deepEqual(first.booking, { step: "email", day: "2026-11-04", time: "01:20 PM" });
+  assert.equal(first.via, "booking:email");
+
+  const retry = b.askEmailOut("2026-11-04", "01:20 PM", { tries: 1 });
+  assert.equal(retry.wa.body, b.COPY.emailRetry);
+  assert.deepEqual(retry.booking, { step: "email", day: "2026-11-04", time: "01:20 PM", tries: 1 });
+});
+
+test("the offer carries the two buttons, in one message or two", () => {
+  const [single, ...rest] = b.offerOut("Thanks. Book a free call here: https://lanatutors.africa/book-consultation", "ai");
+  assert.equal(rest.length, 0);
+  assert.equal(single.wa.type, "interactive");
+  assert.deepEqual(buttonsOf(single), [{ id: "bk:start", title: "Book a free call" }, { id: "bk:callback", title: "Call me back" }]);
+  assert.equal(single.via, "ai");
+  assert.deepEqual(single.booking, { step: "offer" });
+  assert.match(single.content, /\[Buttons: Book a free call \| Call me back\]$/);
+
+  const [text, buttons, ...more] = b.offerOut("z".repeat(1100), "backup");
+  assert.equal(more.length, 0);
+  assert.equal(text.wa.type, "text");
+  assert.equal(text.via, "backup");
+  assert.equal(text.booking, undefined);
+  assert.equal(buttons.wa.interactive.body.text, b.COPY.moreButtons);
+  assert.equal(buttons.via, "booking:offer");
+  assert.deepEqual(buttons.booking, { step: "offer" });
+  assert.match(buttons.content, /\[Buttons: Book a free call \| Call me back\]$/);
+});

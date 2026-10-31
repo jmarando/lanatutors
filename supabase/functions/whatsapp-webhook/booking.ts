@@ -237,3 +237,188 @@ export function bookingRow(a: { name?: string; phone: string; email: string; day
     booked_via: "whatsapp",
   };
 }
+
+// ---------------- what Lana says ----------------
+
+// Meta's "interactive" object: a list or reply buttons.
+export type Interactive = Record<string, unknown>;
+
+export type Outgoing = {
+  wa: { type: "text"; body: string } | { type: "interactive"; interactive: Interactive };
+  content: string; // what the inbox shows and the AI reads: the text, then a "[List: ...]" or "[Buttons: ...]" line
+  via: string; // "booking:<step>", or the via it was given
+  booking?: BookingState; // the state the next tap or message is read against
+  fallback: string; // plain text to send if Meta refuses an interactive message; empty when there is nothing to send
+};
+
+// Lana's voice: warm, short, plain text, no emojis, no sign-off.
+export const COPY = {
+  firstDays: "Let's find a time for your free 20-minute call with our Learning Coordinator. Pick a day below. All times are Nairobi time (EAT).",
+  againDays: "Pick a day below. All times are Nairobi time (EAT).",
+  filledDays: "Sorry, that day has just filled up. Pick another day below. All times are Nairobi time (EAT).",
+  askEmail: "Thanks. What email address should we send the calendar invite to? Please type it below.",
+  emailRetry: "That doesn't look like an email address. Please type it like name@example.com.",
+  emailGiveUp: "No problem. I've asked our team to book this with you, and they'll message you here shortly.",
+  noFreeDays: "I can't see a free time in the next two weeks. I've asked our Learning Coordinator to arrange your call, and someone will message you here shortly.",
+  limit: "I've reached the limit for booking in the chat today, so I've asked our team to arrange your call. They'll message you here.",
+  changeAck: "No problem. I've asked our team to change or cancel your call. They'll confirm with you here shortly.",
+  nudge: "Thanks. To keep going, please tap one of the options above. Or tell us the day and time you prefer, and our team will arrange it.",
+  wentWrong: "Sorry, something went wrong on my side. I've asked our team to book this with you, and they'll message you here shortly.",
+  teamArranges: "Our team will arrange your call. Please tell us the day and time you'd like, and your time zone.",
+  moreButtons: "Would you like to book it here?",
+};
+
+const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const WEEKDAYS_LONG = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"];
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+const MONTHS_LONG = ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
+
+function dayFields(day: string): { weekday: number; date: number; month: number } {
+  const date = dayDate(day);
+  if (!date) throw new Error(`Not a day: ${day}`);
+  return { weekday: date.getUTCDay(), date: date.getUTCDate(), month: date.getUTCMonth() };
+}
+
+function shortDay(day: string): string {
+  const { weekday, date, month } = dayFields(day);
+  return `${WEEKDAYS[weekday]} ${date} ${MONTHS[month]}`;
+}
+
+export function dayLabel(day: string, now: Date): string {
+  const today = nairobiNow(now).day;
+  if (day === today) return "Today";
+  return day === addDays(today, 1) ? "Tomorrow" : shortDay(day);
+}
+
+export function longDay(day: string): string {
+  const { weekday, date, month } = dayFields(day);
+  return `${WEEKDAYS_LONG[weekday]} ${date} ${MONTHS_LONG[month]}`;
+}
+
+function clock(minutes: number): string {
+  const hours = Math.floor(minutes / 60) % 24;
+  return `${hours % 12 === 0 ? 12 : hours % 12}:${pad(minutes % 60)} ${hours < 12 ? "am" : "pm"}`;
+}
+
+export function niceTime(time: string): string {
+  return clock(minutesOf(time));
+}
+
+export function endTime(time: string): string {
+  return clock(minutesOf(time) + CALL_MINUTES);
+}
+
+// A flow state without the fields that are not known, so it compares and saves cleanly.
+function state(step: Step, rest: Omit<BookingState, "step"> = {}): BookingState {
+  const out: BookingState = { step };
+  for (const [key, value] of Object.entries(rest)) if (value !== undefined) (out as Record<string, unknown>)[key] = value;
+  return out;
+}
+
+function buttonsOut(via: string, body: string, buttons: { id: string; title: string }[], booking: BookingState | undefined, fallback: string): Outgoing {
+  const interactive: Interactive = {
+    type: "button",
+    body: { text: body },
+    action: { buttons: buttons.map(({ id, title }) => ({ type: "reply", reply: { id, title } })) },
+  };
+  return {
+    wa: { type: "interactive", interactive },
+    content: `${body}\n\n[Buttons: ${buttons.map((button) => button.title).join(" | ")}]`,
+    via,
+    ...(booking && { booking }),
+    fallback,
+  };
+}
+
+function listOut(via: string, body: string, button: string, section: string, rows: { id: string; title: string; description: string }[], booking: BookingState, fallback: string): Outgoing {
+  const interactive: Interactive = {
+    type: "list",
+    body: { text: body },
+    action: { button, sections: [{ title: section, rows }] },
+  };
+  return {
+    wa: { type: "interactive", interactive },
+    content: `${body}\n\n[List: ${rows.map((row) => row.title).join(", ")}]`,
+    via,
+    booking,
+    fallback,
+  };
+}
+
+export function textOut(via: string, body: string, booking?: BookingState): Outgoing {
+  return { wa: { type: "text", body }, content: body, via, ...(booking && { booking }), fallback: body };
+}
+
+const OFFER_BUTTONS = [
+  { id: "bk:start", title: "Book a free call" },
+  { id: "bk:callback", title: "Call me back" },
+];
+const REPLY_BUTTONS_BODY_LIMIT = 1024;
+
+// Lana's answer with the two buttons that offer the call: in the same message when the text fits, else as the text
+// followed by a short message that carries the buttons.
+export function offerOut(text: string, via: string): Outgoing[] {
+  if (text.length <= REPLY_BUTTONS_BODY_LIMIT) return [buttonsOut(via, text, OFFER_BUTTONS, state("offer"), text)];
+  return [textOut(via, text), buttonsOut("booking:offer", COPY.moreButtons, OFFER_BUTTONS, state("offer"), "")];
+}
+
+export function dayListOut(days: { day: string; free: number }[], now: Date, opts: { intro?: "first" | "again" | "filled"; email?: string } = {}): Outgoing {
+  const body = opts.intro === "again" ? COPY.againDays : opts.intro === "filled" ? COPY.filledDays : COPY.firstDays;
+  const rows = days.map(({ day, free }) => ({
+    id: `bk:day:${day}`,
+    title: dayLabel(day, now),
+    description: free === 1 ? "1 time free" : `${free} times free`,
+  }));
+  return listOut("booking:day", body, "Pick a day", "Days with free times", rows, state("day", { email: opts.email }), COPY.teamArranges);
+}
+
+const PART_TITLES: Record<Part, string> = { am: "11:00 am - 12:40 pm", pm: "1:00 - 2:40 pm", eve: "7:00 - 8:40 pm" };
+
+export function partsOut(day: string, parts: Part[], email?: string): Outgoing {
+  const body = `Which part of the day suits you on ${longDay(day)}? All times are Nairobi time (EAT).`;
+  const buttons = parts.map((part) => ({ id: `bk:part:${day}:${part}`, title: PART_TITLES[part] }));
+  return buttonsOut("booking:part", body, buttons, state("part", { day, email }), COPY.teamArranges);
+}
+
+export function timesOut(day: string, times: string[], opts: { taken?: boolean; email?: string } = {}): Outgoing {
+  const body = `${opts.taken ? "Sorry, that time has just been taken. " : ""}Pick a time on ${longDay(day)}. Each call is ${CALL_MINUTES} minutes, in Nairobi time (EAT).`;
+  const rows = times.map((time) => ({
+    id: `bk:time:${day}:${slotId(time)}`,
+    title: niceTime(time),
+    description: `${shortDay(day)}, ${CALL_MINUTES} minutes`,
+  }));
+  return listOut("booking:time", body, "Pick a time", "Free times", rows, state("time", { day, email: opts.email }), COPY.teamArranges);
+}
+
+export function askEmailOut(day: string, time: string, retry?: { tries: number }): Outgoing {
+  return textOut("booking:email", retry ? COPY.emailRetry : COPY.askEmail, state("email", { day, time, tries: retry?.tries }));
+}
+
+export function confirmOut(day: string, time: string, email: string): Outgoing {
+  const body = `Please check your booking:\n\nDay: ${longDay(day)}\nTime: ${niceTime(time)} to ${endTime(time)} Nairobi time (EAT)\nEmail: ${email}\n\nShall I book it?`;
+  const buttons = [
+    { id: `bk:confirm:${day}:${slotId(time)}`, title: "Confirm" },
+    { id: "bk:retime", title: "Change time" },
+    { id: "bk:reemail", title: "Change email" },
+  ];
+  return buttonsOut("booking:confirm", body, buttons, state("confirm", { day, time, email }), COPY.teamArranges);
+}
+
+const CHANGE_BUTTON = [{ id: "bk:change", title: "Change or cancel" }];
+const PREPARE = "To help our Learning Coordinator prepare, please type your child's grade and the subjects they need help with.";
+
+export function bookedOut(a: { day: string; time: string; email: string; link: string | null; id: string }): Outgoing {
+  const lines = ["Your call is booked.", "", `${longDay(a.day)}, ${niceTime(a.time)} Nairobi time (EAT)`];
+  if (a.link) {
+    lines.push(`Google Meet: ${a.link}`, "", `A calendar invite is on its way to ${a.email}. It will show the time in your own time zone once you add it to your calendar.`);
+  } else {
+    lines.push("", "Our team will send you the Google Meet link here before the call.");
+  }
+  lines.push("", PREPARE);
+  return buttonsOut("booking:done", lines.join("\n"), CHANGE_BUTTON, state("done", { id: a.id }), COPY.teamArranges);
+}
+
+export function alreadyBookedOut(day: string, time: string): Outgoing {
+  const body = `You already have a call booked for ${longDay(day)}, ${niceTime(time)} Nairobi time (EAT). If you need to change it, tap the button below.`;
+  return buttonsOut("booking:done", body, CHANGE_BUTTON, state("done"), COPY.teamArranges);
+}
