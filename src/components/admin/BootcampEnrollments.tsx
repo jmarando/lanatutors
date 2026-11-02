@@ -4,9 +4,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Copy, Users, Mail, Phone, BookOpen, CreditCard, Loader2, ExternalLink } from "lucide-react";
+import { Banknote, Copy, Users, Mail, Phone, BookOpen, CreditCard, Loader2, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import { format } from "date-fns";
+import { RecordPaybillDialog } from "./RecordPaybillDialog";
 
 interface EnrollmentWithDetails {
   id: string;
@@ -162,6 +163,8 @@ export function BootcampEnrollments() {
   };
 
   const [generatingLink, setGeneratingLink] = useState<string | null>(null);
+  // The enrolment whose paybill payment is being recorded.
+  const [paybillFor, setPaybillFor] = useState<EnrollmentWithDetails | null>(null);
 
   const getPaymentBadge = (status: string) => {
     switch (status) {
@@ -355,16 +358,47 @@ export function BootcampEnrollments() {
                         )}
                       </Button>
                     )}
+                    {(enrollment.payment_status === 'pending' || enrollment.payment_status === 'deposit_paid') && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => setPaybillFor(enrollment)}
+                        className="h-7 text-xs"
+                      >
+                        <Banknote className="h-3 w-3 mr-1" />
+                        Record paybill
+                      </Button>
+                    )}
                   </div>
                 </TableCell>
                 <TableCell className="text-sm text-muted-foreground">
                   {format(new Date(enrollment.created_at), "MMM d, yyyy")}
+                  {enrollment.program?.name && (
+                    <p className="text-xs mt-1">{enrollment.program.name}</p>
+                  )}
                 </TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
       </CardContent>
+      <RecordPaybillDialog
+        open={paybillFor !== null}
+        onOpenChange={(open) => {
+          if (!open) setPaybillFor(null);
+        }}
+        enrollment={
+          paybillFor && {
+            id: paybillFor.id,
+            totalAmount: paybillFor.total_amount,
+            paymentStatus: paybillFor.payment_status,
+            who: paybillFor.student_profile?.full_name || paybillFor.parent_profile?.full_name || "this student",
+            subjects: paybillFor.classes.map((c) => c.subject),
+            programName: paybillFor.program?.name ?? "",
+          }
+        }
+        onRecorded={fetchEnrollments}
+      />
     </Card>
   );
 }

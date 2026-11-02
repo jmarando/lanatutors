@@ -69,6 +69,7 @@ const SubjectLanding = lazy(() => import("./pages/SubjectLanding"));
 const CurriculumMathLanding = lazy(() => import("./pages/CurriculumMathLanding"));
 const Diaspora = lazy(() => import("./pages/Diaspora"));
 const CityLanding = lazy(() => import("./pages/CityLanding"));
+const DecemberClasses = lazy(() => import("./pages/DecemberClasses"));
 
 // School module
 const SchoolLogin = lazy(() => import("./pages/school/SchoolLogin"));
@@ -142,6 +143,7 @@ export const AppContent = () => {
           <Route path="/tutors-in-nairobi" element={<CityLanding />} />
           <Route path="/tutors-in-mombasa" element={<CityLanding />} />
           <Route path="/tutors-in-kisumu" element={<CityLanding />} />
+          <Route path="/december-classes" element={<DecemberClasses />} />
           <Route path="/subjects/:subject" element={<SubjectLanding />} />
           <Route path="/kcse-mathematics-tutors" element={<CurriculumMathLanding slugOverride="kcse-mathematics-tutors" />} />
           <Route path="/igcse-mathematics-tutors" element={<CurriculumMathLanding slugOverride="igcse-mathematics-tutors" />} />

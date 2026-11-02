@@ -25,7 +25,7 @@ const CBC_SUBJECTS = [
 const IGCSE_SUBJECTS = [
   "Mathematics", "English Language", "English Literature", "Physics", "Chemistry",
   "Biology", "Combined Science", "History", "Geography", "Computer Science",
-  "Business Studies", "Economics", "French", "Spanish", "Art & Design"
+  "Business Studies", "Economics", "French", "German", "Spanish", "Art & Design"
 ];
 
 const TutorSignup = () => {

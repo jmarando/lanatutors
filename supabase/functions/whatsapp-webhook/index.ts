@@ -40,7 +40,7 @@ import {
   timesOut,
 } from "./booking.ts";
 import { readClaudeReply, toClaudeMessages } from "./claude.ts";
-import { ATTACHMENT_NOTICE, BACKUP_REPLY, CALLBACK_REPLY, isGreeting, looksLikeSpam, matchPrefill } from "./lana.ts";
+import { ATTACHMENT_NOTICE, BACKUP_REPLY, CALLBACK_REPLY, isGreeting, looksLikeSpam, matchPrefill, seasonalNotes } from "./lana.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -493,6 +493,7 @@ function parseToolArgs(raw: string | undefined): Record<string, string> {
 function systemPrompt(profileName: string | undefined, parentId: string | null): string {
   return (
     SYSTEM_PROMPT +
+    seasonalNotes(new Date()) +
     (profileName ? `\n\nParent's WhatsApp name: "${profileName}".` : "") +
     (parentId ? `\nThis WhatsApp number IS linked to an existing parent account.` : `\nThis WhatsApp number is NOT linked to an existing parent account yet.`)
   );

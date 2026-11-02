@@ -1,14 +1,23 @@
 import { useEffect, useRef, useState } from "react";
 import { analytics } from "@/utils/analytics";
-import { CalendarCheck, ClipboardList, Users, GraduationCap, X } from "lucide-react";
+import { BookOpen, CalendarCheck, ClipboardList, Users, GraduationCap, X } from "lucide-react";
 
 const PHONE_NUMBER = "254117512316";
 
-const options = [
+// An option with `until` stops showing on that date (UTC midnight), so a seasonal button leaves on its own. The December
+// one leaves on the day Lana stops mentioning the classes (DECEMBER_CLASSES_UNTIL in whatsapp-webhook/lana.ts; a test
+// checks the two match).
+const options: { icon: typeof CalendarCheck; label: string; message: string; until?: string }[] = [
   {
     icon: CalendarCheck,
     label: "Book an assessment call",
     message: "Hi Lana Tutors! I'd like to book a 20-minute assessment call.",
+  },
+  {
+    icon: BookOpen,
+    label: "December holiday classes",
+    message: "Hi Lana Tutors! I'd like to reserve a seat in the December holiday classes.",
+    until: "2026-12-19",
   },
   {
     icon: ClipboardList,
@@ -68,7 +77,7 @@ const WhatsAppChatButton = () => {
             <p className="text-sm opacity-85">Typically replies within minutes</p>
           </div>
           <ul className="divide-y divide-border">
-            {options.map(({ icon: Icon, label, message }) => (
+            {options.filter(({ until }) => !until || Date.now() < Date.parse(until)).map(({ icon: Icon, label, message }) => (
               <li key={label}>
                 <button
                   onClick={() => startChat(message)}
