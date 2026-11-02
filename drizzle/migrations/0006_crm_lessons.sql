@@ -101,6 +101,32 @@ DROP TRIGGER IF EXISTS update_enrolments_updated_at ON public.enrolments;
 CREATE TRIGGER update_enrolments_updated_at BEFORE UPDATE ON public.enrolments
   FOR EACH ROW EXECUTE FUNCTION public.update_updated_at_column();
 
+-- The tutor of an existing child and subject can be set or changed afterwards (the team often records a
+-- payment before a tutor is chosen), but never onto a second entry for the same child, subject and tutor:
+-- credit would be split across two entries and lessons would only ever use one.
+CREATE OR REPLACE FUNCTION public.crm_enrolments_before_update_tutor()
+RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+BEGIN
+  IF NEW.tutor_id IS DISTINCT FROM OLD.tutor_id AND EXISTS (
+    SELECT 1 FROM enrolments x
+    WHERE x.id <> NEW.id
+      AND x.family_id = NEW.family_id
+      AND public.crm_norm_text(x.subject) = public.crm_norm_text(NEW.subject)
+      AND x.tutor_id IS NOT DISTINCT FROM NEW.tutor_id
+      AND (
+        (NEW.student_id IS NOT NULL AND x.student_id = NEW.student_id)
+        OR (public.crm_norm_text(NEW.student_name) <> ''
+            AND public.crm_norm_text(x.student_name) = public.crm_norm_text(NEW.student_name))
+      )
+  ) THEN
+    RAISE EXCEPTION 'There is already an entry for this child, subject and tutor. Record payments there instead.';
+  END IF;
+  RETURN NEW;
+END $$;
+DROP TRIGGER IF EXISTS crm_enrolments_before_update_tutor ON public.enrolments;
+CREATE TRIGGER crm_enrolments_before_update_tutor BEFORE UPDATE OF tutor_id ON public.enrolments
+  FOR EACH ROW EXECUTE FUNCTION public.crm_enrolments_before_update_tutor();
+
 -- A pack without a rate gets amount / sessions; the team can type over it.
 CREATE OR REPLACE FUNCTION public.crm_session_packs_before_insert()
 RETURNS trigger LANGUAGE plpgsql AS $$
@@ -189,6 +215,31 @@ BEGIN
     WHERE id = v_enrolment
       AND ((student_id IS NULL AND v_student_id IS NOT NULL) OR status <> 'active');
     RETURN v_enrolment;
+  END IF;
+
+  -- A payment saved before a tutor was chosen sits on an entry with no tutor. The first lesson with a
+  -- tutor for the same child and subject takes that entry over, so the money is not left on an entry
+  -- no lesson will ever find.
+  IF v_tutor IS NOT NULL THEN
+    SELECT e.id INTO v_enrolment
+    FROM enrolments e
+    WHERE e.family_id = v_family
+      AND e.tutor_id IS NULL
+      AND public.crm_norm_text(e.subject) = public.crm_norm_text(v_subject)
+      AND (
+        (v_student_id IS NOT NULL AND e.student_id = v_student_id)
+        OR (public.crm_norm_text(e.student_name) <> ''
+            AND public.crm_norm_text(e.student_name) = public.crm_norm_text(v_student_name)
+            AND (e.student_id IS NULL OR e.student_id IS NOT DISTINCT FROM v_student_id))
+      )
+    ORDER BY (e.student_id IS NOT DISTINCT FROM v_student_id) DESC, (e.status = 'active') DESC, e.created_at
+    LIMIT 1;
+    IF v_enrolment IS NOT NULL THEN
+      UPDATE enrolments
+      SET tutor_id = v_tutor, student_id = coalesce(student_id, v_student_id), status = 'active'
+      WHERE id = v_enrolment;
+      RETURN v_enrolment;
+    END IF;
   END IF;
 
   INSERT INTO enrolments (family_id, student_id, student_name, subject, tutor_id)
@@ -344,14 +395,91 @@ DROP TRIGGER IF EXISTS crm_session_packs_after_insert ON public.session_packs;
 CREATE TRIGGER crm_session_packs_after_insert AFTER INSERT ON public.session_packs
   FOR EACH ROW EXECUTE FUNCTION public.crm_session_packs_after_insert();
 
+-- Correcting a payment. Its amount, sessions, rate and child are fixed once recorded: tutor pay is priced
+-- from the rate when a lesson is confirmed, so changing money in place would leave pay and balances wrong.
+-- The way to change money is to remove the payment and record it again. A typo in the reference or the
+-- date can be fixed in place, and the timeline shows what changed. Only sessions_used moves by itself
+-- (the lesson triggers), and that is not a correction.
+CREATE OR REPLACE FUNCTION public.crm_session_packs_before_update()
+RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+DECLARE
+  e enrolments;
+  v_changes text[] := ARRAY[]::text[];
+BEGIN
+  IF NEW.enrolment_id IS DISTINCT FROM OLD.enrolment_id
+     OR NEW.amount_kes IS DISTINCT FROM OLD.amount_kes
+     OR NEW.sessions_bought IS DISTINCT FROM OLD.sessions_bought
+     OR NEW.rate_per_session IS DISTINCT FROM OLD.rate_per_session THEN
+    RAISE EXCEPTION 'The amount, sessions, rate and child of a payment cannot be changed. Remove the payment and record it again.';
+  END IF;
+
+  IF NEW.reference IS DISTINCT FROM OLD.reference THEN
+    v_changes := v_changes || ('ref ' || coalesce(OLD.reference, 'none') || ' → ' || coalesce(NEW.reference, 'none'));
+  END IF;
+  IF NEW.paid_on IS DISTINCT FROM OLD.paid_on THEN
+    v_changes := v_changes || ('paid on ' || coalesce(to_char(OLD.paid_on, 'YYYY-MM-DD'), 'no date')
+                               || ' → ' || coalesce(to_char(NEW.paid_on, 'YYYY-MM-DD'), 'no date'));
+  END IF;
+  IF array_length(v_changes, 1) IS NOT NULL THEN
+    BEGIN
+      SELECT * INTO e FROM enrolments WHERE id = OLD.enrolment_id;
+      INSERT INTO lead_activities (family_id, kind, body, meta)
+      VALUES (e.family_id, 'system',
+              'Payment corrected (' || coalesce(nullif(btrim(e.student_name), ''), 'child') || ', ' || e.subject
+                || ', KES ' || to_char(OLD.amount_kes, 'FM999,999,990') || '): ' || array_to_string(v_changes, '; '),
+              jsonb_build_object('pack_id', OLD.id));
+    EXCEPTION WHEN OTHERS THEN
+      RAISE WARNING 'CRM: could not log the correction of payment %: %', OLD.id, SQLERRM;
+    END;
+  END IF;
+  RETURN NEW;
+END $$;
+DROP TRIGGER IF EXISTS crm_session_packs_before_update ON public.session_packs;
+CREATE TRIGGER crm_session_packs_before_update BEFORE UPDATE ON public.session_packs
+  FOR EACH ROW EXECUTE FUNCTION public.crm_session_packs_before_update();
+
+-- Removing a payment entered by mistake. Once sessions have been taken from it (lessons, or an imported
+-- opening balance) it stays; undo those lessons first. The timeline keeps a line saying what was removed.
+CREATE OR REPLACE FUNCTION public.crm_session_packs_before_delete()
+RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+DECLARE
+  e enrolments;
+BEGIN
+  IF OLD.sessions_used > 0 THEN
+    RAISE EXCEPTION 'Sessions have already been taken from this payment, so it cannot be removed. Undo those lessons first.';
+  END IF;
+  BEGIN
+    SELECT * INTO e FROM enrolments WHERE id = OLD.enrolment_id;
+    INSERT INTO lead_activities (family_id, kind, body, meta, source_table, source_id)
+    VALUES (e.family_id, 'system',
+            'Payment removed: KES ' || to_char(OLD.amount_kes, 'FM999,999,990')
+              || ' for ' || trim_scale(OLD.sessions_bought)::text
+              || CASE WHEN OLD.sessions_bought = 1 THEN ' session' ELSE ' sessions' END
+              || ' (' || coalesce(nullif(btrim(e.student_name), ''), 'child') || ', ' || e.subject || ')'
+              || CASE WHEN nullif(btrim(OLD.reference), '') IS NULL THEN '' ELSE ', ref ' || btrim(OLD.reference) END,
+            jsonb_build_object('pack_id', OLD.id, 'amount_kes', OLD.amount_kes, 'sessions', OLD.sessions_bought),
+            'session_packs', OLD.id::text || ':removed')
+    ON CONFLICT DO NOTHING;
+  EXCEPTION WHEN OTHERS THEN
+    RAISE WARNING 'CRM: could not log the removal of payment %: %', OLD.id, SQLERRM;
+  END;
+  RETURN OLD;
+END $$;
+DROP TRIGGER IF EXISTS crm_session_packs_before_delete ON public.session_packs;
+CREATE TRIGGER crm_session_packs_before_delete BEFORE DELETE ON public.session_packs
+  FOR EACH ROW EXECUTE FUNCTION public.crm_session_packs_before_delete();
+
 -- Record payment (admin only): a new pack for an enrolment. The rate defaults to amount / sessions.
 -- The payment also lands on the family timeline, and a family that has paid is active.
+-- Sessions may be fractional (half sessions), so p_sessions_bought is numeric. The earlier integer
+-- signature is dropped so a database that ran an older draft of this file keeps exactly one function.
+DROP FUNCTION IF EXISTS public.crm_record_payment(uuid, numeric, text, date, integer, numeric);
 CREATE OR REPLACE FUNCTION public.crm_record_payment(
   p_enrolment_id uuid,
   p_amount_kes numeric,
   p_reference text DEFAULT NULL,
   p_paid_on date DEFAULT NULL,
-  p_sessions_bought integer DEFAULT NULL,
+  p_sessions_bought numeric DEFAULT NULL,
   p_rate_per_session numeric DEFAULT NULL)
 RETURNS uuid LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
 DECLARE
@@ -365,7 +493,7 @@ BEGIN
   IF p_amount_kes IS NULL OR p_amount_kes <= 0 THEN
     RAISE EXCEPTION 'Enter the amount that was paid';
   END IF;
-  IF p_sessions_bought IS NULL OR p_sessions_bought < 1 THEN
+  IF p_sessions_bought IS NULL OR p_sessions_bought <= 0 THEN
     RAISE EXCEPTION 'Enter how many sessions were bought';
   END IF;
   IF p_rate_per_session IS NOT NULL AND p_rate_per_session < 0 THEN
@@ -493,11 +621,14 @@ REVOKE ALL ON FUNCTION public.crm_ensure_enrolment(public.bookings) FROM PUBLIC,
 REVOKE ALL ON FUNCTION public.crm_bookings_before_insert() FROM PUBLIC, anon, authenticated;
 REVOKE ALL ON FUNCTION public.crm_session_packs_before_insert() FROM PUBLIC, anon, authenticated;
 REVOKE ALL ON FUNCTION public.crm_session_packs_after_insert() FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.crm_session_packs_before_update() FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.crm_session_packs_before_delete() FROM PUBLIC, anon, authenticated;
+REVOKE ALL ON FUNCTION public.crm_enrolments_before_update_tutor() FROM PUBLIC, anon, authenticated;
 REVOKE ALL ON FUNCTION public.crm_lesson_reports_before_insert() FROM PUBLIC, anon, authenticated;
 REVOKE ALL ON FUNCTION public.crm_lesson_reports_before_update() FROM PUBLIC, anon, authenticated;
 REVOKE ALL ON FUNCTION public.crm_lesson_reports_after_delete() FROM PUBLIC, anon, authenticated;
-REVOKE ALL ON FUNCTION public.crm_record_payment(uuid, numeric, text, date, integer, numeric) FROM PUBLIC, anon;
-GRANT EXECUTE ON FUNCTION public.crm_record_payment(uuid, numeric, text, date, integer, numeric) TO authenticated;
+REVOKE ALL ON FUNCTION public.crm_record_payment(uuid, numeric, text, date, numeric, numeric) FROM PUBLIC, anon;
+GRANT EXECUTE ON FUNCTION public.crm_record_payment(uuid, numeric, text, date, numeric, numeric) TO authenticated;
 
 ALTER TABLE public.enrolments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.session_packs ENABLE ROW LEVEL SECURITY;

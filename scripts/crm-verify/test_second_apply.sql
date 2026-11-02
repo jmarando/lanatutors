@@ -31,7 +31,8 @@ BEGIN
     || (SELECT count(*) FROM pg_trigger WHERE tgrelid = 'public.lesson_reports'::regclass AND NOT tgisinternal));
   PERFORM crm_test.assert((SELECT count(*) FROM pg_trigger WHERE tgrelid = 'public.bookings'::regclass AND tgname = 'crm_bookings_before_insert') = 1,
     'T18 one CRM trigger on bookings');
-  PERFORM crm_test.assert((SELECT count(*) FROM pg_trigger WHERE tgrelid = 'public.session_packs'::regclass AND NOT tgisinternal) = 2,
-    'T18 two triggers on session_packs (default rate, late payment pickup)');
+  PERFORM crm_test.assert((SELECT count(*) FROM pg_trigger WHERE tgrelid = 'public.session_packs'::regclass AND NOT tgisinternal) = 4,
+    'T18 four triggers on session_packs (default rate, late payment pickup, correction guard, removal guard), got '
+    || (SELECT count(*) FROM pg_trigger WHERE tgrelid = 'public.session_packs'::regclass AND NOT tgisinternal));
   RAISE NOTICE 'T18 ok';
 END $$;

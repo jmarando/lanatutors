@@ -593,6 +593,167 @@ BEGIN
   RAISE NOTICE 'T20 ok';
 END $$;
 
+-- ------------------------------------------------------------------ T23 a payment's reference and date can be corrected, and the timeline shows it
+-- (info@ types M-Pesa codes by hand; a typo must be fixable without touching the money)
+DO $$
+DECLARE f uuid := crm_test.get('f1'); e uuid; p uuid; pk public.session_packs; n int; v_body text;
+BEGIN
+  INSERT INTO public.enrolments (family_id, student_name, subject, tutor_id)
+  VALUES (f, 'Zuri Kamau', 'Geography', crm_test.id(32)) RETURNING id INTO e;
+  PERFORM crm_test.as_admin();
+  p := public.crm_record_payment(e, 9000, 'MPESA-TYPO', DATE '2026-11-02', 3, NULL);
+  UPDATE public.session_packs SET reference = 'MPESA-RIGHT', paid_on = DATE '2026-11-01' WHERE id = p;
+  RESET ROLE;
+  SELECT * INTO pk FROM public.session_packs WHERE id = p;
+  PERFORM crm_test.assert(pk.reference = 'MPESA-RIGHT' AND pk.paid_on = DATE '2026-11-01', 'T23 the reference and date were corrected');
+  PERFORM crm_test.assert(pk.amount_kes = 9000 AND pk.sessions_bought = 3 AND pk.rate_per_session = 3000, 'T23 the money is untouched');
+  SELECT count(*) INTO n FROM public.lead_activities WHERE family_id = f AND kind = 'system' AND body LIKE 'Payment corrected%';
+  PERFORM crm_test.assert(n = 1, 'T23 one correction on the timeline (lessons using up sessions are not corrections), got ' || n);
+  SELECT body INTO v_body FROM public.lead_activities WHERE family_id = f AND kind = 'system' AND body LIKE 'Payment corrected%';
+  PERFORM crm_test.assert(v_body LIKE '%MPESA-TYPO%' AND v_body LIKE '%MPESA-RIGHT%', 'T23 the timeline shows the old and new reference, got ' || coalesce(v_body, 'nothing'));
+  PERFORM crm_test.assert(v_body LIKE '%2026-11-02%' AND v_body LIKE '%2026-11-01%', 'T23 and the old and new date, got ' || coalesce(v_body, 'nothing'));
+  INSERT INTO crm_test.ctx VALUES ('e_geo', e), ('p_geo', p);
+  RAISE NOTICE 'T23 ok';
+END $$;
+
+-- ------------------------------------------------------------------ T24 amount, sessions, rate and child are fixed once recorded
+-- (tutor pay is priced from the rate when a lesson is confirmed; the way to change money is remove and record again)
+DO $$
+DECLARE e uuid := crm_test.get('e_geo'); p uuid := crm_test.get('p_geo'); failed boolean; pk public.session_packs;
+BEGIN
+  PERFORM crm_test.as_admin();
+  failed := false; BEGIN UPDATE public.session_packs SET amount_kes = 900 WHERE id = p; EXCEPTION WHEN raise_exception THEN failed := true; END;
+  PERFORM crm_test.assert(failed, 'T24 the amount cannot be changed');
+  failed := false; BEGIN UPDATE public.session_packs SET sessions_bought = 4 WHERE id = p; EXCEPTION WHEN raise_exception THEN failed := true; END;
+  PERFORM crm_test.assert(failed, 'T24 the sessions bought cannot be changed');
+  failed := false; BEGIN UPDATE public.session_packs SET rate_per_session = 100 WHERE id = p; EXCEPTION WHEN raise_exception THEN failed := true; END;
+  PERFORM crm_test.assert(failed, 'T24 the rate cannot be changed');
+  failed := false; BEGIN UPDATE public.session_packs SET enrolment_id = crm_test.get('e1') WHERE id = p; EXCEPTION WHEN raise_exception THEN failed := true; END;
+  PERFORM crm_test.assert(failed, 'T24 the payment cannot be moved to another child');
+  RESET ROLE;
+  SELECT * INTO pk FROM public.session_packs WHERE id = p;
+  PERFORM crm_test.assert(pk.amount_kes = 9000 AND pk.sessions_bought = 3 AND pk.rate_per_session = 3000 AND pk.enrolment_id = e, 'T24 nothing changed');
+  RAISE NOTICE 'T24 ok';
+END $$;
+
+-- ------------------------------------------------------------------ T25 an unused payment can be removed; one that sessions came from cannot
+DO $$
+DECLARE e uuid := crm_test.get('e_geo'); f uuid := crm_test.get('f1'); p uuid; kept uuid; failed boolean; v_body text;
+BEGIN
+  PERFORM crm_test.as_admin();
+  p := public.crm_record_payment(e, 6000, 'MPESA-WRONG-FAMILY', DATE '2026-11-03', 2, NULL);
+  DELETE FROM public.session_packs WHERE id = p;
+  RESET ROLE;
+  PERFORM crm_test.assert(NOT EXISTS (SELECT 1 FROM public.session_packs WHERE id = p), 'T25 an unused payment was removed');
+  SELECT body INTO v_body FROM public.lead_activities WHERE family_id = f AND kind = 'system' AND body LIKE 'Payment removed%';
+  PERFORM crm_test.assert(v_body LIKE '%6,000%' AND v_body LIKE '%MPESA-WRONG-FAMILY%' AND v_body LIKE '%Geography%',
+    'T25 the timeline says what was removed, got ' || coalesce(v_body, 'nothing'));
+  -- sessions already taken from a payment (lessons, or an imported opening balance): it stays
+  INSERT INTO public.session_packs (enrolment_id, amount_kes, sessions_bought, sessions_used, rate_per_session, paid_on)
+  VALUES (e, 3000, 2, 1, 1500, DATE '2026-11-04') RETURNING id INTO kept;
+  PERFORM crm_test.as_admin();
+  failed := false; BEGIN DELETE FROM public.session_packs WHERE id = kept; EXCEPTION WHEN raise_exception THEN failed := true; END;
+  RESET ROLE;
+  PERFORM crm_test.assert(failed, 'T25 a payment that sessions were taken from cannot be removed');
+  PERFORM crm_test.assert(EXISTS (SELECT 1 FROM public.session_packs WHERE id = kept), 'T25 and it is still there');
+  PERFORM crm_test.assert((SELECT count(*) FROM public.lead_activities WHERE family_id = f AND body LIKE 'Payment removed%') = 1,
+    'T25 only the real removal is on the timeline');
+  RAISE NOTICE 'T25 ok';
+END $$;
+
+-- ------------------------------------------------------------------ T26 a payment saved before a tutor was chosen is adopted by the first lesson with a tutor
+-- (parents often pay before a tutor is assigned; the money must not sit on an entry no lesson will ever find)
+DO $$
+DECLARE f uuid := (SELECT family_id FROM public.enrolments WHERE id = crm_test.get('e3')); e uuid; p uuid; b uuid;
+        rep public.lesson_reports; n int;
+BEGIN
+  INSERT INTO public.enrolments (family_id, student_id, student_name, subject, tutor_id)
+  VALUES (f, crm_test.id(43), 'Baraka Otieno', 'Physics', NULL) RETURNING id INTO e;
+  PERFORM crm_test.as_admin();
+  p := public.crm_record_payment(e, 15000, 'MPESA-NOTUTOR', DATE '2026-11-02', 6, NULL);
+  RESET ROLE;
+  -- another subject for the same child does not take the tutor-less entry
+  b := crm_test.book(crm_test.id(12), crm_test.id(22), crm_test.id(43), 'Biology', now() - interval '5 days');
+  PERFORM crm_test.assert((SELECT enrolment_id FROM public.bookings WHERE id = b) <> e, 'T26 a different subject does not take the tutor-less entry');
+  PERFORM crm_test.assert((SELECT tutor_id FROM public.enrolments WHERE id = e) IS NULL, 'T26 and the entry still has no tutor');
+  -- the same family, same subject, but a different learner (the account holder, no child recorded), does not take it either
+  b := crm_test.book(crm_test.id(12), crm_test.id(22), NULL, 'Physics', now() - interval '4 days');
+  PERFORM crm_test.assert((SELECT enrolment_id FROM public.bookings WHERE id = b) <> e, 'T26 another learner''s Physics lesson does not take it');
+  PERFORM crm_test.assert((SELECT tutor_id FROM public.enrolments WHERE id = e) IS NULL, 'T26 and the entry still has no tutor after that');
+  -- the first Physics lesson for this child with a tutor joins it
+  b := crm_test.book(crm_test.id(12), crm_test.id(22), crm_test.id(43), 'physics', now() - interval '3 days');
+  PERFORM crm_test.assert((SELECT enrolment_id FROM public.bookings WHERE id = b) = e, 'T26 the lesson joined the entry the payment was recorded on');
+  PERFORM crm_test.assert((SELECT tutor_id FROM public.enrolments WHERE id = e) = crm_test.id(32), 'T26 the entry now has the lesson''s tutor');
+  SELECT count(*) INTO n FROM public.enrolments
+  WHERE family_id = f AND public.crm_norm_text(subject) = 'physics' AND public.crm_norm_text(student_name) = 'baraka otieno';
+  PERFORM crm_test.assert(n = 1, 'T26 no second Physics entry for the child, got ' || n);
+  -- and the payment pays for it
+  PERFORM crm_test.as_admin();
+  INSERT INTO public.lesson_reports (booking_id, attendance) VALUES (b, 'delivered') RETURNING * INTO rep;
+  RESET ROLE;
+  PERFORM crm_test.assert(rep.pack_id = p AND rep.tutor_pay_kes = 1750,
+    'T26 the lesson used the payment; tutor pay is 70% of KES 2,500, got ' || coalesce(rep.tutor_pay_kes::text, 'null'));
+  INSERT INTO crm_test.ctx VALUES ('f_baraka', f);
+  RAISE NOTICE 'T26 ok';
+END $$;
+
+-- ------------------------------------------------------------------ T27 the tutor can be set after the payment, but never onto a duplicate
+DO $$
+DECLARE f uuid := crm_test.get('f_baraka'); e uuid; dup uuid; failed boolean; b uuid;
+BEGIN
+  -- a tutor-less entry (a payment saved as "not chosen yet") gets its tutor later
+  INSERT INTO public.enrolments (family_id, student_id, student_name, subject, tutor_id)
+  VALUES (f, crm_test.id(43), 'Baraka Otieno', 'Chemistry', NULL) RETURNING id INTO e;
+  PERFORM crm_test.as_admin();
+  UPDATE public.enrolments SET tutor_id = crm_test.id(31) WHERE id = e;
+  RESET ROLE;
+  PERFORM crm_test.assert((SELECT tutor_id FROM public.enrolments WHERE id = e) = crm_test.id(31), 'T27 the tutor was set');
+  b := crm_test.book(crm_test.id(12), crm_test.id(21), crm_test.id(43), 'Chemistry', now() - interval '2 days');
+  PERFORM crm_test.assert((SELECT enrolment_id FROM public.bookings WHERE id = b) = e, 'T27 a lesson with that tutor joins the entry');
+
+  -- the same child, subject and tutor already exist on another entry: refused, so credit is never split in two
+  INSERT INTO public.enrolments (family_id, student_id, student_name, subject, tutor_id)
+  VALUES (f, crm_test.id(43), 'baraka  otieno', 'CHEMISTRY', NULL) RETURNING id INTO dup;
+  PERFORM crm_test.as_admin();
+  failed := false; BEGIN UPDATE public.enrolments SET tutor_id = crm_test.id(31) WHERE id = dup; EXCEPTION WHEN raise_exception THEN failed := true; END;
+  RESET ROLE;
+  PERFORM crm_test.assert(failed, 'T27 a second entry for the same child, subject and tutor is refused');
+  PERFORM crm_test.assert((SELECT tutor_id FROM public.enrolments WHERE id = dup) IS NULL, 'T27 and that entry kept no tutor');
+  -- a different tutor for it is fine
+  PERFORM crm_test.as_admin();
+  UPDATE public.enrolments SET tutor_id = crm_test.id(32) WHERE id = dup;
+  RESET ROLE;
+  PERFORM crm_test.assert((SELECT tutor_id FROM public.enrolments WHERE id = dup) = crm_test.id(32), 'T27 a different tutor is accepted');
+  -- changing something else about an entry is never blocked by the tutor check
+  PERFORM crm_test.as_admin();
+  UPDATE public.enrolments SET status = 'paused' WHERE id = dup;
+  RESET ROLE;
+  PERFORM crm_test.assert((SELECT status FROM public.enrolments WHERE id = dup) = 'paused', 'T27 other edits still work');
+  RAISE NOTICE 'T27 ok';
+END $$;
+
+-- ------------------------------------------------------------------ T28 Record payment accepts half sessions
+-- (the tracker has half sessions; a family can also buy 3.5 at a time)
+DO $$
+DECLARE e uuid := crm_test.get('e_geo'); p uuid; pk public.session_packs; failed boolean; v_body text;
+BEGIN
+  PERFORM crm_test.as_admin();
+  p := public.crm_record_payment(e, 10500, 'MPESA-HALF', DATE '2026-11-05', 3.5, NULL);
+  RESET ROLE;
+  SELECT * INTO pk FROM public.session_packs WHERE id = p;
+  PERFORM crm_test.assert(pk.sessions_bought = 3.5 AND pk.rate_per_session = 3000,
+    'T28 3.5 sessions at KES 3,000, got ' || pk.sessions_bought || ' at ' || pk.rate_per_session);
+  SELECT body INTO v_body FROM public.lead_activities WHERE source_table = 'session_packs' AND source_id = p::text;
+  PERFORM crm_test.assert(v_body LIKE '%for 3.5 sessions%', 'T28 the timeline says 3.5 sessions, got ' || coalesce(v_body, 'nothing'));
+  PERFORM crm_test.as_admin();
+  failed := false; BEGIN PERFORM public.crm_record_payment(e, 100, 'Z', CURRENT_DATE, 0.0, NULL); EXCEPTION WHEN raise_exception THEN failed := true; END;
+  PERFORM crm_test.assert(failed, 'T28 zero sessions is still refused');
+  failed := false; BEGIN PERFORM public.crm_record_payment(e, 100, 'Z', CURRENT_DATE, -1, NULL); EXCEPTION WHEN raise_exception THEN failed := true; END;
+  PERFORM crm_test.assert(failed, 'T28 negative sessions is refused');
+  RESET ROLE;
+  RAISE NOTICE 'T28 ok';
+END $$;
+
 -- ------------------------------------------------------------------ snapshot for the second-apply check
 DO $$
 BEGIN
