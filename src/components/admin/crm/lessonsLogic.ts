@@ -234,3 +234,14 @@ export function formatKes(amount: number | string | null | undefined): string {
   });
   return `${n < 0 ? "-" : ""}KES ${text}`;
 }
+
+/**
+ * "8", "8.5" and "3,5" read as sessions bought. Half sessions are real (the tracker has them), and the
+ * database holds up to 9999.99 (numeric(6,2)). Anything else, or zero, is NaN.
+ */
+export function parseSessions(text: string): number {
+  const cleaned = text.trim().replace(",", ".");
+  if (!/^(?:\d{1,4}(?:\.\d{1,2})?|\.\d{1,2})$/.test(cleaned)) return NaN;
+  const value = Number(cleaned);
+  return value > 0 ? value : NaN;
+}

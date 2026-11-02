@@ -12,6 +12,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { cn } from "@/lib/utils";
+import { EditPaymentDialog, RemovePaymentDialog } from "./PaymentDialogs";
 import { RecordPaymentDialog } from "./RecordPaymentDialog";
 import { crmDb } from "./crmTypes";
 import type {
@@ -41,6 +42,11 @@ const STATUS_LABELS: Record<EnrolmentStatus, string> = {
   paused: "Paused",
   ended: "Ended",
 };
+
+const NO_TUTOR = "__none__";
+
+/** "Amani · Maths": whose payment or lessons these are. */
+const whoseEntry = (e: Enrolment) => `${e.student_name || "Child"} · ${e.subject}`;
 
 function packDate(paidOn: string | null): string {
   if (!paidOn) return "Date not recorded";
@@ -85,6 +91,8 @@ export function SessionsCard({
 }: SessionsCardProps) {
   const [paying, setPaying] = useState<{ enrolmentId: string | null } | null>(null);
   const [openPacks, setOpenPacks] = useState<Record<string, boolean>>({});
+  const [editing, setEditing] = useState<{ pack: SessionPack; whose: string } | null>(null);
+  const [removing, setRemoving] = useState<{ pack: SessionPack; whose: string } | null>(null);
 
   const balanceById = useMemo(() => new Map(balances.map((b) => [b.enrolment_id, b])), [balances]);
   const packsById = useMemo(() => {
@@ -104,6 +112,29 @@ export function SessionsCard({
     toast.success(`Marked ${STATUS_LABELS[status].toLowerCase()}`);
     onChanged();
   };
+
+  // The tutor can be set or changed after the entry was made (a payment is often recorded before a tutor
+  // is chosen). The database refuses a change that would duplicate another entry for the same child,
+  // subject and tutor, and its message says what to do instead.
+  const setTutor = async (enrolmentId: string, tutorId: string | null) => {
+    const { data, error: err } = await crmDb
+      .from("enrolments")
+      .update({ tutor_id: tutorId })
+      .eq("id", enrolmentId)
+      .select("id");
+    if (err || !data?.length) {
+      toast.error(`Could not change the tutor: ${err?.message ?? "nothing was saved"}`);
+      return;
+    }
+    toast.success(tutorId ? "Tutor changed" : "Tutor cleared");
+    onChanged();
+  };
+
+  // The tutors to pick from, with the entry's own tutor kept in the list even when they are not listed.
+  const tutorChoices = (currentId: string | null, currentName: string | undefined): ListedTutor[] =>
+    currentId && !tutors.some((t) => t.id === currentId)
+      ? [{ id: currentId, name: currentName ?? "Current tutor" }, ...tutors]
+      : tutors;
 
   return (
     <Card>
@@ -150,9 +181,28 @@ export function SessionsCard({
                     <p className="truncate text-sm font-semibold">
                       {enrolment.student_name || "Child"} · {enrolment.subject}
                     </p>
-                    <p className="text-xs text-muted-foreground">
-                      {tutor ? `with ${tutor}` : "No tutor chosen yet"}
-                    </p>
+                    <div className="mt-1 flex items-center gap-1.5">
+                      <span className="text-xs text-muted-foreground">Tutor</span>
+                      <Select
+                        value={enrolment.tutor_id ?? NO_TUTOR}
+                        onValueChange={(value) => void setTutor(enrolment.id, value === NO_TUTOR ? null : value)}
+                      >
+                        <SelectTrigger
+                          className="h-7 w-[11rem] text-xs"
+                          aria-label={`Tutor for ${whoseEntry(enrolment)}`}
+                        >
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value={NO_TUTOR}>Not chosen yet</SelectItem>
+                          {tutorChoices(enrolment.tutor_id, tutor).map((t) => (
+                            <SelectItem key={t.id} value={t.id}>
+                              {t.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
                   </div>
                   <div className="flex items-center gap-1.5">
                     {due && (
@@ -247,6 +297,32 @@ export function SessionsCard({
                           {packDate(pack.paid_on)}
                           {pack.reference ? ` · ref ${pack.reference}` : ""}
                         </span>
+                        <span className="flex w-full justify-end gap-1">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-6 px-2 text-xs"
+                            aria-label={`Correct the payment of ${formatKes(pack.amount_kes)}`}
+                            onClick={() => setEditing({ pack, whose: whoseEntry(enrolment) })}
+                          >
+                            Correct
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-6 px-2 text-xs text-destructive hover:text-destructive"
+                            aria-label={`Remove the payment of ${formatKes(pack.amount_kes)}`}
+                            disabled={Number(pack.sessions_used) > 0}
+                            title={
+                              Number(pack.sessions_used) > 0
+                                ? "Sessions have been taken from this payment. Undo those lessons first."
+                                : undefined
+                            }
+                            onClick={() => setRemoving({ pack, whose: whoseEntry(enrolment) })}
+                          >
+                            Remove
+                          </Button>
+                        </span>
                       </li>
                     ))}
                   </ul>
@@ -270,6 +346,23 @@ export function SessionsCard({
           onChanged();
           onRecorded();
         }}
+      />
+      <EditPaymentDialog
+        key={editing?.pack.id ?? "none"}
+        pack={editing?.pack ?? null}
+        whose={editing?.whose ?? ""}
+        onOpenChange={(open) => {
+          if (!open) setEditing(null);
+        }}
+        onSaved={onChanged}
+      />
+      <RemovePaymentDialog
+        pack={removing?.pack ?? null}
+        whose={removing?.whose ?? ""}
+        onOpenChange={(open) => {
+          if (!open) setRemoving(null);
+        }}
+        onRemoved={onChanged}
       />
     </Card>
   );

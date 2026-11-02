@@ -22,7 +22,7 @@ import {
 import type { Enrolment, ListedTutor } from "./crmTypes";
 import { crmDb } from "./crmTypes";
 import { nairobiDate } from "./crmMeta";
-import { formatKes } from "./lessonsLogic";
+import { formatKes, parseSessions } from "./lessonsLogic";
 
 const NEW_ENROLMENT = "__new__";
 const NO_TUTOR = "__none__";
@@ -88,9 +88,9 @@ export function RecordPaymentDialog({
   }, [open, defaultEnrolmentId, enrolments]);
 
   const amountValue = parseMoney(amount);
-  const sessionsValue = Number.parseInt(sessions, 10);
+  const sessionsValue = parseSessions(sessions);
   const autoRate =
-    amountValue > 0 && sessionsValue >= 1 ? Math.round((amountValue / sessionsValue) * 100) / 100 : null;
+    amountValue > 0 && sessionsValue > 0 ? Math.round((amountValue / sessionsValue) * 100) / 100 : null;
   const rateShown = rateTouched ? rate : autoRate !== null ? String(autoRate) : "";
   const creating = target === NEW_ENROLMENT;
 
@@ -99,8 +99,8 @@ export function RecordPaymentDialog({
       toast.error("Enter the amount that was paid");
       return;
     }
-    if (!(sessionsValue >= 1)) {
-      toast.error("Enter how many sessions were bought");
+    if (!(sessionsValue > 0)) {
+      toast.error("Enter how many sessions were bought, for example 8 or 8.5");
       return;
     }
     if (creating && !subject.trim()) {
@@ -245,11 +245,12 @@ export function RecordPaymentDialog({
               <Label htmlFor="pay-sessions">Sessions bought</Label>
               <Input
                 id="pay-sessions"
-                inputMode="numeric"
+                inputMode="decimal"
                 placeholder="8"
                 value={sessions}
                 onChange={(e) => setSessions(e.target.value)}
               />
+              <p className="text-[11px] text-muted-foreground">Half sessions are fine, for example 8.5.</p>
             </div>
             <div className="space-y-1.5">
               <Label htmlFor="pay-rate">Rate per session (KES)</Label>

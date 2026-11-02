@@ -6,6 +6,7 @@ import {
   formatKes,
   isTopUpDue,
   needsConfirming,
+  parseSessions,
   weekRange,
   yesterdayRange,
   type LessonLike,
@@ -263,5 +264,23 @@ describe("formatKes", () => {
   it("copes with missing values", () => {
     assert.equal(formatKes(null), "—");
     assert.equal(formatKes(undefined), "—");
+  });
+});
+
+describe("parseSessions", () => {
+  it("reads whole sessions and half sessions", () => {
+    assert.equal(parseSessions("8"), 8);
+    assert.equal(parseSessions("8.5"), 8.5);
+    assert.equal(parseSessions(" 0.5 "), 0.5);
+    assert.equal(parseSessions(".5"), 0.5);
+    assert.equal(parseSessions("9999.99"), 9999.99);
+  });
+  it("reads a comma as the decimal point", () => {
+    assert.equal(parseSessions("3,5"), 3.5);
+  });
+  it("refuses what is not a positive number the database can hold", () => {
+    for (const bad of ["", "   ", "abc", "0", "0.00", "-2", "8.555", "1e3", "8 sessions", "10000", "."]) {
+      assert.ok(Number.isNaN(parseSessions(bad)), `"${bad}" should be refused`);
+    }
   });
 });

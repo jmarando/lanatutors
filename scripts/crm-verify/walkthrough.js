@@ -5,11 +5,14 @@
 // and after setting the window size with browser_resize (390x844 for a phone, 1280x800 for a desktop).
 // Edit BASE and OUT below if the port or the screenshot folder differ. No real data is touched: every
 // request to the Supabase host is answered from the fixtures below, which also mimic what the database
-// does for the two writes the screens make (Record payment and confirming a lesson).
+// does for the writes the screens make (Record payment, confirming a lesson, correcting or removing a
+// payment, changing a tutor).
 //
 // It signs in as a fake admin, then: opens Today (top-ups and lessons to confirm), confirms a lesson
 // and yesterday's lessons on /admin/lessons, records a payment on a family page and reads its
-// progress. It returns {results, errors}; every result must be ok and errors must be empty.
+// progress. Section 4 then records half a session, sets and changes a tutor (including the change the
+// database refuses), corrects a payment's date and reference and removes a payment entered by mistake.
+// It returns {results, errors}; every result must be ok and errors must be empty.
 async (page) => {
   const BASE = "http://127.0.0.1:4179";
   const OUT = "/tmp/crm-walkthrough";
@@ -175,8 +178,28 @@ async (page) => {
           } else { out = input; }
           return wantsBody ? reply(route, 201, wantsObject ? out[0] : out) : reply(route, 201);
         }
-        if (req.method() === "PATCH") { rows.forEach((r) => Object.assign(r, body)); return wantsBody ? reply(route, 200, rows) : reply(route, 204); }
+        if (req.method() === "PATCH") {
+          // What crm_enrolments_before_update_tutor does: a tutor change may not duplicate another entry
+          // for the same child, subject and tutor.
+          if (table === "enrolments" && body && "tutor_id" in body) {
+            for (const r of rows) {
+              const clash = enrolments.find((x) => x !== r && x.family_id === r.family_id
+                && x.subject.toLowerCase() === r.subject.toLowerCase()
+                && (x.student_name || "").toLowerCase() === (r.student_name || "").toLowerCase()
+                && x.tutor_id === body.tutor_id);
+              if (clash) return reply(route, 400, { code: "P0001", message: "There is already an entry for this child, subject and tutor. Record payments there instead." });
+            }
+          }
+          rows.forEach((r) => Object.assign(r, body));
+          return wantsBody ? reply(route, 200, rows) : reply(route, 204);
+        }
         if (req.method() === "DELETE") {
+          // What crm_session_packs_before_delete does: a payment lessons have used stays.
+          if (table === "session_packs") {
+            if (rows.some((r) => Number(r.sessions_used) > 0)) return reply(route, 400, { code: "P0001", message: "Sessions have already been taken from this payment, so it cannot be removed. Undo those lessons first." });
+            for (const r of rows) packs.splice(packs.indexOf(r), 1);
+            return wantsBody ? reply(route, 200, rows) : reply(route, 204);
+          }
           if (table === "lesson_reports") {
             for (const l of lessons) if (rows.length === 0 ? false : rows.some((r) => r.id === l.report_id)) { Object.assign(l, { report_id: null, attendance: null, covered: null, homework: null, engagement: null, tutor_pay_kes: null }); }
           }
@@ -264,6 +287,87 @@ async (page) => {
   await visible(page.getByText(/ref TESTREF3/), "Family: the new payment shows its reference");
   await shot("7-family-after-payment");
   await noOverflow("Family after payment");
+
+  // ------------------------------------------------------------ 4. Payments: half sessions, tutor, correct, remove
+  // Two more entries, made the way the team makes them: a payment recorded before a tutor was chosen, and a
+  // second entry with no tutor for a child and subject that already has one (the orphan the tutor fix is for).
+  const E3 = { id: "e0000000-0000-4000-8000-000000000003", family_id: F1, student_name: "Zuri Test", student_id: null, subject: "Science", tutor_id: null, status: "active", rate_per_session: null, opening_tutor_pay_kes: null, opening_tutor_paid_kes: null, opening_tutor_reference: null, notes: null, created_at: iso(nowMs - 5 * D), updated_at: iso(nowMs) };
+  const E4 = { ...E3, id: "e0000000-0000-4000-8000-000000000004", student_name: "Amani Test", subject: "Maths", created_at: iso(nowMs - 4 * D) };
+  enrolments.push(E3, E4);
+  packs.push(
+    { id: "p0000000-0000-4000-8000-000000000003", enrolment_id: E3.id, amount_kes: 9000, reference: "EARLY1", paid_on: "2026-10-20", sessions_bought: 6, rate_per_session: 1500, sessions_used: 0, notes: null, created_by: ADMIN, created_at: iso(nowMs - 5 * D) },
+    { id: "p0000000-0000-4000-8000-000000000004", enrolment_id: E4.id, amount_kes: 3000, reference: "ORPHAN1", paid_on: "2026-10-22", sessions_bought: 1, rate_per_session: 3000, sessions_used: 0, notes: null, created_by: ADMIN, created_at: iso(nowMs - 4 * D) },
+  );
+  await page.goto(`${BASE}/admin/families/${F1}`);
+  await visible(page.getByText("Zuri Test · Science").first(), "Payments: the entry with no tutor yet is listed");
+  // The entry blocks (not the card around them, not the payment list inside).
+  const entry = (label) => page.locator("div.rounded-lg.border.p-3", { has: page.getByText(label, { exact: true }) });
+
+  // Half a session.
+  await page.getByRole("button", { name: "Record payment", exact: true }).first().click();
+  const halfDialog = page.getByRole("dialog");
+  await visible(halfDialog.getByText("Record a payment"), "Half sessions: the dialog opens");
+  await halfDialog.locator("#pay-amount").fill("12750");
+  await halfDialog.locator("#pay-sessions").fill("8.5");
+  check("Half sessions: the rate fills in as 1500 for 8.5 sessions", (await halfDialog.locator("#pay-rate").inputValue()) === "1500", await halfDialog.locator("#pay-rate").inputValue());
+  await halfDialog.locator("#pay-ref").fill("HALF1");
+  await shot("8-half-session-payment");
+  await halfDialog.getByRole("button", { name: "Record payment" }).click();
+  await visible(page.getByText(/Recorded KES 12,750 for 8\.5 sessions/), "Half sessions: recording says 8.5 sessions");
+  const amaniMaths = entry("Amani Test · Maths").first();
+  await amaniMaths.getByRole("button", { name: /3 payments/ }).click();
+  await visible(amaniMaths.getByText(/8\.5 sessions/), "Half sessions: the payment is listed as 8.5 sessions");
+  const removeFlags = await amaniMaths.getByRole("button", { name: /Remove the payment of KES 24,000/ }).evaluateAll((els) => els.map((el) => el.disabled));
+  check("Remove: a payment lessons have used cannot be removed, a fresh one can", removeFlags.includes(true) && removeFlags.includes(false), JSON.stringify(removeFlags));
+  await noOverflow("Family with half-session payment");
+
+  // Set a tutor on the entry that has none, then try a change the database refuses.
+  const zuriScience = page.getByRole("combobox", { name: "Tutor for Zuri Test · Science" });
+  await zuriScience.click();
+  await page.getByRole("option", { name: "Tutor Two" }).click();
+  await visible(page.getByText("Tutor changed"), "Tutor: choosing a tutor for the entry with none saves it");
+  await page.waitForTimeout(500);
+  check("Tutor: the entry now shows Tutor Two", (await zuriScience.innerText()).includes("Tutor Two"), await zuriScience.innerText());
+  const amaniOrphan = page.getByRole("combobox", { name: "Tutor for Amani Test · Maths" }).nth(1); // the first is the entry that has Tutor One
+  check("Tutor: the orphan entry starts with no tutor", (await amaniOrphan.innerText()).includes("Not chosen yet"), await amaniOrphan.innerText());
+  await amaniOrphan.click();
+  await page.getByRole("option", { name: "Tutor One" }).click();
+  await visible(page.getByText(/There is already an entry for this child, subject and tutor/), "Tutor: a change that would duplicate another entry is refused with the database's message");
+  await page.waitForTimeout(500);
+  check("Tutor: the refused entry still has no tutor", (await amaniOrphan.innerText()).includes("Not chosen yet"), await amaniOrphan.innerText());
+  await shot("9-tutor");
+
+  // Correct a payment's reference and date.
+  const zuriBlock = entry("Zuri Test · Science");
+  await zuriBlock.getByRole("button", { name: /1 payment/ }).click();
+  await zuriBlock.getByRole("button", { name: "Correct the payment of KES 9,000" }).click();
+  const fixDialog = page.getByRole("dialog");
+  await visible(fixDialog.getByText("Correct a payment"), "Correct: the dialog opens");
+  await visible(fixDialog.getByText(/remove the payment and record it again/), "Correct: it says money changes mean remove and record again");
+  check("Correct: it starts with the saved reference", (await fixDialog.locator("#edit-pay-ref").inputValue()) === "EARLY1", await fixDialog.locator("#edit-pay-ref").inputValue());
+  await fixDialog.locator("#edit-pay-ref").fill("EARLY2");
+  await fixDialog.locator("#edit-pay-date").fill("2026-10-21");
+  await shot("10-correct-payment");
+  await fixDialog.getByRole("button", { name: "Save correction" }).click();
+  await visible(page.getByText("Payment corrected"), "Correct: saving says the payment was corrected");
+  await page.waitForTimeout(500);
+  if (!(await zuriBlock.getByText(/ref EARLY2/).count())) await zuriBlock.getByRole("button", { name: /1 payment/ }).click();
+  await visible(zuriBlock.getByText(/21 Oct 2026 · ref EARLY2/), "Correct: the list shows the new date and reference");
+
+  // Remove a payment entered by mistake: the orphan entry's one payment.
+  const orphanBlock = entry("Amani Test · Maths").nth(1);
+  await orphanBlock.getByRole("button", { name: /1 payment/ }).click();
+  await orphanBlock.getByRole("button", { name: "Remove the payment of KES 3,000" }).click();
+  const gone = page.getByRole("dialog");
+  await visible(gone.getByText("Remove this payment?"), "Remove: it asks first");
+  await visible(gone.getByText(/KES 3,000 for 1 session \(Amani Test · Maths\), ref ORPHAN1/), "Remove: it names the payment");
+  await shot("11-remove-payment");
+  await gone.getByRole("button", { name: "Remove payment" }).click();
+  await visible(page.getByText("Payment removed"), "Remove: saying so");
+  await page.waitForTimeout(500);
+  check("Remove: the orphan entry has no payments left", (await entry("Amani Test · Maths").nth(1).getByRole("button", { name: /1 payment/ }).count()) === 0);
+  await shot("12-after-remove");
+  await noOverflow("Family after correcting and removing");
 
   return { width: WIDTH, results, failed: results.filter((r) => !r.ok), errors };
 }
