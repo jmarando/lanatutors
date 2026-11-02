@@ -20,6 +20,40 @@
   sections 5 (data model, lesson flow, payment flow) and 6 (import plan).
 - **Slice 1:** `docs/superpowers/plans/2026-10-28-crm-leads-slice.md`.
 
+## Execution notes (30 Oct 2026)
+
+Built on branch `claude/quizzical-shaw-6700f6`. Where this plan and what was built differ, the build follows the
+amendments from the Task 0 checks and the rulings below.
+
+- [x] Task 0: pre-build checks, answered against production on 30 Oct (read-only).
+- [x] Task 1: migration `0006_crm_lessons.sql` (the plan said 0005, which is the hand-off fix), journal idx 6, snapshot chained to 0005.
+      `scripts/crm-verify/run.sh`: cases T00 to T22 (T21 and T22 run the tracker import SQL), the migration applied twice,
+      15 deliberate breakages of the migration all caught.
+- [x] Task 2: types and hooks (`crmTypes.ts`, `useCrmData.ts`), pure rules in `lessonsLogic.ts` with 27 tests (`npm run test:crm`).
+- [x] Task 3: Sessions card, Record payment, Progress on the family page.
+- [x] Task 4: `/admin/lessons`, with "Confirm yesterday's lessons" in one go and Undo.
+- [x] Task 5: Today gains "Top-ups due" and "Lessons to confirm".
+- [x] Task 6: `tracker_dry_run.py` and its tests. Reproduces the audit's totals on the real sheet (see its README).
+- [x] Task 7: tsc, build and ESLint pass; headless walkthrough at 390 px and 1280 px, 27 of 27 checks each.
+- [ ] Apply 0006 to production, publish, smoke-test (needs the user's go-ahead; HANDOFF-crm.md section 9).
+
+Rulings that change the plan:
+
+1. `package_purchases` is left alone; `session_packs` is new.
+2. **`bookings.status` is never written.** The reminder and post-session email functions filter on `confirmed`.
+3. Every lesson is linked to its enrolment by a `BEFORE INSERT` trigger on `bookings` (family, child, subject, tutor), so neither
+   `BookingCalendar` nor `ManualBookingDialog` was edited. Confirming a lesson that has none creates it then.
+4. Tutor pay is the constant 70% (`crm_tutor_share()`) of the pack's rate, fixed at confirmation. `platform_settings` is untouched.
+5. `crm_settings.lessons_from` is the cut-over (set to the apply time). Lessons that ended before it never join "Needs confirming":
+   the 110 historic bookings would otherwise flood the queue, and the tracker's opening balances already cover them.
+6. `sessions_bought` and `sessions_used` are `numeric(6,2)`, not integers: the tracker has half sessions (3.5 taken), inside the 59.
+   A lesson needs one whole session left in a pack.
+7. `sessions_used` is not capped at `sessions_bought`: the tracker lets a family owe sessions.
+8. A payment recorded after lessons were confirmed pays for them, oldest first. Deleting a report gives the session back;
+   attendance cannot be edited in place (undo, then confirm again).
+9. Opening tutor pay lives in `enrolments.opening_tutor_pay_kes / opening_tutor_paid_kes / opening_tutor_reference` for the payouts slice.
+10. A `crm_lessons` view serves the week and the queue; `crm_enrolment_balances` serves balances and top-ups.
+
 ## Global constraints
 
 - **Migration track.** `drizzle/migrations/0005_crm_lessons.sql`, with a journal

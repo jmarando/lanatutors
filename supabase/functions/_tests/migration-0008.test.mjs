@@ -40,13 +40,14 @@ test("migration 0008 keeps the function closed to the public, as 0004 did", asyn
   assert.match(sql, /REVOKE ALL ON FUNCTION public\.crm_record_assessment_booking\(public\.consultation_bookings\) FROM PUBLIC, anon, authenticated;/);
 });
 
-test("migration 0008 is the newest entry in the journal, with a snapshot that follows 0005's", async () => {
+test("migration 0008 is in the journal with a later time than everything before it, and a snapshot that follows 0005's", async () => {
   const journal = JSON.parse(await read("drizzle/migrations/meta/_journal.json"));
-  const last = journal.entries.at(-1);
+  const at = journal.entries.findIndex((entry) => entry.tag === "0008_inchat_booking");
+  const entry = journal.entries[at];
 
-  assert.equal(last.tag, "0008_inchat_booking");
-  assert.equal(last.idx, journal.entries.length - 1);
-  assert.ok(journal.entries.slice(0, -1).every((entry) => entry.when < last.when), "the newest entry has the latest time");
+  assert.ok(at > 0, "0008 is listed");
+  assert.equal(entry.idx, at);
+  assert.ok(journal.entries.slice(0, at).every((earlier) => earlier.when < entry.when), "it has a later time than the entries before it");
 
   const snapshot = JSON.parse(await read("drizzle/migrations/meta/0008_snapshot.json"));
   const before = JSON.parse(await read("drizzle/migrations/meta/0005_snapshot.json"));

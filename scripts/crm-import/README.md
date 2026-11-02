@@ -81,3 +81,79 @@ half-imported.
 - It does not invent a lost reason beyond `went_elsewhere`.
 - It keeps all personal data out of the repository: the sheet and the `out`
   folder live outside the code.
+
+# Payment tracker dry run (lessons slice)
+
+`tracker_dry_run.py` does for the team's **multi-student payment tracker** what the call-log script does for
+the call log: it turns the sheet into a reviewed list and a SQL import, and never writes to the database
+itself. The import needs `drizzle/migrations/0006_crm_lessons.sql` (enrolments, session packs, opening tutor pay).
+
+## Run it
+
+```bash
+python3 -I tracker_dry_run.py "<path to the tracker.xlsx>" ./tracker-out --check
+```
+
+- `.csv` works too (same columns), which is how the tests run it on an invented sheet.
+- The workbook's **Tutors** sheet gives the tutor name and phone list. For a CSV, pass `--tutors tutors.csv`.
+- `--check` exits with 1 when the totals differ from the targets. `--expect paid=..,taken=..,pay=..,outstanding=..`
+  changes the targets (default: the audit's KES 110,925 paid, 59 sessions taken, KES 66,535 tutor pay, KES 3,150 outstanding).
+- Tests: `python3 -I -m unittest discover -s scripts/crm-import -p "test_*.py"`.
+
+## What it does with each line
+
+A **line** is one child, one subject and one tutor under a parent. Each becomes one review row, with:
+
+- the amount, reference, rate (the typed one, else amount ÷ sessions paid), sessions paid and taken;
+- **tutor pay = rate × sessions taken × 70%**, the tracker's own formula, and what was already paid
+  (the whole line when its status is Paid; none when Pending or Partially Paid, because the sheet does not say how much was sent);
+- the tutor's phone, found in the Tutors sheet when every word of the name matches exactly one person.
+
+Things it decides for you, and flags so you can check:
+
+| Case | What it does |
+|---|---|
+| A line lists several subjects with counts, `Maths(3), English(2)`, and the counts add up to the sessions taken | Splits it into one row per subject (tutors paired in order, or the one tutor), sharing amount and sessions paid by the counts, so the totals do not move |
+| Counts that do not add up, no counts, or tutors that cannot be paired | Leaves it as one row, flagged: split it by hand in `review.csv` |
+| Sessions paid is blank | Sets it to the sessions taken, or to amount ÷ rate when nothing was taken, so the pack is valid. Money and balances are unchanged |
+| Sessions taken exceeds sessions paid | Keeps it (the family owes), flagged |
+| Half sessions (3.5) | Kept: the packs hold fractions |
+| No money or sessions on the line | Still makes the child and subject, with no pack |
+| A **continuation line**: money and sessions but no student, tutor or subject | Held back until you set `decision` to `attach`; proposed as another payment on the line above |
+
+## Reviewing
+
+Open `review.csv` and work down it:
+
+1. **`family_phone`** (or **`family_id`** for an existing family): the sheet has no parent phones, so each family is matched by hand.
+   Rows with neither are skipped and listed at the end of `import.sql`.
+2. **`decision`**: `attach` for a continuation line; `skip` to leave any row out.
+3. **`flags`**: read every one. Fix `tutor_phone` or `tutor_profile_id` where a tutor was not found.
+4. Edit amounts, sessions or subjects freely; `--from-review` recomputes the totals from the file.
+
+```bash
+python3 -I tracker_dry_run.py ./tracker-out/review.csv ./tracker-out --from-review
+```
+
+The summary prints the totals against the targets. **Do not import until they agree, or you know why they do not.**
+
+## Running `import.sql`
+
+Once, at the cut-over, **after** migration 0006 is applied and **before** anyone confirms a lesson for these families
+(confirming a lesson changes the sessions used and would fail the reconciliation).
+
+It runs in one transaction. For each row it finds or creates the family (by phone), the enrolment (same child, subject
+and tutor, so a top-up becomes a second pack on one enrolment) and the pack, with `paid_on` empty because the sheet has
+no payment dates, and adds the tutor pay and references to the enrolment's opening fields for the payouts slice.
+Each pack is marked `tracker import row N part M`, so running the file twice adds nothing.
+
+At the end it **adds up what it wrote and raises an exception if that differs from the review**, so a bad import keeps nothing.
+That check counts every pack marked `tracker import row ...`, so keep to one import per database. To redo one,
+delete those packs and clear `opening_tutor_*` on their enrolments first.
+
+## Known limits
+
+- The sheet's own "sessions paid" total will not equal the packs' total when blank cells were filled in; the summary shows the packs' figure.
+- A Partially Paid line counts wholly as outstanding until the payouts slice records the transfers.
+- Tutors typed as a list ("A, B") are not matched to tutor accounts; split the line and set `tutor_phone`.
+- Nothing here merges families. The same parent spelled two ways with different phones becomes two families.

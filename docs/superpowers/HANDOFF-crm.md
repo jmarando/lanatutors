@@ -1,5 +1,8 @@
 # CRM handoff — slice 1 is in the database; publish it, then build slice 2
 
+> **Update 2026-10-30:** slice 2 (lessons, prepaid sessions, tracker import) is built on branch
+> `claude/quizzical-shaw-6700f6` and not applied to production. See **section 9**; the sections below describe slice 1.
+
 _Written 2026-10-29 for a session with a database/Lovable connection, and updated
 the same day once the migration was applied. Everything below was verified on
 this machine; nothing here is a guess._
@@ -292,3 +295,56 @@ The cases themselves are listed in the slice-1 plan (Task 1, steps 2 and 9).
   publishing from Lovable only ships the screens. Lovable should skip 0004
   because it is recorded. After the publish, check that
   `drizzle.__drizzle_migrations` still has exactly one `9cedfcb5…` row.
+
+
+## 9. Slice 2: built on 2026-10-30, not applied
+
+Branch `claude/quizzical-shaw-6700f6`, worktree `.claude/worktrees/quizzical-shaw-6700f6`, on top of `main` plus the 0005 branch.
+Plan: `docs/superpowers/plans/2026-10-29-crm-lessons-slice.md` (see its "Execution notes"). Nothing has been pushed or applied.
+
+### What it adds
+
+| Piece | Where |
+|---|---|
+| Migration (tables, views, triggers, RPC, RLS) | `drizzle/migrations/0006_crm_lessons.sql`, journal idx 6 |
+| Lessons screen (`/admin/lessons`) | `src/pages/admin/CrmLessons.tsx`, `LessonRow.tsx`, `ConfirmLessonDialog.tsx`, `lessonActions.ts` |
+| Sessions card, Record payment, Progress on the family page | `SessionsCard.tsx`, `RecordPaymentDialog.tsx`, `StudentProgress.tsx` |
+| Today: Top-ups due, Lessons to confirm | `CrmToday.tsx`, `TopUpRow.tsx` |
+| The rules (attendance, Nairobi week, top-up, at-risk) | `lessonsLogic.ts`, tests in `scripts/crm-tests/` (`npm run test:crm`) |
+| Tracker import | `scripts/crm-import/tracker_dry_run.py`, its README and tests |
+| Checks | `scripts/crm-verify/` (scratch Postgres, SQL cases, the headless walkthrough) |
+
+### How it was checked
+
+- `scripts/crm-verify/run.sh`: a throw-away Postgres built from production's column lists, 0004 + 0005 + 0006 (twice), cases T00 to T22,
+  15 deliberate breakages of the migration, all caught. It also runs the SQL the tracker dry run writes: a wrong total is refused and rolls back,
+  the right one commits, and a second run adds nothing.
+- The tracker dry run on the real sheet, with invented family phones, applied to that scratch database: **KES 110,925 paid, 59 sessions taken,
+  KES 66,535 tutor pay, KES 3,150 outstanding, KES 15,875 credit held**, exactly the audit's figures.
+- `npx tsc --noEmit -p tsconfig.app.json`, `npm run build`, ESLint on the changed folders, `npm run test:crm` (27), the importer's 17 tests.
+- Headless walkthrough (mocked Supabase, `scripts/crm-verify/walkthrough.js`) at 390 px and 1280 px: 27 of 27 checks each.
+  It has not been run against real data or a real admin sign-in.
+
+### Applying it (needs the user's go-ahead, like 0004 and 0005)
+
+1. Read-only preflight through the connector: no `enrolments`, `session_packs` or `lesson_reports` yet; `drizzle.__drizzle_migrations` has 6 rows.
+2. One script through `query_database`: `BEGIN;`, a guard that refuses if the hash is already recorded, the contents of `0006_crm_lessons.sql`, the record from
+   `CRM_MIGRATION_TAG=0006_crm_lessons scripts/crm-apply/apply.sh --print-record`, `COMMIT;`. The hash is `shasum -a 256` of the file
+   (`70c87507...` when this was written; recompute if the file changes) and `when` is `1793356397613`.
+3. Check: 3 tables, 2 views, 6 triggers, 3 policies, 5 functions; `crm_settings.lessons_from` is the apply time; no enrolments yet (there is no backfill).
+4. Merge and publish **after** the migration. Published first, the new cards show "not available yet" instead of data, and nothing breaks.
+5. Smoke test as an admin: book a lesson in the past for a throwaway family (an enrolment appears), record a payment, confirm the lesson (one session used,
+   tutor pay 70% of the rate), undo it, then clean up. Check `bookings.status` is still `confirmed` after a confirmation.
+
+### Decisions and open points for the user
+
+- **The tracker has one more line than the audit counted.** The sheet's last family block ends with a top-up line with no student, tutor or subject
+  (KES 10,500, 3 sessions paid, 1 taken, tutor pay KES 2,450, no tutor-pay status). The audit's totals are the 16 named lines; the whole sheet gives
+  121,425 / 60 / 68,985 / 5,600. The dry run holds that line back until someone sets `decision` to `attach`; it prints both sets of totals.
+- **The cut-over date.** `crm_settings.lessons_from` defaults to the moment 0006 is applied. To change it:
+  `update public.crm_settings set lessons_from = '2026-11-02 00:00:00+03' where id;` (admins cannot update that table through the API on purpose).
+- **Free trial bookings** (the 30-minute chemistry check) also get an enrolment and will show in "Needs confirming" with no pack. Not special-cased.
+- **Default lead owner** (section 5 above) still has no control; it was not part of this slice.
+- **Existing RLS** lets a parent or tutor update any column of their own booking, now including `enrolment_id`. A lesson report always re-derives
+  its enrolment from the booking, but the policy deserves its own look.
+- **Tutor confirmation** by tutors themselves, payouts, the `platform_settings` tutor share and the 80% in Admin Reports are slice 3.

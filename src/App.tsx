@@ -37,6 +37,7 @@ const AdminDashboardRedesigned = lazy(() => import("./pages/AdminDashboard-Redes
 const CrmToday = lazy(() => import("./pages/admin/CrmToday"));
 const CrmLeads = lazy(() => import("./pages/admin/CrmLeads"));
 const CrmFamily = lazy(() => import("./pages/admin/CrmFamily"));
+const CrmLessons = lazy(() => import("./pages/admin/CrmLessons"));
 const BookConsultation = lazy(() => import("./pages/BookConsultation"));
 
 const AdminHolidayPackages = lazy(() => import("./pages/AdminHolidayPackages"));
@@ -82,6 +83,7 @@ export const AppContent = () => {
   const isCrmRoute =
     location.pathname === "/admin" ||
     location.pathname === "/admin/leads" ||
+    location.pathname === "/admin/lessons" ||
     location.pathname.startsWith("/admin/families/");
   return (
     <>
@@ -121,6 +123,7 @@ export const AppContent = () => {
           <Route path="/tutor-guide-printable" element={<TutorGuidePrintable />} />
           <Route path="/admin" element={<RequireRole roles={["admin"]}><CrmToday /></RequireRole>} />
           <Route path="/admin/leads" element={<RequireRole roles={["admin"]}><CrmLeads /></RequireRole>} />
+          <Route path="/admin/lessons" element={<RequireRole roles={["admin"]}><CrmLessons /></RequireRole>} />
           <Route path="/admin/families/:id" element={<RequireRole roles={["admin"]}><CrmFamily /></RequireRole>} />
           <Route path="/admin/more" element={<RequireRole roles={["admin"]}><AdminDashboardRedesigned /></RequireRole>} />
           <Route path="/book-consultation" element={<BookConsultation />} />

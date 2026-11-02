@@ -2,14 +2,14 @@
 
 - **Date:** 28 Oct 2026, updated the same day with the team's spreadsheets
 - **Branch:** `claude/crm-redesign`, cut from `main` at `87ed63a`
-- **Status:** approved on 28 Oct 2026. Slice 1 (leads) is built and verified on
-  this branch. It is **not applied to the live database** and the work is
-  uncommitted; `docs/superpowers/HANDOFF-crm.md` is the pick-up point.
-- **What is built:** `drizzle/migrations/0004_crm_leads.sql` (families, leads,
-  lead_activities, crm_settings, triggers, RLS, backfill), the Today / Leads /
-  Family screens, the "+ Lead" form, call logging, and the call-log import dry
-  run. The migration was applied twice to a scratch Postgres built from the
-  production column lists, and the behaviour cases in the slice plan pass.
+- **Status:** approved on 28 Oct 2026. Slice 1 (leads) is live: migrations 0004 and 0005 are applied and the
+  screens are published. Slice 2 (lessons and prepaid sessions) is **built and verified on branch
+  `claude/quizzical-shaw-6700f6`; migration `0006_crm_lessons.sql` is not applied to production yet**.
+  `docs/superpowers/HANDOFF-crm.md` (section 9) is the pick-up point.
+- **What slice 2 adds:** enrolments, session packs and lesson reports; a trigger that links every booking to an
+  enrolment; Record payment; the Lessons screen with the "Needs confirming" queue; top-ups due and lessons to
+  confirm on Today; student progress; and the payment-tracker import dry run (`scripts/crm-import/tracker_dry_run.py`).
+  Decisions taken while building it are in section 5 below and in the plan's execution notes.
 
 ## 1. What exists today
 
@@ -262,8 +262,10 @@ WhatsApp, proposed:
    - Optionally, a WhatsApp nudge reminds the tutor after each lesson. This needs an approved WhatsApp template.
 4. Admins can confirm a lesson for a tutor, or confirm all of yesterday's lessons at once.
 5. A confirmed lesson uses one session from the family's oldest pack. When a family is down to its last session, Today flags it for a top-up call.
-6. A delivered lesson's booking status becomes "completed", so Reports and the automations see it.
-   - Before building, check the reminder and post-session functions. They currently look for "confirmed" bookings.
+6. Delivery is recorded in `lesson_reports`; **the booking status is left alone**. (Checked 30 Oct 2026: production only has
+   `confirmed` and `pending`, and `send-session-reminders`, `send-consultation-reminder` and `send-post-session-emails` all filter on
+   `confirmed`; the post-session email picks confirmed bookings whose slot ended 48 to 49 hours ago, so flipping a lesson to
+   `completed` would skip the feedback email. Reports that want delivered lessons should read `lesson_reports`.)
 7. Each student has a progress view: attendance rate, lessons this month against the plan, the last three feedback notes, and the engagement trend.
    - A student is flagged at risk after two absences in a row, falling engagement, or no lesson in 14 days.
 

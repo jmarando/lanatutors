@@ -7,6 +7,7 @@
  */
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
+import type { Attendance } from "./lessonsLogic";
 
 export const OPEN_STAGES = ["new", "contacted", "call_booked", "call_done"] as const;
 
@@ -105,7 +106,127 @@ export type LeadActivity = {
 export type CrmSettings = {
   id: boolean;
   default_owner_id: string | null;
+  /** Cut-over: lessons that ended before this are history, not "Needs confirming". */
+  lessons_from: string;
   updated_at: string;
+}
+
+export type EnrolmentStatus = "active" | "paused" | "ended";
+
+/** One child, one subject and one tutor for a family: a line of the payment tracker. */
+export type Enrolment = {
+  id: string;
+  family_id: string;
+  student_name: string | null;
+  student_id: string | null;
+  subject: string;
+  tutor_id: string | null;
+  status: EnrolmentStatus;
+  rate_per_session: number | null;
+  opening_tutor_pay_kes: number | null;
+  opening_tutor_paid_kes: number | null;
+  opening_tutor_reference: string | null;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+/** What a family prepaid for an enrolment. A top-up is a new pack. */
+export type SessionPack = {
+  id: string;
+  enrolment_id: string;
+  amount_kes: number;
+  reference: string | null;
+  /** Empty for packs imported from the tracker, which has no payment dates. */
+  paid_on: string | null;
+  sessions_bought: number;
+  rate_per_session: number;
+  sessions_used: number;
+  notes: string | null;
+  created_by: string | null;
+  created_at: string;
+}
+
+/** The pack, the enrolment and the tutor's pay are filled in by the database when this is saved. */
+export type LessonReport = {
+  id: string;
+  booking_id: string;
+  enrolment_id: string | null;
+  attendance: Attendance;
+  covered: string | null;
+  homework: string | null;
+  engagement: number | null;
+  tutor_pay_kes: number | null;
+  pack_id: string | null;
+  confirmed_by: string | null;
+  confirmed_at: string;
+  created_at: string;
+}
+
+export type LessonReportInsert = {
+  booking_id: string;
+  attendance: Attendance;
+  covered?: string | null;
+  homework?: string | null;
+  engagement?: number | null;
+}
+
+export type LessonReportUpdate = {
+  covered?: string | null;
+  homework?: string | null;
+  engagement?: number | null;
+}
+
+/** crm_enrolment_balances: sessions and credit per enrolment, with the family's names joined in. */
+export type EnrolmentBalance = {
+  enrolment_id: string;
+  family_id: string;
+  family_name: string | null;
+  family_phone: string | null;
+  student_name: string | null;
+  subject: string;
+  tutor_id: string | null;
+  tutor_name: string | null;
+  status: EnrolmentStatus;
+  rate_per_session: number | null;
+  packs: number;
+  sessions_bought: number;
+  sessions_used: number;
+  sessions_left: number;
+  amount_paid: number;
+  /** Paid minus sessions used times the rate: negative means the family owes. */
+  balance: number;
+  /** Counted lessons confirmed before any pack could pay for them. */
+  unpriced_lessons: number;
+  last_lesson_at: string | null;
+}
+
+/** crm_lessons: every lesson with its names and, once confirmed, its report. */
+export type CrmLesson = {
+  booking_id: string;
+  enrolment_id: string | null;
+  family_id: string | null;
+  family_name: string | null;
+  family_phone: string | null;
+  student_name: string | null;
+  subject: string;
+  tutor_user_id: string;
+  tutor_profile_id: string | null;
+  tutor_name: string;
+  starts_at: string;
+  ends_at: string;
+  booking_status: string;
+  class_type: string | null;
+  report_id: string | null;
+  attendance: Attendance | null;
+  covered: string | null;
+  homework: string | null;
+  engagement: number | null;
+  tutor_pay_kes: number | null;
+  pack_id: string | null;
+  confirmed_at: string | null;
+  /** False for lessons that ended before the cut-over. */
+  tracked: boolean;
 }
 
 export interface TeamMember {
@@ -175,9 +296,41 @@ export type CrmDatabase = {
         Partial<WhatsAppConversation> & { phone_number: string },
         Partial<WhatsAppConversation>
       >;
+      enrolments: Table<
+        Enrolment,
+        Partial<Omit<Enrolment, "id" | "created_at" | "updated_at">> & {
+          family_id: string;
+          subject: string;
+        },
+        Partial<Omit<Enrolment, "id" | "family_id" | "created_at" | "updated_at">>
+      >;
+      session_packs: Table<
+        SessionPack,
+        Partial<Omit<SessionPack, "id" | "created_at">> & {
+          enrolment_id: string;
+          amount_kes: number;
+          sessions_bought: number;
+        },
+        Partial<Omit<SessionPack, "id" | "enrolment_id" | "created_at">>
+      >;
+      lesson_reports: Table<LessonReport, LessonReportInsert, LessonReportUpdate>;
     };
-    Views: Record<string, never>;
+    Views: {
+      crm_enrolment_balances: { Row: EnrolmentBalance; Relationships: [] };
+      crm_lessons: { Row: CrmLesson; Relationships: [] };
+    };
     Functions: {
+      crm_record_payment: {
+        Args: {
+          p_enrolment_id: string;
+          p_amount_kes: number;
+          p_reference?: string | null;
+          p_paid_on?: string | null;
+          p_sessions_bought: number;
+          p_rate_per_session?: number | null;
+        };
+        Returns: string;
+      };
       crm_create_lead: {
         Args: {
           p_phone: string;

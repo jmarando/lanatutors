@@ -6,15 +6,18 @@
 #   scripts/crm-apply/apply.sh --verify        # check only, change nothing
 #   scripts/crm-apply/apply.sh --print-record  # the INSERT to run by hand
 #
+# It applies 0004_crm_leads by default. For a later migration set its tag:
+#   CRM_MIGRATION_TAG=0006_crm_lessons scripts/crm-apply/apply.sh --print-record
+#
 # The URL can also live in ~/.config/lanatutors/db-url (chmod 600). Never put it
 # in .env: that file is tracked by git.
 set -euo pipefail
 
 REF="iccemuiqcdumgxiwxzdq"
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
-MIGRATION="$ROOT/drizzle/migrations/0004_crm_leads.sql"
+TAG="${CRM_MIGRATION_TAG:-0004_crm_leads}"
+MIGRATION="$ROOT/drizzle/migrations/$TAG.sql"
 JOURNAL="$ROOT/drizzle/migrations/meta/_journal.json"
-TAG="0004_crm_leads"
 
 URL="${LOVABLE_DB_MIGRATION_URL:-}"
 if [[ -z "$URL" && -f "$HOME/.config/lanatutors/db-url" ]]; then
@@ -66,7 +69,7 @@ select '$HASH', $WHEN
 where not exists (select 1 from drizzle.__drizzle_migrations where hash = '$HASH');
 "
 
-VERIFY_SQL="
+VERIFY_SQL_0004="
 select
   (select count(*) from pg_class c join pg_namespace n on n.oid = c.relnamespace
      where n.nspname = 'public' and c.relname in ('families','leads','lead_activities','crm_settings')) as tables,
@@ -84,6 +87,30 @@ select
   (select count(*) from public.whatsapp_conversations where family_id is not null) as chats_linked,
   (select count(*) from public.consultation_bookings where family_id is not null) as calls_linked;
 "
+
+# Expected after 0006: tables 3, views 2, triggers 6, policies 3, functions 5.
+VERIFY_SQL_0006="
+select
+  (select count(*) from pg_class c join pg_namespace n on n.oid = c.relnamespace
+     where n.nspname = 'public' and c.relname in ('enrolments','session_packs','lesson_reports')) as tables,
+  (select count(*) from pg_class c join pg_namespace n on n.oid = c.relnamespace
+     where n.nspname = 'public' and c.relkind = 'v' and c.relname in ('crm_enrolment_balances','crm_lessons')) as views,
+  (select count(*) from pg_trigger where not tgisinternal and tgname in
+     ('crm_bookings_before_insert','crm_lesson_reports_before_insert','crm_lesson_reports_before_update',
+      'crm_lesson_reports_after_delete','crm_session_packs_before_insert','crm_session_packs_after_insert')) as triggers,
+  (select count(*) from pg_policies where schemaname = 'public'
+     and tablename in ('enrolments','session_packs','lesson_reports')) as policies,
+  (select count(*) from pg_proc p join pg_namespace n on n.oid = p.pronamespace
+     where n.nspname = 'public'
+       and p.proname in ('crm_tutor_share','crm_norm_text','crm_ensure_family_for_user','crm_ensure_enrolment','crm_record_payment')) as functions,
+  (select lessons_from from public.crm_settings where id) as lessons_from,
+  (select count(*) from public.enrolments) as enrolments,
+  (select count(*) from public.bookings where enrolment_id is not null) as bookings_linked;
+"
+case "$TAG" in
+  0006_crm_lessons) VERIFY_SQL="$VERIFY_SQL_0006" ;;
+  *) VERIFY_SQL="$VERIFY_SQL_0004" ;;
+esac
 
 if [[ "${1:-}" == "--print-record" ]]; then
   echo "$RECORD_SQL"

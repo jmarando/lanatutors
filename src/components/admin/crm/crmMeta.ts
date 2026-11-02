@@ -188,6 +188,54 @@ export function formatDue(iso?: string | null): string {
   return `${dayLabel}, ${time}`;
 }
 
+/** "Today", or "Fri 6 Nov": the Nairobi date of a timestamp. */
+export function formatDay(iso?: string | null): string {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  if (dateKey(iso) === nairobiDate()) return "Today";
+  return new Intl.DateTimeFormat("en-GB", {
+    timeZone: NAIROBI,
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+  }).format(d);
+}
+
+/** "Tue 3 Nov, 4:00 PM to 5:00 PM" in Nairobi time, for a lesson. */
+export function formatSlot(startIso?: string | null, endIso?: string | null): string {
+  if (!startIso) return "";
+  const start = new Date(startIso);
+  if (Number.isNaN(start.getTime())) return "";
+  const day = new Intl.DateTimeFormat("en-GB", {
+    timeZone: NAIROBI,
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+  }).format(start);
+  const time = (d: Date) =>
+    new Intl.DateTimeFormat("en-US", {
+      timeZone: NAIROBI,
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
+    }).format(d);
+  const end = endIso ? new Date(endIso) : null;
+  return end && !Number.isNaN(end.getTime())
+    ? `${day}, ${time(start)} to ${time(end)}`
+    : `${day}, ${time(start)}`;
+}
+
+/** "Mon 2 Nov" for a YYYY-MM-DD Nairobi date. */
+export function formatDayHeading(key: string): string {
+  return new Intl.DateTimeFormat("en-GB", {
+    timeZone: "UTC",
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+  }).format(new Date(`${key}T00:00:00Z`));
+}
+
 /** YYYY-MM-DDTHH:mm for a datetime-local input, in Nairobi time. */
 export function toLocalInput(iso?: string | null): string {
   if (!iso) return "";
