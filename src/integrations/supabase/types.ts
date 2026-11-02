@@ -73,6 +73,7 @@ export type Database = {
           created_at: string | null
           currency: string | null
           deposit_paid: number | null
+          enrolment_id: string | null
           exchange_rate: number | null
           id: string
           meeting_link: string | null
@@ -99,6 +100,7 @@ export type Database = {
           created_at?: string | null
           currency?: string | null
           deposit_paid?: number | null
+          enrolment_id?: string | null
           exchange_rate?: number | null
           id?: string
           meeting_link?: string | null
@@ -125,6 +127,7 @@ export type Database = {
           created_at?: string | null
           currency?: string | null
           deposit_paid?: number | null
+          enrolment_id?: string | null
           exchange_rate?: number | null
           id?: string
           meeting_link?: string | null
@@ -144,6 +147,20 @@ export type Database = {
             columns: ["availability_slot_id"]
             isOneToOne: false
             referencedRelation: "tutor_availability"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "bookings_enrolment_id_fkey"
+            columns: ["enrolment_id"]
+            isOneToOne: false
+            referencedRelation: "crm_enrolment_balances"
+            referencedColumns: ["enrolment_id"]
+          },
+          {
+            foreignKeyName: "bookings_enrolment_id_fkey"
+            columns: ["enrolment_id"]
+            isOneToOne: false
+            referencedRelation: "enrolments"
             referencedColumns: ["id"]
           },
           {
@@ -261,6 +278,13 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "communication_logs_related_booking_id_fkey"
+            columns: ["related_booking_id"]
+            isOneToOne: false
+            referencedRelation: "crm_lessons"
+            referencedColumns: ["booking_id"]
+          },
+          {
             foreignKeyName: "communication_logs_related_consultation_id_fkey"
             columns: ["related_consultation_id"]
             isOneToOne: false
@@ -292,6 +316,13 @@ export type Database = {
             foreignKeyName: "communication_logs_tutor_id_fkey"
             columns: ["tutor_id"]
             isOneToOne: false
+            referencedRelation: "crm_lessons"
+            referencedColumns: ["tutor_profile_id"]
+          },
+          {
+            foreignKeyName: "communication_logs_tutor_id_fkey"
+            columns: ["tutor_id"]
+            isOneToOne: false
             referencedRelation: "tutor_profiles"
             referencedColumns: ["id"]
           },
@@ -308,6 +339,7 @@ export type Database = {
         Row: {
           additional_notes: string | null
           admin_notes: string | null
+          booked_via: string | null
           budget_range: string | null
           consultation_date: string
           consultation_outcome: string | null
@@ -339,6 +371,7 @@ export type Database = {
         Insert: {
           additional_notes?: string | null
           admin_notes?: string | null
+          booked_via?: string | null
           budget_range?: string | null
           consultation_date: string
           consultation_outcome?: string | null
@@ -370,6 +403,7 @@ export type Database = {
         Update: {
           additional_notes?: string | null
           admin_notes?: string | null
+          booked_via?: string | null
           budget_range?: string | null
           consultation_date?: string
           consultation_outcome?: string | null
@@ -480,16 +514,19 @@ export type Database = {
         Row: {
           default_owner_id: string | null
           id: boolean
+          lessons_from: string
           updated_at: string
         }
         Insert: {
           default_owner_id?: string | null
           id?: boolean
+          lessons_from?: string
           updated_at?: string
         }
         Update: {
           default_owner_id?: string | null
           id?: boolean
+          lessons_from?: string
           updated_at?: string
         }
         Relationships: []
@@ -526,6 +563,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "tutor_pricing_tiers"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "curriculum_level_tier_assignments_tutor_id_fkey"
+            columns: ["tutor_id"]
+            isOneToOne: false
+            referencedRelation: "crm_lessons"
+            referencedColumns: ["tutor_profile_id"]
           },
           {
             foreignKeyName: "curriculum_level_tier_assignments_tutor_id_fkey"
@@ -569,6 +613,93 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      enrolments: {
+        Row: {
+          created_at: string
+          family_id: string
+          id: string
+          notes: string | null
+          opening_tutor_paid_kes: number | null
+          opening_tutor_pay_kes: number | null
+          opening_tutor_reference: string | null
+          rate_per_session: number | null
+          status: string
+          student_id: string | null
+          student_name: string | null
+          subject: string
+          tutor_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          family_id: string
+          id?: string
+          notes?: string | null
+          opening_tutor_paid_kes?: number | null
+          opening_tutor_pay_kes?: number | null
+          opening_tutor_reference?: string | null
+          rate_per_session?: number | null
+          status?: string
+          student_id?: string | null
+          student_name?: string | null
+          subject: string
+          tutor_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          family_id?: string
+          id?: string
+          notes?: string | null
+          opening_tutor_paid_kes?: number | null
+          opening_tutor_pay_kes?: number | null
+          opening_tutor_reference?: string | null
+          rate_per_session?: number | null
+          status?: string
+          student_id?: string | null
+          student_name?: string | null
+          subject?: string
+          tutor_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "enrolments_family_id_fkey"
+            columns: ["family_id"]
+            isOneToOne: false
+            referencedRelation: "families"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "enrolments_student_id_fkey"
+            columns: ["student_id"]
+            isOneToOne: false
+            referencedRelation: "students"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "enrolments_tutor_id_fkey"
+            columns: ["tutor_id"]
+            isOneToOne: false
+            referencedRelation: "crm_lessons"
+            referencedColumns: ["tutor_profile_id"]
+          },
+          {
+            foreignKeyName: "enrolments_tutor_id_fkey"
+            columns: ["tutor_id"]
+            isOneToOne: false
+            referencedRelation: "tutor_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "enrolments_tutor_id_fkey"
+            columns: ["tutor_id"]
+            isOneToOne: false
+            referencedRelation: "tutor_profiles_public"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       exchange_rates: {
         Row: {
@@ -774,6 +905,13 @@ export type Database = {
             foreignKeyName: "general_learning_plan_requests_assigned_tutor_id_fkey"
             columns: ["assigned_tutor_id"]
             isOneToOne: false
+            referencedRelation: "crm_lessons"
+            referencedColumns: ["tutor_profile_id"]
+          },
+          {
+            foreignKeyName: "general_learning_plan_requests_assigned_tutor_id_fkey"
+            columns: ["assigned_tutor_id"]
+            isOneToOne: false
             referencedRelation: "tutor_profiles"
             referencedColumns: ["id"]
           },
@@ -830,6 +968,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "group_classes"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "group_class_attendance_tutor_id_fkey"
+            columns: ["tutor_id"]
+            isOneToOne: false
+            referencedRelation: "crm_lessons"
+            referencedColumns: ["tutor_profile_id"]
           },
           {
             foreignKeyName: "group_class_attendance_tutor_id_fkey"
@@ -945,6 +1090,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "group_classes"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "group_class_tutor_assignments_tutor_id_fkey"
+            columns: ["tutor_id"]
+            isOneToOne: false
+            referencedRelation: "crm_lessons"
+            referencedColumns: ["tutor_profile_id"]
           },
           {
             foreignKeyName: "group_class_tutor_assignments_tutor_id_fkey"
@@ -1126,6 +1278,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "intensive_programs"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "intensive_classes_tutor_id_fkey"
+            columns: ["tutor_id"]
+            isOneToOne: false
+            referencedRelation: "crm_lessons"
+            referencedColumns: ["tutor_profile_id"]
           },
           {
             foreignKeyName: "intensive_classes_tutor_id_fkey"
@@ -1531,6 +1690,13 @@ export type Database = {
             foreignKeyName: "leads_recommended_tutor_id_fkey"
             columns: ["recommended_tutor_id"]
             isOneToOne: false
+            referencedRelation: "crm_lessons"
+            referencedColumns: ["tutor_profile_id"]
+          },
+          {
+            foreignKeyName: "leads_recommended_tutor_id_fkey"
+            columns: ["recommended_tutor_id"]
+            isOneToOne: false
             referencedRelation: "tutor_profiles"
             referencedColumns: ["id"]
           },
@@ -1616,6 +1782,13 @@ export type Database = {
             foreignKeyName: "learning_plans_tutor_id_fkey"
             columns: ["tutor_id"]
             isOneToOne: false
+            referencedRelation: "crm_lessons"
+            referencedColumns: ["tutor_profile_id"]
+          },
+          {
+            foreignKeyName: "learning_plans_tutor_id_fkey"
+            columns: ["tutor_id"]
+            isOneToOne: false
             referencedRelation: "tutor_profiles"
             referencedColumns: ["id"]
           },
@@ -1624,6 +1797,87 @@ export type Database = {
             columns: ["tutor_id"]
             isOneToOne: false
             referencedRelation: "tutor_profiles_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lesson_reports: {
+        Row: {
+          attendance: string
+          booking_id: string
+          confirmed_at: string
+          confirmed_by: string | null
+          covered: string | null
+          created_at: string
+          engagement: number | null
+          enrolment_id: string | null
+          homework: string | null
+          id: string
+          pack_id: string | null
+          tutor_pay_kes: number | null
+        }
+        Insert: {
+          attendance: string
+          booking_id: string
+          confirmed_at?: string
+          confirmed_by?: string | null
+          covered?: string | null
+          created_at?: string
+          engagement?: number | null
+          enrolment_id?: string | null
+          homework?: string | null
+          id?: string
+          pack_id?: string | null
+          tutor_pay_kes?: number | null
+        }
+        Update: {
+          attendance?: string
+          booking_id?: string
+          confirmed_at?: string
+          confirmed_by?: string | null
+          covered?: string | null
+          created_at?: string
+          engagement?: number | null
+          enrolment_id?: string | null
+          homework?: string | null
+          id?: string
+          pack_id?: string | null
+          tutor_pay_kes?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lesson_reports_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: true
+            referencedRelation: "bookings"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lesson_reports_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: true
+            referencedRelation: "crm_lessons"
+            referencedColumns: ["booking_id"]
+          },
+          {
+            foreignKeyName: "lesson_reports_enrolment_id_fkey"
+            columns: ["enrolment_id"]
+            isOneToOne: false
+            referencedRelation: "crm_enrolment_balances"
+            referencedColumns: ["enrolment_id"]
+          },
+          {
+            foreignKeyName: "lesson_reports_enrolment_id_fkey"
+            columns: ["enrolment_id"]
+            isOneToOne: false
+            referencedRelation: "enrolments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lesson_reports_pack_id_fkey"
+            columns: ["pack_id"]
+            isOneToOne: false
+            referencedRelation: "session_packs"
             referencedColumns: ["id"]
           },
         ]
@@ -1687,6 +1941,13 @@ export type Database = {
           validity_days?: number | null
         }
         Relationships: [
+          {
+            foreignKeyName: "package_offers_tutor_id_fkey"
+            columns: ["tutor_id"]
+            isOneToOne: false
+            referencedRelation: "crm_lessons"
+            referencedColumns: ["tutor_profile_id"]
+          },
           {
             foreignKeyName: "package_offers_tutor_id_fkey"
             columns: ["tutor_id"]
@@ -1778,6 +2039,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "students"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "package_purchases_tutor_id_fkey"
+            columns: ["tutor_id"]
+            isOneToOne: false
+            referencedRelation: "crm_lessons"
+            referencedColumns: ["tutor_profile_id"]
           },
           {
             foreignKeyName: "package_purchases_tutor_id_fkey"
@@ -1877,6 +2145,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "package_purchases"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "package_subject_allocations_tutor_id_fkey"
+            columns: ["tutor_id"]
+            isOneToOne: false
+            referencedRelation: "crm_lessons"
+            referencedColumns: ["tutor_profile_id"]
           },
           {
             foreignKeyName: "package_subject_allocations_tutor_id_fkey"
@@ -2567,6 +2842,63 @@ export type Database = {
         }
         Relationships: []
       }
+      session_packs: {
+        Row: {
+          amount_kes: number
+          created_at: string
+          created_by: string | null
+          enrolment_id: string
+          id: string
+          notes: string | null
+          paid_on: string | null
+          rate_per_session: number
+          reference: string | null
+          sessions_bought: number
+          sessions_used: number
+        }
+        Insert: {
+          amount_kes: number
+          created_at?: string
+          created_by?: string | null
+          enrolment_id: string
+          id?: string
+          notes?: string | null
+          paid_on?: string | null
+          rate_per_session: number
+          reference?: string | null
+          sessions_bought: number
+          sessions_used?: number
+        }
+        Update: {
+          amount_kes?: number
+          created_at?: string
+          created_by?: string | null
+          enrolment_id?: string
+          id?: string
+          notes?: string | null
+          paid_on?: string | null
+          rate_per_session?: number
+          reference?: string | null
+          sessions_bought?: number
+          sessions_used?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "session_packs_enrolment_id_fkey"
+            columns: ["enrolment_id"]
+            isOneToOne: false
+            referencedRelation: "crm_enrolment_balances"
+            referencedColumns: ["enrolment_id"]
+          },
+          {
+            foreignKeyName: "session_packs_enrolment_id_fkey"
+            columns: ["enrolment_id"]
+            isOneToOne: false
+            referencedRelation: "enrolments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       student_notes: {
         Row: {
           created_at: string | null
@@ -2853,6 +3185,13 @@ export type Database = {
             foreignKeyName: "tutor_calendar_credentials_tutor_id_fkey"
             columns: ["tutor_id"]
             isOneToOne: true
+            referencedRelation: "crm_lessons"
+            referencedColumns: ["tutor_profile_id"]
+          },
+          {
+            foreignKeyName: "tutor_calendar_credentials_tutor_id_fkey"
+            columns: ["tutor_id"]
+            isOneToOne: true
             referencedRelation: "tutor_profiles"
             referencedColumns: ["id"]
           },
@@ -2931,6 +3270,13 @@ export type Database = {
             foreignKeyName: "tutor_inquiries_tutor_id_fkey"
             columns: ["tutor_id"]
             isOneToOne: false
+            referencedRelation: "crm_lessons"
+            referencedColumns: ["tutor_profile_id"]
+          },
+          {
+            foreignKeyName: "tutor_inquiries_tutor_id_fkey"
+            columns: ["tutor_id"]
+            isOneToOne: false
             referencedRelation: "tutor_profiles"
             referencedColumns: ["id"]
           },
@@ -2969,6 +3315,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "tutor_pricing_tiers_tutor_id_fkey"
+            columns: ["tutor_id"]
+            isOneToOne: false
+            referencedRelation: "crm_lessons"
+            referencedColumns: ["tutor_profile_id"]
+          },
           {
             foreignKeyName: "tutor_pricing_tiers_tutor_id_fkey"
             columns: ["tutor_id"]
@@ -3148,6 +3501,20 @@ export type Database = {
             referencedColumns: ["id"]
           },
           {
+            foreignKeyName: "tutor_reviews_booking_id_fkey"
+            columns: ["booking_id"]
+            isOneToOne: false
+            referencedRelation: "crm_lessons"
+            referencedColumns: ["booking_id"]
+          },
+          {
+            foreignKeyName: "tutor_reviews_tutor_id_fkey"
+            columns: ["tutor_id"]
+            isOneToOne: false
+            referencedRelation: "crm_lessons"
+            referencedColumns: ["tutor_profile_id"]
+          },
+          {
             foreignKeyName: "tutor_reviews_tutor_id_fkey"
             columns: ["tutor_id"]
             isOneToOne: false
@@ -3254,6 +3621,115 @@ export type Database = {
       }
     }
     Views: {
+      crm_enrolment_balances: {
+        Row: {
+          amount_paid: number | null
+          balance: number | null
+          enrolment_id: string | null
+          family_id: string | null
+          family_name: string | null
+          family_phone: string | null
+          last_lesson_at: string | null
+          packs: number | null
+          rate_per_session: number | null
+          sessions_bought: number | null
+          sessions_left: number | null
+          sessions_used: number | null
+          status: string | null
+          student_name: string | null
+          subject: string | null
+          tutor_id: string | null
+          tutor_name: string | null
+          unpriced_lessons: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "enrolments_family_id_fkey"
+            columns: ["family_id"]
+            isOneToOne: false
+            referencedRelation: "families"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "enrolments_tutor_id_fkey"
+            columns: ["tutor_id"]
+            isOneToOne: false
+            referencedRelation: "crm_lessons"
+            referencedColumns: ["tutor_profile_id"]
+          },
+          {
+            foreignKeyName: "enrolments_tutor_id_fkey"
+            columns: ["tutor_id"]
+            isOneToOne: false
+            referencedRelation: "tutor_profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "enrolments_tutor_id_fkey"
+            columns: ["tutor_id"]
+            isOneToOne: false
+            referencedRelation: "tutor_profiles_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      crm_lessons: {
+        Row: {
+          attendance: string | null
+          booking_id: string | null
+          booking_status: string | null
+          class_type: string | null
+          confirmed_at: string | null
+          covered: string | null
+          ends_at: string | null
+          engagement: number | null
+          enrolment_id: string | null
+          family_id: string | null
+          family_name: string | null
+          family_phone: string | null
+          homework: string | null
+          pack_id: string | null
+          report_id: string | null
+          starts_at: string | null
+          student_name: string | null
+          subject: string | null
+          tracked: boolean | null
+          tutor_name: string | null
+          tutor_pay_kes: number | null
+          tutor_profile_id: string | null
+          tutor_user_id: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bookings_enrolment_id_fkey"
+            columns: ["enrolment_id"]
+            isOneToOne: false
+            referencedRelation: "crm_enrolment_balances"
+            referencedColumns: ["enrolment_id"]
+          },
+          {
+            foreignKeyName: "bookings_enrolment_id_fkey"
+            columns: ["enrolment_id"]
+            isOneToOne: false
+            referencedRelation: "enrolments"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "enrolments_family_id_fkey"
+            columns: ["family_id"]
+            isOneToOne: false
+            referencedRelation: "families"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "lesson_reports_pack_id_fkey"
+            columns: ["pack_id"]
+            isOneToOne: false
+            referencedRelation: "session_packs"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       public_tutor_profiles: {
         Row: {
           avatar_url: string | null
@@ -3384,6 +3860,12 @@ export type Database = {
         }
         Returns: string
       }
+      crm_ensure_enrolment: {
+        Args: { b: Database["public"]["Tables"]["bookings"]["Row"] }
+        Returns: string
+      }
+      crm_ensure_family_for_user: { Args: { p_user: string }; Returns: string }
+      crm_norm_text: { Args: { p: string }; Returns: string }
       crm_normalize_phone: { Args: { p: string }; Returns: string }
       crm_open_lead: {
         Args: {
@@ -3401,6 +3883,17 @@ export type Database = {
         }
         Returns: string
       }
+      crm_record_payment: {
+        Args: {
+          p_amount_kes: number
+          p_enrolment_id: string
+          p_paid_on?: string
+          p_rate_per_session?: number
+          p_reference?: string
+          p_sessions_bought?: number
+        }
+        Returns: string
+      }
       crm_set_default_owner: { Args: { p_user_id: string }; Returns: undefined }
       crm_stage_label: { Args: { p_stage: string }; Returns: string }
       crm_team_members: {
@@ -3410,6 +3903,7 @@ export type Database = {
           user_id: string
         }[]
       }
+      crm_tutor_share: { Args: never; Returns: number }
       crm_upsert_family: {
         Args: { p_email?: string; p_name: string; p_phone: string }
         Returns: string
