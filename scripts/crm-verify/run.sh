@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 # Verify the CRM migrations on a throw-away Postgres.
 #
-#   scripts/crm-verify/run.sh            build the stand-in schema, apply 0004, 0005 and 0006 (twice),
-#                                        run the SQL tests, then tear the cluster down
+#   scripts/crm-verify/run.sh            build the stand-in schema, apply 0004, 0005, 0008 and 0006 (twice;
+#                                        the order production has: 0008 went in before 0006), run the SQL
+#                                        tests, then tear the cluster down
 #   scripts/crm-verify/run.sh --keep     leave the cluster running (prints how to connect)
 #   CRM_VERIFY_SKIP_TRACKER=1            skip the invented-tracker import (when applying a real-shaped one through
 #   CRM_VERIFY_EXTRA_SQL="a.sql b.sql"   SQL files applied last, in order)
@@ -55,6 +56,7 @@ apply() {
 
 apply "$MIGRATIONS/0004_crm_leads.sql"
 apply "$MIGRATIONS/0005_crm_handoff_next_step.sql"
+apply "$MIGRATIONS/0008_inchat_booking.sql"
 
 LESSONS="$MIGRATIONS/0006_crm_lessons.sql"
 if [ -f "$LESSONS" ]; then

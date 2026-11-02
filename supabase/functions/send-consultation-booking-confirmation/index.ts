@@ -12,7 +12,7 @@ const corsHeaders = {
 interface BookingConfirmationRequest {
   email: string;
   parentName: string;
-  studentName: string;
+  studentName?: string; // blank when the family booked in the WhatsApp chat and has not said yet
   consultationDate: string;
   consultationTime: string;
   meetingLink: string;
@@ -39,7 +39,13 @@ const handler = async (req: Request): Promise<Response> => {
   try {
     const { email, parentName, studentName, consultationDate, consultationTime, meetingLink, phoneNumber }: BookingConfirmationRequest = await req.json();
 
+    // How the email names the child: "Amani" and "Amani's", or "your child" and "your child's" when it is not known.
+    const child = studentName?.trim() ?? "";
+    const childName = child || "your child";
+    const childNamePossessive = child ? `${child}'s` : "your child's";
+
     const formattedDate = new Date(consultationDate).toLocaleDateString('en-US', { 
+      timeZone: 'UTC', // the date is a calendar day, not a moment: read it in UTC so the server's clock cannot change it
       weekday: 'long', 
       year: 'numeric', 
       month: 'long', 
@@ -59,8 +65,9 @@ const handler = async (req: Request): Promise<Response> => {
     };
 
     const { hours, minutes } = parseTime(consultationTime);
-    const startDateTime = new Date(consultationDate);
-    startDateTime.setHours(hours, minutes, 0, 0);
+    // The time is Nairobi time (UTC+3, no daylight saving). Written with its offset, so the calendar links are right
+    // whatever time zone the server's clock is in.
+    const startDateTime = new Date(`${consultationDate}T${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:00+03:00`);
     const endDateTime = new Date(startDateTime.getTime() + 20 * 60000); // 20 minutes later
 
     // Format for Google Calendar URL (YYYYMMDDTHHmmssZ format)
@@ -68,8 +75,8 @@ const handler = async (req: Request): Promise<Response> => {
       return date.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
     };
 
-    const eventTitle = encodeURIComponent(`Free Consultation with Lana Tutors - ${studentName}`);
-    const eventDescription = encodeURIComponent(`Your free consultation session with Lana Tutors to discuss ${studentName}'s learning needs.\n\nJoin here: ${meetingLink}`);
+    const eventTitle = encodeURIComponent(child ? `Free Consultation with Lana Tutors - ${child}` : "Free Consultation with Lana Tutors");
+    const eventDescription = encodeURIComponent(`Your free consultation session with Lana Tutors to discuss ${childNamePossessive} learning needs.\n\nJoin here: ${meetingLink}`);
     const eventLocation = encodeURIComponent(meetingLink);
 
     // Google Calendar link
@@ -122,7 +129,7 @@ const handler = async (req: Request): Promise<Response> => {
           <div class="content">
             <div class="banner">
               <h2>Hi ${parentName},</h2>
-              <p>Great news! Your free consultation for <strong>${studentName}</strong> has been successfully scheduled with Lana Tutors.</p>
+              <p>Great news! Your free consultation for <strong>${childName}</strong> has been successfully scheduled with Lana Tutors.</p>
             </div>
 
             <div class="detail-box">
@@ -155,9 +162,9 @@ const handler = async (req: Request): Promise<Response> => {
               <h3>💡 What to Expect During Your Consultation</h3>
               <ul>
                 <li><strong>Meet Your Expert:</strong> You'll chat with a Lana Tutors curriculum specialist who understands your child's learning system</li>
-                <li><strong>Discuss Learning Needs:</strong> Share ${studentName}'s academic goals, challenges, and subjects where they need support</li>
+                <li><strong>Discuss Learning Needs:</strong> Share ${childNamePossessive} academic goals, challenges, and subjects where they need support</li>
                 <li><strong>Personalized Recommendations:</strong> Get expert advice on the best tutoring approach, subject combinations, and tutor matches</li>
-                <li><strong>Ask Questions:</strong> Learn about our tutoring methods, pricing packages, and how Lana Tutors can help ${studentName} excel</li>
+                <li><strong>Ask Questions:</strong> Learn about our tutoring methods, pricing packages, and how Lana Tutors can help ${childName} excel</li>
                 <li><strong>Next Steps:</strong> Receive a customized learning plan and immediate support to get started</li>
               </ul>
             </div>
@@ -175,7 +182,7 @@ const handler = async (req: Request): Promise<Response> => {
               <h3 style="color: #1A1A1A; margin-top: 0;">📝 Prepare for Your Session</h3>
               <p style="color: #737373; margin: 5px 0;">To make the most of your consultation, please have ready:</p>
               <ul style="color: #737373; line-height: 1.8;">
-                <li>List of subjects ${studentName} needs help with</li>
+                <li>List of subjects ${childName} needs help with</li>
                 <li>Current academic challenges or concerns</li>
                 <li>Your child's learning goals and aspirations</li>
                 <li>Any questions about our tutoring services</li>
@@ -183,7 +190,7 @@ const handler = async (req: Request): Promise<Response> => {
             </div>
 
             <div style="text-align: center; margin: 30px 0;">
-              <a href="mailto:info@lanatutors.africa?subject=Reschedule Consultation - ${studentName}" class="button button-secondary">📅 Need to Reschedule?</a>
+              <a href="mailto:info@lanatutors.africa?subject=Reschedule Consultation${child ? ` - ${child}` : ""}" class="button button-secondary">📅 Need to Reschedule?</a>
             </div>
 
             <p style="color: #737373; text-align: center; font-size: 14px; margin: 30px 0;">
@@ -246,7 +253,7 @@ const handler = async (req: Request): Promise<Response> => {
 
 Hi ${parentName},
 
-Your free consultation for *${studentName}* is confirmed! ✅
+Your free consultation for *${childName}* is confirmed! ✅
 
 📅 *Date:* ${formattedDate}
 ⏰ *Time:* ${consultationTime}

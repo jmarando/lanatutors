@@ -13,9 +13,10 @@ interface CalendarEventRequest {
   phoneNumber: string;
   consultationDate: string; // e.g. 2025-11-28 (ISO date only)
   consultationTime: string; // e.g. "12:00 PM"
-  subjects: string[];
-  gradeLevel: string;
+  subjects?: string[];
+  gradeLevel?: string;
   notes?: string;
+  source?: string; // "whatsapp" when the family booked in the WhatsApp chat
 }
 
 // Helper to convert 12-hour time ("12:00 PM") plus date string into a Date in EAT
@@ -56,6 +57,7 @@ const handler = async (req: Request): Promise<Response> => {
       subjects,
       gradeLevel,
       notes,
+      source,
     }: CalendarEventRequest = await req.json();
 
     // Use Google service account to create Meet link (same approach as generate-google-meet-link)
@@ -141,21 +143,25 @@ const handler = async (req: Request): Promise<Response> => {
     const startDateTime = buildStartDateTime(consultationDate, consultationTime);
     const endDateTime = new Date(startDateTime.getTime() + 20 * 60 * 1000); // 20 minutes
 
+    // A family that booked in the WhatsApp chat has not said the child's name, grade or subjects yet: leave those
+    // lines out rather than print them empty, and title the event with the parent's name.
+    const child = studentName?.trim();
     const eventDescription = [
       "Free Consultation",
-      `Parent: ${parentName}`,
-      `Student: ${studentName}`,
+      parentName ? `Parent: ${parentName}` : "",
+      child ? `Student: ${child}` : "",
       `Email: ${email}`,
       `Phone: ${phoneNumber}`,
-      `Grade Level: ${gradeLevel}`,
-      `Subjects: ${subjects.join(", ")}`,
+      gradeLevel ? `Grade Level: ${gradeLevel}` : "",
+      subjects?.length ? `Subjects: ${subjects.join(", ")}` : "",
       notes ? `Notes: ${notes}` : "",
+      source === "whatsapp" && !notes?.includes("Booked in the WhatsApp chat") ? "Booked in the WhatsApp chat" : "",
     ]
       .filter(Boolean)
       .join("\n");
 
     const calendarEvent = {
-      summary: `Consultation - ${studentName}`,
+      summary: child || parentName ? `Consultation - ${child || parentName}` : "Consultation",
       description: eventDescription,
       start: {
         dateTime: startDateTime.toISOString(),

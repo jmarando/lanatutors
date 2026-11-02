@@ -243,6 +243,7 @@ CREATE TABLE public.consultation_bookings (
   grade_level text,
   consultation_date date,
   consultation_time text,
+  status text DEFAULT 'pending',
   subjects_interest text[],
   preferred_mode text,
   budget_range text,
