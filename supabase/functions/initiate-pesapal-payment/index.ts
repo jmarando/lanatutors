@@ -8,6 +8,12 @@ const corsHeaders = {
 
 const PESAPAL_BASE_URL = 'https://pay.pesapal.com/v3'
 
+// The tutor whose deposit is 1% instead of the platform's. The booking, package and invoice screens have this id
+// written into them, so what they ask for and what is allowed here have to agree.
+const SPECIAL_TUTOR_ID = '4d9426d7-7294-492a-a2e9-4b1642ba1954'
+// What the screens use when platform_settings holds no deposit percentage (src/hooks/useDepositPercentage.ts).
+const DEFAULT_DEPOSIT_PERCENTAGE = 30
+
 serve(async (req) => {
   if (req.method === 'OPTIONS') {
     return new Response(null, { headers: corsHeaders })
@@ -94,6 +100,24 @@ serve(async (req) => {
       )
     }
 
+    // The deposits the screens may ask for on an order of this total: the platform's deposit percentage and, on the
+    // special tutor's orders, 1%. Null when the percentage cannot be read: none is guessed, so the order is refused
+    // until it can be.
+    const depositAmounts = async (total: number, tutorId: string | null): Promise<number[] | null> => {
+      const { data, error } = await supabase
+        .from('platform_settings')
+        .select('deposit_percentage')
+        .eq('id', 'global')
+        .maybeSingle()
+      if (error) {
+        console.error('Could not read the platform deposit percentage:', error)
+        return null
+      }
+      const percentage = Number(data?.deposit_percentage)
+      const platform = percentage > 0 && percentage <= 100 ? percentage : DEFAULT_DEPOSIT_PERCENTAGE
+      return [total * platform / 100, ...(tutorId === SPECIAL_TUTOR_ID ? [total * 0.01] : [])]
+    }
+
     const resolveExpected = async (): Promise<{ currency: string; allowed: number[] } | null> => {
       switch (pt) {
         case 'booking':
@@ -102,7 +126,7 @@ serve(async (req) => {
           if (!referenceId) return null
           const { data: b } = await supabase
             .from('bookings')
-            .select('amount, balance_due, currency')
+            .select('amount, balance_due, currency, tutor_id')
             .eq('id', referenceId)
             .maybeSingle()
           if (!b) return null
@@ -111,13 +135,10 @@ serve(async (req) => {
           if (pt === 'booking_balance') {
             return { currency: cur, allowed: [round2(b.balance_due)].filter((n) => n > 0) }
           }
-          // full payment, 30% deposit, 1% deposit (special tutor), or remaining balance
-          return {
-            currency: cur,
-            allowed: [full, full * 0.3, full * 0.01, Number(b.balance_due) || 0]
-              .map(round2)
-              .filter((n) => n > 0),
-          }
+          // The full price or a deposit. What is left after a deposit is paid as booking_balance, never as a booking.
+          const deposits = await depositAmounts(full, b.tutor_id)
+          if (!deposits) return null
+          return { currency: cur, allowed: [full, ...deposits].map(round2).filter((n) => n > 0) }
         }
         case 'package_purchase':
         case 'package':
@@ -125,13 +146,15 @@ serve(async (req) => {
           if (!referenceId) return null
           const { data: p } = await supabase
             .from('package_purchases')
-            .select('total_amount, currency')
+            .select('total_amount, currency, tutor_id')
             .eq('id', referenceId)
             .maybeSingle()
           if (!p) return null
           const cur = String(p.currency || 'KES').toUpperCase()
           const total = Number(p.total_amount) || 0
-          return { currency: cur, allowed: [total, total * 0.3, total * 0.01].map(round2).filter((n) => n > 0) }
+          const deposits = await depositAmounts(total, p.tutor_id)
+          if (!deposits) return null
+          return { currency: cur, allowed: [total, ...deposits].map(round2).filter((n) => n > 0) }
         }
         case 'intensive_enrollment': {
           if (!referenceId) return null
@@ -142,7 +165,9 @@ serve(async (req) => {
             .maybeSingle()
           if (!e) return null
           const total = Number(e.total_amount) || 0
-          return { currency: 'KES', allowed: [total, total * 0.3].map(round2).filter((n) => n > 0) }
+          const deposits = await depositAmounts(total, null)
+          if (!deposits) return null
+          return { currency: 'KES', allowed: [total, ...deposits].map(round2).filter((n) => n > 0) }
         }
         case 'group_class_enrollment': {
           if (!referenceId) return null

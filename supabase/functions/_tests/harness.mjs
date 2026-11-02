@@ -71,6 +71,8 @@ class Query {
   }
   run() {
     this.world.touch();
+    // A table the test has made unreadable: the database failing on this one query.
+    if (this.world.failTables.has(this.table)) return { data: null, error: { code: "XX000", message: "boom" } };
     const rows = (this.world.tables[this.table] ??= []);
     const matches = (row) => this.filters.every((test) => test(row));
     const conversations = this.table === "whatsapp_conversations";
@@ -150,6 +152,7 @@ const DEFAULT_ENV = {
 };
 
 const FUNCTIONS_URL = `${DEFAULT_ENV.SUPABASE_URL}/functions/v1/`;
+const PESAPAL_URL = "https://pay.pesapal.com/v3/";
 // What the two booking functions answer unless a test scripts something else.
 const FUNCTION_DEFAULTS = {
   "create-consultation-calendar-event": { status: 200, body: { success: true, eventId: "evt_1", meetingLink: "https://meet.google.com/abc-defg-hij" } },
@@ -171,6 +174,8 @@ function makeWorld({ conversations, gateway, anthropic, meta, bookings, function
     events: [], // what happened, in order: "insert booking", "update booking", "call <function>", "send text|interactive", "email <subject>"
     functionCalls: [], // calls to the booking functions: { name, headers, body }
     googleEvents: [], // calendar events created through Google: the event body
+    pesapalOrders: [], // orders submitted to Pesapal: the order request body
+    failTables: new Set(), // tables whose queries fail, e.g. world.failTables.add("platform_settings")
     functionQueue: Object.fromEntries(Object.entries(functions).map(([name, outcomes]) => [name, [...outcomes]])),
     failInsert: Boolean(failInsert), // the next insert into consultation_bookings fails
     rejectNextInsert: Boolean(rejectNextInsert), // the next one finds the time taken by someone else
@@ -267,6 +272,16 @@ function makeWorld({ conversations, gateway, anthropic, meta, bookings, function
         if (next.delayMs) await delay(next.delayMs, init.signal);
         if (next.throws) throw next.throws;
         return jsonResponse(next.status, next.body);
+      }
+      if (target.startsWith(PESAPAL_URL)) {
+        const step = target.slice(PESAPAL_URL.length);
+        if (step === "api/Auth/RequestToken") return jsonResponse(200, { token: "pesapal-token" });
+        if (step === "api/URLSetup/RegisterIPN") return jsonResponse(200, { ipn_id: "ipn_fake" });
+        if (step === "api/Transactions/SubmitOrderRequest") {
+          world.pesapalOrders.push(body);
+          return jsonResponse(200, { order_tracking_id: "track_fake", merchant_reference: body.id, redirect_url: "https://pay.pesapal.com/pay/track_fake" });
+        }
+        return jsonResponse(404, { error: `no such Pesapal call: ${step}` });
       }
       if (target === "https://api.resend.com/emails") {
         world.events.push(`email ${body.subject}`);
