@@ -20,9 +20,9 @@ export const BACKUP_REPLY = [
 export const ATTACHMENT_NOTICE =
   "Thanks for your message. I can't open voice notes, photos or files here, so could you type what you need?";
 
-export type PrefillIntent = "tutor_apply" | "assessment_call" | "learning_plan" | "callback" | "learn_more";
+export type PrefillIntent = "tutor_apply" | "assessment_call" | "learning_plan" | "callback" | "learn_more" | "december_classes";
 
-// What people send when they start a chat from a button instead of typing. The first four are the options in
+// What people send when they start a chat from a button instead of typing. The first four, and "december_classes", are the options in
 // src/components/WhatsAppChatButton.tsx (a test checks they stay in sync). "learn_more" comes from outside the
 // repo, probably a business listing or ad link, and is the most common starter.
 const PREFILLED: Record<PrefillIntent, string> = {
@@ -31,6 +31,7 @@ const PREFILLED: Record<PrefillIntent, string> = {
   learning_plan: "Hi Lana Tutors! I'd like a custom learning plan for my child.",
   callback: "Hi Lana Tutors! Please have a learning coordinator call me back.",
   learn_more: "Hi Lana Tutors! I'd like to learn more about your tutoring services.",
+  december_classes: "Hi Lana Tutors! I'd like to reserve a seat in the December holiday classes.",
 };
 
 const ASSESSMENT_CALL_REPLY = [
@@ -64,6 +65,23 @@ const TEAM_REPLIES: Record<PrefillIntent, string> = {
   // The team answers a learning-plan request the same way as an assessment-call request.
   assessment_call: ASSESSMENT_CALL_REPLY,
   learning_plan: ASSESSMENT_CALL_REPLY,
+  // The "December holiday classes" button, and the December page's buttons. It states only what holds whichever two
+  // weeks are chosen: no dates, cut-off or price, since none is settled and public pages show no prices. The team notes
+  // the seat on the family's timeline, so the reply asks for what they need to do that.
+  december_classes: [
+    "Hi, thank you for your interest in our December holiday classes.",
+    "",
+    "We are opening a few small online classes for students going into their final exam year: Form 3 and Grade 8, in Mathematics, Science and English. They run Monday to Friday in the morning (Nairobi time) for two weeks, 10 lessons of 75 minutes per subject.",
+    "",
+    "Reserving a seat is free, and nothing is paid until we confirm that your class is running. A class runs once at least 6 students have reserved, so the groups stay small.",
+    "",
+    "To note your seat, please tell us:",
+    "",
+    "1. Your child's name and grade",
+    "2. Which subjects you would like: Mathematics, Science, English",
+    "",
+    "Our Learning Coordinator will then confirm your seat.",
+  ].join("\n"),
   callback:
     "Hi! Absolutely. We’d be happy to arrange a call with our Learning Coordinator. Since we may be in different time zones, could you please share your preferred time for the call so we can coordinate accordingly?",
   // The button text is generic, so tutors write it too: the team's welcome gets one line for them.
@@ -92,9 +110,16 @@ export const CALLBACK_REPLY = TEAM_REPLIES.callback;
 const normalize = (text: string) =>
   text.toLowerCase().replace(/[’‘`]/g, "'").replace(/[^a-z0-9' ]+/g, " ").replace(/\s+/g, " ").trim();
 
+// The December page's buttons name the class ("... a seat in Form 3 Mathematics for the December holiday classes."), so
+// they cannot be matched whole. They are matched by their shape, and only with a short class name: a parent who writes
+// more than that gets the AI. reserveMessage in src/utils/holidayClasses.ts builds them (a test keeps the two in step).
+const DECEMBER_CLASS_REQUEST = /^hi lana tutors i'd like to reserve a seat in [a-z0-9' ]{3,60} for the december holiday classes$/;
+
 export function matchPrefill(text: string): { intent: PrefillIntent; reply: string } | null {
   const key = normalize(text);
-  const intent = (Object.keys(PREFILLED) as PrefillIntent[]).find((i) => normalize(PREFILLED[i]) === key);
+  const intent: PrefillIntent | undefined =
+    (Object.keys(PREFILLED) as PrefillIntent[]).find((i) => normalize(PREFILLED[i]) === key) ??
+    (DECEMBER_CLASS_REQUEST.test(key) ? "december_classes" : undefined);
   return intent ? { intent, reply: TEAM_REPLIES[intent] } : null;
 }
 
@@ -120,4 +145,22 @@ const SPAM_PATTERNS = [
 
 export function looksLikeSpam(text: string): boolean {
   return SPAM_PATTERNS.some((pattern) => pattern.test(text));
+}
+
+// The day after the December classes end (UTC midnight). Until then the AI is told about them, and the website's chat
+// button offers them (src/components/WhatsAppChatButton.tsx has the same date; a test checks the two match). Change it
+// when the dates are set.
+export const DECEMBER_CLASSES_UNTIL = "2026-12-19";
+
+// No dates, fee or link on purpose: the dates and the fee are not settled, and the page may not be live yet.
+const DECEMBER_CLASSES_NOTE = [
+  "DECEMBER HOLIDAY CLASSES (only while these classes are being sold)",
+  "We are opening a few small online group classes for students going into their final exam year: Form 3 and Grade 8, in Mathematics, Science and English. They run Monday to Friday in the mornings, Nairobi time, for two weeks: 10 lessons of 75 minutes per subject.",
+  "Reserving a seat is free, and nothing is paid until the team confirms that a class is running. A class runs once at least 6 students have reserved, so the groups stay small. The team confirms the dates, the fee and how to pay when it confirms the class: never quote a price, and do not state exact dates.",
+  "If someone asks about these classes or wants a seat, do not follow the assessment-call steps above and do not offer the booking link. Ask for the child's name, their grade and the subjects they want (Mathematics, Science, English). Once you have them, call escalate_to_team with a reason that starts \"December classes seat:\" followed by the child's name, grade and subjects, then reply that we have noted the seat and the Learning Coordinator will confirm which classes are running. If they ask for a grade or subject that is not listed, say the Learning Coordinator will check and note their interest, and still call escalate_to_team.",
+].join("\n");
+
+// What is added to the AI's prompt at `now`: the December classes until they end, otherwise nothing.
+export function seasonalNotes(now: Date): string {
+  return now.getTime() < Date.parse(DECEMBER_CLASSES_UNTIL) ? `\n\n${DECEMBER_CLASSES_NOTE}` : "";
 }
