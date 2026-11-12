@@ -3,6 +3,7 @@ import { toast } from "sonner";
 import {
   ArrowRight,
   CalendarCheck,
+  GraduationCap,
   Info,
   Loader2,
   MessageCircle,
@@ -15,7 +16,9 @@ import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import type { ActivityKind, LeadActivity, WhatsAppConversation } from "./crmTypes";
 import { crmDb } from "./crmTypes";
-import { formatDue } from "./crmMeta";
+import { isDeskActive } from "@/utils/decemberDesk";
+import { formatDue, nairobiDate } from "./crmMeta";
+import { DecemberSeatsDialog } from "./DecemberSeatsDialog";
 
 interface FamilyTimelineProps {
   familyId: string;
@@ -68,6 +71,8 @@ export function FamilyTimeline({
 }: FamilyTimelineProps) {
   const [note, setNote] = useState("");
   const [saving, setSaving] = useState(false);
+  const [seatsOpen, setSeatsOpen] = useState(false);
+  const deskActive = isDeskActive(nairobiDate());
 
   const entries = useMemo<Entry[]>(() => {
     const fromActivities: Entry[] = activities.map((a) => ({
@@ -132,6 +137,15 @@ export function FamilyTimeline({
         </Button>
       </div>
 
+      {deskActive && (
+        <div className="flex justify-end">
+          <Button type="button" variant="outline" size="sm" onClick={() => setSeatsOpen(true)}>
+            <GraduationCap className="h-4 w-4" />
+            December seats
+          </Button>
+        </div>
+      )}
+
       <ol className="space-y-2">
         {entries.map((entry) => {
           const meta = KIND_META[entry.kind] ?? KIND_META.note;
@@ -171,6 +185,15 @@ export function FamilyTimeline({
           </li>
         )}
       </ol>
+
+      <DecemberSeatsDialog
+        open={seatsOpen}
+        onOpenChange={setSeatsOpen}
+        familyId={familyId}
+        leadId={leadId}
+        activities={activities}
+        onAdded={onAdded}
+      />
     </div>
   );
 }
