@@ -1,0 +1,26 @@
+{
+  "about": "Invented December reservation notes. `expected` is what scripts/crm-verify/december-count.sql answers for them: scripts/crm-verify/december-counter.sh checks it (and --write refreshes it), and the parser is tested against the same numbers.",
+  "notes": [
+    { "id": "n01", "family_id": "a0000000-0000-4000-8000-00000000000a", "kind": "note", "occurred_at": "2026-11-09T07:00:00+00:00", "body": "DEC26 F3-MATHS F3-ENG - Amani" },
+    { "id": "n02", "family_id": "a0000000-0000-4000-8000-00000000000a", "kind": "note", "occurred_at": "2026-11-09T07:01:00+00:00", "body": "DEC26 G8-MATHS - Baraka" },
+    { "id": "n03", "family_id": "b0000000-0000-4000-8000-00000000000b", "kind": "note", "occurred_at": "2026-11-09T07:02:00+00:00", "body": "  dec26 f3-maths - Wanjiru" },
+    { "id": "n04", "family_id": "c0000000-0000-4000-8000-00000000000c", "kind": "note", "occurred_at": "2026-11-09T07:03:00+00:00", "body": "DEC26 F3-MATHS F3-MATHS - Kip" },
+    { "id": "n05", "family_id": "d0000000-0000-4000-8000-00000000000d", "kind": "note", "occurred_at": "2026-11-09T07:04:00+00:00", "body": "DEC26X F3-CHEM - not a reservation" },
+    { "id": "n06", "family_id": "d0000000-0000-4000-8000-00000000000d", "kind": "note", "occurred_at": "2026-11-09T07:05:00+00:00", "body": "Remember to ask about DEC26 F3-CHEM" },
+    { "id": "n07", "family_id": "a0000000-0000-4000-8000-00000000000a", "kind": "note", "occurred_at": "2026-11-09T07:06:00+00:00", "body": "DEC26 CANCEL F3-ENG - Amani" },
+    { "id": "n08", "family_id": "b0000000-0000-4000-8000-00000000000b", "kind": "note", "occurred_at": "2026-11-09T07:07:00+00:00", "body": "DEC26 F3-CHEM G8-SCI" },
+    { "id": "n09", "family_id": "e0000000-0000-4000-8000-00000000000e", "kind": "note", "occurred_at": "2026-11-09T07:08:00+00:00", "body": "DEC26 G8-ENG - Zawadi" },
+    { "id": "n10", "family_id": "e0000000-0000-4000-8000-00000000000e", "kind": "note", "occurred_at": "2026-11-09T07:09:00+00:00", "body": "DEC26 G8-ENG - Zawadi" },
+    { "id": "n11", "family_id": "c0000000-0000-4000-8000-00000000000c", "kind": "note", "occurred_at": "2026-11-09T07:10:00+00:00", "body": "DEC26 CANCELLED G8-ENG" },
+    { "id": "n12", "family_id": "a0000000-0000-4000-8000-00000000000a", "kind": "note", "occurred_at": "2026-11-09T07:11:00+00:00", "body": "DEC26 hello" },
+    { "id": "n13", "family_id": "c0000000-0000-4000-8000-00000000000c", "kind": "whatsapp", "occurred_at": "2026-11-09T07:12:00+00:00", "body": "DEC26 F3-MATHS" }
+  ],
+  "expected": [
+    { "code": "F3-MATHS", "seats": 3, "families": 3 },
+    { "code": "F3-CHEM", "seats": 1, "families": 1 },
+    { "code": "F3-ENG", "seats": 0, "families": 1 },
+    { "code": "G8-MATHS", "seats": 1, "families": 1 },
+    { "code": "G8-SCI", "seats": 1, "families": 1 },
+    { "code": "G8-ENG", "seats": 1, "families": 1 }
+  ]
+}

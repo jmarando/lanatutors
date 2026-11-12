@@ -1,16 +1,27 @@
 import { ReactNode } from "react";
 import { Link, useLocation } from "react-router-dom";
-import { Home, Users, CalendarDays, MoreHorizontal, ArrowLeft } from "lucide-react";
+import { Home, Users, CalendarDays, GraduationCap, MoreHorizontal, ArrowLeft, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { isDeskActive } from "@/utils/decemberDesk";
+import { nairobiDate } from "./crmMeta";
 
-export type CrmSection = "today" | "leads" | "lessons" | "family" | "more";
+export type CrmSection = "today" | "leads" | "lessons" | "december" | "family" | "more";
 
-const NAV = [
+interface NavItem {
+  key: CrmSection;
+  label: string;
+  to: string;
+  icon: LucideIcon;
+}
+
+const BASE_NAV: NavItem[] = [
   { key: "today", label: "Today", to: "/admin", icon: Home },
   { key: "leads", label: "Leads", to: "/admin/leads", icon: Users },
   { key: "lessons", label: "Lessons", to: "/admin/lessons", icon: CalendarDays },
-  { key: "more", label: "More", to: "/admin/more", icon: MoreHorizontal },
-] as const;
+];
+// Shown until the holiday classes are over (DECEMBER_DESK_UNTIL).
+const DECEMBER_NAV: NavItem = { key: "december", label: "December", to: "/admin/december", icon: GraduationCap };
+const MORE_NAV: NavItem = { key: "more", label: "More", to: "/admin/more", icon: MoreHorizontal };
 
 interface CrmShellProps {
   title: string;
@@ -27,6 +38,7 @@ interface CrmShellProps {
  */
 export function CrmShell({ title, subtitle, active, actions, backTo, children }: CrmShellProps) {
   const location = useLocation();
+  const nav = isDeskActive(nairobiDate()) ? [...BASE_NAV, DECEMBER_NAV, MORE_NAV] : [...BASE_NAV, MORE_NAV];
 
   return (
     <div className="min-h-screen bg-muted/30 md:flex">
@@ -37,7 +49,7 @@ export function CrmShell({ title, subtitle, active, actions, backTo, children }:
           </Link>
         </div>
         <nav className="flex-1 p-3 space-y-1">
-          {NAV.map((item) => {
+          {nav.map((item) => {
             const Icon = item.icon;
             const isActive = active === item.key || (active === "family" && item.key === "leads");
             return (
@@ -93,8 +105,8 @@ export function CrmShell({ title, subtitle, active, actions, backTo, children }:
         className="fixed inset-x-0 bottom-0 z-20 border-t bg-background md:hidden"
         style={{ paddingBottom: "env(safe-area-inset-bottom)" }}
       >
-        <div className="grid grid-cols-4">
-          {NAV.map((item) => {
+        <div className={cn("grid", nav.length === 5 ? "grid-cols-5" : "grid-cols-4")}>
+          {nav.map((item) => {
             const Icon = item.icon;
             const isActive =
               active === item.key || (active === "family" && item.key === "leads");
