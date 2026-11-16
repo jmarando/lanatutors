@@ -82,7 +82,8 @@ export const TutorBootcampTab = ({ tutorProfileId }: TutorBootcampTabProps) => {
         .from("intensive_classes")
         .select("*")
         .eq("tutor_id", tutorProfileId)
-        .eq("status", "active")
+        // Taking reservations or running (opened on the December desk); not archived.
+        .in("status", ["active", "confirmed"])
         .order("time_slot");
 
       if (classesError) throw classesError;
@@ -107,6 +108,12 @@ export const TutorBootcampTab = ({ tutorProfileId }: TutorBootcampTabProps) => {
           .select("id, full_name")
           .in("id", studentIds);
 
+        // A child enrolled by the team has a record of their own under the parent's login: the roster shows the child.
+        const childIds = [...new Set(enrollments?.map(e => e.student_profile_id).filter((id): id is string => Boolean(id)) || [])];
+        const { data: children } = childIds.length > 0
+          ? await supabase.from("students").select("id, full_name").in("id", childIds)
+          : { data: [] as { id: string; full_name: string }[] };
+
         // Map students to classes
         const studentsByClass: Record<string, EnrolledStudent[]> = {};
         
@@ -119,7 +126,7 @@ export const TutorBootcampTab = ({ tutorProfileId }: TutorBootcampTabProps) => {
               studentsByClass[classId].push({
                 id: enrollment.id,
                 student_id: enrollment.student_id,
-                student_name: profile?.full_name || "Unknown Student",
+                student_name: children?.find(c => c.id === enrollment.student_profile_id)?.full_name || profile?.full_name || "Unknown Student",
                 payment_status: enrollment.payment_status,
               });
             }

@@ -9,8 +9,10 @@ import {
   formatProgramRange,
   formatSlot,
   groupByGrade,
+  isRunning,
   pickProgram,
   reserveMessage,
+  seatsLeft,
   type HolidayClass,
   type HolidayProgram,
 } from "@/utils/holidayClasses";
@@ -112,9 +114,9 @@ const DecemberClasses = () => {
         }
         const { data: classes, error: classError } = await supabase
           .from("intensive_classes")
-          .select("id, subject, curriculum, grade_levels, time_slot, max_students")
+          .select("id, subject, curriculum, grade_levels, time_slot, max_students, current_enrollment, status")
           .eq("program_id", program.id)
-          .eq("status", "active");
+          .in("status", ["active", "confirmed"]);
         if (classError) throw classError;
         if (!cancelled) setState({ status: "ready", program, classes: classes ?? [] });
       } catch (error) {
@@ -215,7 +217,11 @@ const DecemberClasses = () => {
                       <div className="flex-1">
                         <p className="text-lg font-semibold">{c.subject}</p>
                         <p className="text-sm text-muted-foreground">
-                          Up to {c.max_students} students. Opens when {MIN_STUDENTS_TO_OPEN} reserve.
+                          {isRunning(c)
+                            ? seatsLeft(c) > 0
+                              ? `Running. ${seatsLeft(c)} ${seatsLeft(c) === 1 ? "seat" : "seats"} left.`
+                              : "Running. Full."
+                            : `Up to ${c.max_students} students. Opens when ${MIN_STUDENTS_TO_OPEN} reserve.`}
                         </p>
                       </div>
                       <Reserve

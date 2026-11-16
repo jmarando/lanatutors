@@ -192,7 +192,7 @@ const handler = async (req: Request): Promise<Response> => {
     }
     const programById: Record<string, Program> = Object.fromEntries(programs.map((p) => [p.id, p]));
 
-    // Active classes of those programs only
+    // Confirmed (running) classes of those programs only
     const { data: classes, error: classesError } = await supabase
       .from("intensive_classes")
       .select(`
@@ -206,7 +206,7 @@ const handler = async (req: Request): Promise<Response> => {
         program_id,
         current_enrollment
       `)
-      .eq("status", "active")
+      .eq("status", "confirmed")
       .in("program_id", programs.map((p) => p.id));
 
     if (classesError) {
@@ -214,9 +214,9 @@ const handler = async (req: Request): Promise<Response> => {
       throw new Error("Failed to fetch intensive classes");
     }
 
-    console.log(`Found ${classes?.length || 0} active classes in ${programs.length} program(s)`);
+    console.log(`Found ${classes?.length || 0} confirmed classes in ${programs.length} program(s)`);
     if (!classes?.length) {
-      return respond({ message: "No active classes to sync" });
+      return respond({ message: "No confirmed classes to sync. Open a class on the December desk first" });
     }
 
     // Fetch tutor names

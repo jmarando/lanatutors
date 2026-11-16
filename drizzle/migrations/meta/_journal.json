@@ -57,6 +57,13 @@
       "when": 1793610768403,
       "tag": "0006_crm_lessons",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1794840771640,
+      "tag": "0009_december_running_classes",
+      "breakpoints": true
     }
   ]
 }

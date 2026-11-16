@@ -42,6 +42,21 @@ const delay = (ms, signal) =>
     signal?.addEventListener("abort", () => { clearTimeout(timer); reject(signal.reason); }, { once: true });
   });
 
+// Tables whose rows get a uuid `id` from the database when an insert does not give one.
+const GENERATED_ID_TABLES = new Set(["students", "intensive_enrollments", "lead_activities", "payments"]);
+
+// Production's update_intensive_enrollment_count trigger: an enrolment takes a seat in each of its classes when it is
+// inserted and gives it back when it is deleted. It does nothing on update, as in production.
+function adjustSeats(world, enrolments, step) {
+  for (const enrolment of enrolments) {
+    for (const klass of world.tables.intensive_classes ?? []) {
+      if ((enrolment.enrolled_class_ids ?? []).includes(klass.id)) {
+        klass.current_enrollment = Math.max(0, (klass.current_enrollment ?? 0) + step);
+      }
+    }
+  }
+}
+
 // The slice of the supabase-js query builder the functions use, over in-memory tables.
 class Query {
   constructor(world, table) {
@@ -63,6 +78,8 @@ class Query {
   in(column, values) { this.filters.push((row) => values.includes(row[column])); return this; }
   order(column, { ascending = true } = {}) { this.sort = [column, ascending]; return this; }
   limit(count) { this.cap = count; return this; }
+  range(from, to) { this.window = [from, to]; return this; }
+  delete() { this.op = "delete"; return this; }
   or() { return this; }
   maybeSingle() { this.mode = "maybe"; return this; }
   single() { this.mode = "one"; return this; }
@@ -83,6 +100,11 @@ class Query {
     }
     let out;
     if (this.op === "insert") {
+      // A test can make the next insert(s) into a table fail, as the database would on a constraint or a dropped connection.
+      if ((this.world.failInserts[this.table] ?? 0) > 0) {
+        this.world.failInserts[this.table] -= 1;
+        return { data: null, error: { code: "XX000", message: "boom" } };
+      }
       // phone_number is the primary key, as in production.
       if (conversations && rows.some((row) => row.phone_number === this.payload.phone_number)) {
         return { data: null, error: { code: "23505", message: "duplicate key value violates unique constraint" } };
@@ -108,8 +130,9 @@ class Query {
       // A booking gets its id and creation time as the database would, the time from the (possibly mocked) clock.
       const row = this.table === "consultation_bookings"
         ? { id: crypto.randomUUID(), created_at: new Date().toISOString(), ...clone(this.payload) }
-        : { escalated: false, messages: [], ...clone(this.payload), created_at: this.payload.created_at ?? at, updated_at: at };
+        : { escalated: false, messages: [], ...(GENERATED_ID_TABLES.has(this.table) ? { id: crypto.randomUUID() } : {}), ...clone(this.payload), created_at: this.payload.created_at ?? at, updated_at: at };
       rows.push(row);
+      if (this.table === "intensive_enrollments") adjustSeats(this.world, [row], 1);
       out = [row];
     } else if (this.op === "upsert") {
       rows.push(clone(this.payload));
@@ -122,6 +145,10 @@ class Query {
         // Production's update_whatsapp_conversations_updated_at trigger.
         if (conversations) row.updated_at = this.world.timestamp();
       }
+    } else if (this.op === "delete") {
+      out = rows.filter(matches);
+      for (const row of out) rows.splice(rows.indexOf(row), 1);
+      if (this.table === "intensive_enrollments") adjustSeats(this.world, out, -1);
     } else {
       out = rows.filter(matches);
       if (this.sort) {
@@ -129,6 +156,7 @@ class Query {
         out = [...out].sort((a, b) => (a[column] < b[column] ? -1 : a[column] > b[column] ? 1 : 0) * (ascending ? 1 : -1));
       }
       if (this.cap !== null) out = out.slice(0, this.cap);
+      if (this.window) out = out.slice(this.window[0], this.window[1] + 1);
     }
     out = out.map(clone);
     if (this.mode === "maybe") return { data: out[0] ?? null, error: null };
@@ -173,6 +201,7 @@ function makeWorld({ conversations, gateway, anthropic, meta, bookings, function
     googleEvents: [], // calendar events created through Google: the event body
     functionQueue: Object.fromEntries(Object.entries(functions).map(([name, outcomes]) => [name, [...outcomes]])),
     failInsert: Boolean(failInsert), // the next insert into consultation_bookings fails
+    failInserts: {}, // table name to how many of its next inserts fail, e.g. world.failInserts.intensive_enrollments = 1
     rejectNextInsert: Boolean(rejectNextInsert), // the next one finds the time taken by someone else
     gatewayCalls: [], // AI gateway requests: { headers, body }
     anthropicCalls: [], // Claude requests: { headers, body }

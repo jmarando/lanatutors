@@ -6,7 +6,8 @@
 // (scripts/crm-verify/december-count.sql) rule for rule, and scripts/crm-tests/fixtures/december-notes.json is checked
 // against both.
 
-import { MIN_STUDENTS_TO_OPEN } from "./holidayClasses";
+import { MIN_STUDENTS_TO_OPEN, formatSlot } from "./holidayClasses";
+import { PAYBILL } from "./paybill";
 
 export const DECEMBER_CODES = ["F3-MATHS", "F3-CHEM", "F3-ENG", "G8-MATHS", "G8-SCI", "G8-ENG"] as const;
 export type DecemberCode = (typeof DECEMBER_CODES)[number];
@@ -215,4 +216,116 @@ export function buildSeatNote(input: { codes: DecemberCode[]; child: string; can
   const codes = DECEMBER_CODES.filter((code) => input.codes.includes(code));
   if (!child || codes.length === 0) return null;
   return `DEC26 ${input.cancel ? "CANCEL " : ""}${codes.join(" ")} - ${child}`;
+}
+
+export type MessageClass = {
+  grade: string;
+  subject: string;
+  slot: string;
+  tutorFirstName: string | null;
+  meetingLink: string | null;
+};
+
+const kes = (amount: number): string => `KES ${Math.round(amount).toLocaleString("en-US")}`;
+
+/** The M-Pesa paybill details, as the invoice shows them. */
+export function paybillBlock(): string {
+  return [
+    "How to pay (M-Pesa)",
+    `${PAYBILL.label}: ${PAYBILL.number}`,
+    `Account number: ${PAYBILL.account}`,
+    `Recipient: ${PAYBILL.recipient}`,
+    `After paying, send your M-Pesa confirmation to ${PAYBILL.sendTo}.`,
+  ].join("\n");
+}
+
+/** The message that asks a family to pay, sent by the team after Enrol. */
+export function buildPaymentMessage(m: {
+  parentName: string;
+  childName: string;
+  classes: MessageClass[];
+  startDate: string;
+  amount: number;
+  payBy: string;
+}): string {
+  const one = m.classes.length === 1;
+  return [
+    `Good news, ${m.parentName}: ${m.childName}'s ${one ? "class is" : "classes are"} running from ${longDay(m.startDate)}, online (Nairobi time):`,
+    ...m.classes.map(
+      (c) => `- ${c.grade} ${c.subject}, ${formatSlot(c.slot)}${c.tutorFirstName ? `, with ${c.tutorFirstName}` : ""}`,
+    ),
+    "",
+    `To keep ${m.childName}'s ${one ? "seat" : "seats"}, please pay ${kes(m.amount)} by ${longDay(m.payBy)}.`,
+    "",
+    paybillBlock(),
+    "",
+    `You will get the class ${one ? "link" : "links"} once payment is confirmed.`,
+  ].join("\n");
+}
+
+/** The class links, for a family that has paid; null when no class has a link yet. */
+export function buildLinksMessage(m: { parentName: string; childName: string; classes: MessageClass[] }): string | null {
+  const withLinks = m.classes.filter((c) => c.meetingLink);
+  if (withLinks.length === 0) return null;
+  return [
+    `Thank you, ${m.parentName}. We have received the payment for ${m.childName}. The class ${withLinks.length === 1 ? "link is" : "links are"} below (Nairobi time):`,
+    ...withLinks.map((c) => `- ${c.grade} ${c.subject}, ${formatSlot(c.slot)}: ${c.meetingLink}`),
+  ].join("\n");
+}
+
+/** For the families of a class that did not reach the seats it needs. */
+export function buildNotRunningMessage(m: { parentName: string; childName: string; className: string }): string {
+  return [
+    `Thank you for reserving, ${m.parentName}. ${m.className} did not reach the ${MIN_STUDENTS_TO_OPEN} students it needs, so it will not run this December and nothing has been charged for ${m.childName}.`,
+    "If you would like, we can arrange a free 20-minute assessment call with our Learning Coordinator and look at one-to-one options for January: https://lanatutors.africa/book-consultation",
+  ].join("\n\n");
+}
+
+/** A WhatsApp link to a number with the text filled in; null without a number. */
+export function waMessageLink(phone: string | null | undefined, text: string): string | null {
+  const digits = (phone ?? "").replace(/\D/g, "");
+  return digits ? `https://wa.me/${digits}?text=${encodeURIComponent(text)}` : null;
+}
+
+export type DeskEnrolment = {
+  id: string;
+  student_id: string;
+  student_profile_id: string | null;
+  enrolled_class_ids: string[];
+  payment_status: string;
+  total_amount: number;
+};
+export type DeskChild = { id: string; full_name: string };
+export type HolderStage = "reserved" | "enrolled" | "paid";
+
+/**
+ * Where one reservation stands: reserved, enrolled (waiting for payment) or paid. The enrolment is found by the family's login and
+ * the child's name (the reservation note names the child; the enrolment points at the child's record).
+ */
+export function holderStage(args: {
+  holding: Holding;
+  classId: string;
+  family: { parent_profile_id: string | null } | undefined;
+  enrolments: DeskEnrolment[];
+  children: DeskChild[];
+}): { stage: HolderStage; enrolment: DeskEnrolment | null } {
+  const { holding, classId, family, enrolments, children } = args;
+  const login = family?.parent_profile_id;
+  if (!login || !holding.child) return { stage: "reserved", enrolment: null };
+  const kidIds = children.filter((k) => sameChild(k.full_name, holding.child)).map((k) => k.id);
+  const found = enrolments.find(
+    (e) =>
+      e.student_id === login &&
+      e.student_profile_id !== null &&
+      kidIds.includes(e.student_profile_id) &&
+      e.enrolled_class_ids.includes(classId),
+  );
+  if (!found) return { stage: "reserved", enrolment: null };
+  return { stage: found.payment_status === "completed" ? "paid" : "enrolled", enrolment: found };
+}
+
+/** The classes one child of a family holds, in class order, from the family's reservation notes. */
+export function childCodes(lists: DeskLists, familyId: string, child: string): DecemberCode[] {
+  const held = lists.held.filter((h) => h.familyId === familyId && sameChild(h.child, child)).map((h) => h.code);
+  return DECEMBER_CODES.filter((code) => held.includes(code));
 }
