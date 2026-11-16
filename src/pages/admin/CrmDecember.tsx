@@ -334,7 +334,7 @@ export default function CrmDecember() {
                   {lists.unreadable.map((u, index) => (
                     <li key={`${u.familyId}-${index}`} className="px-3 py-2 text-sm">
                       <p className="break-words">{u.text}</p>
-                      <Link to={`/admin/families/${u.familyId}`} className="text-xs text-muted-foreground hover:underline">
+                      <Link to={`/admin/crm/${u.familyId}`} className="text-xs text-muted-foreground hover:underline">
                         {families.get(u.familyId)?.parent_name || "Open the family"}
                       </Link>
                     </li>

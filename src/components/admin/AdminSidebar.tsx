@@ -15,9 +15,12 @@ import {
   CalendarClock,
   BarChart3,
   Send,
-  Megaphone
+  Megaphone,
+  CalendarDays,
 } from "lucide-react";
 import { Link } from "react-router-dom";
+import { isDeskActive } from "@/utils/decemberDesk";
+import { nairobiDate } from "@/components/admin/crm/crmMeta";
 import { Badge } from "@/components/ui/badge";
 import {
   Sidebar,
@@ -44,6 +47,8 @@ interface AdminSidebarProps {
     consultationBookings: number;
     tutoringBookings: number;
     unassignedIntensiveClasses: number;
+    crmNeedsReply: number;
+    lessonsToConfirm: number;
   };
 }
 
@@ -111,9 +116,16 @@ export function AdminSidebar({ activeTab, onTabChange, counts }: AdminSidebarPro
         { 
           id: "crm", 
           label: "CRM",
-          // Opens the CRM's own screens (Today, Leads, Family) instead of a tab here.
-          to: "/admin", 
-          icon: Users 
+          icon: Users,
+          badge: counts.crmNeedsReply,
+          badgeVariant: "destructive" as const
+        },
+        { 
+          id: "lessons", 
+          label: "Lessons",
+          icon: CalendarDays,
+          badge: counts.lessonsToConfirm,
+          badgeVariant: "secondary" as const
         },
         { 
           id: "student-hub", 
@@ -186,6 +198,8 @@ export function AdminSidebar({ activeTab, onTabChange, counts }: AdminSidebarPro
           label: "Bootcamp Students", 
           icon: Sparkles 
         },
+        // The December desk, shown until the holiday classes are over (DECEMBER_DESK_UNTIL).
+        ...(isDeskActive(nairobiDate()) ? [{ id: "december", label: "December desk", icon: GraduationCap }] : []),
       ],
     },
     {

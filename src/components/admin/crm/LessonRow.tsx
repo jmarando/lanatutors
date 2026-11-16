@@ -66,7 +66,7 @@ export function LessonRow({ lesson, now, onConfirm, onUndo }: LessonRowProps) {
           {lesson.family_id ? (
             <>
               {" · "}
-              <Link to={`/admin/families/${lesson.family_id}`} className="text-primary hover:underline">
+              <Link to={`/admin/crm/${lesson.family_id}`} className="text-primary hover:underline">
                 {lesson.family_name || "Family"}
               </Link>
             </>

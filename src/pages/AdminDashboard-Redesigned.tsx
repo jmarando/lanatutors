@@ -1,5 +1,5 @@
-import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import { lazy, Suspense, useState, useEffect } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -22,7 +22,6 @@ import { TutorEmailList } from "@/components/admin/TutorEmailList";
 import { AdminIntensivePrograms } from "@/components/admin/AdminIntensivePrograms";
 import { AdminTutorProfileEdit } from "@/components/admin/AdminTutorProfileEdit";
 import { AdminStudentHub } from "@/components/admin/AdminStudentHub";
-import { AdminCrm } from "@/components/admin/AdminCrm";
 import { DailyOperationsCard } from "@/components/admin/DailyOperationsCard";
 import { BootcampEnrollments } from "@/components/admin/BootcampEnrollments";
 import { EmailComposer } from "@/components/admin/EmailComposer";
@@ -36,7 +35,25 @@ import { WhatsAppInbox } from "@/components/admin/WhatsAppInbox";
 import { WhatsAppCampaigns } from "@/components/admin/WhatsAppCampaigns";
 import AdminInvoices from "@/components/admin/AdminInvoices";
 import { sendCrmEvent, splitName, stageFromFollowUpStatus } from "@/utils/metaCrm";
+import { crmDb } from "@/components/admin/crm/crmTypes";
 
+// The CRM, Lessons and the December desk are tabs with addresses of their own (/admin/crm, /admin/crm/<family>,
+// /admin/lessons, /admin/december), so links, reloads and the back button work; the other tabs switch in place at /admin.
+const CrmList = lazy(() => import("@/components/admin/crm/CrmList"));
+const CrmLessons = lazy(() => import("@/pages/admin/CrmLessons"));
+const CrmDecember = lazy(() => import("@/pages/admin/CrmDecember"));
+const TAB_PATHS: Record<string, string> = { crm: "/admin/crm", lessons: "/admin/lessons", december: "/admin/december" };
+const tabForPath = (path: string): string | null => {
+  if (path === "/admin/crm" || path.startsWith("/admin/crm/")) return "crm";
+  if (path === "/admin/lessons") return "lessons";
+  if (path === "/admin/december") return "december";
+  return null;
+};
+const tabFallback = (
+  <div className="flex justify-center py-12">
+    <div className="h-6 w-6 animate-spin rounded-full border-b-2 border-primary" />
+  </div>
+);
 
 const AdminDashboard = () => {
   const navigate = useNavigate();
@@ -51,7 +68,21 @@ const AdminDashboard = () => {
   const [dashboardMetrics, setDashboardMetrics] = useState<any>(null);
   const [timeRange, setTimeRange] = useState<'7days' | '30days' | '90days'>('30days');
   const [unassignedIntensiveClasses, setUnassignedIntensiveClasses] = useState(0);
-  const [activeTab, setActiveTab] = useState<string>('dashboard');
+  const location = useLocation();
+  const [stateTab, setStateTab] = useState<string>('dashboard');
+  const pathTab = tabForPath(location.pathname);
+  const activeTab = pathTab ?? stateTab;
+  const setActiveTab = (tab: string) => {
+    const path = TAB_PATHS[tab];
+    if (path) {
+      navigate(path);
+      return;
+    }
+    setStateTab(tab);
+    if (pathTab) navigate('/admin');
+  };
+  // The menu's CRM badge (families waiting for a WhatsApp reply) and Lessons badge (lessons waiting to be confirmed).
+  const [crmCounts, setCrmCounts] = useState({ crmNeedsReply: 0, lessonsToConfirm: 0 });
   const [interviewFilter, setInterviewFilter] = useState<'all' | 'scheduled' | 'passed' | 'failed'>('all');
   const [editingNote, setEditingNote] = useState<string | null>(null);
   const [noteContent, setNoteContent] = useState("");
@@ -384,6 +415,31 @@ Reply with A, B, or C!
   useEffect(() => {
     checkAdminAccess();
   }, []);
+
+  useEffect(() => {
+    if (!isAdmin) return;
+    let active = true;
+    void (async () => {
+      const [reply, lessons] = await Promise.all([
+        crmDb
+          .from("leads")
+          .select("id", { count: "exact", head: true })
+          .eq("needs_reply", true)
+          .in("stage", ["new", "contacted", "call_booked", "call_done"]),
+        crmDb
+          .from("crm_lessons")
+          .select("id", { count: "exact", head: true })
+          .eq("tracked", true)
+          .is("report_id", null)
+          .neq("booking_status", "cancelled")
+          .lt("ends_at", new Date().toISOString()),
+      ]);
+      if (active) setCrmCounts({ crmNeedsReply: reply.count ?? 0, lessonsToConfirm: lessons.count ?? 0 });
+    })();
+    return () => {
+      active = false;
+    };
+  }, [isAdmin, location.pathname]);
 
   useEffect(() => {
     if (!isAdmin) return;
@@ -1307,6 +1363,7 @@ The Lana Tutors Team`
     consultationBookings: consultationBookings.length,
     tutoringBookings: tutoringBookings.length,
     unassignedIntensiveClasses,
+    ...crmCounts,
   };
 
   // Render Dashboard Overview Content
@@ -2365,7 +2422,11 @@ The Lana Tutors Team`
       case 'edit-tutors':
         return <AdminTutorProfileEdit />;
       case 'crm':
-        return <AdminCrm />;
+        return <Suspense fallback={tabFallback}><CrmList /></Suspense>;
+      case 'lessons':
+        return <Suspense fallback={tabFallback}><CrmLessons /></Suspense>;
+      case 'december':
+        return <Suspense fallback={tabFallback}><CrmDecember /></Suspense>;
       case 'student-hub':
         return <AdminStudentHub />;
       case 'bootcamp-enrollments':

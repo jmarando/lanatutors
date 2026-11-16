@@ -109,6 +109,7 @@ async (page) => {
       }
       if (path.startsWith("/rest/v1/")) {
         const table = path.split("/").pop();
+        if (table === "user_roles") return reply(route, 200, (req.headers()["accept"] || "").includes("vnd.pgrst.object") ? { role: "admin", user_id: ADMIN } : [{ role: "admin", user_id: ADMIN }]); // the dashboard's admin check
         if (req.method() === "GET") {
           if (table === "intensive_classes" && failClasses) return reply(route, 500, { message: "classes are down" });
           const rows = query(table, url.searchParams);
@@ -159,7 +160,7 @@ async (page) => {
   check("Desk: the other cards do not say check the notes", !/check the notes/.test(maths) && !/check the notes/.test(english));
   await visible(page.getByText("Notes the desk could not read"), "Desk: the unreadable-notes list is there");
   await visible(page.getByText("DEC26 hello"), "Desk: it shows the unreadable note");
-  await visible(page.getByRole("link", { name: "December" }).last(), "Desk: December is in the navigation");
+  if (WIDTH >= 768) await visible(page.getByRole("button", { name: /^December desk/ }), "Desk: the December desk is in the admin menu");
   await visible(page.getByText(/reservations close Fri 27 Nov/), "Desk: the cut-off is in the heading");
   await noOverflow("Desk");
   await shot("1-desk");
@@ -173,7 +174,8 @@ async (page) => {
   failClasses = false;
 
   // ------------------------------------------------------------ 3. Add December seats on a family page
-  await page.goto(`${BASE}/admin/families/${F1}`);
+  await page.goto(`${BASE}/admin/crm/${F1}`); // the family opens in the CRM panel; December seats is on its History tab
+  await page.getByRole("tab", { name: "History" }).click();
   await visible(page.getByRole("button", { name: "December seats" }), "Family: the December seats button is there");
   await page.getByRole("button", { name: "December seats" }).click();
   const dialog = page.getByRole("dialog");

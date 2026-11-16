@@ -2,7 +2,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation, useParams } from "react-router-dom";
 import { lazy, Suspense, useMemo, type ReactNode } from "react";
 import Navigation from "./components/Navigation";
 import { AuthProvider } from "@/contexts/AuthContext";
@@ -34,11 +34,6 @@ const StudentDashboard = lazy(() => import("./pages/StudentDashboard"));
 const UnifiedStudentDashboard = lazy(() => import("./pages/UnifiedStudentDashboard"));
 const TutorDashboard = lazy(() => import("./pages/TutorDashboard"));
 const AdminDashboardRedesigned = lazy(() => import("./pages/AdminDashboard-Redesigned"));
-const CrmToday = lazy(() => import("./pages/admin/CrmToday"));
-const CrmLeads = lazy(() => import("./pages/admin/CrmLeads"));
-const CrmFamily = lazy(() => import("./pages/admin/CrmFamily"));
-const CrmLessons = lazy(() => import("./pages/admin/CrmLessons"));
-const CrmDecember = lazy(() => import("./pages/admin/CrmDecember"));
 const BookConsultation = lazy(() => import("./pages/BookConsultation"));
 
 const AdminHolidayPackages = lazy(() => import("./pages/AdminHolidayPackages"));
@@ -78,19 +73,20 @@ const SchoolAdminDashboard = lazy(() => import("./pages/school/SchoolAdminDashbo
 const SchoolTeacherDashboard = lazy(() => import("./pages/school/SchoolTeacherDashboard"));
 const SchoolParentDashboard = lazy(() => import("./pages/school/SchoolParentDashboard"));
 
+// Old links to a family page open that family in the CRM's panel.
+const FamilyRedirect = () => {
+  const { id } = useParams<{ id: string }>();
+  return <Navigate to={id ? `/admin/crm/${id}` : "/admin/crm"} replace />;
+};
+
 export const AppContent = () => {
   const location = useLocation();
   const isSchoolRoute = location.pathname.startsWith("/school/");
-  // The CRM screens carry their own top bar and phone bottom bar.
-  const isCrmRoute =
-    location.pathname === "/admin" ||
-    location.pathname === "/admin/leads" ||
-    location.pathname === "/admin/lessons" ||
-    location.pathname === "/admin/december" ||
-    location.pathname.startsWith("/admin/families/");
+  // The admin (the CRM included) has no use for the public chat button, which would sit over the CRM panel on a phone.
+  const isAdminRoute = location.pathname === "/admin" || location.pathname.startsWith("/admin/");
   return (
     <>
-      {!isSchoolRoute && !isCrmRoute && <Navigation />}
+      {!isSchoolRoute && <Navigation />}
       <Suspense fallback={
         <div className="min-h-screen flex items-center justify-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary"></div>
@@ -124,12 +120,15 @@ export const AppContent = () => {
           <Route path="/tutor-profile-submitted" element={<TutorProfileSubmitted />} />
           <Route path="/tutor-onboarding-guide" element={<TutorOnboardingGuide />} />
           <Route path="/tutor-guide-printable" element={<TutorGuidePrintable />} />
-          <Route path="/admin" element={<RequireRole roles={["admin"]}><CrmToday /></RequireRole>} />
-          <Route path="/admin/leads" element={<RequireRole roles={["admin"]}><CrmLeads /></RequireRole>} />
-          <Route path="/admin/lessons" element={<RequireRole roles={["admin"]}><CrmLessons /></RequireRole>} />
-          <Route path="/admin/december" element={<RequireRole roles={["admin"]}><CrmDecember /></RequireRole>} />
-          <Route path="/admin/families/:id" element={<RequireRole roles={["admin"]}><CrmFamily /></RequireRole>} />
-          <Route path="/admin/more" element={<RequireRole roles={["admin"]}><AdminDashboardRedesigned /></RequireRole>} />
+          {/* The admin dashboard; the CRM, Lessons and the December desk are its tabs with addresses of their own. */}
+          <Route path="/admin" element={<RequireRole roles={["admin"]}><AdminDashboardRedesigned /></RequireRole>} />
+          <Route path="/admin/crm" element={<RequireRole roles={["admin"]}><AdminDashboardRedesigned /></RequireRole>} />
+          <Route path="/admin/crm/:familyId" element={<RequireRole roles={["admin"]}><AdminDashboardRedesigned /></RequireRole>} />
+          <Route path="/admin/lessons" element={<RequireRole roles={["admin"]}><AdminDashboardRedesigned /></RequireRole>} />
+          <Route path="/admin/december" element={<RequireRole roles={["admin"]}><AdminDashboardRedesigned /></RequireRole>} />
+          <Route path="/admin/families/:id" element={<FamilyRedirect />} />
+          <Route path="/admin/leads" element={<Navigate to="/admin/crm" replace />} />
+          <Route path="/admin/more" element={<Navigate to="/admin" replace />} />
           <Route path="/book-consultation" element={<BookConsultation />} />
           <Route path="/booking-confirmed" element={<BookingConfirmed />} />
           <Route path="/package-confirmed" element={<PackageConfirmed />} />
@@ -168,7 +167,7 @@ export const AppContent = () => {
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Suspense>
-      {!isSchoolRoute && !isCrmRoute && (
+      {!isSchoolRoute && !isAdminRoute && (
         <Suspense fallback={null}>
           <WhatsAppChatButton />
         </Suspense>

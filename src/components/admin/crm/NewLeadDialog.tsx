@@ -87,7 +87,7 @@ export function NewLeadDialog({ open, onOpenChange, onCreated }: NewLeadDialogPr
       return;
     }
     if (existing) {
-      navigate(`/admin/families/${existing.id}`);
+      navigate(`/admin/crm/${existing.id}`);
       onOpenChange(false);
       return;
     }
@@ -113,7 +113,7 @@ export function NewLeadDialog({ open, onOpenChange, onCreated }: NewLeadDialogPr
     toast.success("Lead added");
     onOpenChange(false);
     onCreated?.();
-    if (data) navigate(`/admin/families/${data}`);
+    if (data) navigate(`/admin/crm/${data}`);
   };
 
   return (
