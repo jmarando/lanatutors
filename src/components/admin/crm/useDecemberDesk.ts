@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { pickProgram, type HolidayProgram } from "@/utils/holidayClasses";
-import type { DeskNote } from "@/utils/decemberDesk";
+import type { DeskChild, DeskEnrolment, DeskNote } from "@/utils/decemberDesk";
 import { crmDb } from "./crmTypes";
 import { nairobiDate } from "./crmMeta";
 
@@ -33,10 +33,12 @@ export interface DeskData {
   program: HolidayProgram | null;
   classes: DeskClass[];
   notes: DeskNoteRow[];
+  enrolments: DeskEnrolment[];
+  children: DeskChild[];
 }
 
 const NOTE_LIMIT = 2000;
-const EMPTY: DeskData = { program: null, classes: [], notes: [] };
+const EMPTY: DeskData = { program: null, classes: [], notes: [], enrolments: [], children: [] };
 
 async function readTutorNames(tutorIds: (string | null)[]): Promise<Map<string, string>> {
   const ids = [...new Set(tutorIds.filter((id): id is string => Boolean(id)))];
@@ -99,12 +101,28 @@ export function useDecemberDesk() {
       const notes = (noteRes.data ?? []) as unknown as DeskNoteRow[];
       if (notes.length >= NOTE_LIMIT) throw new Error(`There are ${NOTE_LIMIT} or more December notes, more than the desk reads`);
 
+      const enrolRes = await supabase
+        .from("intensive_enrollments")
+        .select("id, student_id, student_profile_id, enrolled_class_ids, payment_status, total_amount")
+        .eq("program_id", program.id);
+      if (enrolRes.error) throw enrolRes.error;
+      const enrolments = (enrolRes.data ?? []) as DeskEnrolment[];
+      const childIds = [...new Set(enrolments.map((e) => e.student_profile_id).filter((id): id is string => Boolean(id)))];
+      let children: DeskChild[] = [];
+      if (childIds.length > 0) {
+        const kidsRes = await supabase.from("students").select("id, full_name").in("id", childIds);
+        if (kidsRes.error) throw kidsRes.error;
+        children = kidsRes.data ?? [];
+      }
+
       const rows = classRes.data ?? [];
       const tutorNames = await readTutorNames(rows.map((c) => c.tutor_id));
       setData({
         program,
         classes: rows.map((c) => ({ ...c, tutor_name: c.tutor_id ? (tutorNames.get(c.tutor_id) ?? null) : null })),
         notes,
+        enrolments,
+        children,
       });
       setError(null);
     } catch (e) {

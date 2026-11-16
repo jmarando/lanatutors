@@ -141,3 +141,12 @@ test("the business number is the one the chat button uses", async () => {
   assert.match(w.WHATSAPP_NUMBER, /^\d{12}$/);
   assert.ok(button.includes(`PHONE_NUMBER = "${w.WHATSAPP_NUMBER}"`), "the chat button has the same number");
 });
+
+test("a confirmed class is running, and the page can say how many seats are left", () => {
+  assert.equal(h.isRunning({ status: "confirmed" }), true);
+  assert.equal(h.isRunning({ status: "active" }), false);
+  assert.equal(h.isRunning({}), false);
+  assert.equal(h.seatsLeft({ max_students: 12, current_enrollment: 5 }), 7);
+  assert.equal(h.seatsLeft({ max_students: 12, current_enrollment: 15 }), 0);
+  assert.equal(h.seatsLeft({ max_students: 12 }), 12);
+});

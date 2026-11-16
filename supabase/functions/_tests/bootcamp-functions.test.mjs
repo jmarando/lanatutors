@@ -125,7 +125,7 @@ const TEN_DAYS = [
 
 const klass = (id, program_id, subject, time_slot, extra = {}) => ({
   id: `c${id}000000-0000-4000-8000-000000000000`, program_id, subject, curriculum: "8-4-4", grade_levels: ["Form 3"],
-  time_slot, meeting_link: "https://meet.google.com/x", tutor_id: "t1", current_enrollment: 3, status: "active", ...extra,
+  time_slot, meeting_link: "https://meet.google.com/x", tutor_id: "t1", current_enrollment: 3, status: "confirmed", ...extra,
 });
 
 async function syncWith(t, { programs, classes }) {
@@ -144,8 +144,9 @@ test("the sync fills the program's own class days, for its own classes only", as
   const maths = klass(1, "prog-2099", "Mathematics", "8:00 - 9:15 AM"); // the style last December's rows are stored in
   const english = klass(2, "prog-2099", "English", "11:00 AM - 12:15 PM");
   const archived = klass(3, "prog-2099", "Physics", "9:30 AM - 10:45 AM", { status: "archived" });
+  const reserving = klass(5, "prog-2099", "Chemistry", "9:30 AM - 10:45 AM", { status: "active" }); // still taking reservations
   const lastYears = klass(4, "prog-2025", "Biology", "8:00 - 9:15 AM"); // still active in the database
-  const fn = await syncWith(t, { programs: [FUTURE, PAST], classes: [maths, english, archived, lastYears] });
+  const fn = await syncWith(t, { programs: [FUTURE, PAST], classes: [maths, english, archived, reserving, lastYears] });
 
   const response = await fn.deliver(undefined); // the admin screen calls it with no body
   const result = await response.json();
@@ -155,7 +156,10 @@ test("the sync fills the program's own class days, for its own classes only", as
   assert.equal(result.created, 20, "two classes on ten days");
   assert.equal(fn.world.googleEvents.length, 20);
   assert.deepEqual([...new Set(fn.world.googleEvents.map((e) => e.start.dateTime.slice(0, 10)))].sort(), TEN_DAYS);
-  assert.ok(fn.world.googleEvents.every((e) => !/Physics|Biology/.test(e.summary)), "no archived class, no other year's class");
+  assert.ok(
+    fn.world.googleEvents.every((e) => !/Physics|Biology|Chemistry/.test(e.summary)),
+    "no archived class, no class still taking reservations, no other year's class",
+  );
 
   const first = fn.world.googleEvents.find((e) => e.summary.includes("Mathematics") && e.start.dateTime.startsWith("2099-12-07"));
   assert.equal(first.summary, "Bootcamp: Mathematics (8-4-4 Form 3) - Test Tutor");

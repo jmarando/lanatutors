@@ -150,10 +150,10 @@ async (page) => {
   await visible(card("F3-MATHS"), "Desk: the Form 3 Mathematics card is there");
   check("Desk: six class cards", (await page.locator("[data-class-code]").count()) === 6, await page.locator("[data-class-code]").count());
   const maths = await text(card("F3-MATHS"));
-  check("Desk: Form 3 Mathematics shows 3 reserved and needs 3 more", /Reserved 3 of 12/.test(maths) && /Needs 3 more/.test(maths), maths);
+  check("Desk: Form 3 Mathematics shows 3 reserved and needs 3 more", /Reserved 3 · Enrolled 0 · Paid 0 · of 12/.test(maths) && /Needs 3 more/.test(maths), maths);
   check("Desk: Form 3 Mathematics lists Amani, Wanjiru and Kip", ["Amani", "Wanjiru", "Kip"].every((n) => maths.includes(n)), maths);
   const english = await text(card("F3-ENG"));
-  check("Desk: Form 3 English is back to 0 after the cancel", /Reserved 0 of 12/.test(english), english);
+  check("Desk: Form 3 English is back to 0 after the cancel", /Reserved 0 · Enrolled 0 · Paid 0 · of 12/.test(english), english);
   const g8eng = await text(card("G8-ENG"));
   check("Desk: Grade 8 English says check the notes and flags the duplicate", /check the notes/.test(g8eng) && /possible duplicate/.test(g8eng), g8eng);
   check("Desk: the other cards do not say check the notes", !/check the notes/.test(maths) && !/check the notes/.test(english));

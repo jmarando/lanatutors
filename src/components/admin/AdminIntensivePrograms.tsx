@@ -73,7 +73,7 @@ export const AdminIntensivePrograms = () => {
       const { data: classesData, error: classesError } = await supabase
         .from("intensive_classes")
         .select("*")
-        .eq("status", "active")
+        .in("status", ["active", "confirmed"])
         .order("time_slot");
 
       if (classesError) throw classesError;

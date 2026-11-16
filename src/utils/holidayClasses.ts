@@ -16,11 +16,21 @@ export type HolidayClass = {
   grade_levels: string[];
   time_slot: string;
   max_students: number;
+  // Seats held, and where the class stands: `active` takes reservations, `confirmed` is running.
+  current_enrollment?: number | null;
+  status?: string | null;
 };
 
 // A class runs once this many families have reserved. Lana says the same number (whatsapp-webhook/lana.ts); a test
 // checks the two match.
 export const MIN_STUDENTS_TO_OPEN = 6;
+
+// A class the team has opened is running; until then it only takes reservations.
+export const isRunning = (c: { status?: string | null }): boolean => c.status === "confirmed";
+
+// Seats left in a class, from the seats the database counts (an enrolment holds a seat from the day it is made).
+export const seatsLeft = (c: { max_students: number; current_enrollment?: number | null }): number =>
+  Math.max(c.max_students - (c.current_enrollment ?? 0), 0);
 
 const day = (value: string): string => value.slice(0, 10);
 

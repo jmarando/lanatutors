@@ -3,7 +3,11 @@ import { describe, it } from "node:test";
 import {
   DECEMBER_CODES,
   DECEMBER_DESK_UNTIL,
+  buildLinksMessage,
+  buildNotRunningMessage,
+  buildPaymentMessage,
   buildSeatNote,
+  childCodes,
   classCode,
   classState,
   isDeskActive,
@@ -13,9 +17,13 @@ import {
   readLists,
   shortDay,
   tallyNotes,
+  holderStage,
+  waMessageLink,
   type DeskNote,
+  type Holding,
 } from "../../src/utils/decemberDesk";
 import fixture from "./fixtures/december-notes.json";
+import { PAYBILL } from "../../src/utils/paybill";
 
 type Fixture = {
   notes: (DeskNote & { kind: string })[];
@@ -168,5 +176,88 @@ describe("dates", () => {
     assert.equal(shortDay("2026-11-27"), "Fri 27 Nov");
     assert.equal(longDay("2026-12-04"), "Friday 4 December");
     assert.equal(longDay("2026-12-07"), "Monday 7 December");
+  });
+});
+
+describe("messages", () => {
+  const classes = [
+    { grade: "Form 3", subject: "Mathematics", slot: "8:00 AM - 9:15 AM", tutorFirstName: "Jane", meetingLink: "https://meet.example/maths" },
+    { grade: "Form 3", subject: "English", slot: "11:00 AM - 12:15 PM", tutorFirstName: null, meetingLink: null },
+  ];
+
+  it("asks for payment: the classes, the amount, the day to pay by and the paybill details", () => {
+    const text = buildPaymentMessage({ parentName: "Mrs Test", childName: "Amani", classes, startDate: "2026-12-07", amount: 8000, payBy: "2026-12-04" });
+    assert.match(text, /Good news, Mrs Test: Amani's classes are running from Monday 7 December/);
+    assert.match(text, /- Form 3 Mathematics, 8:00 – 9:15 AM, with Jane/);
+    assert.match(text, /- Form 3 English, 11:00 AM – 12:15 PM\n/); // no tutor yet, so no "with"
+    assert.match(text, /please pay KES 8,000 by Friday 4 December/);
+    assert.ok(text.includes(PAYBILL.number) && text.includes(PAYBILL.account) && text.includes(PAYBILL.recipient));
+    assert.match(text, /class links once payment is confirmed/);
+  });
+  it("speaks of one class and one seat in the singular", () => {
+    const text = buildPaymentMessage({ parentName: "Mrs Test", childName: "Amani", classes: [classes[0]], startDate: "2026-12-07", amount: 4000, payBy: "2026-12-04" });
+    assert.match(text, /Amani's class is running/);
+    assert.match(text, /keep Amani's seat/);
+    assert.match(text, /the class link once/);
+  });
+  it("sends the class links only for classes that have one, and nothing when none has", () => {
+    const text = buildLinksMessage({ parentName: "Mrs Test", childName: "Amani", classes }) as string;
+    assert.match(text, /Form 3 Mathematics, 8:00 – 9:15 AM: https:\/\/meet\.example\/maths/);
+    assert.doesNotMatch(text, /English/);
+    assert.equal(buildLinksMessage({ parentName: "Mrs Test", childName: "Amani", classes: [classes[1]] }), null);
+  });
+  it("tells a family a class is not running, that nothing was charged, and offers the assessment call", () => {
+    const text = buildNotRunningMessage({ parentName: "Mrs Test", childName: "Amani", className: "Form 3 Chemistry" });
+    assert.match(text, /Form 3 Chemistry did not reach the 6 students it needs/);
+    assert.match(text, /nothing has been charged/);
+    assert.match(text, /book-consultation/);
+  });
+  it("opens WhatsApp with the text in the link, and gives no link without a number", () => {
+    assert.equal(waMessageLink("254712345678", "Hi there & you"), "https://wa.me/254712345678?text=Hi%20there%20%26%20you");
+    assert.equal(waMessageLink(null, "x"), null);
+    assert.equal(waMessageLink("", "x"), null);
+  });
+});
+
+describe("holderStage", () => {
+  const holding: Holding = { familyId: "fam-1", child: "Amani", code: "F3-MATHS" };
+  const family = { parent_profile_id: "login-1" };
+  const children = [{ id: "kid-1", full_name: "amani" }];
+  const enrolment = (extra = {}) => ({
+    id: "e1", student_id: "login-1", student_profile_id: "kid-1", enrolled_class_ids: ["class-maths"],
+    payment_status: "pending", total_amount: 4000, ...extra,
+  });
+  const stage = (over: Record<string, unknown> = {}) =>
+    holderStage({ holding, classId: "class-maths", family, enrolments: [enrolment()], children, ...over } as Parameters<typeof holderStage>[0]);
+
+  it("is enrolled while the enrolment is unpaid or part paid, whatever the letter case of the name", () => {
+    assert.equal(stage().stage, "enrolled");
+    assert.equal(stage({ enrolments: [enrolment({ payment_status: "deposit_paid" })] }).stage, "enrolled");
+  });
+  it("is paid once the enrolment is completed", () => {
+    const found = stage({ enrolments: [enrolment({ payment_status: "completed" })] });
+    assert.equal(found.stage, "paid");
+    assert.equal(found.enrolment?.id, "e1");
+  });
+  it("stays reserved when the child is not enrolled in that class, or the family has no login, or the note names no child", () => {
+    assert.equal(stage({ classId: "class-english" }).stage, "reserved");
+    assert.equal(stage({ family: { parent_profile_id: null } }).stage, "reserved");
+    assert.equal(stage({ family: undefined }).stage, "reserved");
+    assert.equal(stage({ holding: { ...holding, child: "" } }).stage, "reserved");
+    assert.equal(stage({ enrolments: [enrolment({ student_id: "someone-else" })] }).stage, "reserved");
+  });
+});
+
+describe("childCodes", () => {
+  const A = "a0000000-0000-4000-8000-00000000000a";
+  const lists = readLists(notes);
+  it("lists the classes one child holds, in class order, whatever the letter case", () => {
+    assert.deepEqual(childCodes(lists, A, "amani"), ["F3-MATHS"]); // F3-ENG was cancelled
+    assert.deepEqual(childCodes(lists, A, "Baraka"), ["G8-MATHS"]);
+  });
+  it("finds a child the note gave no name, and nobody else's", () => {
+    const B = "b0000000-0000-4000-8000-00000000000b";
+    assert.deepEqual(childCodes(lists, B, ""), ["F3-CHEM", "G8-SCI"]);
+    assert.deepEqual(childCodes(lists, A, "Nobody"), []);
   });
 });

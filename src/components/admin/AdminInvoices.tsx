@@ -12,6 +12,7 @@ import { format } from "date-fns";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import lanaLogo from "@/assets/lana-tutors-invoice-logo.png";
+import { PAYBILL } from "@/utils/paybill";
 import { 
   FileText, 
   Download, 
@@ -588,12 +589,12 @@ export default function AdminInvoices() {
         <tr><td style="padding:24px 0 8px;font-weight:bold;font-size:15px">How to pay (M-Pesa)</td></tr>
         <tr><td>
           <table role="presentation" width="100%" cellpadding="8" cellspacing="0" style="border:1px solid #e5e7eb;border-radius:8px;background:#f9fafb">
-            <tr><td style="color:#6b7280">NCBA Paybill</td><td style="text-align:right;font-weight:bold">880100</td></tr>
-            <tr><td style="color:#6b7280">Account Number</td><td style="text-align:right;font-weight:bold">1006114657</td></tr>
-            <tr><td style="color:#6b7280">Recipient</td><td style="text-align:right;font-weight:bold">Lana Bespoke Limited</td></tr>
+            <tr><td style="color:#6b7280">${PAYBILL.label}</td><td style="text-align:right;font-weight:bold">${PAYBILL.number}</td></tr>
+            <tr><td style="color:#6b7280">Account Number</td><td style="text-align:right;font-weight:bold">${PAYBILL.account}</td></tr>
+            <tr><td style="color:#6b7280">Recipient</td><td style="text-align:right;font-weight:bold">${PAYBILL.recipient}</td></tr>
           </table>
         </td></tr>
-        <tr><td style="padding:10px 0 0;color:#6b7280;font-size:13px">After paying, send your M-Pesa confirmation to info@lanatutors.africa or WhatsApp +254 117 512316.</td></tr>`;
+        <tr><td style="padding:10px 0 0;color:#6b7280;font-size:13px">After paying, send your M-Pesa confirmation to ${PAYBILL.sendTo}.</td></tr>`;
 
       const html = `
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-family:Arial,Helvetica,sans-serif;color:#1f2937">
@@ -1523,21 +1524,21 @@ export default function AdminInvoices() {
                   </h3>
                   <div className="border rounded-lg divide-y text-sm">
                     <div className="flex justify-between px-3 py-1.5">
-                      <span className="text-muted-foreground">NCBA Paybill</span>
-                      <span className="font-bold">880100</span>
+                      <span className="text-muted-foreground">{PAYBILL.label}</span>
+                      <span className="font-bold">{PAYBILL.number}</span>
                     </div>
                     <div className="flex justify-between px-3 py-1.5">
                       <span className="text-muted-foreground">Account Number</span>
-                      <span className="font-bold">1006114657</span>
+                      <span className="font-bold">{PAYBILL.account}</span>
                     </div>
                     <div className="flex justify-between px-3 py-1.5">
                       <span className="text-muted-foreground">Recipient</span>
-                      <span className="font-bold">Lana Bespoke Limited</span>
+                      <span className="font-bold">{PAYBILL.recipient}</span>
                     </div>
                   </div>
                   <p className="text-xs text-muted-foreground">
                     Card and mobile money payments can also be made via Pesapal. After paying, send your
-                    M-Pesa confirmation to info@lanatutors.africa or WhatsApp +254 117 512316.
+                    M-Pesa confirmation to {PAYBILL.sendTo}.
                   </p>
                 </div>
 

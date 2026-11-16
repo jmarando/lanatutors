@@ -120,6 +120,9 @@ verify_jwt = true
 [functions.record-intensive-payment]
 verify_jwt = true
 
+[functions.enrol-december-family]
+verify_jwt = true
+
 [functions.send-session-reminders]
 verify_jwt = false
 

@@ -52,7 +52,7 @@ The team sends every message from the admin inbox. The system sends nothing to a
 - One action turns a reserved child into an enrolment that holds a seat, with a login for the family and a message to send.
 - Payment keeps going through the existing Record paybill and the existing Pesapal recovery link. The confirmation email and the morning reminder work unchanged.
 - A class is on the calendar and described as running only after the team has confirmed it.
-- No database migration.
+- No database migration but one: 0009 (added 2026-11-16, while building Phase 2) lets anyone read a running (`confirmed`) class as they can a reserving (`active`) one. The class read rule allowed `active` only, so without it opening a class would hide it from the public page and from students' and tutors' Bootcamp tabs. It is applied by hand, with the owner's go-ahead, before Phase 2 is merged.
 
 ## Non-goals (this version)
 
@@ -164,7 +164,7 @@ Two pull requests.
 - Phase 1, aimed at Friday 6 November so the first wave on Monday 9 November uses it: the parser, the screen with counts and family lists, Add December seats, the route and the nav entry. It is read-only apart from the note.
 - Phase 2, aimed at Friday 20 November: the `confirmed` status, Open, Archive, Enrol, the messages, Record paybill and Release seat inside the screen, and the tutor roster name.
 
-For each: merge, then publish the site. For Phase 2 also deploy `enrol-december-family` and the changed `sync-bootcamp-to-calendar` through Lovable's agent, then probe them from outside (an unauthenticated POST answers 401). Merging does not deploy functions. Then the dry run in the week of 23 November. Nothing is applied to the database.
+For each: merge, then publish the site. For Phase 2, apply migration 0009 first (before the merge, and before anyone clicks Open), then merge and publish, then deploy `enrol-december-family` and the changed `sync-bootcamp-to-calendar` through Lovable's agent and probe them from outside (an unauthenticated POST answers 401). Merging does not deploy functions. Then the dry run in the week of 23 November. Nothing else is applied to the database.
 
 ## Cleanup after 18 December
 
