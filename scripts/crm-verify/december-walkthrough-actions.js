@@ -122,6 +122,7 @@ async (page) => {
       }
       if (path.startsWith("/rest/v1/")) {
         const table = path.split("/").pop();
+        if (table === "user_roles") return reply(route, 200, (req.headers()["accept"] || "").includes("vnd.pgrst.object") ? { role: "admin", user_id: ADMIN } : [{ role: "admin", user_id: ADMIN }]); // the dashboard's admin check
         const rows = query(table, url.searchParams);
         if (req.method() === "GET") return reply(route, 200, rows);
         const body = req.postData() ? JSON.parse(req.postData()) : null;

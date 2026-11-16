@@ -8,8 +8,8 @@
 // does for the writes the screens make (Record payment, confirming a lesson, correcting or removing a
 // payment, changing a tutor).
 //
-// It signs in as a fake admin, then: opens Today (top-ups and lessons to confirm), confirms a lesson
-// and yesterday's lessons on /admin/lessons, records a payment on a family page and reads its
+// It signs in as a fake admin, then: opens the CRM list (the top-up filter, the Lessons badge), confirms a lesson
+// and yesterday's lessons on /admin/lessons, records a payment in the family's panel and reads its
 // progress. Section 4 then records half a session, sets and changes a tutor (including the change the
 // database refuses), corrects a payment's date and reference and removes a payment entered by mistake.
 // It returns {results, errors}; every result must be ok and errors must be empty.
@@ -162,7 +162,9 @@ async (page) => {
       }
       if (path.startsWith("/rest/v1/")) {
         const table = path.split("/").pop();
+        if (table === "user_roles") return reply(route, 200, (req.headers()["accept"] || "").includes("vnd.pgrst.object") ? { role: "admin", user_id: ADMIN } : [{ role: "admin", user_id: ADMIN }]); // the dashboard's admin check
         const rows = query(table, url.searchParams);
+        if (req.method() === "HEAD") return route.fulfill({ status: 200, headers: { ...CORS, "content-range": rows.length ? `0-${rows.length - 1}/${rows.length}` : "*/0" } }); // the menu badges
         if (req.method() === "GET") {
           if (wantsObject) return rows.length ? reply(route, 200, rows[0]) : reply(route, 406, { code: "PGRST116", message: "no rows" });
           return reply(route, 200, rows);
@@ -229,14 +231,22 @@ async (page) => {
     try { await locator.first().waitFor({ state: "visible", timeout }); check(name, true); return true; } catch (e) { check(name, false, e.message.split("\n")[0]); return false; }
   };
 
-  // ------------------------------------------------------------ 1. Today
-  await page.goto(`${BASE}/admin`);
-  await visible(page.getByText("Top-ups due"), "Today: the Top-ups due card is there");
-  await visible(page.getByText("1 session left"), "Today: Amani's maths pack is flagged as 1 session left");
-  await visible(page.getByText(/2 lessons waiting/), "Today: two lessons are waiting to be confirmed");
-  await visible(page.getByRole("link", { name: "Lessons" }).last(), "Today: Lessons is in the navigation");
-  await noOverflow("Today");
-  await shot("1-today");
+  // ------------------------------------------------------------ 1. The CRM list (Today's cards became its filters and the menu's badges)
+  // The family's panel, on its Payments tab: where the family page's Sessions and Progress cards now live.
+  const openPayments = async () => {
+    await page.goto(`${BASE}/admin/crm/${F1}`);
+    await page.getByRole("tab", { name: "Payments" }).click();
+  };
+  await page.goto(`${BASE}/admin/crm`);
+  await visible(page.getByText("Families who got in touch, newest first"), "CRM: the list is there");
+  await page.getByRole("group", { name: "Quick filters" }).getByRole("button", { name: /^Top-up due/ }).click();
+  await visible(page.locator('ul[aria-label="Families"] > li', { hasText: "Test Parent" }), "CRM: Amani's family, down to one maths session, is under Top-up due");
+  if (WIDTH >= 768) {
+    const lessonsItem = page.getByRole("button", { name: /^Lessons/ }).first();
+    check("Menu: Lessons shows the two lessons waiting to be confirmed", /Lessons\s*2$/.test(((await lessonsItem.textContent()) || "").trim()), await lessonsItem.textContent());
+  }
+  await noOverflow("CRM");
+  await shot("1-crm");
 
   // ------------------------------------------------------------ 2. Lessons: confirm one, then yesterday's
   await page.goto(`${BASE}/admin/lessons`);
@@ -263,9 +273,9 @@ async (page) => {
   await shot("4-lessons-after");
 
   // ------------------------------------------------------------ 3. Family: sessions, record payment, progress
-  await page.goto(`${BASE}/admin/families/${F1}`);
-  await visible(page.getByText("Amani Test · Maths").first(), "Family: Amani's maths line is in the Sessions card");
-  await visible(page.getByText("Zuri Test · English").first(), "Family: Zuri's English line is in the Sessions card");
+  await openPayments();
+  await visible(page.getByRole("dialog").getByText("Amani Test · Maths", { exact: true }).first(), "Family: Amani's maths line is in the Sessions card");
+  await visible(page.getByRole("dialog").getByText("Zuri Test · English", { exact: true }).first(), "Family: Zuri's English line is in the Sessions card");
   await visible(page.getByText("Top-up due").first(), "Family: Amani's pack is used up, so Top-up due shows");
   await visible(page.getByText("Progress", { exact: true }), "Family: the Progress card is there");
   await visible(page.getByText("Attendance").first(), "Family: progress shows attendance");
@@ -298,7 +308,7 @@ async (page) => {
     { id: "p0000000-0000-4000-8000-000000000003", enrolment_id: E3.id, amount_kes: 9000, reference: "EARLY1", paid_on: "2026-10-20", sessions_bought: 6, rate_per_session: 1500, sessions_used: 0, notes: null, created_by: ADMIN, created_at: iso(nowMs - 5 * D) },
     { id: "p0000000-0000-4000-8000-000000000004", enrolment_id: E4.id, amount_kes: 3000, reference: "ORPHAN1", paid_on: "2026-10-22", sessions_bought: 1, rate_per_session: 3000, sessions_used: 0, notes: null, created_by: ADMIN, created_at: iso(nowMs - 4 * D) },
   );
-  await page.goto(`${BASE}/admin/families/${F1}`);
+  await openPayments();
   await visible(page.getByText("Zuri Test · Science").first(), "Payments: the entry with no tutor yet is listed");
   // The entry blocks (not the card around them, not the payment list inside).
   const entry = (label) => page.locator("div.rounded-lg.border.p-3", { has: page.getByText(label, { exact: true }) });

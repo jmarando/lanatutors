@@ -111,7 +111,7 @@ export function DecemberClassCard({ cls, seats, holders, checkNotes, enrolled, p
                         {h.child || "(no name)"}
                         {h.duplicate && <span className="ml-2 text-xs font-normal text-amber-700">possible duplicate</span>}
                       </p>
-                      <Link to={`/admin/families/${h.familyId}`} className="text-xs text-muted-foreground hover:underline">
+                      <Link to={`/admin/crm/${h.familyId}`} className="text-xs text-muted-foreground hover:underline">
                         {h.parentName}
                         {h.phone ? ` · ${formatPhone(h.phone)}` : ""}
                       </Link>
