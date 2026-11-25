@@ -373,7 +373,7 @@ const TutorProfileEdit = () => {
         try {
           console.log("Starting photo upload...", { userId, fileName: photoFile.name });
           const fileExt = photoFile.name.split('.').pop();
-          const fileName = `${userId}-${Date.now()}.${fileExt}`;
+          const fileName = `${userId}/${Date.now()}.${fileExt}`;
           
           const { data: uploadData, error: uploadError } = await supabase.storage
             .from('avatars')

@@ -445,7 +445,7 @@ export const AdminTutorProfileEdit = () => {
       if (photoFile) {
         try {
           const fileExt = photoFile.name.split('.').pop();
-          const fileName = `${tutor.user_id}-${Date.now()}.${fileExt}`;
+          const fileName = `${tutor.user_id}/${Date.now()}.${fileExt}`;
           
           const { data: uploadData, error: uploadError } = await supabase.storage
             .from('avatars')
