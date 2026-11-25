@@ -71,6 +71,13 @@
       "when": 1795602920866,
       "tag": "0009_migration",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1795606969272,
+      "tag": "0010_tutor_videos_owner_only",
+      "breakpoints": true
     }
   ]
 }
