@@ -3,6 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { SEO } from "@/components/SEO";
+import { RelatedLinks } from "@/components/RelatedLinks";
+import { ABROAD_LINKS, MATHS_CURRICULUM_LINKS, PLACE_LINKS } from "@/data/siteLinks";
 import {
   ShieldCheck,
   Star,
@@ -300,6 +302,16 @@ const TutorsInKenya = () => {
           />
         </div>
       </section>
+
+      <RelatedLinks
+        heading="Explore related tutoring"
+        currentPath="/tutors-in-kenya"
+        groups={[
+          { title: "Tutors by place", links: PLACE_LINKS },
+          { title: "Maths by curriculum", links: MATHS_CURRICULUM_LINKS },
+          { title: "Families abroad", links: ABROAD_LINKS },
+        ]}
+      />
 
       {/* CTA */}
       <section className="py-16 bg-primary text-primary-foreground">

@@ -20,13 +20,9 @@ import { CURRICULUM_DATA, getCurriculums, getAllSubjects, getLevelsForCurriculum
 import { NAIROBI_LOCATIONS } from "@/utils/locationData";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
-import tutor1 from "@/assets/tutor-1.jpg";
-import tutor2 from "@/assets/tutor-2.jpg";
-import tutor3 from "@/assets/tutor-3.jpg";
-import tutor4 from "@/assets/tutor-4.jpg";
-import tutor5 from "@/assets/tutor-5.jpg";
-import tutor6 from "@/assets/tutor-6.jpg";
 import calvinProfilePhoto from "@/assets/calvin-profile.png";
+import { toPublicTutors, type PublicTutor } from "@/lib/publicTutors";
+import { prerenderData } from "@/lib/prerenderData";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { GeneralLearningPlanRequest } from "@/components/GeneralLearningPlanRequest";
 const TutorSearch = () => {
@@ -35,8 +31,10 @@ const TutorSearch = () => {
   const [selectedCurriculum, setSelectedCurriculum] = useState("all");
   const [selectedTeachingLevel, setSelectedTeachingLevel] = useState("all");
   const [selectedLocation, setSelectedLocation] = useState("all");
-  const [tutors, setTutors] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  // In the prerendered page (and its first render in the browser) the cards come from the build; the fetch below
+  // then refreshes them.
+  const [tutors, setTutors] = useState<PublicTutor[]>(() => prerenderData("tutors") ?? []);
+  const [loading, setLoading] = useState(() => !prerenderData("tutors"));
   const [showLearningPlanDialog, setShowLearningPlanDialog] = useState(false);
   // Safety: ensure any legacy references to `sortBy` won't crash the page
   const [sortBy, setSortBy] = useState<string>("relevance");
@@ -66,77 +64,17 @@ const TutorSearch = () => {
     fetchTutors();
   }, []);
   const fetchTutors = async () => {
-    setLoading(true);
     try {
       // Use the secure RPC function that includes tutor names and avatars from profiles table
       const { data: tutorProfiles, error: tutorError } = await supabase.rpc("get_public_tutor_profiles");
-      
-      console.log("Fetched tutor profiles:", tutorProfiles?.slice(0, 2));
-      
       if (tutorError) throw tutorError;
 
-      // 3) Fetch pricing tiers for all tutors to get their rate ranges
-      const tutorProfileIds = (tutorProfiles || []).map((tp: any) => tp.id);
+      // Pricing tiers for all tutors, for their rate ranges
+      const tutorProfileIds = (tutorProfiles || []).map((tp) => tp.id);
       const {
         data: pricingTiers
       } = await supabase.from("tutor_pricing_tiers").select("*").in("tutor_id", tutorProfileIds);
-      const tiersByTutor = new Map<string, any[]>();
-      (pricingTiers || []).forEach((tier: any) => {
-        if (!tiersByTutor.has(tier.tutor_id)) {
-          tiersByTutor.set(tier.tutor_id, []);
-        }
-        tiersByTutor.get(tier.tutor_id)!.push(tier);
-      });
-
-      // 4) Merge and format
-      const tutorImages = [tutor1, tutor2, tutor3, tutor4, tutor5, tutor6];
-      const formattedTutors = (tutorProfiles || []).map((tp: any, index: number) => {
-        // Name and avatar now come directly from RPC function
-        const name = tp.full_name || "Tutor";
-
-        // Get pricing tiers for this tutor
-        const tiers = tiersByTutor.get(tp.id) || [];
-
-        // Compute min and max rates from any tiers configured for this tutor
-        const tierRates = tiers
-          .map((t: any) => Number(t.online_hourly_rate) || 0)
-          .filter((r: number) => r > 0);
-
-        const hourlyRate = tierRates.length
-          ? Math.min(...tierRates)
-          : (Number(tp.hourly_rate) || 2500);
-
-        const hourlyRateMax = tierRates.length
-          ? Math.max(...tierRates)
-          : hourlyRate;
-
-        // Only show real uploaded avatars, no AI fallback photos
-        const uploadedAvatar = tp.avatar_url;
-        return {
-          id: tp.id,
-          name,
-          photo: name.split(" ").map((n: string) => n[0]).join("").toUpperCase().slice(0, 2),
-          photoUrl: uploadedAvatar || null,
-          // Only use real avatar, no fallback
-          profileSlug: tp.profile_slug,
-          // Add profile slug
-          subjects: tp.subjects || [],
-          curriculum: tp.curriculum || [],
-          teachingLevels: tp.teaching_levels || [],
-          teachingLocation: tp.teaching_location || "",
-          teachingMode: tp.teaching_mode || [],
-          school: tp.current_institution || "Not specified",
-          displayInstitution: tp.display_institution || false,
-          experienceYears: tp.experience_years || 0,
-          rating: Number(tp.rating) || 0,
-          reviews: tp.total_reviews || 0,
-          hourlyRate,
-          hourlyRateMax,
-          hasTiers: tiers.length > 0,
-          gender: tp.gender || null
-        };
-      });
-      setTutors(formattedTutors);
+      setTutors(toPublicTutors(tutorProfiles || [], pricingTiers || []));
     } catch (err) {
       console.error("Error fetching tutors:", err);
       toast.error("Failed to load tutors");
@@ -375,7 +313,7 @@ const TutorSearch = () => {
                     />
                     <div className="flex-1">
                       <h3 className="font-semibold text-lg">{formatName(tutor.name)}</h3>
-                      <p className="text-sm text-muted-foreground">{tutor.school}</p>
+                      {tutor.school && <p className="text-sm text-muted-foreground">{tutor.school}</p>}
                       <p className="mt-2 text-xs text-muted-foreground">
                         <span className="font-semibold">Subjects:</span> {tutor.subjects.slice(0, 3).join(", ")}
                         {tutor.subjects.length > 3 ? "…" : ""}

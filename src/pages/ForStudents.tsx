@@ -144,7 +144,7 @@ const ForStudents = () => {
     <div className="min-h-screen bg-[image:var(--gradient-page)]">
       <SEO 
         title="1-on-1 Tutoring from Verified Kenyan Teachers"
-        description="Connect with verified tutors from top Kenyan schools from anywhere in the world. Get personalized 1-on-1 tutoring for KCSE, KCPE, CBC, IGCSE, and American curriculum. Learn online globally or in-person in Kenya."
+        description="One-on-one tutoring from verified teachers at top Kenyan schools for CBC, KCSE, IGCSE and American curricula. Online from anywhere, or in person in Nairobi."
       />
       
       {/* Hero Section */}

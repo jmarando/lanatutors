@@ -3,6 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { SEO } from "@/components/SEO";
+import { RelatedLinks } from "@/components/RelatedLinks";
+import { ABROAD_LINKS, MATHS_CURRICULUM_LINKS, SUBJECT_LINKS } from "@/data/siteLinks";
 import { CheckCircle, Globe, ShieldCheck, GraduationCap, Clock } from "lucide-react";
 
 type Faq = { q: string; a: string };
@@ -227,6 +229,16 @@ const Diaspora = () => {
           />
         </div>
       </section>
+
+      <RelatedLinks
+        heading="Explore related tutoring"
+        currentPath={market.path}
+        groups={[
+          { title: "Families abroad", links: ABROAD_LINKS },
+          { title: "Subjects", links: SUBJECT_LINKS },
+          { title: "Maths by curriculum", links: MATHS_CURRICULUM_LINKS },
+        ]}
+      />
 
       {/* CTA */}
       <section className="py-16 bg-primary text-primary-foreground">

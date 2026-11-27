@@ -10,6 +10,11 @@
 // before hydration ends must do it in a transition (see src/contexts/AuthContext.tsx), or React
 // re-renders the page.
 //
+// Pages that show database content (blog posts, the blog list, the tutor list) render from data that
+// loadPrerenderData (src/entry-prerender.tsx) reads once with the site's public key, and each such page carries the
+// part it used as window.__LANA_DATA__ so the browser's first render matches (src/lib/prerenderData.ts). Every
+// published blog post is prerendered, in the sitemap or not.
+//
 // Add a page to public/sitemap.xml and the next publish prerenders it. A page is skipped, and keeps
 // the plain SPA shell, if it throws while rendering in Node (for example by reading `window` during
 // render) or renders without its own <title> and canonical (for example when its <SEO> waits for
@@ -43,6 +48,26 @@ const FALLBACK_GUARD = `<script>if (location.pathname !== "/") document.document
 `;
 
 const firstLine = (error) => String(error?.message ?? error).split("\n")[0];
+
+// The part of the build-time data a page renders, which it must also carry for hydration.
+function pageData(data, pathname) {
+  if (pathname === "/tutors" && data.tutors) return { tutors: data.tutors };
+  if (pathname === "/blog" && data.blogList) return { blogList: data.blogList };
+  const slug = pathname.match(/^\/blog\/([^/]+)$/)?.[1];
+  if (slug && data.blogPosts?.[slug]) return { blogPosts: { [slug]: data.blogPosts[slug] } };
+  return null;
+}
+
+// JSON inside an inline <script>: escape "<" so nothing in it (a "</script>", an HTML comment) can end the script
+// early, and the two line separators older JavaScript rejects.
+function dataScript(value) {
+  if (!value) return "";
+  const json = JSON.stringify(value)
+    .replace(/</g, "\\u003c")
+    .replace(new RegExp(String.fromCharCode(0x2028), "g"), "\\u2028")
+    .replace(new RegExp(String.fromCharCode(0x2029), "g"), "\\u2029");
+  return `<script>window.__LANA_DATA__=${json};</script>\n`;
+}
 
 function sitemapPaths(xml) {
   const paths = new Set();
@@ -83,7 +108,6 @@ async function prerender() {
   const template = await readFile(path.join(distDir, "index.html"), "utf8");
   if (!template.includes(ROOT_DIV)) throw new Error(`dist/index.html has no ${ROOT_DIV}`);
   const sitemap = await readFile(path.join(distDir, "sitemap.xml"), "utf8");
-  const paths = [...new Set([...sitemapPaths(sitemap), ...ALSO_PRERENDER])];
 
   const [{ build }, { default: react }] = await Promise.all([
     import("vite"),
@@ -106,7 +130,20 @@ async function prerender() {
       rollupOptions: { output: { entryFileNames: "entry-prerender.js" } },
     },
   });
-  const { render } = await import(pathToFileURL(path.join(ssrDir, "entry-prerender.js")).href);
+  const { render, loadPrerenderData } = await import(pathToFileURL(path.join(ssrDir, "entry-prerender.js")).href);
+
+  const data = await loadPrerenderData().catch((error) => {
+    console.log(`prerender: no page data: ${firstLine(error)}`);
+    return {};
+  });
+  globalThis.__LANA_DATA__ = data;
+  const postPaths = Object.keys(data.blogPosts ?? {})
+    .filter((slug) => /^[a-z0-9-]+$/i.test(slug))
+    .map((slug) => `/blog/${slug}`);
+  const paths = [...new Set([...sitemapPaths(sitemap), ...ALSO_PRERENDER, ...postPaths])];
+  console.log(
+    `prerender: data for ${data.tutors?.length ?? 0} tutors and ${data.blogList?.length ?? 0} blog posts`,
+  );
 
   const written = [];
   const skipped = [];
@@ -133,7 +170,7 @@ async function prerender() {
         pageHtml(template, withoutUrlTags(page.head), page.html, FALLBACK_GUARD),
       );
     } else {
-      const html = pageHtml(template, page.head, page.html);
+      const html = pageHtml(template, page.head, page.html, dataScript(pageData(data, pathname)));
       const dir = path.join(distDir, pathname);
       await mkdir(dir, { recursive: true });
       // Write both forms, as hosts resolve an extensionless /tutors to either one.

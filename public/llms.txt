@@ -1,60 +1,65 @@
 # Lana Tutors
 
-> Lana Tutors connects parents and students with verified Kenyan teachers for online and in-person one-on-one tutoring across CBC, KCSE (8-4-4), IGCSE, A-Level, IB, and American curricula. Headquartered in Nairobi, Kenya, serving students locally and across the African diaspora (UK, USA, Canada, UAE, and beyond).
+> Lana Tutors connects parents and students with verified Kenyan teachers for one-on-one tutoring, online or in person, across CBC (now also called CBE), KCSE (8-4-4), IGCSE, A-Level, IB and American curricula. Based in Nairobi, Kenya, serving families in Kenya and across the African diaspora (UK, USA, Canada, UAE and beyond).
 
-Lana Tutors is a Kenyan tutoring platform. Tutors are verified classroom teachers — many are KCSE examiners or markers from top Kenyan schools. Sessions are delivered over Google Meet (online) or in-person in Nairobi, Mombasa, and Kisumu. Pricing is in Kenyan Shillings with multi-currency display (USD, EUR, GBP, KES, TZS, UGX). All assessment calls and bookings resolve to East Africa Time (EAT, Africa/Nairobi).
+Lana Tutors is a Kenyan tutoring platform. Tutors are verified classroom teachers, many of them KCSE examiners or markers from leading Kenyan schools. Lessons are one-on-one over Google Meet, or in person at home in Nairobi; in Mombasa and Kisumu, in-person lessons are arranged when a tutor is nearby, and online lessons are always available. Lessons run between 6 AM and 10 PM East Africa Time (EAT, Africa/Nairobi). Families pay by M-Pesa or card, and families abroad can pay in USD, GBP or EUR.
 
 ## Key facts
-- Founded and headquartered in Nairobi, Kenya
-- Specializes in Kenyan curricula (CBC, KCSE/8-4-4) and major international curricula (IGCSE, A-Level, IB, American/AP)
-- Verified tutors only — credential-checked classroom teachers, including KCSE markers
-- One-on-one online lessons via Google Meet; in-person sessions available in Nairobi
-- Serves Kenyan diaspora families in the UK, USA, Canada, UAE, Australia
-- Free 20-minute Academic Assessment Calls before committing to a tutor
-- Custom Learning Plans designed by senior educators for long-term goals
-- Group classes and December Intensive holiday programs
-- Pricing: typically KES 1,500 – KES 3,500 per hour depending on curriculum and level
-- Contact: info@lanatutors.africa
+- Founded and based in Nairobi, Kenya
+- Kenyan curricula (CBC/CBE and KCSE/8-4-4) and international curricula (IGCSE, A-Level, IB, American/AP)
+- Verified tutors only: credential-checked classroom teachers, including KCSE markers
+- One-on-one online lessons via Google Meet; in-person lessons at home in Nairobi, and in Mombasa or Kisumu when a tutor is nearby
+- Serves Kenyan and African families abroad in the UK, USA, Canada, UAE and Australia
+- Free 20-minute Academic Assessment Call with a learning coordinator before committing to a tutor; most families are matched within 48 hours
+- Custom Learning Plans designed by senior educators
+- Group classes and December holiday classes
+- Pricing depends on the curriculum, the level and the tutor; a learning coordinator explains it on the free assessment call. Group classes start from KES 400 per hour.
+- Contact: info@lanatutors.africa, WhatsApp +254 117 512316
 
 ## Core pages
 - [Home](/): Platform overview and value proposition
-- [Find Tutors](/tutors): Browse and filter verified Kenyan tutors by subject, curriculum, and level
-- [How It Works](/how-it-works): Step-by-step explanation of booking, sessions, and payment
+- [Find Tutors](/tutors): Browse and filter verified Kenyan tutors by subject, curriculum, level and location
+- [How It Works](/how-it-works): Step-by-step explanation of booking, lessons and payment
 - [About Lana Tutors](/about): Company background and mission
 - [For Students & Parents](/for-students): Information for families considering tutoring
-- [For Tutors](/for-tutors): Information for teachers wanting to join the platform
+- [For Tutors](/for-tutors): Information for teachers who want to join the platform
 - [Become a Tutor](/become-a-tutor): Tutor application
-- [Book a Free Assessment Call](/book-consultation): Schedule a 20-minute consultation with the Lana academic team
-- [Request a Learning Plan](/request-learning-plan): Get a custom multi-session plan designed for your child
-- [Group Classes](/group-classes): Small-group classes by curriculum and subject
-- [Blog](/blog): Articles on Kenyan education, exam prep, and parenting
+- [Book a Free Assessment Call](/book-consultation): Schedule a 20-minute call with the Lana academic team
+- [Request a Learning Plan](/request-learning-plan): A custom multi-session plan designed for your child
+- [Group Classes](/group-classes): Small-group online classes by curriculum and subject, from KES 400 per hour
+- [December Holiday Classes](/december-classes): Holiday classes for Form 3 and Grade 8
+- [Blog](/blog): Articles on Kenyan education, exam preparation and parenting
+
+## Tutors by place
+- [Online Tutors in Kenya](/tutors-in-kenya): Verified Kenyan tutors online, anywhere in Kenya
+- [Home Tutors in Nairobi](/tutors-in-nairobi): In-person lessons at home across Nairobi, or online
+- [Tutors in Mombasa](/tutors-in-mombasa): Online lessons, and in-person lessons when a tutor is nearby
+- [Tutors in Kisumu](/tutors-in-kisumu): Online lessons, and in-person lessons when a tutor is nearby
 
 ## Subject pages
-- [Mathematics Tutors](/subjects/mathematics): CBC, KCSE, IGCSE 0580, IB Maths AA & AI
-- [Chemistry Tutors](/subjects/chemistry): KCSE, IGCSE 0620, IB Chemistry SL/HL
-- [Physics Tutors](/subjects/physics): KCSE, IGCSE 0625, IB Physics SL/HL
-- [Biology Tutors](/subjects/biology): KCSE, IGCSE 0610, IB Biology SL/HL
-- [English Tutors](/subjects/english): KCSE, IGCSE First Language English 0500, IB English
-- [Kiswahili Tutors](/subjects/kiswahili): KCSE, CBC, and IB Kiswahili
-- [Business Studies Tutors](/subjects/business-studies): KCSE and IGCSE Business
-- [Computer Studies Tutors](/subjects/computer-studies): KCSE Computer Studies and IGCSE ICT
-- [Geography Tutors](/subjects/geography): KCSE and IGCSE Geography
-- [History Tutors](/subjects/history): KCSE History & Government, IGCSE History
+- [Mathematics Tutors](/subjects/mathematics): CBC, KCSE, IGCSE 0580 and 0607, IB Maths AA and AI
+- [English Tutors](/subjects/english): KCSE, IGCSE First Language English 0500 and ESL 0510, IB English
+- [Kiswahili Tutors](/subjects/kiswahili): KCSE, CBC and IB Kiswahili
+- [Chemistry Tutors](/subjects/chemistry): KCSE, IGCSE 0620, IB Chemistry SL and HL
+- [Physics Tutors](/subjects/physics): KCSE, IGCSE 0625, IB Physics SL and HL
+- [Biology Tutors](/subjects/biology): KCSE, IGCSE 0610, IB Biology SL and HL
+- [Integrated Science Tutors](/subjects/integrated-science): CBC (CBE) Junior School, Grades 7 to 9, and revision for the KJSEA
+- [Business Studies Tutors](/subjects/business-studies): KCSE and IGCSE Business Studies 0450
+- [Computer Studies Tutors](/subjects/computer-studies): KCSE Computer Studies, IGCSE Computer Science 0478 and ICT 0417
+- [Geography Tutors](/subjects/geography): KCSE, IGCSE 0460 and IB Geography
+- [History Tutors](/subjects/history): KCSE History and Government, IGCSE 0470, IB History
 
-## Curriculum × Mathematics pages
-- [KCSE Mathematics Tutors](/kcse-mathematics-tutors): KCSE Paper 1 & 2 preparation
+## Maths by curriculum
+- [CBC Mathematics Tutors](/cbc-mathematics-tutors): CBC (CBE) mathematics, Grade 1 to Grade 9
+- [KCSE Mathematics Tutors](/kcse-mathematics-tutors): KCSE Paper 1 and Paper 2 preparation
 - [IGCSE Mathematics Tutors](/igcse-mathematics-tutors): IGCSE 0580 and 0607 preparation
 - [IB Mathematics Tutors](/ib-mathematics-tutors): IB Maths AA and AI, SL and HL
-- [CBC Mathematics Tutors](/cbc-mathematics-tutors): CBC Grade 1 – Grade 9 mathematics
 
-## Diaspora pages
-- [Tutors for the African Diaspora](/diaspora): Online tutoring for Kenyan and African families abroad
+## Families abroad
+- [Tutors for Kenyan Families Abroad](/diaspora): Online tutoring for Kenyan and African families abroad
 - [Kenyan Tutors in the UK](/kenyan-tutors-uk): For Kenyan families in the United Kingdom
 - [Kenyan Tutors in the USA](/kenyan-tutors-usa): For Kenyan families in the United States
+- [Tutors for African Students Abroad](/tutors-for-african-students-abroad): For African students studying abroad
 
 ## Policies
 - [Privacy Policy](/privacy-policy)
-
-## Optional
-- [Tutors in Kenya — overview](/tutors-in-kenya)
-- [Tutors for African students abroad](/tutors-for-african-students-abroad)

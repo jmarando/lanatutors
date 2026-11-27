@@ -5,6 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate, useLocation, useParams } from "react-router-dom";
 import { lazy, Suspense, useMemo, type ReactNode } from "react";
 import Navigation from "./components/Navigation";
+import { SiteFooter } from "./components/SiteFooter";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import RequireRole from "./components/RequireRole";
@@ -84,6 +85,14 @@ export const AppContent = () => {
   const isSchoolRoute = location.pathname.startsWith("/school/");
   // The admin (the CRM included) has no use for the public chat button, which would sit over the CRM panel on a phone.
   const isAdminRoute = location.pathname === "/admin" || location.pathname.startsWith("/admin/");
+  // The public footer links every marketing page (src/data/siteLinks.ts). Dashboards, the admin and the printable
+  // guide are working screens and have no use for it.
+  const showFooter =
+    !isSchoolRoute &&
+    !isAdminRoute &&
+    !location.pathname.startsWith("/student/") &&
+    !location.pathname.startsWith("/tutor/") &&
+    location.pathname !== "/tutor-guide-printable";
   return (
     <>
       {!isSchoolRoute && <Navigation />}
@@ -164,9 +173,12 @@ export const AppContent = () => {
           <Route path="/school/:slug/admin" element={<SchoolAdminDashboard />} />
           <Route path="/school/:slug/teacher" element={<SchoolTeacherDashboard />} />
           <Route path="/school/:slug/parent" element={<SchoolParentDashboard />} />
+          {/* Visitors arrive at this encoded "book-consultation" address; send them to the booking page. */}
+          <Route path="/Ym9vay1jb2" element={<Navigate to="/book-consultation" replace />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Suspense>
+      {showFooter && <SiteFooter />}
       {!isSchoolRoute && !isAdminRoute && (
         <Suspense fallback={null}>
           <WhatsAppChatButton />
