@@ -185,7 +185,7 @@ const AboutUs = () => {
     <div className="min-h-screen bg-[image:var(--gradient-page)]">
       <SEO
         title="About Us: Verified Kenyan Teachers, Worldwide"
-        description="Learn about Lana's mission to make quality tutoring from verified Kenyan teachers accessible to students worldwide. Discover how we work, our values, and why thousands of families globally trust us."
+        description="Lana connects students in Kenya and abroad with verified Kenyan teachers for one-on-one tutoring. Our mission, how we vet tutors and how we work."
       />
 
       {/* Hero Section */}

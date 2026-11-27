@@ -3,6 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { SEO } from "@/components/SEO";
+import { RelatedLinks } from "@/components/RelatedLinks";
+import { MATHS_CURRICULUM_LINKS, PLACE_LINKS, SUBJECT_LINKS } from "@/data/siteLinks";
 import { CheckCircle, GraduationCap, Star, ShieldCheck } from "lucide-react";
 
 interface CurriculumMath {
@@ -288,6 +290,16 @@ const CurriculumMathLanding = ({ slugOverride }: { slugOverride?: string }) => {
           <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumb) }} />
         </div>
       </section>
+
+      <RelatedLinks
+        heading="Explore related tutoring"
+        currentPath={`/${data.slug}`}
+        groups={[
+          { title: "Maths by curriculum", links: [{ to: "/subjects/mathematics", label: "All maths tutors" }, ...MATHS_CURRICULUM_LINKS] },
+          { title: "Other subjects", links: SUBJECT_LINKS.filter((link) => link.to !== "/subjects/mathematics") },
+          { title: "Tutors near you", links: PLACE_LINKS },
+        ]}
+      />
 
       <section className="py-16 bg-primary text-primary-foreground">
         <div className="container mx-auto px-4 max-w-3xl text-center">

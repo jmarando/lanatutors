@@ -337,7 +337,7 @@ const BookConsultation = () => {
   return <div className="min-h-screen bg-[image:var(--gradient-page)] py-12 px-6">
       <SEO 
         title="Book a Free 20-Minute Assessment Call" 
-        description="Schedule a 20-minute academic assessment call with Lana education experts. Get personalized tutor recommendations, custom learning plan, and expert guidance for your child's success." 
+        description="Book a free 20-minute call with a Lana learning coordinator. Get tutor recommendations and a custom learning plan for your child."
         keywords="academic assessment Kenya, tutoring consultation, education assessment, tutor matching Kenya, learning plan Kenya" 
       />
       

@@ -4,7 +4,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { SEO } from "@/components/SEO";
 import { Button } from "@/components/ui/button";
 import { Calendar, User, ArrowLeft } from "lucide-react";
-import { format } from "date-fns";
+import { prerenderData } from "@/lib/prerenderData";
+import { formatPublishedDate } from "@/lib/publishedDate";
+
+// Search results show about 155 characters of a description; cut longer excerpts at a word.
+const metaDescription = (text: string) =>
+  text.length <= 155 ? text : `${text.slice(0, 154).replace(/\s+\S*$/, "")}…`;
 
 interface BlogPostData {
   id: string;
@@ -19,8 +24,11 @@ interface BlogPostData {
 
 export default function BlogPost() {
   const { slug } = useParams<{ slug: string }>();
-  const [post, setPost] = useState<BlogPostData | null>(null);
-  const [loading, setLoading] = useState(true);
+  // The prerendered page (and its first render in the browser) uses the post loaded at build time; the fetch below
+  // then refreshes it.
+  const initialPost = slug ? prerenderData("blogPosts")?.[slug] : undefined;
+  const [post, setPost] = useState<BlogPostData | null>(initialPost ?? null);
+  const [loading, setLoading] = useState(!initialPost);
 
   useEffect(() => {
     if (slug) {
@@ -86,7 +94,7 @@ export default function BlogPost() {
     <>
       <SEO
         title={post.title}
-        description={post.excerpt || post.title}
+        description={metaDescription(post.excerpt || post.title)}
         ogImage={post.featured_image_url || undefined}
       />
       
@@ -122,7 +130,7 @@ export default function BlogPost() {
               {post.published_at && (
                 <div className="flex items-center gap-2">
                   <Calendar className="h-4 w-4" />
-                  <span>{format(new Date(post.published_at), "MMMM d, yyyy")}</span>
+                  <span>{formatPublishedDate(post.published_at, "MMMM d, yyyy")}</span>
                 </div>
               )}
             </div>

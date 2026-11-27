@@ -3,6 +3,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { SEO } from "@/components/SEO";
+import { RelatedLinks } from "@/components/RelatedLinks";
+import { MATHS_CURRICULUM_LINKS, PLACE_LINKS, SUBJECT_LINKS } from "@/data/siteLinks";
 import { NAIROBI_LOCATIONS } from "@/utils/locationData";
 import { CheckCircle, ShieldCheck, MapPin, GraduationCap, Smartphone, Video } from "lucide-react";
 
@@ -339,6 +341,16 @@ const CityLanding = () => {
           />
         </div>
       </section>
+
+      <RelatedLinks
+        heading="Explore related tutoring"
+        currentPath={city.path}
+        groups={[
+          { title: "Subjects", links: SUBJECT_LINKS },
+          { title: "Maths by curriculum", links: MATHS_CURRICULUM_LINKS },
+          { title: "Other places", links: PLACE_LINKS },
+        ]}
+      />
 
       {/* CTA */}
       <section className="py-16 bg-primary text-primary-foreground">

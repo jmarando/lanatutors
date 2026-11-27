@@ -4,7 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { SEO } from "@/components/SEO";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Calendar, User } from "lucide-react";
-import { format } from "date-fns";
+import { prerenderData } from "@/lib/prerenderData";
+import { formatPublishedDate } from "@/lib/publishedDate";
 
 interface BlogPost {
   id: string;
@@ -17,8 +18,10 @@ interface BlogPost {
 }
 
 export default function Blog() {
-  const [posts, setPosts] = useState<BlogPost[]>([]);
-  const [loading, setLoading] = useState(true);
+  // The prerendered page (and its first render in the browser) lists the posts loaded at build time; the fetch below
+  // then refreshes them.
+  const [posts, setPosts] = useState<BlogPost[]>(() => prerenderData("blogList") ?? []);
+  const [loading, setLoading] = useState(() => !prerenderData("blogList"));
 
   useEffect(() => {
     fetchPosts();
@@ -105,7 +108,7 @@ export default function Blog() {
                         {post.published_at && (
                           <div className="flex items-center gap-1">
                             <Calendar className="h-4 w-4" />
-                            <span>{format(new Date(post.published_at), "MMM d, yyyy")}</span>
+                            <span>{formatPublishedDate(post.published_at, "MMM d, yyyy")}</span>
                           </div>
                         )}
                       </div>
