@@ -52,7 +52,7 @@ const Home = () => {
     "name": "Lana Tutors",
     "description": "Your Trusted Tutoring Partner - Quality online tutoring from verified Kenyan teachers. Join from anywhere in the world.",
     "url": SITE_URL,
-    "logo": `${SITE_URL}/favicon.png`,
+    "logo": `${SITE_URL}/lana-tutors-logo-square.png`,
     "address": {
       "@type": "PostalAddress",
       "streetAddress": "First Floor, Arbor House, Arboretum Drive",

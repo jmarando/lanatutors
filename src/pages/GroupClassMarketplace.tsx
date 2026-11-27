@@ -96,7 +96,7 @@ const GroupClassMarketplace = () => {
   return (
     <>
       <SEO
-        title="Group Classes"
+        title="Online Group Classes in Kenya"
         description="Join affordable group classes starting from KES 400/hour across multiple subjects and curricula"
       />
       <div className="min-h-screen bg-background py-12">

@@ -181,6 +181,7 @@ const Login = () => {
       <SEO
         title="Log In"
         description="Log in to your Lana Tutors account to manage your lessons and bookings."
+        noindex
       />
       <div className="w-full max-w-md">
         <Link to="/" className="flex items-center justify-center gap-2 mb-8">
