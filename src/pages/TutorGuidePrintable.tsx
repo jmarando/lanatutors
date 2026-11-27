@@ -1,5 +1,4 @@
 import { useEffect } from "react";
-import lanaLogo from "@/assets/lana-tutors-logo-hd.png";
 
 const TutorGuidePrintable = () => {
   useEffect(() => {
@@ -11,7 +10,7 @@ const TutorGuidePrintable = () => {
       {/* Cover Page */}
       <div className="page cover-page">
         <div className="cover-content">
-          <img src={lanaLogo} alt="Lana Tutors" className="cover-logo" />
+          <img src="/lana-logo-white.png" alt="Lana Tutors" className="cover-logo" />
           <h1 className="cover-title">Tutor Dashboard Guide</h1>
           <p className="cover-subtitle">Complete Guide to Using Your Tutor Dashboard</p>
           <div className="cover-footer">
@@ -635,7 +634,6 @@ const TutorGuidePrintable = () => {
         .cover-logo {
           max-width: 200px;
           margin: 0 auto 2rem;
-          filter: brightness(0) invert(1);
         }
 
         .cover-title {
@@ -870,7 +868,6 @@ const TutorGuidePrintable = () => {
           .page {
             box-shadow: 0 2px 8px rgba(0,0,0,0.1);
             margin-bottom: 2rem;
-            background: white;
           }
         }
       `}</style>

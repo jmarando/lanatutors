@@ -2,12 +2,13 @@
 //
 // Lovable's host serves a file from dist/ when one exists for the requested path, and
 // dist/index.html (HTTP 200) for every other path. This script renders each URL in
-// public/sitemap.xml with the real app (src/entry-prerender.tsx) and writes it to
-// dist/<path>/index.html and dist/<path>.html, so the raw HTML of /tutors, /diaspora and the rest
-// carries that page's own title, description, canonical, Open Graph tags and body. That HTML is
-// what WhatsApp and Facebook link previews and crawlers that don't run JavaScript read. In the
-// browser, src/main.tsx hydrates this markup. Anything that updates state before hydration ends
-// must do it in a transition (see src/contexts/AuthContext.tsx), or React re-renders the page.
+// public/sitemap.xml, and the ones in ALSO_PRERENDER, with the real app (src/entry-prerender.tsx)
+// and writes it to dist/<path>/index.html and dist/<path>.html, so the raw HTML of /tutors,
+// /diaspora and the rest carries that page's own title, description, canonical, Open Graph tags and
+// body. That HTML is what WhatsApp and Facebook link previews and crawlers that don't run
+// JavaScript read. In the browser, src/main.tsx hydrates this markup. Anything that updates state
+// before hydration ends must do it in a transition (see src/contexts/AuthContext.tsx), or React
+// re-renders the page.
 //
 // Add a page to public/sitemap.xml and the next publish prerenders it. A page is skipped, and keeps
 // the plain SPA shell, if it throws while rendering in Node (for example by reading `window` during
@@ -24,6 +25,8 @@ const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
 const distDir = path.join(root, "dist");
 const ssrDir = path.join(root, "dist-ssr");
 const ROOT_DIV = '<div id="root"></div>';
+// Pages kept out of the sitemap that people still share, so they keep their own link preview.
+const ALSO_PRERENDER = ["/student-signup"];
 
 // Template tags that each page's <SEO> provides itself. Everything else in <head> is kept.
 const TEMPLATE_SEO_TAGS = [
@@ -80,7 +83,7 @@ async function prerender() {
   const template = await readFile(path.join(distDir, "index.html"), "utf8");
   if (!template.includes(ROOT_DIV)) throw new Error(`dist/index.html has no ${ROOT_DIV}`);
   const sitemap = await readFile(path.join(distDir, "sitemap.xml"), "utf8");
-  const paths = sitemapPaths(sitemap);
+  const paths = [...new Set([...sitemapPaths(sitemap), ...ALSO_PRERENDER])];
 
   const [{ build }, { default: react }] = await Promise.all([
     import("vite"),
@@ -140,7 +143,7 @@ async function prerender() {
     written.push(pathname);
   }
 
-  console.log(`prerender: wrote ${written.length} of ${paths.length} sitemap pages`);
+  console.log(`prerender: wrote ${written.length} of ${paths.length} pages`);
   for (const line of skipped) console.log(`prerender: skipped ${line}`);
 }
 

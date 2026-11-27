@@ -10,15 +10,17 @@ interface SEOProps {
   ogImage?: string;
   structuredData?: object;
   canonical?: string;
+  noindex?: boolean;
 }
 
 export const SEO = ({ 
   title, 
   description, 
   keywords = "Kenyan tutors online, KCSE tutors worldwide, KCPE tutors diaspora, CBC tutors global, verified Kenyan teachers, online tutoring East Africa",
-  ogImage = "/og-image.png",
+  ogImage = "/lana-tutors-share.png",
   structuredData,
-  canonical
+  canonical,
+  noindex
 }: SEOProps) => {
   const { pathname } = useLocation();
   const fullTitle = `${title} | Lana Tutors`;
@@ -34,7 +36,8 @@ export const SEO = ({
       <title>{fullTitle}</title>
       <meta name="description" content={description} />
       <meta name="keywords" content={keywords} />
-      
+      {noindex && <meta name="robots" content="noindex" />}
+
       <link rel="canonical" href={canonicalUrl} />
       
       <meta property="og:title" content={fullTitle} />
